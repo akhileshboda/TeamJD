@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Results &amp; Transformations | Team JD — Jake Dedert Fitness Coaching</title>
+  <meta name="description" content="Real results from real clients coached by Jake Dedert. Competition stage photos, body transformations, and posing achievements from Team JD athletes.">
+  <link rel="canonical" href="https://jakededert.fit/results/">
+
+  <meta property="og:title" content="Client Results | Team JD — Jake Dedert Fitness">
+  <meta property="og:description" content="Real results from real people. Competition winners, body transformations, and elite stage performances from Team JD coaching clients.">
+  <meta property="og:image" content="https://jakededert.fit/assets/images/results/client-posing-1.jpg">
+  <meta property="og:url" content="https://jakededert.fit/results/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="../assets/images/logo-mark.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { accent: '#16c9dd', 'accent-dark': '#0ea5b8', surface: '#1a1a1a', 'surface-2': '#242424' },
+          fontFamily: { sans: ['Manrope', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo" aria-label="Team JD — Home">
+      <img src="../assets/images/logo.png" alt="Team JD Jake Dedert" width="140" height="36">
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="/">Home</a></li>
+      <li><a href="/about/">About</a></li>
+      <li><a href="/services/">Services</a></li>
+      <li><a href="/results/" aria-current="page">Results</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://calendly.com/team-jd/15min" class="btn btn-primary btn-sm" target="_blank" rel="noopener">Book a Consult</a>
+    </div>
+    <button id="nav-hamburger" class="nav-hamburger" aria-expanded="false" aria-controls="nav-mobile" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div id="nav-mobile" class="nav-mobile" role="dialog" aria-label="Mobile navigation">
+    <a href="/">Home</a>
+    <a href="/about/">About</a>
+    <a href="/services/">Services</a>
+    <a href="/results/">Results</a>
+    <a href="/contact/">Contact</a>
+    <div class="mobile-cta">
+      <a href="https://calendly.com/team-jd/15min" class="btn btn-primary" target="_blank" rel="noopener" style="width:100%; justify-content:center;">Book a Consult</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Hero -->
+<section class="page-hero">
+  <div class="container">
+    <span class="eyebrow">Real Results</span>
+    <h1>These Aren't Stock Photos.</h1>
+    <p>These are real people who committed to the process, trusted the coaching, and delivered. Every single one is a Team JD athlete.</p>
+  </div>
+</section>
+
+<!-- Results Gallery -->
+<section class="section">
+  <div class="container">
+    <!-- Filter buttons -->
+    <div class="filter-group" role="group" aria-label="Filter results by category">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="competition">Competition</button>
+      <button class="filter-btn" data-filter="posing">Posing</button>
+      <button class="filter-btn" data-filter="training">Training</button>
+    </div>
+
+    <!-- Grid -->
+    <div id="results-grid" class="grid-results">
+      <!-- Rendered by render.js -->
+    </div>
+
+    <!-- No results state (hidden) -->
+    <p id="no-results" style="display:none; text-align:center; color:var(--color-text-muted); padding:3rem;">No results in this category yet — check back soon.</p>
+  </div>
+</section>
+
+<!-- Want Your Results Here? -->
+<section class="section" style="background-color:var(--color-surface); border-block:1px solid var(--color-border);">
+  <div class="container">
+    <div style="max-width:640px; margin-inline:auto; text-align:center;">
+      <span style="display:inline-block; text-transform:uppercase; letter-spacing:0.12em; font-size:0.75rem; font-weight:700; color:var(--color-accent); margin-bottom:0.75rem;">Your Turn</span>
+      <h2 style="margin-bottom:1rem;">Want Your Results Here?</h2>
+      <p style="color:var(--color-text-muted); margin-bottom:2rem; font-size:1.0625rem;">Every person on this page started with a conversation. Book your free 15-minute consultation and let's see what's possible for you.</p>
+      <a href="https://calendly.com/team-jd/15min" class="btn btn-primary btn-lg" target="_blank" rel="noopener">Book a Free Consult</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">
+          <img src="../assets/images/logo.png" alt="Team JD Jake Dedert" width="120" height="30">
+        </div>
+        <p class="footer-tagline">Elite fitness coaching for those who are serious about results.</p>
+      </div>
+      <div>
+        <p class="footer-heading">Pages</p>
+        <ul class="footer-links" role="list">
+          <li><a href="/">Home</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/services/">Services</a></li>
+          <li><a href="/results/">Results</a></li>
+          <li><a href="/contact/">Contact</a></li>
+          <li><a href="/privacy/">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-heading">Services</p>
+        <ul class="footer-links" role="list">
+          <li><a href="/services/#competition-prep">Competition Prep</a></li>
+          <li><a href="/services/#online-coaching">Online Coaching</a></li>
+          <li><a href="/services/#personal-training">Personal Training</a></li>
+          <li><a href="/services/#posing-only">Posing Only</a></li>
+        </ul>
+        <p class="footer-heading" style="margin-top:1.5rem;">Connect</p>
+        <ul class="footer-links" role="list">
+          <li><a href="#instagram-placeholder" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://calendly.com/team-jd/15min" target="_blank" rel="noopener">Book a Consult</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copyright">&copy; <span id="year"></span> Jake Dedert &mdash; Team JD. All rights reserved.</p>
+      <a href="/privacy/" style="color:var(--color-text-subtle); font-size:0.875rem;">Privacy Policy</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" aria-label="Close image viewer">&times;</button>
+    <img class="lightbox-img" src="" alt="" width="600" height="900">
+    <p class="lightbox-caption"></p>
+  </div>
+</div>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="../assets/js/main.js" defer></script>
+<script type="module">
+  import { renderResults } from '../assets/js/render.js';
+  await renderResults('results-grid', '../content/results.json');
+</script>
+</body>
+</html>

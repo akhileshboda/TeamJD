@@ -1,0 +1,87 @@
+########################################
+# 0) Hard rule: ignore LocalWP WordPress snapshot
+########################################
+# Entire LocalWP packaged WP site (huge, contains DB dumps, logs, core files)
+dev/
+dev/**
+
+########################################
+# 1) OS / system junk
+########################################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+########################################
+# 2) Editors / IDEs
+########################################
+.vscode/
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.code-workspace
+
+########################################
+# 3) Logs / temp files
+########################################
+*.log
+logs/
+tmp/
+temp/
+.cache/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+
+########################################
+# 4) Node / JS / package managers
+########################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json.lock
+.pnp.*
+.pnp.js
+
+########################################
+# 5) Next.js / React build outputs
+########################################
+.next/
+out/
+dist/
+build/
+.vercel/
+.turbo/
+
+########################################
+# 6) Tailwind / PostCSS build artifacts
+########################################
+# (Keep if you generate compiled CSS into a build dir)
+# If you intentionally commit built CSS, remove these lines.
+*.css.map
+
+########################################
+# 7) Env files (secrets)
+########################################
+.env
+.env.*
+!.env.example
+
+########################################
+# 8) Optional: ignore large raw media dumps
+########################################
+# If you later dump raw image folders you don't want tracked, add them here:
+# media_raw/
+# exports/

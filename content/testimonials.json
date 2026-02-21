@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "quote": "Jake's attention to detail and unwavering support made all the difference in my first competition. I stepped on stage feeling confident and prepared for every aspect of the experience.",
+    "author": "Competition Prep Client",
+    "service": "Competition Preparation",
+    "result": "First Competition"
+  },
+  {
+    "id": 2,
+    "quote": "The comprehensive approach meant I never felt lost or unsure. From training adjustments to peak week, Jake was there every step of the way. Couldn't have done it without him.",
+    "author": "Online Coaching Client",
+    "service": "Online Coaching",
+    "result": "Stage Ready"
+  },
+  {
+    "id": 3,
+    "quote": "Having competed multiple times before, I was impressed by Jake's ability to fine-tune my preparation and help me achieve my best conditioning yet. He genuinely cares about your success.",
+    "author": "Returning Competitor",
+    "service": "Competition Preparation",
+    "result": "Best Conditioning Yet"
+  },
+  {
+    "id": 4,
+    "quote": "I came to Jake for posing and walked away with so much more. My stage presence completely transformed and my confidence went through the roof. The judges definitely noticed.",
+    "author": "Posing Client",
+    "service": "Posing Only",
+    "result": "Stage Presence Transformation"
+  },
+  {
+    "id": 5,
+    "quote": "What sets Jake apart is that he actually cares. He treats your goals like his own goals. The personalised program was exactly what I needed to finally break through my plateau.",
+    "author": "Personal Training Client",
+    "service": "Personal Training",
+    "result": "Plateau Broken"
+  }
+]

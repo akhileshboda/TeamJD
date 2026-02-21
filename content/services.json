@@ -1,0 +1,182 @@
+[
+  {
+    "id": "competition-prep",
+    "name": "Competition Preparation",
+    "slug": "competition-preparation",
+    "tagline": "Transform your dedication into stage-ready excellence.",
+    "short_description": "A full-service package to get you on stage looking your absolute best. From training and nutrition to posing and peak week — every detail covered.",
+    "description": "Competition preparation is more than just getting in shape – it's about achieving peak conditioning, mastering stage presence, and presenting your absolute best self when it matters most. As a Pro Physique athlete with years of competition experience, Jake understands every aspect of what it takes to succeed on stage.",
+    "who_its_for": [
+      "You have at least 1–2 years of consistent training experience",
+      "You're committed to following a structured program for 12–24 weeks",
+      "You understand that competition prep requires dedication and sacrifice",
+      "You want expert guidance through every aspect of preparation",
+      "You want to challenge yourself and achieve something extraordinary"
+    ],
+    "includes": [
+      {
+        "title": "Personalised Training Programs",
+        "description": "Customised periodisation, progressive overload strategies, pre-competition training adjustments, and peak week protocols.",
+        "icon": "icons/competition-preparation.png"
+      },
+      {
+        "title": "Precision Nutrition Coaching",
+        "description": "Detailed macronutrient protocols, strategic carb cycling, supplementation guidance, and peak-week nutrition.",
+        "icon": "icons/nutrition-coaching.png"
+      },
+      {
+        "title": "Posing Instruction & Stage Presence",
+        "description": "Mandatory pose technique, individual routine development, stage presence and confidence building, competition day cueing.",
+        "icon": "icons/posing.png"
+      },
+      {
+        "title": "Ongoing Monitoring & Adjustments",
+        "description": "Weekly check-ins, real-time adjustments, body composition tracking, and continuous support.",
+        "icon": "icons/ongoing-support.png"
+      },
+      {
+        "title": "Competition Day Support",
+        "description": "Peak week management, competition day guidance, post-competition transition planning, and achievement celebration.",
+        "icon": "icons/physique-optimisation.png"
+      }
+    ],
+    "application_required": true,
+    "cta_text": "Book Consultation",
+    "cta_url": "https://calendly.com/team-jd/30min",
+    "cta_secondary": "Apply Now",
+    "cta_secondary_url": "https://calendly.com/team-jd/30min"
+  },
+  {
+    "id": "online-coaching",
+    "name": "Online Coaching",
+    "slug": "online-coaching",
+    "tagline": "Personalised training and nutrition guidance with real-time support. Delivered entirely online.",
+    "short_description": "A tailored coaching package designed entirely according to your unique needs and goals — delivered anywhere in the world.",
+    "description": "Distance shouldn't compromise the quality of your coaching experience. Our online coaching program delivers the same level of personalised attention, expert guidance, and proven results as in-person training – with the convenience and flexibility of training anywhere, anytime. This isn't about generic programs or automated responses. It's about building a real coaching relationship.",
+    "who_its_for": [
+      "You want professional coaching but can't train in-person with Jake",
+      "You need a flexible program that fits your lifestyle",
+      "You're looking for real accountability and live check-ins",
+      "You want individualised plans, not generic templates",
+      "You're committed to consistent progress with expert guidance"
+    ],
+    "includes": [
+      {
+        "title": "Personalised Training Programs",
+        "description": "Customised workout plans for your goals and equipment, with progressive programming and exercise video demonstrations.",
+        "icon": "icons/personalised-training.png"
+      },
+      {
+        "title": "Comprehensive Nutrition Coaching",
+        "description": "Individualised macronutrient targets, meal planning guidance, supplement recommendations, and metabolic adjustments based on progress.",
+        "icon": "icons/nutrition-coaching.png"
+      },
+      {
+        "title": "Dedicated Coaching App Access",
+        "description": "All programs delivered through a professional platform with progress tracking, direct messaging, and exercise library with videos.",
+        "icon": "icons/coaching-app.png"
+      },
+      {
+        "title": "Detailed Progress Monitoring",
+        "description": "Regular training and body composition assessments, progress photos, measurement tracking, and performance metrics.",
+        "icon": "icons/ongoing-support.png"
+      },
+      {
+        "title": "Fortnightly Live Virtual Check-Ins",
+        "description": "Scheduled one-on-one video calls for real-time program adjustments, direct feedback on technique, and personal accountability sessions.",
+        "icon": "icons/virtual-checkins.png"
+      }
+    ],
+    "application_required": true,
+    "cta_text": "Book Free Consult",
+    "cta_url": "https://calendly.com/team-jd/15min",
+    "cta_secondary": null,
+    "cta_secondary_url": null
+  },
+  {
+    "id": "personal-training",
+    "name": "Personal Training",
+    "slug": "personal-training",
+    "tagline": "Face-to-face coaching with expert guidance to build confidence, competence, and results.",
+    "short_description": "One-on-one coaching sessions focused on proper form, progressive programming, and achieving your individual fitness goals.",
+    "description": "Nothing replaces the power of face-to-face coaching in a professional gym environment. Our personal training delivers unmatched attention, expert guidance, and accelerated results through dedicated one-on-one sessions. This isn't about working out alone or figuring things out through trial and error. It's about building proper technique, real competence, and the confidence needed to achieve your goals.",
+    "who_its_for": [
+      "You want hands-on coaching and immediate form correction",
+      "You're new to training and want to build a strong foundation",
+      "You've hit a plateau and need expert programming to break through",
+      "You want structured, progressive sessions with full accountability",
+      "You're in or near Melbourne and can train in-person"
+    ],
+    "includes": [
+      {
+        "title": "Comprehensive Movement Assessment",
+        "description": "Posture and mobility evaluation, strength imbalance identification, injury history consideration, and movement pattern analysis.",
+        "icon": "icons/movement-assessment.png"
+      },
+      {
+        "title": "Structured Training Sessions",
+        "description": "Progressive strength training programs, equipment mastery and safety protocols, workout intensity optimisation, and session-based progress tracking.",
+        "icon": "icons/structured-training.png"
+      },
+      {
+        "title": "Technique Mastery Focus",
+        "description": "Compound movement fundamentals, equipment-specific training methods, form correction and refinement, and confidence building with weights.",
+        "icon": "icons/personalised-training.png"
+      },
+      {
+        "title": "Ongoing Support & Accountability",
+        "description": "Weekly progress assessments, training log management, goal setting and milestone celebrations, and motivational coaching.",
+        "icon": "icons/ongoing-support.png"
+      }
+    ],
+    "application_required": false,
+    "pricing": "$120 per session",
+    "cta_text": "Book a Session",
+    "cta_url": "https://calendly.com/team-jd/15min",
+    "cta_secondary": null,
+    "cta_secondary_url": null
+  },
+  {
+    "id": "posing-only",
+    "name": "Posing Only",
+    "slug": "posing-only",
+    "tagline": "Master the art of presentation and maximise your competitive edge on stage.",
+    "short_description": "Expert posing instruction that showcases your physique's strengths and maximises your competitive edge — for all federations.",
+    "description": "Your physique tells a story, but your posing brings it to life. Whether you're competing in IFBB, NABBA, INBA, or any other federation, the way you present yourself on stage can be the difference between placing and winning. As a professional with a track record of developing winning athletes, Jake provides specialised coaching to ensure you command attention, showcase your strengths, and present with the confidence of a true competitor.",
+    "who_its_for": [
+      "You're preparing for a competition and need posing guidance",
+      "You have your physique dialled in but want to present it better",
+      "You're competing in any federation — IFBB, NABBA, INBA, ICN, FMG, ANB",
+      "You're a first-timer who wants to walk on stage with confidence",
+      "You're an experienced competitor refining your routine"
+    ],
+    "includes": [
+      {
+        "title": "Mandatory Pose Mastery",
+        "description": "Division-specific instruction, proper form, angles, and technique refinement, with individual adjustments for your unique physique.",
+        "icon": "icons/posing.png"
+      },
+      {
+        "title": "Individual Posing Routine",
+        "description": "Custom choreography tailored to your physique strengths, music selection guidance, seamless transitions, and personality integration.",
+        "icon": "icons/physique-optimisation.png"
+      },
+      {
+        "title": "Physique Optimisation Strategy",
+        "description": "Highlighting your best features, minimising weaker areas through positioning, division-specific presentation, and federation rule compliance.",
+        "icon": "icons/nutrition-coaching.png"
+      },
+      {
+        "title": "Stage Presence Training",
+        "description": "Confidence building, performance psychology, stage walking skills, audience engagement, judge connection, and competition day mindset.",
+        "icon": "icons/ongoing-support.png"
+      }
+    ],
+    "federations": ["IFBB", "NABBA", "INBA", "ICN", "FMG", "ANB"],
+    "application_required": false,
+    "cta_text": "Book Posing Session",
+    "cta_url": "https://calendly.com/team-jd/1-on-1-posing-session",
+    "cta_secondary": null,
+    "cta_secondary_url": null
+  }
+]
