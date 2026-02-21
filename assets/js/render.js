@@ -43,7 +43,7 @@ export async function renderServices(containerId, jsonPath, mode = 'cards') {
           <h3>${s.name}</h3>
           <p>${s.short_description}</p>
           <div class="card-footer">
-            ${s.application_required ? '<span class="badge">Application Required</span>' : '<span></span>'}
+            ${s.application_required ? '<span class="badge">Application Required</span>' : ''}
             <a href="${s.cta_url}" class="btn btn-outline btn-sm" target="_blank" rel="noopener">${s.cta_text}</a>
           </div>
         </div>
