@@ -1,42 +1,42 @@
 [
   {
     "id": 1,
-    "src": "/assets/images/results/client-posing-1.jpg",
+    "src": "assets/images/results/client-posing-1.jpg",
     "alt": "Team JD client on stage at ANB competition, winning gold medal",
     "caption": "ANB Champion — Competition Prep Client",
     "category": "competition"
   },
   {
     "id": 2,
-    "src": "/assets/images/results/client-comp-1.jpg",
+    "src": "assets/images/results/client-comp-1.jpg",
     "alt": "Team JD client competing on stage, showcasing peak conditioning",
     "caption": "Stage Ready — Bodybuilding Division",
     "category": "competition"
   },
   {
     "id": 3,
-    "src": "/assets/images/results/client-comp-2.jpg",
+    "src": "assets/images/results/client-comp-2.jpg",
     "alt": "Team JD client posing on stage at bodybuilding competition",
     "caption": "Peak Conditioning — Competition Prep",
     "category": "competition"
   },
   {
     "id": 4,
-    "src": "/assets/images/results/client-comp-3.jpg",
+    "src": "assets/images/results/client-comp-3.jpg",
     "alt": "Team JD client on stage displaying physique at competition",
     "caption": "Stage Presence — Online Coaching Client",
     "category": "posing"
   },
   {
     "id": 5,
-    "src": "/assets/images/results/client-comp-4.jpg",
+    "src": "assets/images/results/client-comp-4.jpg",
     "alt": "Team JD client competing in physique division",
     "caption": "Best Shape of Their Life — Comp Prep Client",
     "category": "competition"
   },
   {
     "id": 6,
-    "src": "/assets/images/ab-posing.jpg",
+    "src": "assets/images/ab-posing.jpg",
     "alt": "Athlete demonstrating abdominal and thigh posing routine",
     "caption": "Posing Mastery — Mandatory Poses",
     "category": "posing"

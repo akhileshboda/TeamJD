@@ -15,6 +15,19 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function getSiteBasePath(jsonPath) {
+  const cleanPath = jsonPath.split('#')[0].split('?')[0];
+  return cleanPath.replace(/content\/[^/]+$/, '');
+}
+
+function resolveSitePath(path, jsonPath) {
+  if (!path) return '';
+  if (/^(?:[a-z]+:|#|\/\/)/i.test(path)) return path;
+
+  const normalizedPath = path.replace(/^\/+/, '').replace(/^\.\//, '');
+  return `${getSiteBasePath(jsonPath)}${normalizedPath}`;
+}
+
 /* ── Services ────────────────────────────────────────────── */
 export async function renderServices(containerId, jsonPath, mode = 'cards') {
   const container = $(containerId);
@@ -26,11 +39,11 @@ export async function renderServices(containerId, jsonPath, mode = 'cards') {
     if (mode === 'cards') {
       container.innerHTML = services.map(s => `
         <div class="service-card">
-          <img class="card-icon" src="${s.includes[0]?.icon ? `/assets/images/${s.includes[0].icon}` : ''}" alt="" aria-hidden="true">
+          <img class="card-icon" src="${s.includes[0]?.icon ? resolveSitePath(`assets/images/${s.includes[0].icon}`, jsonPath) : ''}" alt="" aria-hidden="true">
           <h3>${s.name}</h3>
           <p>${s.short_description}</p>
           <div class="card-footer">
-            ${s.application_required ? '<span class="badge">Application Required</span>' : '<span></span>'}
+            ${s.application_required ? '<span class="badge">Application Required</span>' : ''}
             <a href="${s.cta_url}" class="btn btn-outline btn-sm" target="_blank" rel="noopener">${s.cta_text}</a>
           </div>
         </div>
@@ -51,7 +64,7 @@ export async function renderServices(containerId, jsonPath, mode = 'cards') {
               <ul class="includes-list" style="margin-bottom:var(--space-8);">
                 ${s.includes.map(inc => `
                   <li class="includes-item">
-                    <img src="/assets/images/${inc.icon}" alt="" aria-hidden="true">
+                    <img src="${resolveSitePath(`assets/images/${inc.icon}`, jsonPath)}" alt="" aria-hidden="true">
                     <div class="includes-item-text">
                       <strong>${inc.title}</strong>
                       <span>${inc.description}</span>
@@ -184,16 +197,20 @@ export async function renderResults(containerId, jsonPath, limit = 0) {
     let results = await fetchJSON(jsonPath);
     if (limit > 0) results = results.slice(0, limit);
 
-    container.innerHTML = results.map(r => `
+    container.innerHTML = results.map(r => {
+      const resolvedSrc = resolveSitePath(r.src, jsonPath);
+
+      return `
       <div class="result-card" data-lightbox data-category="${r.category}"
-           data-src="${r.src}" data-alt="${r.alt}" data-caption="${r.caption}"
+           data-src="${resolvedSrc}" data-alt="${r.alt}" data-caption="${r.caption}"
            role="button" tabindex="0" aria-label="View: ${r.caption}">
-        <img src="${r.src}" alt="${r.alt}" loading="lazy" width="683" height="1024">
+        <img src="${resolvedSrc}" alt="${r.alt}" loading="lazy" width="683" height="1024">
         <div class="result-card-overlay">
           <span class="result-caption">${r.caption}</span>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Keyboard support for lightbox
     container.querySelectorAll('.result-card[data-lightbox]').forEach(card => {

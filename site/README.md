@@ -29,6 +29,61 @@ npx serve .
 
 ---
 
+## Deploying with GitHub Pages (`gh-pages` npm package)
+
+Current architecture:
+- Static site files live in `site/`
+- Deploy command (from repo root `package.json`): `gh-pages -d site`
+- Result: contents of `site/` are pushed to the `gh-pages` branch
+
+### One-time setup
+
+1. From repo root, install dependencies:
+   ```bash
+   npm install
+   ```
+2. In GitHub repo settings, set Pages source to:
+   - Branch: `gh-pages`
+   - Folder: `/ (root)`
+3. Confirm your deploy script in root `package.json` exists:
+   ```json
+   "scripts": {
+     "deploy": "gh-pages -d site"
+   }
+   ```
+
+### Quick deploy workflow (every update)
+
+From repo root:
+
+```bash
+# 1) Edit files in site/
+# 2) Optional: preview locally
+cd site && python3 -m http.server 8080
+
+# 3) Back to repo root and commit your changes
+cd ..
+git add site
+git commit -m "Update site content/layout"
+
+# 4) Push source branch (recommended)
+git push origin main
+
+# 5) Publish site/ to gh-pages
+npm run deploy
+```
+
+After step 5, `gh-pages` updates the `gh-pages` branch and pushes it to GitHub.  
+Your GitHub Pages URL will serve that deployed branch content.
+
+### Notes
+
+- Run `npm run deploy` from repo root (where `package.json` is), not inside `site/`.
+- Because paths in `site/` are relative, the site works under project subpaths on GitHub Pages.
+- If deployment fails, verify remote permissions and that `gh-pages` branch is selected in GitHub Pages settings.
+
+---
+
 ## Deploying to Vercel
 
 1. Push this repo to GitHub
@@ -87,7 +142,7 @@ grep -r "instagram-placeholder" site/
    ```json
    {
      "id": 7,
-     "src": "../assets/images/results/your-photo.jpg",
+     "src": "assets/images/results/your-photo.jpg",
      "alt": "Description of the photo",
      "caption": "Card caption text",
      "category": "competition"
