@@ -22,6 +22,7 @@ Desktop.ini
 ########################################
 .vscode/
 .idea/
+.claude/
 *.iml
 *.suo
 *.ntvs*
@@ -34,6 +35,8 @@ Desktop.ini
 # 3) Logs / temp files
 ########################################
 *.log
+*.tmp
+*.temp
 logs/
 tmp/
 temp/
@@ -80,7 +83,16 @@ build/
 !.env.example
 
 ########################################
-# 8) Optional: ignore large raw media dumps
+# 8) Python artifacts
+########################################
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+########################################
+# 9) Optional: ignore large raw media dumps
 ########################################
 # If you later dump raw image folders you don't want tracked, add them here:
 # media_raw/
