@@ -1,200 +1,149 @@
 # Team JD — Jake Dedert Fitness
 
-Static marketing site for Jake Dedert Fitness (jakededert.fit).
+Marketing site for Jake Dedert Fitness (jakededert.fit), served by an Express app with a `public/` frontend and `server/` API layer.
 
-**Tech:** HTML + Tailwind CDN + Vanilla JS — no build step required.
-
----
+**Tech:** Express + HTML + Tailwind CDN + Vanilla JS.
 
 ## Running Locally
 
-Open any HTML file directly in a browser, **or** use a simple static server for proper module script and fetch() support:
-
 ```bash
-# Option 1: Python (built-in)
 cd site
-python3 -m http.server 8080
-# Open: http://localhost:8080
-
-# Option 2: Node (npx)
-cd site
-npx serve .
-# Opens automatically
-
-# Option 3: VS Code Live Server extension
-# Right-click index.html → "Open with Live Server"
+npm install
+npm run dev
 ```
 
-> Note: Content (services, testimonials, FAQs, results) is loaded via `fetch()` from JSON files. You need a local server (not `file://`) for fetch to work correctly.
+Open `http://localhost:3000`.
 
----
+The app serves static pages from `public/`, third-party asset redirects from `/api/assets/:assetKey`, and Dropbox OAuth routes from `/auth/dropbox/*`.
 
-## Deploying with GitHub Pages (`gh-pages` npm package)
+## Environment
 
-Current architecture:
-- Static site files live in `site/`
-- Deploy command (from repo root `package.json`): `gh-pages -d site`
-- Result: contents of `site/` are pushed to the `gh-pages` branch
-
-### One-time setup
-
-1. From repo root, install dependencies:
-   ```bash
-   npm install
-   ```
-2. In GitHub repo settings, set Pages source to:
-   - Branch: `gh-pages`
-   - Folder: `/ (root)`
-3. Confirm your deploy script in root `package.json` exists:
-   ```json
-   "scripts": {
-     "deploy": "gh-pages -d site"
-   }
-   ```
-
-### Quick deploy workflow (every update)
-
-From repo root:
+Create or edit `site/.env`:
 
 ```bash
-# 1) Edit files in site/
-# 2) Optional: preview locally
-cd site && python3 -m http.server 8080
-
-# 3) Back to repo root and commit your changes
-cd ..
-git add site
-git commit -m "Update site content/layout"
-
-# 4) Push source branch (recommended)
-git push origin main
-
-# 5) Publish site/ to gh-pages
-npm run deploy
+PORT=3000
+HOST=127.0.0.1
+DROPBOX_APP_KEY=your_app_key
+DROPBOX_APP_SECRET=your_app_secret
+DROPBOX_REDIRECT_URI=http://localhost:3000/auth/dropbox/callback
+SESSION_SECRET=some-long-random-string
+DROPBOX_ASSET_MAP=
 ```
 
-After step 5, `gh-pages` updates the `gh-pages` branch and pushes it to GitHub.  
-Your GitHub Pages URL will serve that deployed branch content.
+`DROPBOX_ASSET_MAP` accepts an optional JSON object mapping asset keys to Dropbox share URLs.
 
-### Notes
+Example:
 
-- Run `npm run deploy` from repo root (where `package.json` is), not inside `site/`.
-- Because paths in `site/` are relative, the site works under project subpaths on GitHub Pages.
-- If deployment fails, verify remote permissions and that `gh-pages` branch is selected in GitHub Pages settings.
-
----
-
-## Deploying to Vercel
-
-1. Push this repo to GitHub
-2. Go to [vercel.com](https://vercel.com) → New Project → Import repo
-3. **Set Root Directory to `/site`**
-4. Framework Preset: **Other** (static)
-5. Build Command: *(leave empty)*
-6. Output Directory: *(leave empty — Vercel serves from root)*
-7. Click Deploy
-
-That's it — Vercel will auto-assign a domain and serve all pages at clean URLs.
-
-**Custom domain:** Connect `jakededert.fit` in Vercel Project Settings → Domains.
-
----
-
-## Changing Calendly Links
-
-All Calendly URLs are in `content/services.json`. Update once there — all pages read from this file.
-
-| Field | Current URL |
-|---|---|
-| Free 15-min consult | `https://calendly.com/team-jd/15min` |
-| Comp prep (30 min) | `https://calendly.com/team-jd/30min` |
-| Posing session | `https://calendly.com/team-jd/1-on-1-posing-session` |
-
-Also check `contact/index.html` — the three booking cards have hardcoded Calendly links (intentional for layout reasons).
-
----
-
-## Changing Stripe / Payment Links
-
-Replace `#stripe-placeholder` in any HTML file. Search the codebase:
-
-```bash
-grep -r "stripe-placeholder" site/
+```json
+{
+  "ab_posing": "https://www.dropbox.com/scl/fi/.../ab-posing.jpg?rlkey=...&st=...&dl=0"
+}
 ```
 
----
+## Dropbox OAuth
 
-## Updating Instagram / Social Links
+The first auth flow is server-side Dropbox OAuth with session-backed token storage.
 
-Replace `#instagram-placeholder` with the real URL (e.g. `https://instagram.com/jakededert`). It appears in the footer and contact page.
+- `GET /auth/dropbox/start`
+  Redirects the user to Dropbox and stores a one-time OAuth state value in the session.
+- `GET /auth/dropbox/callback`
+  Validates the returned `code` and `state`, exchanges the code for tokens, stores them in the session, and returns JSON.
 
-```bash
-grep -r "instagram-placeholder" site/
+Session storage is backed by SQLite at `data/sessions.sqlite`.
+
+### Callback response
+
+In non-production, the callback returns token values directly for easy local testing:
+
+```json
+{
+  "connected": true,
+  "provider": "dropbox",
+  "sessionStored": true,
+  "expiresIn": 14400,
+  "accessToken": "...",
+  "refreshToken": "..."
+}
 ```
 
----
+In production, token values are redacted and replaced with booleans.
 
-## Adding Results Photos
+### Local / Postman testing
 
-1. Add your image file to `site/assets/images/results/`
-2. Open `site/content/results.json`
-3. Add an entry:
-   ```json
-   {
-     "id": 7,
-     "src": "assets/images/results/your-photo.jpg",
-     "alt": "Description of the photo",
-     "caption": "Card caption text",
-     "category": "competition"
-   }
-   ```
-   Categories: `competition`, `posing`, `training`
+Recommended flow:
 
----
+1. Open `http://localhost:3000/auth/dropbox/start` in a browser.
+2. Complete Dropbox login and consent.
+3. Let Dropbox redirect back to `http://localhost:3000/auth/dropbox/callback`.
+4. Inspect the JSON response in the browser or copy the callback URL into Postman for follow-up testing.
+
+Notes:
+
+- Dropbox login itself is interactive, so the browser is the easiest way to start the flow.
+- Postman is most useful for checking callback/error responses or using the returned token against Dropbox APIs.
+- Tokens are stored in the session-backed SQLite store for now; they are not yet persisted in an app-owned database table.
+
+## Working With Content
+
+All browser-rendered content still lives in `public/content/`.
+
+- Services: `public/content/services.json`
+- Testimonials: `public/content/testimonials.json`
+- FAQs: `public/content/faqs.json`
+- Results: `public/content/results.json`
+
+To add a results photo:
+
+1. Add the image to `public/assets/images/results/`
+2. Add a matching entry in `public/content/results.json`
+
+Example:
+
+```json
+{
+  "id": 7,
+  "src": "assets/images/results/your-photo.jpg",
+  "alt": "Description of the photo",
+  "caption": "Card caption text",
+  "category": "competition"
+}
+```
+
+Categories: `competition`, `posing`, `training`
+
+## Third-Party Assets
+
+The first server-managed asset route is:
+
+```text
+GET /api/assets/:assetKey
+```
+
+Known asset keys resolve through `server/services/dropbox.js` and redirect to a normalized Dropbox raw asset URL.
 
 ## File Structure
 
-```
+```text
 site/
-├── index.html              ← Home page
-├── about/index.html        ← About Jake
-├── services/index.html     ← All coaching services
-├── results/index.html      ← Results gallery
-├── contact/index.html      ← Contact & booking
-├── privacy/index.html      ← Privacy policy
-├── robots.txt
-├── sitemap.xml
-├── assets/
-│   ├── css/styles.css      ← Design system (CSS vars, components)
-│   ├── js/
-│   │   ├── main.js         ← Nav toggle, FAQ accordion, lightbox, filter
-│   │   └── render.js       ← JSON → HTML renderers
-│   └── images/
-│       ├── logo.png        ← Cyan wordmark (header)
-│       ├── logo-mark.png   ← Icon only (favicon)
-│       ├── jake-hero.png   ← Jake's photo
-│       ├── hero-bg.jpg     ← Hero background
-│       ├── results/        ← Client competition photos
-│       ├── icons/          ← Service feature icons
-│       └── federations/    ← Federation logos
-└── content/
-    ├── services.json       ← All 4 services (edit here first)
-    ├── testimonials.json   ← Client testimonials
-    ← faqs.json            ← FAQ questions & answers
-    └── results.json        ← Results gallery entries
+├── public/
+│   ├── index.html
+│   ├── about/index.html
+│   ├── services/index.html
+│   ├── results/index.html
+│   ├── contact/index.html
+│   ├── privacy/index.html
+│   ├── js/main.js
+│   ├── assets/
+│   └── content/
+├── server/
+│   ├── app.js
+│   ├── routes/assets.js
+│   ├── routes/auth.js
+│   ├── services/dropbox.js
+│   ├── services/dropboxAuth.js
+│   └── utils/url.js
+├── data/
+├── .env
+├── .gitignore
+└── package.json
 ```
-
----
-
-## Migrating to Next.js Later
-
-The content model (`/content/*.json`) is already structured for a CMS-ready migration:
-- Move JSON to a headless CMS (Contentful, Sanity, etc.)
-- Replace `render.js` calls with `getStaticProps()` + React components
-- Copy design tokens from `styles.css` → Tailwind config or CSS modules
-- Nav/footer → React components with the same markup
-- Pages map 1:1 to Next.js `pages/` directory
-
----
-
-*Built with HTML + Tailwind CDN + Vanilla JS. No build system required.*

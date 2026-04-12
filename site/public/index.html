@@ -291,23 +291,12 @@
 </div>
 
 <!-- ── Scripts ────────────────────────────────────────────── -->
-<script>
-  document.getElementById('year').textContent = new Date().getFullYear();
-</script>
-<script src="assets/js/main.js" defer></script>
+<script src="/js/main.js" defer></script>
 <style>
   @media (max-width: 768px) {
     .about-grid { grid-template-columns: 1fr !important; }
     .about-grid .sticky-photo { position: static !important; }
   }
 </style>
-<script type="module">
-  import { renderServices, renderTestimonials, renderFAQs, renderResults } from './assets/js/render.js';
-
-  renderServices('services-container', './content/services.json', 'cards');
-  renderTestimonials('testimonials-container', './content/testimonials.json', 3);
-  renderFAQs('faq-container', './content/faqs.json');
-  renderResults('results-preview', './content/results.json', 3);
-</script>
 </body>
 </html>

@@ -36,7 +36,7 @@
   },
   {
     "id": 6,
-    "src": "assets/images/ab-posing.jpg",
+    "src": "/api/assets/ab_posing",
     "alt": "Athlete demonstrating abdominal and thigh posing routine",
     "caption": "Posing Mastery — Mandatory Poses",
     "category": "posing"
