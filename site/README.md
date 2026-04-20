@@ -22,7 +22,7 @@ Create or edit `site/.env`:
 
 ```bash
 PORT=3000
-HOST=127.0.0.1
+HOST=localhost
 DROPBOX_APP_KEY=your_app_key
 DROPBOX_APP_SECRET=your_app_secret
 DROPBOX_REDIRECT_URI=http://localhost:3000/auth/dropbox/callback
