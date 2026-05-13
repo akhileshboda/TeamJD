@@ -48,6 +48,21 @@ function resolveSitePath(assetPath) {
   return assetPath.startsWith('/') ? assetPath : `/${assetPath.replace(/^\.?\//, '')}`;
 }
 
+function resolveAssetRoute(assetPath) {
+  if (!assetPath) {
+    return '';
+  }
+
+  if (/^(?:[a-z]+:|#|\/\/)/i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const filename = assetPath.split('/').pop();
+  const assetKey = filename.replace(/\.[^.]+$/, '');
+
+  return `/api/assets/${assetKey}`;
+}
+
 async function hydratePageContent() {
   const renderTasks = [];
 
@@ -93,7 +108,7 @@ async function renderServices(containerId, jsonPath, mode = 'cards') {
         .map(
           (service) => `
             <div class="service-card">
-              <img class="card-icon" src="${service.includes[0]?.icon ? resolveSitePath(`assets/images/${service.includes[0].icon}`) : ''}" alt="" aria-hidden="true">
+              <img class="card-icon" src="${resolveAssetRoute(service.includes[0]?.icon)}" alt="" aria-hidden="true">
               <h3>${service.name}</h3>
               <p>${service.short_description}</p>
               <div class="card-footer">
@@ -124,7 +139,7 @@ async function renderServices(containerId, jsonPath, mode = 'cards') {
                       .map(
                         (include) => `
                           <li class="includes-item">
-                            <img src="${resolveSitePath(`assets/images/${include.icon}`)}" alt="" aria-hidden="true">
+                            <img src="${resolveAssetRoute(include.icon)}" alt="" aria-hidden="true">
                             <div class="includes-item-text">
                               <strong>${include.title}</strong>
                               <span>${include.description}</span>

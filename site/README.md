@@ -106,15 +106,16 @@ All browser-rendered content still lives in `public/content/`.
 
 To add a results photo:
 
-1. Add the image to `public/assets/images/results/`
-2. Add a matching entry in `public/content/results.json`
+1. Upload the image to the configured Dropbox asset folder.
+2. Run `GET /api/assets/discover` to confirm the generated `assetKey`.
+3. Add a matching entry in `public/content/results.json`.
 
 Example:
 
 ```json
 {
   "id": 7,
-  "src": "assets/images/results/your-photo.jpg",
+  "src": "/api/assets/your-photo",
   "alt": "Description of the photo",
   "caption": "Card caption text",
   "category": "competition"
@@ -122,6 +123,8 @@ Example:
 ```
 
 Categories: `competition`, `posing`, `training`
+
+Do not add new browser-rendered images under `public/assets/images/`; site images are served through Dropbox-backed `/api/assets/:assetKey` routes.
 
 ## Third-Party Assets
 
@@ -152,7 +155,7 @@ Known asset keys also resolve through:
 GET /api/assets/:assetKey
 ```
 
-That route redirects to the normalized Dropbox raw asset URL, which keeps older content entries such as `/api/assets/ab_posing` working.
+That route redirects to the normalized Dropbox raw asset URL. Content should use hyphenated discovery keys such as `/api/assets/ab-posing`.
 
 To manually rebuild the cached asset map:
 
