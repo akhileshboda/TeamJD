@@ -3,6 +3,7 @@ const express = require('express');
 const { createDropboxAuth } = require('../services/dropboxAuth');
 
 const router = express.Router();
+const DROPBOX_SCOPES = ['files.metadata.read', 'sharing.read', 'sharing.write'];
 
 function isProduction() {
   return process.env.NODE_ENV === 'production';
@@ -46,8 +47,8 @@ router.get('/dropbox/start', async (req, res) => {
       state,
       'code',
       'offline',
-      undefined,
-      undefined,
+      DROPBOX_SCOPES,
+      'none',
       false
     );
 
