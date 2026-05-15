@@ -3,7 +3,7 @@ const express = require('express');
 const { createDropboxAuth } = require('../services/dropboxAuth');
 
 const router = express.Router();
-const DROPBOX_SCOPES = ['files.metadata.read', 'sharing.read', 'sharing.write'];
+const DROPBOX_SCOPES = ['files.metadata.read', 'files.content.read', 'sharing.read', 'sharing.write'];
 
 function isProduction() {
   return process.env.NODE_ENV === 'production';

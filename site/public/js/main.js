@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initResultsFilter();
 });
 
+let assetManifestPromise;
+
+const ASSET_MANIFEST_STORAGE_KEY = 'teamjd:asset-manifest';
+const ASSET_MANIFEST_TTL_MS = 5 * 60 * 1000;
+
 function initYear() {
   const year = new Date().getFullYear();
 
@@ -34,6 +39,46 @@ async function fetchJSON(path) {
   }
 
   return response.json();
+}
+
+function getAssetKey(assetPath) {
+  const filename = assetPath.split('/').pop();
+
+  return filename.replace(/\.[^.]+$/, '');
+}
+
+async function getAssetManifest() {
+  if (assetManifestPromise) {
+    return assetManifestPromise;
+  }
+
+  try {
+    const cached = sessionStorage.getItem(ASSET_MANIFEST_STORAGE_KEY);
+    if (cached) {
+      const { manifest, cachedAt } = JSON.parse(cached);
+      if (Date.now() - cachedAt < ASSET_MANIFEST_TTL_MS) {
+        assetManifestPromise = Promise.resolve(manifest);
+        return assetManifestPromise;
+      }
+    }
+  } catch (_) {}
+
+  assetManifestPromise = fetchJSON('/api/assets/manifest')
+    .then((manifest) => {
+      try {
+        sessionStorage.setItem(
+          ASSET_MANIFEST_STORAGE_KEY,
+          JSON.stringify({ manifest, cachedAt: Date.now() })
+        );
+      } catch (_) {}
+      return manifest;
+    })
+    .catch((error) => {
+      console.warn('Asset manifest unavailable, falling back to asset routes.', error);
+      return { assets: {} };
+    });
+
+  return assetManifestPromise;
 }
 
 function resolveSitePath(assetPath) {
@@ -57,10 +102,23 @@ function resolveAssetRoute(assetPath) {
     return assetPath;
   }
 
-  const filename = assetPath.split('/').pop();
-  const assetKey = filename.replace(/\.[^.]+$/, '');
+  const assetKey = getAssetKey(assetPath);
 
   return `/api/assets/${assetKey}`;
+}
+
+function resolveManifestAsset(assetPath, manifest) {
+  if (!assetPath) {
+    return '';
+  }
+
+  if (/^(?:[a-z]+:|#|\/\/)/i.test(assetPath)) {
+    return assetPath;
+  }
+
+  const assetKey = getAssetKey(assetPath);
+
+  return manifest?.assets?.[assetKey]?.url || resolveAssetRoute(assetPath);
 }
 
 async function hydratePageContent() {
@@ -101,14 +159,14 @@ async function renderServices(containerId, jsonPath, mode = 'cards') {
   }
 
   try {
-    const services = await fetchJSON(jsonPath);
+    const [services, manifest] = await Promise.all([fetchJSON(jsonPath), getAssetManifest()]);
 
     if (mode === 'cards') {
       container.innerHTML = services
         .map(
           (service) => `
             <div class="service-card">
-              <img class="card-icon" src="${resolveAssetRoute(service.includes[0]?.icon)}" alt="" aria-hidden="true">
+              <img class="card-icon" src="${resolveManifestAsset(service.includes[0]?.icon, manifest)}" alt="" aria-hidden="true" loading="lazy" decoding="async">
               <h3>${service.name}</h3>
               <p>${service.short_description}</p>
               <div class="card-footer">
@@ -139,7 +197,7 @@ async function renderServices(containerId, jsonPath, mode = 'cards') {
                       .map(
                         (include) => `
                           <li class="includes-item">
-                            <img src="${resolveAssetRoute(include.icon)}" alt="" aria-hidden="true">
+                            <img src="${resolveManifestAsset(include.icon, manifest)}" alt="" aria-hidden="true" loading="lazy" decoding="async">
                             <div class="includes-item-text">
                               <strong>${include.title}</strong>
                               <span>${include.description}</span>
@@ -282,7 +340,8 @@ async function renderResults(containerId, jsonPath, limit = 0) {
   }
 
   try {
-    let results = await fetchJSON(jsonPath);
+    const [allResults, manifest] = await Promise.all([fetchJSON(jsonPath), getAssetManifest()]);
+    let results = allResults;
 
     if (limit > 0) {
       results = results.slice(0, limit);
@@ -290,13 +349,13 @@ async function renderResults(containerId, jsonPath, limit = 0) {
 
     container.innerHTML = results
       .map((result) => {
-        const resolvedSrc = resolveSitePath(result.src);
+        const resolvedSrc = resolveManifestAsset(result.src, manifest) || resolveSitePath(result.src);
 
         return `
           <div class="result-card" data-lightbox data-category="${result.category}"
                data-src="${resolvedSrc}" data-alt="${result.alt}" data-caption="${result.caption}"
                role="button" tabindex="0" aria-label="View: ${result.caption}">
-            <img src="${resolvedSrc}" alt="${result.alt}" loading="lazy" width="683" height="1024">
+            <img src="${resolvedSrc}" alt="${result.alt}" loading="lazy" decoding="async" width="683" height="1024">
             <div class="result-card-overlay">
               <span class="result-caption">${result.caption}</span>
             </div>

@@ -1,6 +1,8 @@
 const express = require('express');
 const {
+  AssetMapNotReadyError,
   discoverDropboxAssets,
+  getAssetManifest,
   getAssetMap,
   getAssetServiceStatus,
   getAssetUrl,
@@ -8,6 +10,15 @@ const {
 } = require('../services/dropbox');
 
 const router = express.Router();
+const ASSET_REDIRECT_CACHE_SECONDS = 60 * 60;
+
+function sendAssetError(res, error, fallbackMessage) {
+  if (error instanceof AssetMapNotReadyError) {
+    return res.status(error.statusCode).json({ error: error.message });
+  }
+
+  return res.status(500).json({ error: fallbackMessage });
+}
 
 function getSessionAuthState(req) {
   if (!req.session?.dropbox) {
@@ -22,29 +33,46 @@ function getSessionAuthState(req) {
 
 router.get('/', async (req, res) => {
   try {
-    const assets = await getAssetMap({
-      authState: getSessionAuthState(req)
-    });
+    const assets = await getAssetMap();
 
     return res.json({ assets });
   } catch (error) {
     console.error('GET /api/assets error:', error);
-    return res.status(500).json({ error: 'Failed to load assets.' });
+    return sendAssetError(res, error, 'Failed to load assets.');
   }
 });
 
-router.get('/refresh', async (req, res) => {
+router.get('/manifest', async (req, res) => {
   try {
-    const assets = await refreshAssetMap({
-      authState: getSessionAuthState(req)
-    });
+    const manifest = await getAssetManifest();
 
-    return res.json({ assets, refreshed: true });
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    return res.json(manifest);
   } catch (error) {
-    console.error('GET /api/assets/refresh error:', error);
-    return res.status(500).json({ error: 'Failed to refresh assets.' });
+    console.error('GET /api/assets/manifest error:', error);
+    return sendAssetError(res, error, 'Failed to load asset manifest.');
   }
 });
+
+async function handleRefreshAssetMap(req, res) {
+  try {
+    await refreshAssetMap();
+    const manifest = await getAssetManifest();
+
+    return res.json({ ...manifest, refreshed: true });
+  } catch (error) {
+    console.error(`${req.method} /api/assets/refresh error:`, error);
+    try {
+      const currentManifest = await getAssetManifest();
+      return res.status(500).json({ error: 'Failed to refresh assets.', currentManifest });
+    } catch (_) {
+      return res.status(500).json({ error: 'Failed to refresh assets.' });
+    }
+  }
+}
+
+router.get('/refresh', handleRefreshAssetMap);
+router.post('/refresh', handleRefreshAssetMap);
 
 router.get('/status', (req, res) => {
   return res.json(getAssetServiceStatus());
@@ -70,18 +98,21 @@ router.get('/discover', async (req, res) => {
 
 router.get('/:assetKey', async (req, res) => {
   try {
-    const assetUrl = await getAssetUrl(req.params.assetKey, {
-      authState: getSessionAuthState(req)
-    });
+    const assetUrl = await getAssetUrl(req.params.assetKey);
 
     if (!assetUrl) {
       return res.status(404).json({ error: 'Asset not found.' });
     }
 
+    res.set(
+      'Cache-Control',
+      `public, max-age=${ASSET_REDIRECT_CACHE_SECONDS}, stale-while-revalidate=86400`
+    );
+
     return res.redirect(assetUrl);
   } catch (error) {
     console.error(`GET /api/assets/${req.params.assetKey} error:`, error);
-    return res.status(500).json({ error: 'Failed to resolve asset.' });
+    return sendAssetError(res, error, 'Failed to resolve asset.');
   }
 });
 

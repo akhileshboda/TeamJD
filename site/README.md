@@ -4,6 +4,10 @@ Marketing site for Jake Dedert Fitness (jakededert.fit), served by an Express ap
 
 **Tech:** Express + HTML + Tailwind CDN + Vanilla JS.
 
+## How It Works
+
+On startup, the Express server syncs image assets from a configured Dropbox folder into `public/assets/generated/`. A manifest is generated mapping stable asset keys to local file paths. The frontend loads images directly from the local Express static server — Dropbox is never contacted during normal page loads or navigation.
+
 ## Running Locally
 
 ```bash
@@ -14,7 +18,22 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-The app serves static pages from `public/`, third-party asset redirects from `/api/assets/:assetKey`, and Dropbox OAuth routes from `/auth/dropbox/*`.
+On first run (or after a Dropbox change), the server downloads all images from Dropbox into `public/assets/generated/`. Subsequent restarts skip unchanged files based on Dropbox file revision metadata — only new or changed files are re-downloaded.
+
+## Deploying to Raspberry Pi
+
+Deploy the current working tree to the Pi with:
+
+```bash
+DEPLOY_USER=pi \
+DEPLOY_HOST=your-pi-hostname-or-ip \
+DEPLOY_PATH=/path/to/site \
+npm run deploy:pi
+```
+
+The deploy script rsyncs the project to `DEPLOY_USER@DEPLOY_HOST:DEPLOY_PATH`, excluding `node_modules`, `.git`, `.env`, `.DS_Store`, and npm debug logs. On the Pi it runs `npm install`, runs `npm run sync-assets` when available, then restarts the PM2 process named `jake-site` or starts it with `npm start` if it does not already exist.
+
+Keep the production `.env` file on the Pi at `DEPLOY_PATH/.env`; it is intentionally not copied from your local machine.
 
 ## Environment
 
@@ -28,43 +47,86 @@ DROPBOX_APP_SECRET=your_app_secret
 DROPBOX_REDIRECT_URI=http://localhost:3000/auth/dropbox/callback
 DROPBOX_REFRESH_TOKEN=
 DROPBOX_ASSET_ROOT_PATH=
-DROPBOX_ASSET_CACHE_TTL_MS=300000
 SESSION_SECRET=some-long-random-string
-DROPBOX_ASSET_MAP=
 ```
 
-`DROPBOX_REFRESH_TOKEN` is the server-side token used by the public asset API. Without it, the server falls back to `DROPBOX_ASSET_MAP`.
+`DROPBOX_REFRESH_TOKEN` is the server-side token used to sync assets. It must have the `files.content.read` scope. See [Dropbox OAuth](#dropbox-oauth) for how to obtain one.
 
-`DROPBOX_ASSET_ROOT_PATH` optionally limits file discovery to a Dropbox folder, such as `/site-assets`. Leave it blank to scan the Dropbox app root. Do not use a site URL such as `http://localhost:3000/`; Dropbox expects a Dropbox path.
+`DROPBOX_ASSET_ROOT_PATH` optionally limits file discovery to a specific Dropbox folder, such as `/site-assets`. Leave blank to scan the Dropbox app root. Use a Dropbox path — not a URL.
 
-`DROPBOX_ASSET_MAP` accepts an optional JSON object mapping asset keys to Dropbox share URLs. This is useful as a local fallback or for one-off assets before the Dropbox listing flow is connected.
+## Asset Sync Workflow
 
-Example:
+### On startup
 
-```json
-{
-  "ab_posing": "https://www.dropbox.com/scl/fi/.../ab-posing.jpg?rlkey=...&st=...&dl=0"
-}
+`npm run dev` automatically syncs assets before the server starts listening:
+
 ```
+[sync] Starting asset sync from Dropbox...
+[sync] Found 33 image file(s) in Dropbox.
+[sync] hero-bg.jpg — rev match, skipped
+[sync] new-photo.jpg — downloading (245 KB)...
+[sync] new-photo.jpg — downloaded in 892ms
+[sync] Sync complete: 32 skipped, 1 downloaded, 0 failed.
+```
+
+### Explicit one-shot sync (without starting the server)
+
+```bash
+npm run sync-assets
+```
+
+### Refresh assets after Dropbox changes (server already running)
+
+```bash
+POST http://localhost:3000/api/assets/refresh
+# or
+GET  http://localhost:3000/api/assets/refresh
+```
+
+This re-runs the full sync: skips unchanged files, downloads new or changed ones, and updates the in-memory manifest and disk cache.
+
+### Verify images are serving locally
+
+After sync, images are in `public/assets/generated/`. Check a specific asset:
+
+```bash
+curl -I http://localhost:3000/assets/generated/hero-bg.jpg
+# Expected: 200 OK with Cache-Control: max-age=86400
+```
+
+Check the manifest:
+
+```bash
+GET http://localhost:3000/api/assets/manifest
+```
+
+All `url` fields should show `/assets/generated/…` local paths, not Dropbox URLs.
+
+### Fallback behaviour
+
+If Dropbox sync fails on startup (bad token, no internet) but a previous sync has already populated `public/assets/generated/` and `data/asset-manifest.json`, the server falls back to the local files and starts normally. If neither exists, the server starts with a clear error log explaining what is missing.
 
 ## Dropbox OAuth
 
-The first auth flow is server-side Dropbox OAuth with session-backed token storage. The requested scopes are:
+The sync uses a long-lived refresh token stored in `.env`. To get one:
+
+1. Start the dev server: `npm run dev`
+2. Open `http://localhost:3000/auth/dropbox/start` in a browser
+3. Complete Dropbox login and consent
+4. Dropbox redirects back to `http://localhost:3000/auth/dropbox/callback`
+5. Copy the returned `refreshToken` value into `DROPBOX_REFRESH_TOKEN` in `.env`
+6. Restart the server
+
+**Required OAuth scopes:**
 
 - `files.metadata.read`
+- `files.content.read` ← required for downloading images
 - `sharing.read`
 - `sharing.write`
 
-- `GET /auth/dropbox/start`
-  Redirects the user to Dropbox and stores a one-time OAuth state value in the session.
-- `GET /auth/dropbox/callback`
-  Validates the returned `code` and `state`, exchanges the code for tokens, stores them in the session, and returns JSON.
+**Re-authentication:** If your existing `DROPBOX_REFRESH_TOKEN` was obtained before `files.content.read` was added to the scope list, downloads will return 403. Re-run the OAuth flow above to get a new token with the correct scopes.
 
-Session storage is backed by SQLite at `data/sessions.sqlite`.
-
-### Callback response
-
-In non-production, the callback returns token values directly for easy local testing:
+### Callback response (non-production)
 
 ```json
 {
@@ -77,40 +139,21 @@ In non-production, the callback returns token values directly for easy local tes
 }
 ```
 
-In production, token values are redacted and replaced with booleans.
-
-### Local / Postman testing
-
-Recommended flow:
-
-1. Open `http://localhost:3000/auth/dropbox/start` in a browser.
-2. Complete Dropbox login and consent.
-3. Let Dropbox redirect back to `http://localhost:3000/auth/dropbox/callback`.
-4. Inspect the JSON response in the browser or copy the callback URL into Postman for follow-up testing.
-
-Notes:
-
-- Dropbox login itself is interactive, so the browser is the easiest way to start the flow.
-- Postman is most useful for checking callback/error responses or using the returned token against Dropbox APIs.
-- Tokens are stored in the session-backed SQLite store for now; they are not yet persisted in an app-owned database table.
-- Copy the returned refresh token into `DROPBOX_REFRESH_TOKEN` for the public asset API until a DB/admin token store exists.
-
 ## Working With Content
 
-All browser-rendered content still lives in `public/content/`.
+All browser-rendered content lives in `public/content/`.
 
 - Services: `public/content/services.json`
 - Testimonials: `public/content/testimonials.json`
 - FAQs: `public/content/faqs.json`
 - Results: `public/content/results.json`
 
-To add a results photo:
+### Adding a results photo
 
 1. Upload the image to the configured Dropbox asset folder.
-2. Run `GET /api/assets/discover` to confirm the generated `assetKey`.
-3. Add a matching entry in `public/content/results.json`.
-
-Example:
+2. Run `POST /api/assets/refresh` or restart the server to sync it locally.
+3. Run `GET /api/assets/discover` to confirm the generated `assetKey`.
+4. Add a matching entry in `public/content/results.json`:
 
 ```json
 {
@@ -124,130 +167,18 @@ Example:
 
 Categories: `competition`, `posing`, `training`
 
-Do not add new browser-rendered images under `public/assets/images/`; site images are served through Dropbox-backed `/api/assets/:assetKey` routes.
+The `src` value uses the `/api/assets/<key>` format. At runtime, the manifest resolves this to the local path `/assets/generated/your-photo.jpg` — no Dropbox contact during page load.
 
-## Third-Party Assets
-
-The server-managed asset map route is:
+## Asset API Reference
 
 ```text
-GET /api/assets
+GET  /api/assets/manifest        — full manifest with local asset URLs
+GET  /api/assets/status          — sync state, asset count, last error
+POST /api/assets/refresh         — re-run Dropbox sync (preferred)
+GET  /api/assets/refresh         — re-run Dropbox sync (convenience)
+GET  /api/assets/:assetKey       — compatibility redirect to local asset path
+GET  /api/assets/discover        — list Dropbox folder contents (dev only)
 ```
-
-It returns:
-
-```json
-{
-  "assets": {
-    "hero-home-main": {
-      "url": "https://www.dropbox.com/scl/fi/.../hero-home-main.webp?raw=1",
-      "name": "hero-home-main.webp",
-      "path": "/site-assets/home/hero-home-main.webp",
-      "source": "dropbox"
-    }
-  }
-}
-```
-
-Known asset keys also resolve through:
-
-```text
-GET /api/assets/:assetKey
-```
-
-That route redirects to the normalized Dropbox raw asset URL. Content should use hyphenated discovery keys such as `/api/assets/ab-posing`.
-
-To manually rebuild the cached asset map:
-
-```text
-GET /api/assets/refresh
-```
-
-The map is cached in memory for 5 minutes by default. Adjust `DROPBOX_ASSET_CACHE_TTL_MS` if needed.
-
-To verify server-side Dropbox configuration without exposing secrets:
-
-```text
-GET /api/assets/status
-```
-
-During local development, use the discovery endpoint to confirm what the connected Dropbox app can see before creating shared links:
-
-```text
-GET /api/assets/discover
-GET /api/assets/discover?path=/site-assets
-```
-
-This route is disabled in production.
-
-### Postman asset route testing
-
-Start the local server first:
-
-```bash
-npm start
-```
-
-Use `http://localhost:3000` as the base URL unless `PORT` is changed.
-
-1. Confirm Dropbox configuration:
-
-```text
-GET http://localhost:3000/api/assets/status
-```
-
-Expected checks:
-
-- `dropboxApiConfigured` is `true`
-- `assetRootPath` is blank for the Dropbox app root, or a Dropbox folder path such as `/site-assets`
-- no token or secret values are returned
-
-2. Confirm folder access and image discovery:
-
-```text
-GET http://localhost:3000/api/assets/discover
-```
-
-To test a specific Dropbox folder without editing `.env`:
-
-```text
-GET http://localhost:3000/api/assets/discover?path=/site-assets
-```
-
-Expected checks:
-
-- `counts.totalEntries` shows what Dropbox can see in that folder
-- `counts.images` matches the number of supported image files
-- `images[]` includes each discovered image path and generated `assetKey`
-- `unsupportedFiles[]` explains files skipped because their extension is not supported
-
-Supported image extensions are `.avif`, `.gif`, `.jpeg`, `.jpg`, `.png`, and `.webp`.
-
-3. Build or refresh public shared links:
-
-```text
-GET http://localhost:3000/api/assets/refresh
-```
-
-Expected checks:
-
-- `refreshed` is `true`
-- `assets` contains the same image keys discovered in the previous step
-- each asset has a Dropbox `url`, `name`, `path`, and `source`
-
-4. Read the cached asset map:
-
-```text
-GET http://localhost:3000/api/assets
-```
-
-5. Test a single image redirect:
-
-```text
-GET http://localhost:3000/api/assets/<assetKey>
-```
-
-In Postman, leave redirects enabled to confirm the image loads. Disable redirects if you want to inspect the `302 Location` header directly.
 
 ## File Structure
 
@@ -262,15 +193,19 @@ site/
 │   ├── privacy/index.html
 │   ├── js/main.js
 │   ├── assets/
+│   │   └── generated/          ← git-ignored, populated by sync
 │   └── content/
 ├── server/
 │   ├── app.js
+│   ├── sync-assets.js          ← standalone sync script
 │   ├── routes/assets.js
 │   ├── routes/auth.js
 │   ├── services/dropbox.js
 │   ├── services/dropboxAuth.js
 │   └── utils/url.js
-├── data/
+├── data/                       ← git-ignored
+│   ├── asset-manifest.json     ← last-known-good manifest (disk fallback)
+│   └── sessions.sqlite
 ├── .env
 ├── .gitignore
 └── package.json
