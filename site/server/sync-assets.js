@@ -1,7 +1,7 @@
 require('dotenv').config();
-const { preloadAssetMap } = require('./services/dropbox');
+const { syncDropboxAssetsToDisk } = require('./services/dropbox');
 
-preloadAssetMap()
+syncDropboxAssetsToDisk()
   .then(() => {
     console.log('[sync] Done.');
     process.exit(0);

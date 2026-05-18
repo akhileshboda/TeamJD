@@ -1,11 +1,14 @@
 const express = require('express');
 const {
+  AssetNotFoundError,
   AssetMapNotReadyError,
   discoverDropboxAssets,
   getAssetManifest,
   getAssetMap,
   getAssetServiceStatus,
   getAssetUrl,
+  isProductionAssetMode,
+  streamDropboxAsset,
   refreshAssetMap
 } = require('../services/dropbox');
 
@@ -13,6 +16,10 @@ const router = express.Router();
 const ASSET_REDIRECT_CACHE_SECONDS = 60 * 60;
 
 function sendAssetError(res, error, fallbackMessage) {
+  if (error instanceof AssetNotFoundError) {
+    return res.status(error.statusCode).json({ error: error.message });
+  }
+
   if (error instanceof AssetMapNotReadyError) {
     return res.status(error.statusCode).json({ error: error.message });
   }
@@ -98,6 +105,10 @@ router.get('/discover', async (req, res) => {
 
 router.get('/:assetKey', async (req, res) => {
   try {
+    if (!isProductionAssetMode()) {
+      return await streamDropboxAsset(req.params.assetKey, res);
+    }
+
     const assetUrl = await getAssetUrl(req.params.assetKey);
 
     if (!assetUrl) {
