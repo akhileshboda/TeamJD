@@ -118,6 +118,29 @@ function isImageFile(entry) {
   return isFileEntry(entry) && IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase());
 }
 
+function getDropboxPath(entry) {
+  return entry.path_lower || entry.path_display || entry.name || '';
+}
+
+function getAssetPathPriority(entry) {
+  const dropboxPath = getDropboxPath(entry).toLowerCase();
+  const segments = dropboxPath.split('/').filter(Boolean);
+  const backupPenalty = segments.some((segment) => /(?:^|[-_])(backup|archive|old)(?:[-_]|$)/.test(segment))
+    ? 1000
+    : 0;
+
+  return backupPenalty + segments.length;
+}
+
+function sortDropboxAssetFiles(files) {
+  return [...files].sort((a, b) => {
+    const priorityDelta = getAssetPathPriority(a) - getAssetPathPriority(b);
+    if (priorityDelta !== 0) return priorityDelta;
+
+    return getDropboxPath(a).localeCompare(getDropboxPath(b));
+  });
+}
+
 function createAssetKey(fileName) {
   const extension = path.extname(fileName);
   const basename = path.basename(fileName, extension);
@@ -127,6 +150,45 @@ function createAssetKey(fileName) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function createAssetVersion(file) {
+  return [
+    file.rev,
+    file.content_hash,
+    file.size,
+    file.server_modified,
+    file.client_modified
+  ]
+    .filter((value) => value !== undefined && value !== null && value !== '')
+    .map((value) => String(value))
+    .join(':');
+}
+
+function versionAssetUrl(url, assetVersion) {
+  if (!assetVersion) {
+    return url;
+  }
+
+  return `${url}?v=${encodeURIComponent(assetVersion)}`;
+}
+
+function hasSameAssetVersion(existingAsset, file) {
+  const nextVersion = createAssetVersion(file);
+
+  if (existingAsset?.assetVersion && nextVersion) {
+    return existingAsset.assetVersion === nextVersion;
+  }
+
+  if (existingAsset?.rev && file.rev) {
+    return existingAsset.rev === file.rev;
+  }
+
+  return (
+    existingAsset?.size === file.size &&
+    existingAsset?.serverModified === file.server_modified &&
+    existingAsset?.clientModified === file.client_modified
+  );
 }
 
 function getUniqueAssetKey(assetMap, preferredKey) {
@@ -268,10 +330,14 @@ function toDiscoveryFile(entry) {
   return {
     name: entry.name,
     path: entry.path_display,
+    pathLower: entry.path_lower,
     extension: path.extname(entry.name).toLowerCase(),
+    rev: entry.rev,
+    contentHash: entry.content_hash,
     size: entry.size,
     clientModified: entry.client_modified,
     serverModified: entry.server_modified,
+    assetVersion: createAssetVersion(entry),
     assetKey: createAssetKey(entry.name)
   };
 }
@@ -286,7 +352,7 @@ async function discoverDropboxAssets(options = {}) {
   const folderPath =
     typeof options.folderPath === 'string' ? options.folderPath : process.env.DROPBOX_ASSET_ROOT_PATH || '';
   const entries = await listDropboxEntries(dropboxClient, folderPath);
-  const imageFiles = entries.filter(isImageFile);
+  const imageFiles = sortDropboxAssetFiles(entries.filter(isImageFile));
   const unsupportedFiles = entries.filter((entry) => isFileEntry(entry) && !isImageFile(entry));
   const folders = entries.filter(isFolderEntry);
 
@@ -357,13 +423,16 @@ function createRuntimeAssetMap(files) {
   for (const file of files) {
     const assetKey = getUniqueAssetKey(assetMap, createAssetKey(file.name));
     const ext = path.extname(file.name).toLowerCase();
+    const assetVersion = createAssetVersion(file);
 
     assetMap[assetKey] = {
-      url: `/api/assets/${assetKey}`,
+      url: versionAssetUrl(`/api/assets/${assetKey}`, assetVersion),
       name: file.name,
       dropboxPath: file.path_display,
       rev: file.rev,
+      contentHash: file.content_hash,
       size: file.size,
+      assetVersion,
       extension: ext,
       clientModified: file.client_modified,
       serverModified: file.server_modified,
@@ -387,7 +456,7 @@ async function discoverDropboxAssetMap(options = {}) {
 
   console.log('[assets] Discovering asset metadata from Dropbox...');
 
-  const files = await listDropboxFiles(dropboxClient, folderPath);
+  const files = sortDropboxAssetFiles(await listDropboxFiles(dropboxClient, folderPath));
   const assetMap = createRuntimeAssetMap(files);
 
   console.log(`[assets] Discovered ${files.length} image file(s) in Dropbox.`);
@@ -408,7 +477,7 @@ async function syncDropboxAssets(options = {}) {
 
   console.log('[sync] Starting asset sync from Dropbox...');
 
-  const files = await listDropboxFiles(dropboxClient, folderPath);
+  const files = sortDropboxAssetFiles(await listDropboxFiles(dropboxClient, folderPath));
 
   console.log(`[sync] Found ${files.length} image file(s) in Dropbox.`);
 
@@ -432,15 +501,29 @@ async function syncDropboxAssets(options = {}) {
     const ext = path.extname(file.name).toLowerCase();
     const localFilename = assetKey + ext;
     const localPath = path.join(GENERATED_ASSETS_DIR, localFilename);
-    const localUrl = `/assets/generated/${localFilename}`;
+    const assetVersion = createAssetVersion(file);
+    const localUrl = versionAssetUrl(`/assets/generated/${localFilename}`, assetVersion);
 
-    // Skip if rev matches and file exists locally
+    // Skip only when Dropbox metadata still describes the same file content.
     const existingAsset = existingManifest?.assets?.[assetKey];
-    if (existingAsset?.rev === file.rev) {
+    if (hasSameAssetVersion(existingAsset, file)) {
       try {
         await fs.access(localPath);
-        console.log(`[sync] ${localFilename} — rev match, skipped`);
-        assetMap[assetKey] = { ...existingAsset, url: localUrl };
+        console.log(`[sync] ${localFilename} — metadata match, skipped`);
+        assetMap[assetKey] = {
+          ...existingAsset,
+          url: localUrl,
+          name: file.name,
+          localPath: localFilename,
+          dropboxPath: file.path_display,
+          rev: file.rev,
+          contentHash: file.content_hash,
+          size: file.size,
+          assetVersion,
+          clientModified: file.client_modified,
+          serverModified: file.server_modified,
+          source: 'dropbox'
+        };
         skipped += 1;
         continue;
       } catch (_) {
@@ -470,7 +553,9 @@ async function syncDropboxAssets(options = {}) {
       localPath: localFilename,
       dropboxPath: file.path_display,
       rev: file.rev,
+      contentHash: file.content_hash,
       size: file.size,
+      assetVersion,
       clientModified: file.client_modified,
       serverModified: file.server_modified,
       source: 'dropbox'

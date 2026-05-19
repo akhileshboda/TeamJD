@@ -53,7 +53,7 @@ router.get('/manifest', async (req, res) => {
   try {
     const manifest = await getAssetManifest();
 
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
     return res.json(manifest);
   } catch (error) {
     console.error('GET /api/assets/manifest error:', error);

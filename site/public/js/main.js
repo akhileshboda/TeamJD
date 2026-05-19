@@ -31,8 +31,8 @@ function getById(id) {
   return document.getElementById(id);
 }
 
-async function fetchJSON(path) {
-  const response = await fetch(path);
+async function fetchJSON(path, options = {}) {
+  const response = await fetch(path, options);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${path}: ${response.status}`);
@@ -52,18 +52,7 @@ async function getAssetManifest() {
     return assetManifestPromise;
   }
 
-  try {
-    const cached = sessionStorage.getItem(ASSET_MANIFEST_STORAGE_KEY);
-    if (cached) {
-      const { manifest, cachedAt } = JSON.parse(cached);
-      if (Date.now() - cachedAt < ASSET_MANIFEST_TTL_MS) {
-        assetManifestPromise = Promise.resolve(manifest);
-        return assetManifestPromise;
-      }
-    }
-  } catch (_) {}
-
-  assetManifestPromise = fetchJSON('/api/assets/manifest')
+  assetManifestPromise = fetchJSON('/api/assets/manifest', { cache: 'no-cache' })
     .then((manifest) => {
       try {
         sessionStorage.setItem(
@@ -74,6 +63,17 @@ async function getAssetManifest() {
       return manifest;
     })
     .catch((error) => {
+      try {
+        const cached = sessionStorage.getItem(ASSET_MANIFEST_STORAGE_KEY);
+        if (cached) {
+          const { manifest, cachedAt } = JSON.parse(cached);
+          if (Date.now() - cachedAt < ASSET_MANIFEST_TTL_MS) {
+            console.warn('Asset manifest unavailable, falling back to cached manifest.', error);
+            return manifest;
+          }
+        }
+      } catch (_) {}
+
       console.warn('Asset manifest unavailable, falling back to asset routes.', error);
       return { assets: {} };
     });
