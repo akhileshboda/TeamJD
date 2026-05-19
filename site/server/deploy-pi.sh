@@ -7,7 +7,7 @@ set -euo pipefail
 
 echo "Deploying to ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
-rsync -avz --delete \
+rsync -avz --delete --human-readable --info=progress2 \
   --exclude node_modules \
   --exclude .git \
   --exclude .env \
@@ -19,7 +19,8 @@ ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "
   cd '${DEPLOY_PATH}' &&
   npm install &&
   if npm run | grep -q 'sync-assets'; then npm run sync-assets; fi &&
-  pm2 restart jake-site || pm2 start npm --name jake-site -- start &&
+  pm2 delete jake-site >/dev/null 2>&1 || true &&
+  pm2 start npm --name jake-site -- start &&
   pm2 save
 "
 

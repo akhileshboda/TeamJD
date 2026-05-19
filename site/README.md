@@ -36,7 +36,7 @@ DEPLOY_PATH=/path/to/site \
 npm run deploy:pi
 ```
 
-The deploy script rsyncs the project to `DEPLOY_USER@DEPLOY_HOST:DEPLOY_PATH`, excluding `node_modules`, `.git`, `.env`, `.DS_Store`, and npm debug logs. On the Pi it runs `npm install`, runs `npm run sync-assets` when available, then restarts the PM2 process named `jake-site` or starts it with `npm start` if it does not already exist.
+The deploy script rsyncs the project to `DEPLOY_USER@DEPLOY_HOST:DEPLOY_PATH` with transfer progress, excluding `node_modules`, `.git`, `.env`, `.DS_Store`, and npm debug logs. On the Pi it runs `npm install`, runs `npm run sync-assets` when available, then deletes any existing PM2 process named `jake-site` before starting a fresh one with `npm start`.
 
 Keep the production `.env` file on the Pi at `DEPLOY_PATH/.env`; it is intentionally not copied from your local machine.
 
