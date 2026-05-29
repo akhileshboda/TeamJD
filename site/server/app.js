@@ -153,6 +153,15 @@ app.use(
 );
 app.use(express.static(publicDir));
 
+// Serve built React app (production)
+const distDir = path.join(__dirname, '..', 'dist');
+app.use(express.static(distDir));
+app.get('*', (req, res, next) => {
+  const distIndex = path.join(distDir, 'index.html');
+  if (!fs.existsSync(distIndex)) return next();
+  res.sendFile(distIndex);
+});
+
 app.use((req, res) => {
   res.status(404).send('Not found.');
 });

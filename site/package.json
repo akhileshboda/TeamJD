@@ -6,7 +6,10 @@
   "main": "server/app.js",
   "scripts": {
     "start": "node server/app.js",
-    "dev": "nodemon --ignore data/ --ignore public/assets/generated/ server/app.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon --ignore data/ --ignore public/assets/generated/ --ignore dist/ server/app.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
     "sync-assets": "node server/sync-assets.js",
     "deploy:pi": "bash server/deploy-pi.sh"
   },
@@ -24,6 +27,7 @@
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "nodemon": "^3.1.9"
   }
 }

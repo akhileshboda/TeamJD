@@ -3,3 +3,6 @@ node_modules/
 data/
 public/assets/generated/
 .DS_Store
+
+client/node_modules/
+dist/
