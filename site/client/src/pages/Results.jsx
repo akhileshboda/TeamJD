@@ -46,14 +46,16 @@ export default function Results() {
             </div>
           </SectionReveal>
 
-          {/* Results Grid */}
-          <StaggerContainer className="grid-results">
-            {filtered.map((result) => (
-              <StaggerItem key={result.id}>
-                <ResultCard result={result} onOpen={setLightboxImage} />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          {/* Results Grid — only mount once data is ready so IntersectionObserver fires on a non-zero-height element */}
+          {results && (
+            <StaggerContainer className="grid-results">
+              {filtered.map((result) => (
+                <StaggerItem key={result.id}>
+                  <ResultCard result={result} onOpen={setLightboxImage} />
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          )}
 
           {filtered.length === 0 && results && (
             <p

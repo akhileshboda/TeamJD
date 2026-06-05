@@ -97,3 +97,4 @@ venv/
 # If you later dump raw image folders you don't want tracked, add them here:
 # media_raw/
 # exports/
+site/pi_deploy.md

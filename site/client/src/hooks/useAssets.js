@@ -4,19 +4,30 @@ const STORAGE_KEY = 'teamjd:asset-manifest'
 const TTL_MS = 5 * 60 * 1000
 
 let manifestPromise = null
+let manifestResolvedAt = 0
 
 async function fetchManifest() {
+  // Expire a successful manifest after TTL so re-navigation picks up fresh assets
+  if (manifestPromise && manifestResolvedAt && Date.now() - manifestResolvedAt > TTL_MS) {
+    manifestPromise = null
+    manifestResolvedAt = 0
+  }
+
   if (manifestPromise) return manifestPromise
 
   manifestPromise = fetch('/api/assets/manifest', { cache: 'no-cache' })
     .then((r) => r.json())
     .then((manifest) => {
+      manifestResolvedAt = Date.now()
       try {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ manifest, cachedAt: Date.now() }))
       } catch (_) {}
       return manifest
     })
     .catch((err) => {
+      // Reset so the next call retries rather than returning a permanently-empty manifest
+      manifestPromise = null
+      manifestResolvedAt = 0
       try {
         const cached = sessionStorage.getItem(STORAGE_KEY)
         if (cached) {

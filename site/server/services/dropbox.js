@@ -5,6 +5,7 @@ const { Dropbox, DropboxAuth } = require('dropbox');
 const IMAGE_EXTENSIONS = new Set(['.avif', '.gif', '.jpeg', '.jpg', '.png', '.webp']);
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const DEV_ASSET_CACHE_SECONDS = 5 * 60;
+const DROPBOX_FETCH_TIMEOUT_MS = 30_000;
 const MANIFEST_PATH = path.join(__dirname, '..', '..', 'data', 'asset-manifest.json');
 const GENERATED_ASSETS_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'generated');
 const IMAGE_CONTENT_TYPES = {
@@ -380,34 +381,59 @@ async function downloadDropboxFile(dropboxClient, dropboxPath, localPath) {
   await dropboxClient.auth.checkAndRefreshAccessToken();
   const token = dropboxClient.auth.getAccessToken();
 
-  const response = await fetch('https://content.dropboxapi.com/2/files/download', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
-    }
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Dropbox download failed (${response.status}): ${body.slice(0, 200)}`);
+  if (!token) {
+    throw new Error('Dropbox access token unavailable after refresh attempt.');
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
-  await fs.writeFile(localPath, buffer);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DROPBOX_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
+      },
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new Error(`Dropbox download failed (${response.status}): ${body.slice(0, 200)}`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    await fs.writeFile(localPath, buffer);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function fetchDropboxFile(dropboxClient, dropboxPath) {
   await dropboxClient.auth.checkAndRefreshAccessToken();
   const token = dropboxClient.auth.getAccessToken();
 
-  const response = await fetch('https://content.dropboxapi.com/2/files/download', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
-    }
-  });
+  if (!token) {
+    throw new Error('Dropbox access token unavailable after refresh attempt.');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DROPBOX_FETCH_TIMEOUT_MS);
+
+  let response;
+  try {
+    response = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
+      },
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
@@ -743,7 +769,18 @@ async function streamDropboxAsset(assetKey, res) {
   }
 
   const { Readable } = require('stream');
-  return Readable.fromWeb(response.body).pipe(res);
+  const readable = Readable.fromWeb(response.body);
+
+  readable.on('error', (err) => {
+    console.error(`[assets] Stream error for ${assetKey}: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).end();
+    } else {
+      res.destroy();
+    }
+  });
+
+  return readable.pipe(res);
 }
 
 module.exports = {
