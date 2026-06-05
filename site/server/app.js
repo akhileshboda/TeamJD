@@ -6,6 +6,8 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
+const siteAuthRouter = require('./routes/siteAuth');
+const { gateAssets, visitLogger } = require('./middleware/siteGate');
 const { getAssetManifest, preloadAssetMap } = require('./services/dropbox');
 
 dotenv.config();
@@ -24,6 +26,9 @@ for (const envVar of requiredAuthEnvVars) {
 }
 
 const app = express();
+// Trust the reverse proxy in front of the app (staging/prod HTTPS termination)
+// so req.ip reflects the real client and secure cookies are sent.
+app.set('trust proxy', 1);
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '127.0.0.1';
 const listenHost = host === 'localhost' ? '127.0.0.1' : host;
@@ -140,8 +145,10 @@ app.use(
     }
   })
 );
+app.use(visitLogger);
 app.use('/auth', authRouter);
-app.use('/api/assets', assetsRouter);
+app.use('/api/auth', siteAuthRouter);
+app.use('/api/assets', gateAssets, assetsRouter);
 app.use(serveManifestBackedHtml);
 app.use(
   '/assets/generated',
