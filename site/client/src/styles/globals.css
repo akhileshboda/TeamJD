@@ -699,7 +699,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   line-height: 1.35;
 }
 
-.service-card .badge {
+.badge {
+  display: inline-block;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1351,24 +1352,183 @@ p  { line-height: 1.7; color: var(--color-text); }
   flex-shrink: 0;
 }
 
-/* ── Services quick nav ─────────────────────────────────────── */
-.services-quick-nav {
+/* ── Service hub tiles ──────────────────────────────────────── */
+.grid-service-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+}
+
+.service-tile-link {
+  display: block;
+  text-decoration: none;
+  border-radius: var(--radius-xl);
+  outline: none;
+}
+
+.service-tile-link:focus-visible .service-tile {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-card);
+}
+
+.service-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  min-height: 380px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
   background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding-block: 1rem;
-  position: sticky;
-  top: 4.5rem;
-  z-index: 50;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
-.services-quick-nav .container {
+.service-tile-link:hover .service-tile {
+  border-color: var(--color-hover-accent);
+  box-shadow: 0 0 0 1px var(--color-hover-accent), var(--shadow-card);
+}
+
+.service-tile-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.service-tile-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.service-tile-media--fallback {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  background: radial-gradient(
+      120% 120% at 50% 0%,
+      var(--color-accent-glow) 0%,
+      transparent 55%
+    ),
+    linear-gradient(160deg, var(--color-surface-3) 0%, var(--color-bg) 100%);
 }
 
-/* ── Service detail section ─────────────────────────────────── */
+.service-tile-media--fallback .service-tile-fallback-icon {
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.service-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(13, 13, 13, 0.92) 0%,
+    rgba(13, 13, 13, 0.65) 38%,
+    rgba(13, 13, 13, 0.1) 70%,
+    rgba(13, 13, 13, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.service-tile-content {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-6);
+}
+
+.service-tile-content h3 {
+  font-size: 1.5rem;
+  color: var(--color-white);
+  margin: 0;
+}
+
+.service-tile-content p {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.service-tile-cta {
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+  transition: color var(--transition-fast);
+}
+
+.service-tile-link:hover .service-tile-cta {
+  color: var(--color-hover-accent);
+}
+
+.service-tile--skeleton {
+  background-color: var(--color-surface);
+  opacity: 0.4;
+}
+
+/* ── Sticky mobile book bar ─────────────────────────────────── */
+.sticky-book-bar {
+  display: none;
+}
+
+/* ── Service detail page ────────────────────────────────────── */
+.service-detail-body {
+  max-width: 780px;
+}
+
+.service-back-link {
+  display: inline-block;
+  margin-bottom: var(--space-6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.service-back-link:hover {
+  color: var(--color-accent);
+}
+
+.explore-others {
+  margin-top: var(--space-16);
+  padding-top: var(--space-10);
+  border-top: 1px solid var(--color-border);
+}
+
+.explore-others-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.explore-others-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* ── Service detail section (legacy) ────────────────────────── */
 .service-detail {
   padding-block: var(--space-20);
 }
@@ -1457,8 +1617,63 @@ p  { line-height: 1.7; color: var(--color-text); }
     position: static;
   }
 
-  .services-quick-nav {
-    top: 4rem;
+  .grid-service-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .service-tile {
+    aspect-ratio: 3 / 4;
+    min-height: 340px;
+  }
+
+  /* Sticky bottom book bar — mobile only */
+  .sticky-book-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--container-pad);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    background-color: rgba(13, 13, 13, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .sticky-book-bar-label {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .sticky-book-bar-name {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--color-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sticky-book-bar-price {
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .sticky-book-bar .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Clear the fixed bar so it never covers detail page content */
+  .service-detail-page {
+    padding-bottom: calc(var(--space-12) + 5rem + env(safe-area-inset-bottom));
   }
 }
 

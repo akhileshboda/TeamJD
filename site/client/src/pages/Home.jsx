@@ -45,7 +45,7 @@ export default function Home() {
             </div>
           </SectionReveal>
 
-          <StaggerContainer className="grid-services">
+          <StaggerContainer className="grid-service-tiles">
             {services
               ? services.map((service) => (
                   <StaggerItem key={service.id}>
@@ -55,8 +55,8 @@ export default function Home() {
               : Array.from({ length: 4 }).map((_, i) => (
                   <div
                     key={i}
-                    className="service-card"
-                    style={{ minHeight: '200px', opacity: 0.4 }}
+                    className="service-tile service-tile--skeleton"
+                    aria-hidden="true"
                   />
                 ))}
           </StaggerContainer>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useAssets } from '../hooks/useAssets'
 
@@ -5,41 +6,66 @@ export default function ServiceCard({ service }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
 
-  const icon = service.includes?.[0]?.icon || ''
+  const heroSrc = service.hero_image ? resolveAsset(service.hero_image) : ''
+  const fallbackIcon = service.includes?.[0]?.icon || ''
 
   const Card = shouldReduce ? 'div' : motion.div
   const cardProps = shouldReduce
     ? {}
-    : { whileHover: { y: -4 }, transition: { duration: 0.2 } }
+    : { whileHover: 'hover', whileFocus: 'hover', initial: 'rest', animate: 'rest' }
+
+  const mediaVariants = shouldReduce
+    ? undefined
+    : {
+        rest: { scale: 1 },
+        hover: { scale: 1.06, transition: { duration: 0.4, ease: 'easeOut' } },
+      }
+  const Media = shouldReduce ? 'div' : motion.div
 
   return (
-    <Card className="service-card" {...cardProps}>
-      {icon && (
-        <img
-          className="card-icon"
-          src={resolveAsset(icon)}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          decoding="async"
-          style={{ width: '4rem', height: '4rem' }}
-        />
-      )}
-      <h3>{service.name}</h3>
-      <p>{service.short_description}</p>
-      <div className="card-footer">
-        {service.application_required && (
-          <span className="badge">Application Required</span>
-        )}
-        <a
-          href={service.cta_url}
-          className="btn btn-outline btn-sm"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Link
+      to={`/services/${service.slug}`}
+      className="service-tile-link"
+      aria-label={`${service.name} — learn more`}
+    >
+      <Card className="service-tile" {...cardProps}>
+        <Media
+          className={`service-tile-media${heroSrc ? '' : ' service-tile-media--fallback'}`}
+          variants={mediaVariants}
         >
-          {service.cta_text}
-        </a>
-      </div>
-    </Card>
+          {heroSrc ? (
+            <img
+              src={heroSrc}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            fallbackIcon && (
+              <img
+                className="service-tile-fallback-icon"
+                src={resolveAsset(fallbackIcon)}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+              />
+            )
+          )}
+        </Media>
+
+        <div className="service-tile-overlay" />
+
+        <div className="service-tile-content">
+          {service.application_required && (
+            <span className="badge">Application Required</span>
+          )}
+          <h3>{service.name}</h3>
+          <p>{service.tagline}</p>
+          <span className="service-tile-cta">Learn More &rarr;</span>
+        </div>
+      </Card>
+    </Link>
   )
 }

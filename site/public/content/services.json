@@ -51,6 +51,7 @@
     "name": "Online Coaching",
     "slug": "online-coaching",
     "tagline": "Personalised training and nutrition guidance with real-time support. Delivered entirely online.",
+    "hero_image": "service-online-coaching",
     "short_description": "A tailored coaching package designed entirely according to your unique needs and goals — delivered anywhere in the world.",
     "description": "Distance shouldn't compromise the quality of your coaching experience. Our online coaching program delivers the same level of personalised attention, expert guidance, and proven results as in-person training – with the convenience and flexibility of training anywhere, anytime. This isn't about generic programs or automated responses. It's about building a real coaching relationship.",
     "who_its_for": [
@@ -98,6 +99,7 @@
     "name": "Personal Training",
     "slug": "personal-training",
     "tagline": "Face-to-face coaching with expert guidance to build confidence, competence, and results.",
+    "hero_image": "service-personal-training",
     "short_description": "One-on-one coaching sessions focused on proper form, progressive programming, and achieving your individual fitness goals.",
     "description": "Nothing replaces the power of face-to-face coaching in a professional gym environment. Our personal training delivers unmatched attention, expert guidance, and accelerated results through dedicated one-on-one sessions. This isn't about working out alone or figuring things out through trial and error. It's about building proper technique, real competence, and the confidence needed to achieve your goals.",
     "who_its_for": [
@@ -141,6 +143,7 @@
     "name": "Posing Only",
     "slug": "posing-only",
     "tagline": "Master the art of presentation and maximise your competitive edge on stage.",
+    "hero_image": "service-posing",
     "short_description": "Expert posing instruction that showcases your physique's strengths and maximises your competitive edge — for all federations.",
     "description": "Your physique tells a story, but your posing brings it to life. Whether you're competing in IFBB, NABBA, INBA, or any other federation, the way you present yourself on stage can be the difference between placing and winning. As a professional with a track record of developing winning athletes, Jake provides specialised coaching to ensure you command attention, showcase your strengths, and present with the confidence of a true competitor.",
     "who_its_for": [
