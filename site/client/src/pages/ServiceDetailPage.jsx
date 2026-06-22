@@ -35,7 +35,7 @@ export default function ServiceDetailPage() {
 
       <section className="service-detail-page section">
         <div className="container">
-          <SectionReveal>
+          <SectionReveal inView={false}>
             <div className="service-detail-body">
               <Link to="/services" className="service-back-link">
                 &larr; All Services

@@ -18,7 +18,7 @@ export default function Services() {
       <section className="section" aria-label="Coaching services">
         <div className="container">
           {services ? (
-            <StaggerContainer className="grid-service-tiles">
+            <StaggerContainer className="grid-service-tiles" inView={false}>
               {services.map((service) => (
                 <StaggerItem key={service.id}>
                   <ServiceCard service={service} />
