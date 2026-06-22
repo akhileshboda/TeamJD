@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 
 // Gates the site during staging. In local dev (`npm run dev`) the overlay never
 // renders. In a production build it asks the server whether the gate is on and,

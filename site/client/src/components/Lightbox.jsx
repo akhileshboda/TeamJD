@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 
 export default function Lightbox({ image, onClose }) {
   const shouldReduce = useReducedMotion()

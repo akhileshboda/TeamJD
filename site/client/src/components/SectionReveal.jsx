@@ -1,4 +1,4 @@
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 
 export default function SectionReveal({ children, className = '', delay = 0, y = 32, inView = true }) {
   const shouldReduce = useReducedMotion()
