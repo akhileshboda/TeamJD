@@ -2,15 +2,14 @@ import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'motion/react'
 import Hero from '../components/Hero'
 import CredibilityStrip from '../components/CredibilityStrip'
-import ResultCard from '../components/ResultCard'
-import TestimonialCard from '../components/TestimonialCard'
+import AppleWatchGallery from '../components/AppleWatchGallery'
 import FAQItem from '../components/FAQItem'
 import CTABanner from '../components/CTABanner'
-import Lightbox from '../components/Lightbox'
+
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
-import { useState } from 'react'
+
 
 const servicePathways = [
   {
@@ -63,15 +62,10 @@ const MotionLink = motion.create(Link)
 
 export default function Home() {
   const { data: services } = useJSON('/content/services.json')
-  const { data: testimonials } = useJSON('/content/testimonials.json')
   const { data: faqs } = useJSON('/content/faqs.json')
-  const { data: results } = useJSON('/content/results.json')
   const resolveAsset = useAssets()
-  const [lightboxImage, setLightboxImage] = useState(null)
   const shouldReduce = useReducedMotion()
 
-  const previewResults = results?.slice(0, 3) || []
-  const previewTestimonials = testimonials?.slice(0, 3) || []
   const servicesById = new Map((services || []).map((service) => [service.id, service]))
   const ServicePathwayLink = shouldReduce ? Link : MotionLink
   const pathwayMotion = shouldReduce
@@ -166,42 +160,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Results Preview */}
-      <section
-        className="section"
-        style={{
-          backgroundColor: 'var(--color-surface)',
-          borderBlock: '1px solid var(--color-border)',
-        }}
-        aria-labelledby="results-heading"
-      >
-        <div className="container">
-          <SectionReveal>
-            <div className="section-header">
-              <span className="eyebrow">Real Results</span>
-              <h2 id="results-heading">Clients Who Showed Up.</h2>
-              <p>
-                These aren&apos;t stock photos. These are real people who committed to the
-                process and delivered on stage.
-              </p>
-            </div>
-          </SectionReveal>
-
-          <StaggerContainer className="grid-results">
-            {previewResults.map((result) => (
-              <StaggerItem key={result.id}>
-                <ResultCard result={result} onOpen={setLightboxImage} />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-
-          <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-            <Link to="/results" className="btn btn-outline">
-              View All Results &rarr;
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Interactive Results + Testimonials Gallery */}
+      <AppleWatchGallery />
 
       {/* About Teaser */}
       <section className="section" aria-labelledby="about-heading">
@@ -308,35 +268,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section
-        className="section"
-        style={{
-          backgroundColor: 'var(--color-surface)',
-          borderBlock: '1px solid var(--color-border)',
-        }}
-        aria-labelledby="testimonials-heading"
-      >
-        <div className="container">
-          <SectionReveal>
-            <div className="section-header">
-              <span className="eyebrow">Client Stories</span>
-              <h2 id="testimonials-heading">What They&apos;re Saying.</h2>
-              <p>
-                Real words from real clients who trusted the process and showed up every day.
-              </p>
-            </div>
-          </SectionReveal>
 
-          <StaggerContainer className="grid-testimonials">
-            {previewTestimonials.map((t) => (
-              <StaggerItem key={t.id}>
-                <TestimonialCard testimonial={t} />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
 
       {/* FAQ */}
       <section className="section" aria-labelledby="faq-heading">
@@ -362,8 +294,7 @@ export default function Home() {
       {/* CTA */}
       <CTABanner />
 
-      {/* Lightbox */}
-      <Lightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />
+
     </>
   )
 }
