@@ -676,15 +676,10 @@ function WatchGridItem({ item, src, size, left, top, sizePx, isActive, shouldRed
 }
 
 function ResultOverlayBody({ item, titleId }) {
-  const categoryLabel = CATEGORY_LABELS[item.category] || item.category
   const title = displayTitle(item)
 
   return (
     <div className="result-overlay-body">
-      <span className="result-detail-badge" data-category={item.category}>
-        {categoryLabel}
-      </span>
-
       <h3 id={titleId} className="result-detail-title">{title}</h3>
 
       {item.location && (
@@ -801,14 +796,19 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
           >
             <div className="result-overlay-glass" aria-hidden="true" />
 
-            <button
-              type="button"
-              className="result-preview-close"
-              aria-label="Dismiss result details"
-              onClick={onClose}
-            >
-              &times;
-            </button>
+            <div className="result-overlay-header">
+              <span className="result-detail-badge" data-category={item.category}>
+                {CATEGORY_LABELS[item.category] || item.category}
+              </span>
+              <button
+                type="button"
+                className="result-preview-close"
+                aria-label="Dismiss result details"
+                onClick={onClose}
+              >
+                &times;
+              </button>
+            </div>
 
             <div className="result-overlay-scroll">
               <ResultOverlayBody item={item} titleId={titleId} />
