@@ -967,6 +967,7 @@ function ResultModal({ item, src, open, onClose }) {
                   onClick={() => setDetailsOpen(false)}
                 >
                   <EyeOffIcon />
+                  <span>Hide</span>
                 </button>
               </div>
 
@@ -1234,7 +1235,7 @@ export default function AppleWatchGallery() {
   return (
     <>
       <section
-        className="section results-gallery-section"
+        className="section home-section results-gallery-section"
         aria-labelledby="results-heading"
       >
         <div className="container">

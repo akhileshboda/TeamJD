@@ -10,9 +10,10 @@ export default function CTABanner({
   secondaryLabel = 'Explore Services',
   secondaryTo = '/services',
   eyebrow = 'Ready to Begin?',
+  sectionClassName = '',
 }) {
   return (
-    <section className="section" aria-labelledby="cta-heading">
+    <section className={`section${sectionClassName ? ` ${sectionClassName}` : ''}`} aria-labelledby="cta-heading">
       <div className="container">
         <SectionReveal>
           <div className="cta-banner">

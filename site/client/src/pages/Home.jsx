@@ -84,215 +84,215 @@ export default function Home() {
       {/* Credibility Strip */}
       <CredibilityStrip />
 
-      {/* Personalised Services Guidance */}
-      <section className="section home-services" aria-labelledby="services-heading">
-        <div className="container">
-          <SectionReveal>
-            <div className="home-services-intro">
-              <span className="eyebrow">How Jake Helps</span>
-              <h2 id="services-heading">Find the Coaching That Fits Your Next Move.</h2>
-              <p>
-                Jake does not start with a package. He starts with your goal, your timeline,
-                your training history, and the level of accountability you need to move with
-                confidence.
-              </p>
-            </div>
-          </SectionReveal>
-
-          <StaggerContainer className="home-service-pathways">
-            {servicePathways.map((pathway, index) => {
-              const service = servicesById.get(pathway.id)
-              const serviceName = service?.name || pathway.fallbackName
-              const serviceSlug = service?.slug || pathway.fallbackSlug
-              const backgroundSrc = resolveAsset(service?.hero_image || pathway.fallbackImage)
-
-              return (
-                <StaggerItem key={pathway.id}>
-                  <ServicePathwayLink
-                    to={`/services/${serviceSlug}`}
-                    className="home-service-pathway"
-                    aria-label={`${pathway.label}: explore ${serviceName}`}
-                    style={{ '--pathway-bg': `url("${backgroundSrc}")` }}
-                    {...pathwayMotion}
-                  >
-                    <span className="home-service-pathway-number">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <span className="home-service-pathway-label">{pathway.label}</span>
-                    <h3>{pathway.title}</h3>
-                    <p>{pathway.copy}</p>
-                    <span className="home-service-pathway-fit">{pathway.fit}</span>
-                    <span className="home-service-pathway-cta">
-                      Explore {serviceName} &rarr;
-                    </span>
-                  </ServicePathwayLink>
-                </StaggerItem>
-              )
-            })}
-          </StaggerContainer>
-
-          <SectionReveal delay={0.08}>
-            <div className="home-services-consult">
-              <div>
-                <span className="home-services-consult-kicker">Not sure yet?</span>
-                <h3>Bring Jake the goal. He&apos;ll help shape the route.</h3>
+      <div className="home-continuum">
+        {/* Personalised Services Guidance */}
+        <section className="section home-section home-services" aria-labelledby="services-heading">
+          <div className="container">
+            <SectionReveal>
+              <div className="home-services-intro">
+                <span className="eyebrow">How Jake Helps</span>
+                <h2 id="services-heading">Find the Coaching That Fits Your Next Move.</h2>
                 <p>
-                  A quick consult is the easiest way to figure out whether you need prep,
-                  online structure, in-person coaching, posing work, or a blend of support.
+                  Jake does not start with a package. He starts with your goal, your timeline,
+                  your training history, and the level of accountability you need to move with
+                  confidence.
                 </p>
               </div>
-              <div className="home-services-consult-actions">
-                <a
-                  href="https://calendly.com/team-jd/15min"
-                  className="btn btn-primary"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Book a Free Consult
-                </a>
-                <Link to="/services" className="btn btn-secondary">
-                  View All Services &rarr;
-                </Link>
-              </div>
-            </div>
-          </SectionReveal>
+            </SectionReveal>
 
-        </div>
-      </section>
+            <StaggerContainer className="home-service-pathways">
+              {servicePathways.map((pathway, index) => {
+                const service = servicesById.get(pathway.id)
+                const serviceName = service?.name || pathway.fallbackName
+                const serviceSlug = service?.slug || pathway.fallbackSlug
+                const backgroundSrc = resolveAsset(service?.hero_image || pathway.fallbackImage)
 
-      {/* Interactive Results + Testimonials Gallery */}
-      <AppleWatchGallery />
+                return (
+                  <StaggerItem key={pathway.id}>
+                    <ServicePathwayLink
+                      to={`/services/${serviceSlug}`}
+                      className="home-service-pathway"
+                      aria-label={`${pathway.label}: explore ${serviceName}`}
+                      style={{ '--pathway-bg': `url("${backgroundSrc}")` }}
+                      {...pathwayMotion}
+                    >
+                      <span className="home-service-pathway-number">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="home-service-pathway-label">{pathway.label}</span>
+                      <h3>{pathway.title}</h3>
+                      <p>{pathway.copy}</p>
+                      <span className="home-service-pathway-fit">{pathway.fit}</span>
+                      <span className="home-service-pathway-cta">
+                        Explore {serviceName} &rarr;
+                      </span>
+                    </ServicePathwayLink>
+                  </StaggerItem>
+                )
+              })}
+            </StaggerContainer>
 
-      {/* About Teaser */}
-      <section className="section" aria-labelledby="about-heading">
-        <div className="container">
-          <SectionReveal>
-            <div className="two-col-grid-center">
-              <div>
-                <span className="eyebrow">Meet Your Coach</span>
-                <h2 id="about-heading" style={{ marginBottom: '1.25rem' }}>
-                  I&apos;m Jake.
-                  <br />
-                  This is Personal.
-                </h2>
-                <p
-                  style={{
-                    color: 'var(--color-text-muted)',
-                    marginBottom: '1.25rem',
-                    fontSize: '1.0625rem',
-                    lineHeight: 1.75,
-                  }}
-                >
-                  I&apos;m a professional bodybuilder and fitness and nutrition coach dedicated
-                  to helping you achieve your unique goals. I believe in working with your
-                  natural strengths while helping you push through your limitations — everything
-                  I do is customised specifically for you.
-                </p>
-                <p
-                  style={{
-                    color: 'var(--color-text-muted)',
-                    marginBottom: '2rem',
-                    fontSize: '1.0625rem',
-                    lineHeight: 1.75,
-                  }}
-                >
-                  As a Champion Physique Bodybuilder and Competition Prep coach with extensive
-                  experience, I&apos;ve helped hundreds of clients transform their body,
-                  mindset, and lifestyle.
-                </p>
-                <Link to="/about" className="btn btn-outline">
-                  Learn About Jake &rarr;
-                </Link>
-              </div>
-
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
-                    aspectRatio: '3/4',
-                    borderRadius: '1rem',
-                    overflow: 'hidden',
-                    backgroundColor: 'var(--color-surface)',
-                  }}
-                >
-                  <img
-                    src={resolveAsset('/api/assets/jake-hero')}
-                    alt="Jake Dedert — Pro Physique bodybuilder and fitness coach"
-                    loading="lazy"
-                    decoding="async"
-                    width="600"
-                    height="800"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center top',
-                    }}
-                  />
+            <SectionReveal delay={0.08}>
+              <div className="home-services-consult">
+                <div>
+                  <span className="home-services-consult-kicker">Not sure yet?</span>
+                  <h3>Bring Jake the goal. He&apos;ll help shape the route.</h3>
+                  <p>
+                    A quick consult is the easiest way to figure out whether you need prep,
+                    online structure, in-person coaching, posing work, or a blend of support.
+                  </p>
                 </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '-1.5rem',
-                    left: '-1.5rem',
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '0.75rem',
-                    padding: '1.25rem 1.5rem',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                      color: 'var(--color-accent)',
-                      fontWeight: 700,
-                      marginBottom: '0.25rem',
-                    }}
+                <div className="home-services-consult-actions">
+                  <a
+                    href="https://calendly.com/team-jd/15min"
+                    className="btn btn-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    Pro Physique
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 800,
-                      color: 'var(--color-white)',
-                    }}
-                  >
-                    Champion Bodybuilder
-                  </div>
+                    Book a Free Consult
+                  </a>
+                  <Link to="/services" className="btn btn-secondary">
+                    View All Services &rarr;
+                  </Link>
                 </div>
               </div>
-            </div>
-          </SectionReveal>
-        </div>
-      </section>
+            </SectionReveal>
 
-
-
-      {/* FAQ */}
-      <section className="section" aria-labelledby="faq-heading">
-        <div className="container">
-          <SectionReveal>
-            <div className="section-header">
-              <span className="eyebrow">Common Questions</span>
-              <h2 id="faq-heading">Got Questions?</h2>
-              <p>Everything you need to know before taking the next step.</p>
-            </div>
-          </SectionReveal>
-
-          <div className="faq-list">
-            {faqs?.map((faq) => (
-              <SectionReveal key={faq.id} delay={0}>
-                <FAQItem faq={faq} />
-              </SectionReveal>
-            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA */}
-      <CTABanner />
+        {/* Interactive Results + Testimonials Gallery */}
+        <AppleWatchGallery />
+
+        {/* About Teaser */}
+        <section className="section home-section home-about" aria-labelledby="about-heading">
+          <div className="container">
+            <SectionReveal>
+              <div className="two-col-grid-center">
+                <div>
+                  <span className="eyebrow">Meet Your Coach</span>
+                  <h2 id="about-heading" style={{ marginBottom: '1.25rem' }}>
+                    I&apos;m Jake.
+                    <br />
+                    This is Personal.
+                  </h2>
+                  <p
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      marginBottom: '1.25rem',
+                      fontSize: '1.0625rem',
+                      lineHeight: 1.75,
+                    }}
+                  >
+                    I&apos;m a professional bodybuilder and fitness and nutrition coach dedicated
+                    to helping you achieve your unique goals. I believe in working with your
+                    natural strengths while helping you push through your limitations — everything
+                    I do is customised specifically for you.
+                  </p>
+                  <p
+                    style={{
+                      color: 'var(--color-text-muted)',
+                      marginBottom: '2rem',
+                      fontSize: '1.0625rem',
+                      lineHeight: 1.75,
+                    }}
+                  >
+                    As a Champion Physique Bodybuilder and Competition Prep coach with extensive
+                    experience, I&apos;ve helped hundreds of clients transform their body,
+                    mindset, and lifestyle.
+                  </p>
+                  <Link to="/about" className="btn btn-outline">
+                    Learn About Jake &rarr;
+                  </Link>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <div
+                    style={{
+                      aspectRatio: '3/4',
+                      borderRadius: '1rem',
+                      overflow: 'hidden',
+                      backgroundColor: 'var(--color-surface)',
+                    }}
+                  >
+                    <img
+                      src={resolveAsset('/api/assets/jake-hero')}
+                      alt="Jake Dedert — Pro Physique bodybuilder and fitness coach"
+                      loading="lazy"
+                      decoding="async"
+                      width="600"
+                      height="800"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: 'center top',
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '-1.5rem',
+                      left: '-1.5rem',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '0.75rem',
+                      padding: '1.25rem 1.5rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'var(--color-accent)',
+                        fontWeight: 700,
+                        marginBottom: '0.25rem',
+                      }}
+                    >
+                      Pro Physique
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '1.125rem',
+                        fontWeight: 800,
+                        color: 'var(--color-white)',
+                      }}
+                    >
+                      Champion Bodybuilder
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SectionReveal>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="section home-section home-faq" aria-labelledby="faq-heading">
+          <div className="container">
+            <SectionReveal>
+              <div className="section-header">
+                <span className="eyebrow">Common Questions</span>
+                <h2 id="faq-heading">Got Questions?</h2>
+                <p>Everything you need to know before taking the next step.</p>
+              </div>
+            </SectionReveal>
+
+            <div className="faq-list">
+              {faqs?.map((faq) => (
+                <SectionReveal key={faq.id} delay={0}>
+                  <FAQItem faq={faq} />
+                </SectionReveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <CTABanner sectionClassName="home-section home-final-cta" />
+      </div>
 
 
     </>
