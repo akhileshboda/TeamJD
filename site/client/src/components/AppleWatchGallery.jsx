@@ -595,6 +595,26 @@ function StoryIcon() {
   )
 }
 
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9.9 5.75A9.7 9.7 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17.4 17.4 0 0 1-2.4 3.1" />
+      <path d="M14.1 14.1A3 3 0 0 1 9.9 9.9" />
+      <path d="M6.6 6.6C4.1 8.35 2.5 12 2.5 12s3.5 6.5 9.5 6.5a9.8 9.8 0 0 0 4.8-1.3" />
+      <path d="m3 3 18 18" />
+    </svg>
+  )
+}
+
 function CalendarIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -840,6 +860,148 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
   )
 }
 
+function ResultModal({ item, src, open, onClose }) {
+  const shouldReduce = useReducedMotion()
+  const [detailsOpen, setDetailsOpen] = useState(true)
+
+  useEffect(() => {
+    if (item?.id) setDetailsOpen(true)
+  }, [item?.id])
+
+  if (!open || !item) return null
+
+  const titleId = `result-modal-title-${item.id}`
+
+  const backdropMotion = shouldReduce
+    ? { initial: false, animate: {}, exit: {} }
+    : {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.24, ease: 'easeOut' },
+      }
+
+  const dialogMotion = shouldReduce
+    ? { initial: false, animate: {}, exit: {} }
+    : {
+        initial: { opacity: 0, y: 28, scale: 0.98 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: 18, scale: 0.98 },
+        transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
+      }
+
+  return (
+    <motion.div
+      className="result-modal-backdrop"
+      onClick={onClose}
+      {...backdropMotion}
+    >
+      <motion.section
+        className="result-modal-dialog result-preview result-preview--modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(event) => event.stopPropagation()}
+        {...dialogMotion}
+      >
+        <div className="result-preview-media">
+          <motion.img
+            key={item.id}
+            className="result-preview-img"
+            src={src}
+            alt={item.alt}
+            loading="eager"
+            decoding="async"
+            draggable={false}
+            initial={shouldReduce ? false : { opacity: 0, scale: 1.04 }}
+            animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          />
+        </div>
+
+        <AnimatePresence>
+          {detailsOpen && (
+            <motion.div
+              key="modal-scrim"
+              className="result-preview-scrim"
+              aria-hidden="true"
+              initial={shouldReduce ? false : { opacity: 0 }}
+              animate={shouldReduce ? {} : { opacity: 1 }}
+              exit={shouldReduce ? {} : { opacity: 0 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+            />
+          )}
+        </AnimatePresence>
+
+        <button
+          type="button"
+          className="result-preview-close"
+          aria-label="Close result details"
+          onClick={onClose}
+        >
+          &times;
+        </button>
+
+        <AnimatePresence>
+          {detailsOpen && (
+            <motion.div
+              key="modal-overlay"
+              className="result-preview-overlay"
+              role="document"
+              aria-labelledby={titleId}
+              initial={shouldReduce ? false : { opacity: 0, y: 18 }}
+              animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduce ? {} : { opacity: 0, y: 18 }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+            >
+              <div className="result-overlay-glass" aria-hidden="true" />
+
+              <div className="result-overlay-header">
+                <span className="result-detail-badge" data-category={item.category}>
+                  {CATEGORY_LABELS[item.category] || item.category}
+                </span>
+                <button
+                  type="button"
+                  className="result-preview-hide"
+                  aria-label="Hide result details"
+                  onClick={() => setDetailsOpen(false)}
+                >
+                  <EyeOffIcon />
+                </button>
+              </div>
+
+              <div className="result-overlay-scroll">
+                <ResultOverlayBody item={item} titleId={titleId} />
+              </div>
+
+              <ResultOverlayFooter stats={item.stats} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {!detailsOpen && (
+            <motion.button
+              key="modal-reopen"
+              type="button"
+              className="result-preview-reopen result-preview-reopen--modal"
+              aria-label="Show result details"
+              onClick={() => setDetailsOpen(true)}
+              initial={shouldReduce ? false : { opacity: 0, y: 10 }}
+              animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
+              exit={shouldReduce ? {} : { opacity: 0, y: 10 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+            >
+              <EyeIcon />
+              Show
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </motion.section>
+    </motion.div>
+  )
+}
+
 export default function AppleWatchGallery() {
   const { data: results } = useJSON('/content/results.json')
   const { data: testimonials } = useJSON('/content/testimonials.json')
@@ -853,6 +1015,12 @@ export default function AppleWatchGallery() {
   const [activeFilter, setActiveFilter] = useState('all')
   const [selectedItem, setSelectedItem] = useState(null)
   const [overlayOpen, setOverlayOpen] = useState(true)
+  const [mobileModalOpen, setMobileModalOpen] = useState(false)
+  const [isPhoneResultsLayout, setIsPhoneResultsLayout] = useState(() => (
+    typeof window !== 'undefined'
+      ? window.matchMedia('(max-width: 768px)').matches
+      : false
+  ))
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 })
 
   const enrichedItems = useMemo(() => {
@@ -958,6 +1126,22 @@ export default function AppleWatchGallery() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const query = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsPhoneResultsLayout(query.matches)
+    update()
+
+    if (typeof query.addEventListener === 'function') {
+      query.addEventListener('change', update)
+      return () => query.removeEventListener('change', update)
+    }
+
+    query.addListener(update)
+    return () => query.removeListener(update)
+  }, [])
+
+  useEffect(() => {
     if (filteredItems.length === 0) {
       setSelectedItem(null)
       return
@@ -972,6 +1156,27 @@ export default function AppleWatchGallery() {
   useEffect(() => {
     if (selectedItem?.id) setOverlayOpen(true)
   }, [selectedItem?.id])
+
+  useEffect(() => {
+    if (!isPhoneResultsLayout) setMobileModalOpen(false)
+  }, [isPhoneResultsLayout])
+
+  useEffect(() => {
+    if (!isPhoneResultsLayout || !mobileModalOpen) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileModalOpen(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isPhoneResultsLayout, mobileModalOpen])
 
   useEffect(() => {
     const el = viewportRef.current
@@ -1011,13 +1216,18 @@ export default function AppleWatchGallery() {
   const handleOpen = useCallback((item) => {
     setSelectedItem(item)
     setOverlayOpen(true)
+    if (isPhoneResultsLayout) {
+      setMobileModalOpen(true)
+      return
+    }
+
     if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1024px)').matches) {
       previewRef.current?.scrollIntoView({
         behavior: shouldReduce ? 'auto' : 'smooth',
         block: 'nearest',
       })
     }
-  }, [shouldReduce])
+  }, [isPhoneResultsLayout, shouldReduce])
 
   const previewSrc = selectedItem ? resolveItemSrc(selectedItem, resolveAsset) : ''
 
@@ -1103,7 +1313,7 @@ export default function AppleWatchGallery() {
               </div>
             </div>
 
-            {selectedItem && (
+            {selectedItem && !isPhoneResultsLayout && (
               <ResultPreview
                 item={selectedItem}
                 src={previewSrc}
@@ -1122,6 +1332,18 @@ export default function AppleWatchGallery() {
           </div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {selectedItem && isPhoneResultsLayout && mobileModalOpen && (
+          <ResultModal
+            key={selectedItem.id}
+            item={selectedItem}
+            src={previewSrc}
+            open={mobileModalOpen}
+            onClose={() => setMobileModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }

@@ -6,7 +6,9 @@
 .results-gallery-section {
   position: relative;
   overflow: hidden;
-  background: var(--color-bg);
+  background:
+    linear-gradient(180deg, rgba(13, 13, 13, 0.98) 0%, rgba(14, 18, 19, 0.98) 48%, rgba(13, 13, 13, 0.98) 100%),
+    var(--color-bg);
 }
 
 .results-gallery-section::before {
@@ -15,9 +17,9 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 8% 10%, var(--color-accent-glow), transparent 28rem),
-    radial-gradient(circle at 84% 46%, rgba(255, 125, 110, 0.08), transparent 26rem),
-    linear-gradient(180deg, rgba(13, 13, 13, 0) 0%, rgba(26, 26, 26, 0.34) 100%);
+    radial-gradient(circle at 12% 4%, rgba(22, 201, 221, 0.07), transparent 30rem),
+    radial-gradient(circle at 88% 70%, rgba(255, 125, 110, 0.045), transparent 28rem);
+  opacity: 0.9;
 }
 
 .results-gallery-section .container {
@@ -484,6 +486,123 @@
 }
 
 /* ==========================================================================
+   Mobile result modal
+   ========================================================================== */
+
+.result-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(0.75rem, env(safe-area-inset-top))
+    0
+    max(1rem, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 18% 10%, rgba(22, 201, 221, 0.13), transparent 20rem),
+    radial-gradient(circle at 82% 22%, rgba(255, 125, 110, 0.08), transparent 17rem),
+    rgba(7, 18, 29, 0.68);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.result-modal-dialog {
+  width: min(100% - 1.5rem, 430px);
+  height: min(82dvh, 640px);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+}
+
+.result-preview--modal {
+  --overlay-footer-h: 3.3rem;
+  border-radius: var(--radius-xl);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.result-preview--modal .result-overlay-header {
+  padding-right: var(--space-5);
+}
+
+.result-preview--modal .result-preview-hide {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(13, 13, 13, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--color-white);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.result-preview--modal .result-preview-hide svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.result-preview--modal .result-preview-hide:hover,
+.result-preview--modal .result-preview-hide:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: rgba(13, 13, 13, 0.68);
+}
+
+.result-preview--modal .result-preview-hide:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.result-preview--modal .result-preview-close {
+  position: absolute;
+  top: max(var(--space-4), env(safe-area-inset-top));
+  right: var(--space-4);
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(13, 13, 13, 0.46);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.result-preview--modal .result-preview-overlay {
+  height: 74%;
+  --overlay-footer-h: 3.3rem;
+}
+
+.result-preview--modal .result-overlay-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+.result-preview--modal .result-overlay-body {
+  width: 100%;
+  margin-top: auto;
+  padding: 0.5rem var(--space-5) calc(var(--overlay-footer-h) + 0.65rem);
+}
+
+.result-preview-reopen--modal {
+  right: var(--space-5);
+  bottom: var(--space-5);
+}
+
+.result-preview-reopen--modal svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ==========================================================================
    Result copy (shared text styles, used inside the overlay)
    ========================================================================== */
 
@@ -700,7 +819,8 @@
   }
 
   .results-header h2 {
-    font-size: clamp(2.4rem, 13vw, 4rem);
+    font-size: clamp(2.25rem, 9vw, 3.15rem);
+    line-height: 1;
   }
 
   .results-filter-bar {
@@ -720,9 +840,18 @@
     border-radius: var(--radius-xl);
   }
 
+  .result-modal-backdrop {
+    align-items: center;
+  }
+
   .result-preview-overlay {
     height: 70%;
     --overlay-footer-h: 3.25rem;
+  }
+
+  .result-preview--modal .result-preview-overlay {
+    height: 74%;
+    --overlay-footer-h: 3.3rem;
   }
 
   .result-overlay-footer {
@@ -760,10 +889,23 @@
     --overlay-footer-h: 3rem;
   }
 
+  .result-modal-dialog {
+    height: min(84dvh, 620px);
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .result-preview--modal .result-preview-overlay {
+    height: 76%;
+    --overlay-footer-h: 3.15rem;
+  }
+
   .result-overlay-body {
     padding: 2.75rem var(--space-4) calc(var(--overlay-footer-h) + var(--space-3));
   }
 
+  .result-preview--modal .result-overlay-body {
+    padding: 0.65rem var(--space-4) calc(var(--overlay-footer-h) + 0.55rem);
+  }
   .result-detail-title {
     font-size: 1.5rem;
   }

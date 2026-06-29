@@ -18,7 +18,7 @@ export default defineConfig({
       '/assets': 'http://localhost:3000',
     },
     allowedHosts: [
-      "interaction-sticks-reform-planner.trycloudflare.com",
+      "hardwood-backed-above-historic.trycloudflare.com",
     ],
   },
 })
