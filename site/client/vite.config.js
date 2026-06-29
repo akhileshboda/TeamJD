@@ -18,7 +18,7 @@ export default defineConfig({
       '/assets': 'http://localhost:3000',
     },
     allowedHosts: [
-      "hardwood-backed-above-historic.trycloudflare.com",
+      "engaged-assembled-runs-vary.trycloudflare.com",
     ],
   },
 })
