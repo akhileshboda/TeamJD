@@ -1410,27 +1410,10 @@ p  { line-height: 1.7; color: var(--color-text); }
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(22, 201, 221, 0.09), transparent 31rem),
-    radial-gradient(circle at 84% 32%, rgba(255, 125, 110, 0.055), transparent 30rem),
-    radial-gradient(circle at 18% 74%, rgba(22, 201, 221, 0.055), transparent 34rem),
-    radial-gradient(circle at 78% 94%, rgba(255, 125, 110, 0.045), transparent 30rem),
-    linear-gradient(135deg, rgba(9, 15, 16, 0.96) 0%, rgba(18, 20, 21, 0.98) 48%, rgba(10, 13, 14, 0.98) 100%),
-    var(--color-bg);
-}
-
-.home-continuum::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    linear-gradient(115deg, rgba(255, 255, 255, 0.035), transparent 24%, rgba(255, 255, 255, 0.018) 48%, transparent 72%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 14px);
-  opacity: 0.28;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  /* Background removed — the fixed SiteBackground canvas and body
+     background-color (#0d0d0d) provide all lighting. Keeping this
+     element opaque would hide the canvas. */
+  background: transparent;
 }
 
 .home-section {
