@@ -15,8 +15,19 @@ async function fetchManifest() {
 
   if (manifestPromise) return manifestPromise
 
-  manifestPromise = fetch('/api/assets/manifest', { cache: 'no-cache' })
-    .then((r) => r.json())
+  manifestPromise = fetch('/api/assets', { cache: 'no-cache' })
+    .then(async (r) => {
+      if (!r.ok) {
+        throw new Error(`Asset manifest request failed with ${r.status}`)
+      }
+
+      const manifest = await r.json()
+      if (!manifest || typeof manifest.assets !== 'object') {
+        throw new Error('Asset manifest response did not include an assets map')
+      }
+
+      return manifest
+    })
     .then((manifest) => {
       manifestResolvedAt = Date.now()
       try {
@@ -51,11 +62,15 @@ function getAssetKey(assetPath) {
   return filename.replace(/\.[^.]+$/, '')
 }
 
-function resolveAsset(assetPath, manifest) {
+function resolveAsset(assetPath, manifest, fallbackAssetPath) {
   if (!assetPath) return ''
   if (/^(?:[a-z]+:|#|\/\/)/i.test(assetPath)) return assetPath
   const key = getAssetKey(assetPath)
-  return manifest?.assets?.[key]?.url || `/api/assets/${key}`
+  if (manifest?.assets?.[key]?.url) return manifest.assets[key].url
+  if (fallbackAssetPath !== undefined) {
+    return fallbackAssetPath ? resolveAsset(fallbackAssetPath, manifest) : ''
+  }
+  return `/api/assets/${key}`
 }
 
 export function useAssets() {
@@ -65,5 +80,5 @@ export function useAssets() {
     fetchManifest().then(setManifest)
   }, [])
 
-  return (assetPath) => resolveAsset(assetPath, manifest)
+  return (assetPath, fallbackAssetPath) => resolveAsset(assetPath, manifest, fallbackAssetPath)
 }

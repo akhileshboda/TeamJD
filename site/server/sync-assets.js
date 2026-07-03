@@ -1,9 +1,11 @@
 require('dotenv').config();
-const { syncDropboxAssetsToDisk } = require('./services/dropbox');
+const { syncDropboxAssetsAndPersist } = require('./services/dropbox');
 
-syncDropboxAssetsToDisk()
+const dryRun = process.argv.includes('--dry-run');
+
+syncDropboxAssetsAndPersist({ dryRun })
   .then(() => {
-    console.log('[sync] Done.');
+    console.log(`[sync] Done${dryRun ? ' (dry run)' : ''}.`);
     process.exit(0);
   })
   .catch((error) => {

@@ -11,6 +11,8 @@
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "sync-assets": "node server/sync-assets.js",
+    "sync-assets:dry-run": "node server/sync-assets.js --dry-run",
+    "test": "node --test",
     "deploy:pi": "bash server/deploy-pi.sh"
   },
   "nodemonConfig": {
@@ -20,11 +22,13 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1076.0",
     "connect-sqlite3": "^0.9.16",
     "dotenv": "^16.4.7",
     "dropbox": "^10.34.0",
+    "express": "^4.21.2",
     "express-session": "^1.18.1",
-    "express": "^4.21.2"
+    "node-cron": "^4.5.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

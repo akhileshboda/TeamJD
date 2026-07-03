@@ -8,7 +8,7 @@ const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const siteAuthRouter = require('./routes/siteAuth');
 const { gateAssets, visitLogger } = require('./middleware/siteGate');
-const { getAssetManifest, preloadAssetMap } = require('./services/dropbox');
+const { getAssetManifest, preloadAssetMap, startAssetPoller } = require('./services/dropbox');
 
 dotenv.config();
 
@@ -78,9 +78,10 @@ function rewriteAssetUrls(html, manifest) {
     (matchedUrl, assetKey) => {
       const localUrl = manifest.assets?.[assetKey]?.url;
       if (!localUrl) return matchedUrl;
+      if (/^https?:\/\//i.test(localUrl)) return localUrl;
       // OG/Twitter meta tags use absolute URLs — preserve domain when the original was absolute
       if (matchedUrl.startsWith('https://')) {
-        return `https://jakededert.fit${localUrl}`;
+        return new URL(localUrl, 'https://jakededert.fit').toString();
       }
       return localUrl;
     }
@@ -175,6 +176,7 @@ app.use((req, res) => {
 
 async function startServer() {
   await preloadAssetMap();
+  startAssetPoller();
 
   await new Promise((resolve, reject) => {
     const server = app.listen(port, listenHost);

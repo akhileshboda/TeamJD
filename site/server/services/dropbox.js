@@ -1,26 +1,27 @@
-const fs = require('fs/promises');
 const path = require('path');
-const { Dropbox, DropboxAuth } = require('dropbox');
+const {
+  buildAssetSyncPlan,
+  createDropboxClient,
+  downloadDropboxFile,
+  executeAssetSync,
+  getCachedManifest,
+  getErrorSummary,
+  getSetupStatus,
+  getSyncConfig,
+  isR2Configured,
+  listFilesRecursive,
+  recordDryRun,
+  setCachedManifest,
+  startAssetScheduler,
+  stopAssetScheduler
+} = require('./assetSync');
+const {
+  getAssetKey,
+  getContentType,
+  isSupportedAsset
+} = require('./assetClassifier');
 
-const IMAGE_EXTENSIONS = new Set(['.avif', '.gif', '.jpeg', '.jpg', '.png', '.webp']);
-const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const DEV_ASSET_CACHE_SECONDS = 5 * 60;
-const DROPBOX_FETCH_TIMEOUT_MS = 30_000;
-const MANIFEST_PATH = path.join(__dirname, '..', '..', 'data', 'asset-manifest.json');
-const GENERATED_ASSETS_DIR = path.join(__dirname, '..', '..', 'public', 'assets', 'generated');
-const IMAGE_CONTENT_TYPES = {
-  '.avif': 'image/avif',
-  '.gif': 'image/gif',
-  '.jpeg': 'image/jpeg',
-  '.jpg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp'
-};
-
-let cachedAssetMap = null;
-let cachedManifest = null;
-let cachedAt = 0;
-let pendingAssetMapRefresh = null;
 
 const assetMapState = {
   preloadAttempted: false,
@@ -30,7 +31,6 @@ const assetMapState = {
   lastLoadCompletedAt: null,
   lastSuccessfulLoadAt: null,
   diskManifestLoaded: false,
-  diskManifestFile: path.basename(MANIFEST_PATH),
   lastError: null,
   refreshInProgress: false
 };
@@ -55,29 +55,55 @@ function isProductionAssetMode() {
   return process.env.NODE_ENV === 'production';
 }
 
-function getCacheTtlMs() {
-  const configuredTtl = Number(process.env.DROPBOX_ASSET_CACHE_TTL_MS);
+function isR2AssetMode() {
+  return isR2Configured();
+}
 
-  return Number.isFinite(configuredTtl) && configuredTtl >= 0
-    ? configuredTtl
-    : DEFAULT_CACHE_TTL_MS;
+function markLoadStarted() {
+  assetMapState.state = 'loading';
+  assetMapState.lastLoadStartedAt = new Date().toISOString();
+  assetMapState.lastLoadCompletedAt = null;
+  assetMapState.refreshInProgress = true;
+}
+
+function markLoadSucceeded(manifest, source = manifest.source) {
+  const completedAt = new Date().toISOString();
+  setCachedManifest(manifest);
+  assetMapState.state = 'ready';
+  assetMapState.source = source;
+  assetMapState.diskManifestLoaded = source === 'disk';
+  assetMapState.lastLoadCompletedAt = completedAt;
+  assetMapState.lastSuccessfulLoadAt = completedAt;
+  assetMapState.lastError = null;
+  assetMapState.refreshInProgress = false;
+}
+
+function markLoadFailed(error) {
+  assetMapState.state = assetMapState.lastSuccessfulLoadAt ? 'ready' : 'failed';
+  assetMapState.lastLoadCompletedAt = new Date().toISOString();
+  assetMapState.lastError = getErrorSummary(error);
+  assetMapState.refreshInProgress = false;
+}
+
+async function getAssetManifest() {
+  return getCachedManifest();
+}
+
+async function getAssetMap() {
+  const manifest = await getAssetManifest();
+  return manifest.assets || {};
+}
+
+async function getAssetUrl(assetKey) {
+  const assetMap = await getAssetMap();
+  return assetMap[assetKey]?.url || null;
 }
 
 function getAssetServiceStatus() {
-  const assetCount = cachedAssetMap ? Object.keys(cachedAssetMap).length : 0;
-
+  const manifest = require('./assetSync').getSetupStatus();
   return {
-    dropboxApiConfigured: Boolean(process.env.DROPBOX_REFRESH_TOKEN),
-    assetMode: isProductionAssetMode() ? 'production-sync' : 'runtime-discovery',
-    assetRootPath: process.env.DROPBOX_ASSET_ROOT_PATH || '',
-    cacheTtlMs: getCacheTtlMs(),
-    cacheReady: Boolean(cachedAssetMap),
-    hasCachedAssetMap: Boolean(cachedAssetMap),
-    assetCount,
-    manifestGeneratedAt: cachedManifest?.generatedAt || null,
-    diskManifestLoaded: assetMapState.diskManifestLoaded,
-    diskManifestFile: assetMapState.diskManifestFile,
-    cachedAt: cachedAt ? new Date(cachedAt).toISOString() : null,
+    ...manifest,
+    cacheReady: Boolean(assetMapState.lastSuccessfulLoadAt || manifest.manifest.exists),
     preloadAttempted: assetMapState.preloadAttempted,
     state: assetMapState.state,
     source: assetMapState.source,
@@ -85,716 +111,177 @@ function getAssetServiceStatus() {
     lastLoadStartedAt: assetMapState.lastLoadStartedAt,
     lastLoadCompletedAt: assetMapState.lastLoadCompletedAt,
     lastSuccessfulLoadAt: assetMapState.lastSuccessfulLoadAt,
-    lastError: assetMapState.lastError
+    lastError: assetMapState.lastError || manifest.lastError
   };
-}
-
-function createDropboxClient(authState = {}) {
-  const refreshToken = authState.refreshToken || process.env.DROPBOX_REFRESH_TOKEN;
-  const accessToken = authState.accessToken;
-
-  if (!refreshToken && !accessToken) {
-    return null;
-  }
-
-  const auth = new DropboxAuth({
-    clientId: process.env.DROPBOX_APP_KEY,
-    clientSecret: process.env.DROPBOX_APP_SECRET,
-    accessToken,
-    refreshToken
-  });
-
-  return new Dropbox({ auth });
-}
-
-function isFileEntry(entry) {
-  return entry?.['.tag'] === 'file';
-}
-
-function isFolderEntry(entry) {
-  return entry?.['.tag'] === 'folder';
-}
-
-function isImageFile(entry) {
-  return isFileEntry(entry) && IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase());
-}
-
-function getDropboxPath(entry) {
-  return entry.path_lower || entry.path_display || entry.name || '';
-}
-
-function getAssetPathPriority(entry) {
-  const dropboxPath = getDropboxPath(entry).toLowerCase();
-  const segments = dropboxPath.split('/').filter(Boolean);
-  const backupPenalty = segments.some((segment) => /(?:^|[-_])(backup|archive|old)(?:[-_]|$)/.test(segment))
-    ? 1000
-    : 0;
-
-  return backupPenalty + segments.length;
-}
-
-function sortDropboxAssetFiles(files) {
-  return [...files].sort((a, b) => {
-    const priorityDelta = getAssetPathPriority(a) - getAssetPathPriority(b);
-    if (priorityDelta !== 0) return priorityDelta;
-
-    return getDropboxPath(a).localeCompare(getDropboxPath(b));
-  });
-}
-
-function createAssetKey(fileName) {
-  const extension = path.extname(fileName);
-  const basename = path.basename(fileName, extension);
-
-  return basename
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function createAssetVersion(file) {
-  return [
-    file.rev,
-    file.content_hash,
-    file.size,
-    file.server_modified,
-    file.client_modified
-  ]
-    .filter((value) => value !== undefined && value !== null && value !== '')
-    .map((value) => String(value))
-    .join(':');
-}
-
-function versionAssetUrl(url, assetVersion) {
-  if (!assetVersion) {
-    return url;
-  }
-
-  return `${url}?v=${encodeURIComponent(assetVersion)}`;
-}
-
-function hasSameAssetVersion(existingAsset, file) {
-  const nextVersion = createAssetVersion(file);
-
-  if (existingAsset?.assetVersion && nextVersion) {
-    return existingAsset.assetVersion === nextVersion;
-  }
-
-  if (existingAsset?.rev && file.rev) {
-    return existingAsset.rev === file.rev;
-  }
-
-  return (
-    existingAsset?.size === file.size &&
-    existingAsset?.serverModified === file.server_modified &&
-    existingAsset?.clientModified === file.client_modified
-  );
-}
-
-function getUniqueAssetKey(assetMap, preferredKey) {
-  const baseKey = preferredKey || 'asset';
-  let assetKey = baseKey;
-  let suffix = 2;
-
-  while (assetMap[assetKey]) {
-    assetKey = `${baseKey}-${suffix}`;
-    suffix += 1;
-  }
-
-  return assetKey;
-}
-
-function createAssetManifest(assetMap, source, generatedAt = new Date().toISOString()) {
-  return {
-    generatedAt,
-    source,
-    assetCount: Object.keys(assetMap).length,
-    assets: assetMap
-  };
-}
-
-function normalizeManifest(rawManifest, fallbackSource = 'disk') {
-  if (!rawManifest?.assets || typeof rawManifest.assets !== 'object') {
-    throw new Error('Asset manifest must include an assets object.');
-  }
-
-  return {
-    generatedAt: rawManifest.generatedAt || new Date().toISOString(),
-    source: rawManifest.source || fallbackSource,
-    assetCount: Object.keys(rawManifest.assets).length,
-    assets: rawManifest.assets
-  };
-}
-
-async function readDiskManifest() {
-  const rawManifest = await fs.readFile(MANIFEST_PATH, 'utf8');
-  return normalizeManifest(JSON.parse(rawManifest), 'disk');
-}
-
-async function writeDiskManifest(manifest) {
-  const tmpPath = `${MANIFEST_PATH}.tmp`;
-  await fs.mkdir(path.dirname(MANIFEST_PATH), { recursive: true });
-  await fs.writeFile(tmpPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  await fs.rename(tmpPath, MANIFEST_PATH);
-}
-
-function sanitizeErrorMessage(message) {
-  return String(message || 'Unknown Dropbox asset error.')
-    .replace(/https?:\/\/\S+/gi, (rawUrl) => {
-      try {
-        const parsedUrl = new URL(rawUrl);
-        parsedUrl.search = parsedUrl.search ? '?[redacted]' : '';
-        return parsedUrl.toString();
-      } catch (error) {
-        return '[redacted-url]';
-      }
-    })
-    .replace(/\b(refresh_token|access_token|client_secret|client_id)=([^&\s]+)/gi, '$1=[redacted]');
-}
-
-function getErrorSummary(error) {
-  return {
-    name: error?.name || 'Error',
-    message: sanitizeErrorMessage(error?.message),
-    status: error?.status || error?.statusCode || null
-  };
-}
-
-function setLoadStarted() {
-  assetMapState.state = 'loading';
-  assetMapState.lastLoadStartedAt = new Date().toISOString();
-  assetMapState.lastLoadCompletedAt = null;
-  assetMapState.refreshInProgress = true;
-}
-
-function setLoadSucceeded(manifest) {
-  const completedAt = new Date().toISOString();
-
-  cachedAssetMap = manifest.assets;
-  cachedManifest = manifest;
-  cachedAt = Date.now();
-  assetMapState.state = 'ready';
-  assetMapState.source = manifest.source;
-  assetMapState.lastLoadCompletedAt = completedAt;
-  assetMapState.lastSuccessfulLoadAt = completedAt;
-  assetMapState.lastError = null;
-  assetMapState.refreshInProgress = false;
-}
-
-function setLoadFailed(error) {
-  assetMapState.state = cachedAssetMap ? 'ready' : 'failed';
-  assetMapState.lastLoadCompletedAt = new Date().toISOString();
-  assetMapState.lastError = getErrorSummary(error);
-  assetMapState.refreshInProgress = false;
-}
-
-function logAssetMapSuccess(reason, source, assetMap) {
-  console.log(
-    `[assets] ${reason} completed from ${source}: ${Object.keys(assetMap).length} asset(s) ready.`
-  );
-}
-
-function logAssetMapFailure(reason, error) {
-  const summary = getErrorSummary(error);
-  console.error(`[assets] ${reason} failed: ${summary.message}`);
-}
-
-async function listDropboxEntries(dropboxClient, folderPath) {
-  const entries = [];
-  let response = await dropboxClient.filesListFolder({
-    path: folderPath,
-    recursive: true,
-    include_deleted: false,
-    include_non_downloadable_files: false
-  });
-
-  entries.push(...response.result.entries);
-
-  while (response.result.has_more) {
-    response = await dropboxClient.filesListFolderContinue({
-      cursor: response.result.cursor
-    });
-    entries.push(...response.result.entries);
-  }
-
-  return entries;
-}
-
-async function listDropboxFiles(dropboxClient, folderPath) {
-  const entries = await listDropboxEntries(dropboxClient, folderPath);
-
-  return entries.filter(isImageFile);
-}
-
-function toDiscoveryFile(entry) {
-  return {
-    name: entry.name,
-    path: entry.path_display,
-    pathLower: entry.path_lower,
-    extension: path.extname(entry.name).toLowerCase(),
-    rev: entry.rev,
-    contentHash: entry.content_hash,
-    size: entry.size,
-    clientModified: entry.client_modified,
-    serverModified: entry.server_modified,
-    assetVersion: createAssetVersion(entry),
-    assetKey: createAssetKey(entry.name)
-  };
-}
-
-async function discoverDropboxAssets(options = {}) {
-  const dropboxClient = createDropboxClient(options.authState);
-
-  if (!dropboxClient) {
-    throw new Error('Dropbox refresh token is not configured.');
-  }
-
-  const folderPath =
-    typeof options.folderPath === 'string' ? options.folderPath : process.env.DROPBOX_ASSET_ROOT_PATH || '';
-  const entries = await listDropboxEntries(dropboxClient, folderPath);
-  const imageFiles = sortDropboxAssetFiles(entries.filter(isImageFile));
-  const unsupportedFiles = entries.filter((entry) => isFileEntry(entry) && !isImageFile(entry));
-  const folders = entries.filter(isFolderEntry);
-
-  return {
-    folderPath,
-    recursive: true,
-    supportedExtensions: Array.from(IMAGE_EXTENSIONS).sort(),
-    counts: {
-      totalEntries: entries.length,
-      folders: folders.length,
-      files: imageFiles.length + unsupportedFiles.length,
-      images: imageFiles.length,
-      unsupportedFiles: unsupportedFiles.length
-    },
-    images: imageFiles.map(toDiscoveryFile),
-    folders: folders.map((entry) => ({
-      name: entry.name,
-      path: entry.path_display
-    })),
-    unsupportedFiles: unsupportedFiles.map(toDiscoveryFile)
-  };
-}
-
-async function downloadDropboxFile(dropboxClient, dropboxPath, localPath) {
-  await dropboxClient.auth.checkAndRefreshAccessToken();
-  const token = dropboxClient.auth.getAccessToken();
-
-  if (!token) {
-    throw new Error('Dropbox access token unavailable after refresh attempt.');
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DROPBOX_FETCH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
-      },
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      throw new Error(`Dropbox download failed (${response.status}): ${body.slice(0, 200)}`);
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    await fs.writeFile(localPath, buffer);
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-async function fetchDropboxFile(dropboxClient, dropboxPath) {
-  await dropboxClient.auth.checkAndRefreshAccessToken();
-  const token = dropboxClient.auth.getAccessToken();
-
-  if (!token) {
-    throw new Error('Dropbox access token unavailable after refresh attempt.');
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DROPBOX_FETCH_TIMEOUT_MS);
-
-  let response;
-  try {
-    response = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Dropbox-API-Arg': JSON.stringify({ path: dropboxPath })
-      },
-      signal: controller.signal
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`Dropbox download failed (${response.status}): ${body.slice(0, 200)}`);
-  }
-
-  return response;
-}
-
-function createRuntimeAssetMap(files) {
-  const assetMap = {};
-
-  for (const file of files) {
-    const assetKey = getUniqueAssetKey(assetMap, createAssetKey(file.name));
-    const ext = path.extname(file.name).toLowerCase();
-    const assetVersion = createAssetVersion(file);
-
-    assetMap[assetKey] = {
-      url: versionAssetUrl(`/api/assets/${assetKey}`, assetVersion),
-      name: file.name,
-      dropboxPath: file.path_display,
-      rev: file.rev,
-      contentHash: file.content_hash,
-      size: file.size,
-      assetVersion,
-      extension: ext,
-      clientModified: file.client_modified,
-      serverModified: file.server_modified,
-      source: 'dropbox-runtime'
-    };
-  }
-
-  return assetMap;
-}
-
-async function discoverDropboxAssetMap(options = {}) {
-  const dropboxClient = createDropboxClient(options.authState);
-
-  if (!dropboxClient) {
-    throw new Error(
-      'Dropbox refresh token is not configured. Set DROPBOX_REFRESH_TOKEN in .env to enable asset discovery.'
-    );
-  }
-
-  const folderPath = process.env.DROPBOX_ASSET_ROOT_PATH || '';
-
-  console.log('[assets] Discovering asset metadata from Dropbox...');
-
-  const files = sortDropboxAssetFiles(await listDropboxFiles(dropboxClient, folderPath));
-  const assetMap = createRuntimeAssetMap(files);
-
-  console.log(`[assets] Discovered ${files.length} image file(s) in Dropbox.`);
-
-  return { assetMap, source: 'dropbox-runtime' };
-}
-
-async function syncDropboxAssets(options = {}) {
-  const dropboxClient = createDropboxClient(options.authState);
-
-  if (!dropboxClient) {
-    throw new Error(
-      'Dropbox refresh token is not configured. Set DROPBOX_REFRESH_TOKEN in .env to enable asset sync.'
-    );
-  }
-
-  const folderPath = process.env.DROPBOX_ASSET_ROOT_PATH || '';
-
-  console.log('[sync] Starting asset sync from Dropbox...');
-
-  const files = sortDropboxAssetFiles(await listDropboxFiles(dropboxClient, folderPath));
-
-  console.log(`[sync] Found ${files.length} image file(s) in Dropbox.`);
-
-  let existingManifest = null;
-
-  try {
-    existingManifest = await readDiskManifest();
-  } catch (_) {
-    // First run — no existing manifest
-  }
-
-  await fs.mkdir(GENERATED_ASSETS_DIR, { recursive: true });
-
-  const assetMap = {};
-  let downloaded = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  for (const file of files) {
-    const assetKey = getUniqueAssetKey(assetMap, createAssetKey(file.name));
-    const ext = path.extname(file.name).toLowerCase();
-    const localFilename = assetKey + ext;
-    const localPath = path.join(GENERATED_ASSETS_DIR, localFilename);
-    const assetVersion = createAssetVersion(file);
-    const localUrl = versionAssetUrl(`/assets/generated/${localFilename}`, assetVersion);
-
-    // Skip only when Dropbox metadata still describes the same file content.
-    const existingAsset = existingManifest?.assets?.[assetKey];
-    if (hasSameAssetVersion(existingAsset, file)) {
-      try {
-        await fs.access(localPath);
-        console.log(`[sync] ${localFilename} — metadata match, skipped`);
-        assetMap[assetKey] = {
-          ...existingAsset,
-          url: localUrl,
-          name: file.name,
-          localPath: localFilename,
-          dropboxPath: file.path_display,
-          rev: file.rev,
-          contentHash: file.content_hash,
-          size: file.size,
-          assetVersion,
-          clientModified: file.client_modified,
-          serverModified: file.server_modified,
-          source: 'dropbox'
-        };
-        skipped += 1;
-        continue;
-      } catch (_) {
-        // File missing locally despite manifest — fall through to download
-      }
-    }
-
-    const sizeKb = (file.size / 1024).toFixed(0);
-
-    console.log(`[sync] Downloading ${localFilename} (${sizeKb} KB)...`);
-
-    const startMs = Date.now();
-
-    try {
-      await downloadDropboxFile(dropboxClient, file.path_lower || file.path_display, localPath);
-      console.log(`[sync] Downloaded ${localFilename} in ${Date.now() - startMs}ms`);
-      downloaded += 1;
-    } catch (error) {
-      console.error(`[sync] ERROR: failed to download ${localFilename}: ${error.message}`);
-      failed += 1;
-      continue;
-    }
-
-    assetMap[assetKey] = {
-      url: localUrl,
-      name: file.name,
-      localPath: localFilename,
-      dropboxPath: file.path_display,
-      rev: file.rev,
-      contentHash: file.content_hash,
-      size: file.size,
-      assetVersion,
-      clientModified: file.client_modified,
-      serverModified: file.server_modified,
-      source: 'dropbox'
-    };
-  }
-
-  console.log(
-    `[sync] Sync complete: ${downloaded} downloaded, ${skipped} skipped, ${failed} failed.`
-  );
-
-  return { assetMap, source: 'dropbox' };
-}
-
-async function syncDropboxAssetsToDisk(options = {}) {
-  const { assetMap, source } = await syncDropboxAssets(options);
-  const manifest = createAssetManifest(assetMap, source);
-
-  await writeDiskManifest(manifest);
-
-  return manifest;
-}
-
-async function rebuildAssetMap(options = {}) {
-  const { reason = 'Asset refresh', allowFallback = false } = options;
-
-  if (pendingAssetMapRefresh) {
-    return pendingAssetMapRefresh;
-  }
-
-  console.log(`[assets] ${reason} started.`);
-  setLoadStarted();
-
-  pendingAssetMapRefresh = (async () => {
-    try {
-      const { assetMap, source } = isProductionAssetMode()
-        ? await syncDropboxAssets()
-        : await discoverDropboxAssetMap();
-      const manifest = createAssetManifest(assetMap, source);
-
-      setLoadSucceeded(manifest);
-      assetMapState.diskManifestLoaded = false;
-      logAssetMapSuccess(reason, source, assetMap);
-
-      if (isProductionAssetMode()) {
-        try {
-          await writeDiskManifest(manifest);
-        } catch (error) {
-          console.error(`[assets] Failed to persist asset manifest: ${getErrorSummary(error).message}`);
-        }
-      }
-
-      return assetMap;
-    } catch (error) {
-      logAssetMapFailure(reason, error);
-
-      if (allowFallback) {
-        try {
-          const diskManifest = await readDiskManifest();
-
-          diskManifest.source = 'disk';
-          setLoadSucceeded(diskManifest);
-          assetMapState.diskManifestLoaded = true;
-          assetMapState.lastError = getErrorSummary(error);
-          logAssetMapSuccess(`${reason} fallback`, 'disk', diskManifest.assets);
-
-          return diskManifest.assets;
-        } catch (diskError) {
-          assetMapState.diskManifestLoaded = false;
-          console.error(
-            `[assets] Disk manifest fallback unavailable: ${getErrorSummary(diskError).message}`
-          );
-        }
-
-        // No local assets available — fail with clear message
-        const noAssetsError = new Error(
-          isProductionAssetMode()
-            ? 'No local assets available. Run asset sync with a valid DROPBOX_REFRESH_TOKEN to populate public/assets/generated/.'
-            : 'No Dropbox asset metadata available. Set DROPBOX_REFRESH_TOKEN in .env to enable runtime asset discovery.'
-        );
-
-        setLoadFailed(noAssetsError);
-        throw noAssetsError;
-      }
-
-      setLoadFailed(error);
-      throw error;
-    }
-  })()
-    .finally(() => {
-      pendingAssetMapRefresh = null;
-    });
-
-  return pendingAssetMapRefresh;
 }
 
 async function preloadAssetMap() {
   assetMapState.preloadAttempted = true;
+  markLoadStarted();
 
   try {
-    return await rebuildAssetMap({
-      reason: 'Startup asset preload',
-      allowFallback: true
-    });
+    const diskManifest = await getCachedManifest({ forceDisk: true });
+    markLoadSucceeded(diskManifest, 'disk');
   } catch (error) {
-    setLoadFailed(error);
-    return cachedAssetMap;
-  }
-}
-
-async function getAssetMap() {
-  if (!cachedAssetMap) {
-    throw new AssetMapNotReadyError();
+    markLoadFailed(error);
   }
 
-  return cachedAssetMap;
-}
-
-async function getAssetManifest() {
-  if (!cachedManifest) {
-    throw new AssetMapNotReadyError('Asset manifest is not ready.');
+  const syncConfig = getSyncConfig();
+  if (syncConfig.enabled && syncConfig.onBoot && isR2Configured()) {
+    try {
+      const report = await executeAssetSync({ reason: 'startup-sync' });
+      const manifest = await getCachedManifest({ forceDisk: true });
+      markLoadSucceeded(manifest, report.plan?.source || manifest.source);
+      return manifest.assets;
+    } catch (error) {
+      markLoadFailed(error);
+      console.error(`[assets] Startup asset sync failed: ${getErrorSummary(error).message}`);
+    }
   }
 
-  return cachedManifest;
+  const manifest = await getCachedManifest();
+  if (manifest) {
+    markLoadSucceeded(manifest, manifest.source);
+    return manifest.assets;
+  }
+
+  throw new AssetMapNotReadyError('Asset manifest is not ready.');
 }
 
 async function refreshAssetMap(options = {}) {
-  return rebuildAssetMap({
+  markLoadStarted();
+  try {
+    const report = await executeAssetSync({
+      ...options,
+      reason: options.reason || 'manual-refresh',
+      requireFreshPlan: options.requireFreshPlan
+    });
+    const manifest = await getCachedManifest({ forceDisk: true });
+    markLoadSucceeded(manifest, manifest.source);
+    return { manifest, report };
+  } catch (error) {
+    markLoadFailed(error);
+    throw error;
+  }
+}
+
+async function planAssetSync(options = {}) {
+  const plan = await buildAssetSyncPlan(options);
+  if (options.record !== false) {
+    await recordDryRun(plan, { source: options.source || 'internal' });
+  }
+  return plan;
+}
+
+async function runManualAssetSync(options = {}) {
+  return refreshAssetMap({
     ...options,
-    reason: options.reason || 'Manual asset refresh',
-    allowFallback: false
+    reason: 'manual-sync-endpoint',
+    requireFreshPlan: true
   });
 }
 
-async function getAssetUrl(assetKey) {
-  const assetMap = await getAssetMap();
-  const asset = assetMap[assetKey];
-
-  if (!asset) {
-    return null;
+async function syncDropboxAssetsAndPersist(options = {}) {
+  if (options.dryRun) {
+    return planAssetSync({ ...options, record: true, source: options.source || 'cli' });
   }
+  const { manifest, report } = await refreshAssetMap({
+    ...options,
+    reason: 'cli-sync',
+    requireFreshPlan: true
+  });
+  return { ...manifest, report };
+}
 
-  return asset.url;
+async function syncDropboxAssets(options = {}) {
+  return syncDropboxAssetsAndPersist(options);
+}
+
+async function syncDropboxAssetsToDisk(options = {}) {
+  return syncDropboxAssetsAndPersist(options);
+}
+
+async function syncDropboxAssetsToR2(options = {}) {
+  return syncDropboxAssetsAndPersist(options);
+}
+
+async function discoverDropboxAssets(options = {}) {
+  const folderPath =
+    typeof options.folderPath === 'string' ? options.folderPath : process.env.DROPBOX_LATEST_PATH || '/latest';
+  const entries = await listFilesRecursive(folderPath, options);
+  const files = entries.filter((entry) => entry?.['.tag'] === 'file');
+
+  return {
+    folderPath,
+    recursive: true,
+    supportedExtensions: Object.keys(require('./assetClassifier').SUPPORTED_ASSET_TYPES).sort(),
+    counts: {
+      totalEntries: entries.length,
+      files: files.length,
+      supportedFiles: files.filter((entry) => isSupportedAsset(entry.name)).length,
+      unsupportedFiles: files.filter((entry) => !isSupportedAsset(entry.name)).length
+    },
+    files: files.map((entry) => ({
+      name: entry.name,
+      path: entry.path_display,
+      extension: path.extname(entry.name).toLowerCase(),
+      supported: isSupportedAsset(entry.name),
+      assetKey: getAssetKey(entry.name),
+      size: entry.size,
+      rev: entry.rev,
+      contentHash: entry.content_hash
+    }))
+  };
 }
 
 async function streamDropboxAsset(assetKey, res) {
   const assetMap = await getAssetMap();
   const asset = assetMap[assetKey];
-
-  if (!asset) {
-    throw new AssetNotFoundError();
-  }
-
-  if (!asset.dropboxPath) {
-    throw new Error(`Asset ${assetKey} does not include a Dropbox path.`);
-  }
+  if (!asset) throw new AssetNotFoundError();
+  if (!asset.dropboxPath) throw new Error(`Asset ${assetKey} does not include a Dropbox path.`);
 
   const dropboxClient = createDropboxClient();
+  if (!dropboxClient) throw new Error('Dropbox refresh token is not configured.');
 
-  if (!dropboxClient) {
-    throw new Error('Dropbox refresh token is not configured.');
-  }
-
-  const response = await fetchDropboxFile(dropboxClient, asset.dropboxPath);
-  const responseContentType = response.headers.get('content-type');
-  const inferredContentType = IMAGE_CONTENT_TYPES[asset.extension || path.extname(asset.name).toLowerCase()];
-  const contentType =
-    responseContentType && responseContentType !== 'application/octet-stream'
-      ? responseContentType
-      : inferredContentType || 'application/octet-stream';
-  const contentLength = response.headers.get('content-length') || asset.size;
+  const buffer = await downloadDropboxFile(asset.dropboxPath, { dropboxClient });
+  const contentType = asset.contentType || getContentType(asset.name || asset.extension);
 
   res.set('Content-Type', contentType);
   res.set('Cache-Control', `public, max-age=${DEV_ASSET_CACHE_SECONDS}, stale-while-revalidate=60`);
+  if (asset.rev) res.set('ETag', `"dropbox-${asset.rev}"`);
+  res.set('Content-Length', String(buffer.length));
+  return res.end(buffer);
+}
 
-  if (asset.rev) {
-    res.set('ETag', `"dropbox-${asset.rev}"`);
-  }
+function startAssetPoller() {
+  return startAssetScheduler();
+}
 
-  if (contentLength) {
-    res.set('Content-Length', String(contentLength));
-  }
-
-  if (!response.body) {
-    return res.end();
-  }
-
-  const { Readable } = require('stream');
-  const readable = Readable.fromWeb(response.body);
-
-  readable.on('error', (err) => {
-    console.error(`[assets] Stream error for ${assetKey}: ${err.message}`);
-    if (!res.headersSent) {
-      res.status(500).end();
-    } else {
-      res.destroy();
-    }
-  });
-
-  return readable.pipe(res);
+function stopAssetPoller() {
+  return stopAssetScheduler();
 }
 
 module.exports = {
   AssetNotFoundError,
   AssetMapNotReadyError,
+  createAssetKey: getAssetKey,
   discoverDropboxAssets,
   getAssetManifest,
   getAssetServiceStatus,
   getAssetMap,
   getAssetUrl,
+  getSetupStatus,
+  isR2AssetMode,
   isProductionAssetMode,
+  planAssetSync,
   preloadAssetMap,
   refreshAssetMap,
+  runManualAssetSync,
+  startAssetPoller,
+  stopAssetPoller,
   streamDropboxAsset,
   syncDropboxAssets,
-  syncDropboxAssetsToDisk
+  syncDropboxAssetsAndPersist,
+  syncDropboxAssetsToDisk,
+  syncDropboxAssetsToR2
 };

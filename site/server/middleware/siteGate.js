@@ -65,7 +65,22 @@ function findAccount(username, password) {
 function gateAssets(req, res, next) {
   if (!isGateEnabled()) return next();
   if (req.session?.siteAuth?.authed) return next();
-  if (req.path === '/logo' || req.path === '/logo-mark') return next();
+
+  const pathSegments = req.path.split('/').filter(Boolean);
+  const hasAdminBearer = /^Bearer\s+\S+/i.test(req.get('Authorization') || '');
+  const isProtectedAdminRoute =
+    req.path === '/refresh' ||
+    req.path === '/setup-status' ||
+    req.path.startsWith('/sync/');
+  const isPublicManifestRoute = req.method === 'GET' && (req.path === '/' || req.path === '/manifest');
+  const isPublicAssetRedirect =
+    req.method === 'GET' &&
+    pathSegments.length === 1 &&
+    !['refresh', 'setup-status', 'sync', 'discover'].includes(pathSegments[0]);
+
+  if (isPublicManifestRoute || isPublicAssetRedirect) return next();
+  if (isProtectedAdminRoute && hasAdminBearer) return next();
+
   return res.status(401).json({ error: 'Authentication required' });
 }
 

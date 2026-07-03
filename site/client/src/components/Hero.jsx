@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { heroPosterUrl, heroVideoUrl } from '../config/heroMedia'
+import { useAssets } from '../hooks/useAssets'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -21,13 +21,17 @@ function getSaveDataEnabled() {
 
 export default function Hero() {
   const shouldReduce = useReducedMotion()
+  const resolveAsset = useAssets()
   const videoRef = useRef(null)
   const [isMobileHero, setIsMobileHero] = useState(getInitialMobileState)
   const [saveDataEnabled, setSaveDataEnabled] = useState(getSaveDataEnabled)
   const [videoFailed, setVideoFailed] = useState(false)
   const [hasVideoEnded, setHasVideoEnded] = useState(false)
+  const heroVideoUrl = resolveAsset('hero-home-loop-v1', '')
+  const heroPosterUrl = resolveAsset('hero-home-poster-v1', 'hero-bg')
 
-  const canUseVideo = !isMobileHero && !shouldReduce && !saveDataEnabled && !videoFailed
+  const canUseVideo =
+    Boolean(heroVideoUrl) && !isMobileHero && !shouldReduce && !saveDataEnabled && !videoFailed
 
   const containerVariants = shouldReduce
     ? {}

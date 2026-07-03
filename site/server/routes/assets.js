@@ -7,7 +7,11 @@ const {
   getAssetMap,
   getAssetServiceStatus,
   getAssetUrl,
+  getSetupStatus,
+  isR2AssetMode,
   isProductionAssetMode,
+  planAssetSync,
+  runManualAssetSync,
   streamDropboxAsset,
   refreshAssetMap
 } = require('../services/dropbox');
@@ -38,14 +42,42 @@ function getSessionAuthState(req) {
   };
 }
 
+function requireSyncAdmin(req, res, next) {
+  const expectedToken = process.env.ASSET_SYNC_ADMIN_TOKEN;
+  const header = req.get('Authorization') || '';
+  const token = header.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
+
+  if (!expectedToken) {
+    return res.status(503).json({ error: 'Asset sync admin token is not configured.' });
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing bearer token.' });
+  }
+
+  if (token !== expectedToken) {
+    return res.status(403).json({ error: 'Invalid bearer token.' });
+  }
+
+  return next();
+}
+
 router.get('/', async (req, res) => {
   try {
-    const assets = await getAssetMap();
+    const manifest = await getAssetManifest();
 
-    return res.json({ assets });
+    res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+    return res.json(manifest);
   } catch (error) {
     console.error('GET /api/assets error:', error);
-    return sendAssetError(res, error, 'Failed to load assets.');
+    res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
+    return res.json({
+      generatedAt: null,
+      source: 'empty',
+      assetCount: 0,
+      assets: {},
+      byCategory: {}
+    });
   }
 });
 
@@ -71,18 +103,61 @@ async function handleRefreshAssetMap(req, res) {
     console.error(`${req.method} /api/assets/refresh error:`, error);
     try {
       const currentManifest = await getAssetManifest();
-      return res.status(500).json({ error: 'Failed to refresh assets.', currentManifest });
+      return res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to refresh assets.',
+        code: error.code || 'ASSET_REFRESH_FAILED',
+        details: error.details || null,
+        currentManifest
+      });
     } catch (_) {
-      return res.status(500).json({ error: 'Failed to refresh assets.' });
+      return res.status(error.statusCode || 500).json({
+        error: error.message || 'Failed to refresh assets.',
+        code: error.code || 'ASSET_REFRESH_FAILED',
+        details: error.details || null
+      });
     }
   }
 }
 
-router.get('/refresh', handleRefreshAssetMap);
-router.post('/refresh', handleRefreshAssetMap);
+router.get('/refresh', requireSyncAdmin, handleRefreshAssetMap);
+router.post('/refresh', requireSyncAdmin, handleRefreshAssetMap);
 
 router.get('/status', (req, res) => {
   return res.json(getAssetServiceStatus());
+});
+
+router.get('/setup-status', requireSyncAdmin, async (req, res) => {
+  try {
+    const manifest = await getAssetManifest().catch(() => null);
+    return res.json(getSetupStatus(manifest));
+  } catch (error) {
+    console.error('GET /api/assets/setup-status error:', error);
+    return res.status(500).json({ error: 'Failed to load setup status.' });
+  }
+});
+
+router.get('/sync/plan', requireSyncAdmin, async (req, res) => {
+  try {
+    const plan = await planAssetSync({ record: true, source: 'api' });
+    return res.status(plan.ok ? 200 : 400).json(plan);
+  } catch (error) {
+    console.error('GET /api/assets/sync/plan error:', error);
+    return res.status(500).json({ error: 'Failed to build asset sync plan.' });
+  }
+});
+
+router.post('/sync', requireSyncAdmin, async (req, res) => {
+  try {
+    const { report } = await runManualAssetSync();
+    return res.status(report.ok ? 200 : 207).json(report);
+  } catch (error) {
+    console.error('POST /api/assets/sync error:', error);
+    return res.status(error.statusCode || 500).json({
+      error: error.message || 'Failed to run asset sync.',
+      code: error.code || 'ASSET_SYNC_FAILED',
+      details: error.details || null
+    });
+  }
 });
 
 router.get('/discover', async (req, res) => {
@@ -105,7 +180,7 @@ router.get('/discover', async (req, res) => {
 
 router.get('/:assetKey', async (req, res) => {
   try {
-    if (!isProductionAssetMode()) {
+    if (!isProductionAssetMode() && !isR2AssetMode()) {
       return await streamDropboxAsset(req.params.assetKey, res);
     }
 
