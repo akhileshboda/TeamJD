@@ -30,6 +30,11 @@ const {
   verifyR2Bucket
 } = require('./r2');
 const {
+  getOptimizedAssetInfo,
+  getOptimizedAssetVersion,
+  optimizeAssetBuffer
+} = require('./assetOptimizer');
+const {
   createAssetManifest,
   readDiskManifest,
   writeDiskManifest
@@ -68,6 +73,7 @@ function getSyncStatePath() {
 function getSyncConfig() {
   return {
     enabled: process.env.ASSET_SYNC_ENABLED !== 'false',
+    autoSyncEnabled: process.env.ASSET_AUTO_SYNC_ENABLED !== 'false',
     onBoot: process.env.ASSET_SYNC_ON_BOOT !== 'false',
     cron: process.env.ASSET_SYNC_CRON || DEFAULT_CRON,
     adminTokenConfigured: Boolean(process.env.ASSET_SYNC_ADMIN_TOKEN),
@@ -346,6 +352,9 @@ function createPlanFingerprint(plan) {
       contentHash: item.contentHash,
       dropboxDestination: item.dropboxDestination,
       r2ObjectKey: item.r2ObjectKey,
+      assetVersion: item.assetVersion,
+      optimizerVersion: item.optimizerVersion,
+      contentType: item.contentType,
       action: item.action
     })),
     deletes: plan.staleR2Deletes.map((item) => ({
@@ -372,6 +381,12 @@ function addManifestAsset(assetMap, item, overrides = {}) {
     dropboxPath: item.dropboxDestination,
     originalDropboxPath: item.source,
     contentType: item.contentType,
+    optimized: Boolean(item.optimized),
+    originalName: item.originalName || item.normalizedName,
+    originalContentType: item.originalContentType || item.contentType,
+    originalSize: item.originalSize ?? item.size ?? null,
+    optimizedSize: item.optimizedSize ?? null,
+    optimizerVersion: item.optimizerVersion || null,
     width: null,
     height: null,
     updatedAt: overrides.updatedAt || nowIso(),
@@ -379,6 +394,7 @@ function addManifestAsset(assetMap, item, overrides = {}) {
     contentHash: item.contentHash || null,
     size: item.size || null,
     assetVersion: item.assetVersion || null,
+    dropboxAssetVersion: item.dropboxAssetVersion || null,
     extension: item.extension,
     source: 'dropbox-latest-to-r2',
     ...overrides
@@ -391,13 +407,21 @@ function getExistingAssetFromManifest(manifest, assetKey) {
 
 function sameVersion(asset, fileInfo) {
   if (!asset) return false;
+  if (asset.dropboxAssetVersion && fileInfo.assetVersion) return asset.dropboxAssetVersion === fileInfo.assetVersion;
   if (asset.assetVersion && fileInfo.assetVersion) return asset.assetVersion === fileInfo.assetVersion;
   if (asset.rev && fileInfo.rev) return asset.rev === fileInfo.rev;
   return asset.size === fileInfo.size && asset.serverModified === fileInfo.serverModified;
 }
 
-function getOrganizedAssetSyncAction(existingAsset, fileInfo, r2ObjectExists) {
-  return sameVersion(existingAsset, fileInfo) && r2ObjectExists ? 'skip-unchanged' : 'upload-existing-to-r2';
+function getOrganizedAssetSyncAction(existingAsset, fileInfo, r2ObjectExists, plannedItem = {}) {
+  const sameDropboxVersion = sameVersion(existingAsset, fileInfo);
+  const sameOptimizedVersion =
+    !plannedItem.optimizerVersion || existingAsset?.optimizerVersion === plannedItem.optimizerVersion;
+  const sameR2Object = !plannedItem.r2ObjectKey || existingAsset?.r2ObjectKey === plannedItem.r2ObjectKey;
+
+  return sameDropboxVersion && sameOptimizedVersion && sameR2Object && r2ObjectExists
+    ? 'skip-unchanged'
+    : 'upload-existing-to-r2';
 }
 
 function isDropboxNotFoundError(error) {
@@ -509,6 +533,53 @@ function getCleanupRetryItems(syncState, existingManifest, assetPrefix) {
   }
 
   return items.sort((a, b) => a.source.localeCompare(b.source));
+}
+
+function createAssetSyncPlanItem({
+  file,
+  source,
+  category,
+  normalizedName,
+  dropboxDestination,
+  assetKey,
+  action,
+  assetPrefix,
+  sourceKind = null
+}) {
+  const transferInfo = getOptimizedAssetInfo(normalizedName, {
+    originalSize: file.size ?? null
+  });
+  const r2ObjectKey = createR2ObjectKey({
+    assetPrefix,
+    category,
+    fileName: transferInfo.fileName
+  });
+  const assetVersion = getOptimizedAssetVersion(file.assetVersion, transferInfo);
+
+  return {
+    source,
+    category,
+    normalizedName: transferInfo.fileName,
+    originalName: transferInfo.originalName,
+    originalContentType: transferInfo.originalContentType,
+    originalSize: transferInfo.originalSize,
+    optimized: transferInfo.optimized,
+    optimizedSize: transferInfo.optimizedSize,
+    optimizerVersion: transferInfo.optimizerVersion,
+    dropboxDestination,
+    r2ObjectKey,
+    assetKey,
+    contentType: transferInfo.contentType,
+    action,
+    rev: file.rev,
+    contentHash: file.contentHash,
+    size: file.size,
+    dropboxAssetVersion: file.assetVersion,
+    assetVersion,
+    extension: transferInfo.extension,
+    url: getPublicR2Url(r2ObjectKey, assetVersion),
+    sourceKind
+  };
 }
 
 async function listLegacyManifestFiles(dropboxClient, existingManifest, syncConfig, knownDropboxPaths) {
@@ -687,55 +758,29 @@ async function buildAssetSyncPlan(options = {}) {
     });
     const normalizedName = file.name.toLowerCase();
     const assetKey = getAssetKey(normalizedName);
-    const r2ObjectKey = createR2ObjectKey({ assetPrefix, category, fileName: normalizedName });
-    const existingAsset = getExistingAssetFromManifest(existingManifest, assetKey);
-    const r2ObjectExists = r2Keys.includes(r2ObjectKey);
-    const action = getOrganizedAssetSyncAction(existingAsset, file, r2ObjectExists);
-
-    seenR2Keys.add(r2ObjectKey);
-    addManifestAsset(assetMap, {
-      ...file,
+    const baseItem = createAssetSyncPlanItem({
+      file,
       source: file.dropboxPath,
       category,
       normalizedName,
       dropboxDestination: file.dropboxPath,
-      r2ObjectKey,
       assetKey,
-      url: getPublicR2Url(r2ObjectKey, file.assetVersion),
-      contentType: getContentType(normalizedName),
-      action
+      action: 'upload-existing-to-r2',
+      assetPrefix
     });
+    const existingAsset = getExistingAssetFromManifest(existingManifest, assetKey);
+    const r2ObjectExists = r2Keys.includes(baseItem.r2ObjectKey);
+    const action = options.forceUploadAll
+      ? 'upload-existing-to-r2'
+      : getOrganizedAssetSyncAction(existingAsset, file, r2ObjectExists, baseItem);
+    const item = { ...baseItem, action };
 
+    seenR2Keys.add(item.r2ObjectKey);
+    addManifestAsset(assetMap, item);
     if (action === 'skip-unchanged') {
-      addManifestAsset(baseManifestAssets, {
-        ...file,
-        source: file.dropboxPath,
-        category,
-        normalizedName,
-        dropboxDestination: file.dropboxPath,
-        r2ObjectKey,
-        assetKey,
-        url: getPublicR2Url(r2ObjectKey, file.assetVersion),
-        contentType: getContentType(normalizedName),
-        action
-      });
+      addManifestAsset(baseManifestAssets, item);
     } else {
-      planItems.push({
-        source: file.dropboxPath,
-        category,
-        normalizedName,
-        dropboxDestination: file.dropboxPath,
-        r2ObjectKey,
-        assetKey,
-        contentType: getContentType(normalizedName),
-        action,
-        rev: file.rev,
-        contentHash: file.contentHash,
-        size: file.size,
-        assetVersion: file.assetVersion,
-        extension: file.extension,
-        url: getPublicR2Url(r2ObjectKey, file.assetVersion)
-      });
+      planItems.push(item);
     }
   }
 
@@ -757,32 +802,25 @@ async function buildAssetSyncPlan(options = {}) {
     const preferredAssetKey = file.legacyAssetKey || getAssetKey(normalizedName);
     const assetKey = getUniqueAssetKey(preferredAssetKey, assetMap);
     const dropboxDestination = joinDropboxPath(syncConfig.assetsRoot, category, normalizedName);
-    const r2ObjectKey = createR2ObjectKey({ assetPrefix, category, fileName: normalizedName });
-    const item = {
+    const item = createAssetSyncPlanItem({
+      file,
       source: file.dropboxPath,
       category,
       normalizedName,
       dropboxDestination,
-      r2ObjectKey,
       assetKey,
-      contentType: getContentType(normalizedName),
       action: syncConfig.reorganizeEnabled
         ? 'upload-to-r2-write-manifest-and-move-dropbox-file'
         : 'upload-to-r2-write-manifest',
-      rev: file.rev,
-      contentHash: file.contentHash,
-      size: file.size,
-      assetVersion: file.assetVersion,
-      extension: file.extension,
-      url: getPublicR2Url(r2ObjectKey, file.assetVersion),
+      assetPrefix,
       sourceKind: 'legacy-manifest'
-    };
-    seenR2Keys.add(r2ObjectKey);
+    });
+    seenR2Keys.add(item.r2ObjectKey);
     planItems.push(item);
     addManifestAsset(assetMap, item);
 
     console.log(
-      `[asset-sync] legacy-classified source="${file.dropboxPath}" category=${category} normalized=${normalizedName} r2=${r2ObjectKey}`
+      `[asset-sync] legacy-classified source="${file.dropboxPath}" category=${category} normalized=${normalizedName} r2=${item.r2ObjectKey}`
     );
   }
 
@@ -802,31 +840,24 @@ async function buildAssetSyncPlan(options = {}) {
     reservedByCategory[category].add(normalizedName.toLowerCase());
     const assetKey = getAssetKey(normalizedName);
     const dropboxDestination = joinDropboxPath(syncConfig.assetsRoot, category, normalizedName);
-    const r2ObjectKey = createR2ObjectKey({ assetPrefix, category, fileName: normalizedName });
-    const item = {
+    const item = createAssetSyncPlanItem({
+      file,
       source: file.dropboxPath,
       category,
       normalizedName,
       dropboxDestination,
-      r2ObjectKey,
       assetKey,
-      contentType: getContentType(normalizedName),
       action: syncConfig.reorganizeEnabled
         ? 'upload-to-r2-write-manifest-and-move-dropbox-file'
         : 'upload-to-r2-write-manifest',
-      rev: file.rev,
-      contentHash: file.contentHash,
-      size: file.size,
-      assetVersion: file.assetVersion,
-      extension: file.extension,
-      url: getPublicR2Url(r2ObjectKey, file.assetVersion)
-    };
-    seenR2Keys.add(r2ObjectKey);
+      assetPrefix
+    });
+    seenR2Keys.add(item.r2ObjectKey);
     planItems.push(item);
     addManifestAsset(assetMap, item);
 
     console.log(
-      `[asset-sync] classified source="${file.dropboxPath}" category=${category} normalized=${normalizedName} r2=${r2ObjectKey}`
+      `[asset-sync] classified source="${file.dropboxPath}" category=${category} normalized=${normalizedName} r2=${item.r2ObjectKey}`
     );
   }
 
@@ -861,6 +892,7 @@ async function buildAssetSyncPlan(options = {}) {
     plan: planItems,
     skipped,
     staleR2Deletes,
+    existingR2Keys: r2Keys,
     errors,
     r2Bucket: getBucketLookupDiagnostics(bucketLookup),
     manifestPreview: {
@@ -887,6 +919,48 @@ async function buildAssetSyncPlan(options = {}) {
   return plan;
 }
 
+function createRebuildPurgeDeletes(r2Keys, assetPrefix = getR2Config().assetPrefix) {
+  const normalizedPrefix = `${String(assetPrefix || '').replace(/\/+$/g, '')}/`;
+  return Array.from(new Set(r2Keys || []))
+    .filter((r2ObjectKey) => r2ObjectKey && r2ObjectKey.startsWith(normalizedPrefix))
+    .sort()
+    .map((r2ObjectKey) => ({
+      r2ObjectKey,
+      action: 'purge-r2-object-before-rebuild',
+      blocked: false,
+      reason: 'purge-site-assets-rebuild'
+    }));
+}
+
+async function buildAssetRebuildPlan(options = {}) {
+  const plan = await buildAssetSyncPlan({
+    ...options,
+    forceUploadAll: true
+  });
+  const purgeR2Deletes = createRebuildPurgeDeletes(plan.existingR2Keys || []);
+  const originalBytes = plan.plan.reduce((total, item) => total + (Number(item.originalSize ?? item.size) || 0), 0);
+
+  return {
+    ...plan,
+    rebuild: true,
+    purgeFirst: true,
+    purgeR2Deletes,
+    sizeSummary: {
+      originalBytes,
+      optimizedBytes: null,
+      estimatedSavingsBytes: null,
+      note: 'Optimized byte totals are known after the real rebuild downloads and compresses Dropbox assets.'
+    },
+    counts: {
+      ...plan.counts,
+      purgeDeletes: purgeR2Deletes.length
+    },
+    warnings: [
+      'Real rebuild deletes existing R2 site-assets objects before uploading replacements. Public asset URLs may be broken until the rebuild completes.'
+    ]
+  };
+}
+
 async function recordDryRun(plan, options = {}) {
   const state = await readSyncState();
   return writeSyncState({
@@ -910,6 +984,35 @@ async function runTrustedAssetSync(options = {}) {
     approvedDryRunSources: [source],
     reason: options.reason || `${source}-sync`
   });
+}
+
+async function runAssetRebuild(options = {}) {
+  if (!options.dryRun && options.confirm !== 'PURGE_SITE_ASSETS') {
+    throw createExecutionError('Asset rebuild requires --confirm PURGE_SITE_ASSETS before deleting R2 site-assets objects.', {
+      code: 'ASSET_REBUILD_CONFIRMATION_REQUIRED',
+      statusCode: 409
+    });
+  }
+
+  const plan = options.plan || await buildAssetRebuildPlan(options);
+
+  if (options.dryRun) {
+    return { plan };
+  }
+
+  await recordDryRun(plan, { source: 'rebuild' });
+  const report = await executeAssetSync({
+    ...options,
+    plan,
+    source: 'rebuild',
+    reason: 'rebuild-assets',
+    requireFreshPlan: false,
+    approvedDryRunSources: ['rebuild'],
+    purgeFirst: true,
+    failOnUploadErrorsBeforeManifest: true
+  });
+
+  return { plan, report };
 }
 
 function createExecutionError(message, details = {}) {
@@ -980,6 +1083,14 @@ async function executeAssetSync(options = {}) {
 
     console.log(`[asset-sync] sync-start fingerprint=${plan.fingerprint} planned=${plan.plan.length}`);
 
+    if (options.purgeFirst) {
+      for (const purge of plan.purgeR2Deletes || []) {
+        await deleteR2Object(purge.r2ObjectKey);
+        deletedFromR2 += 1;
+        console.log(`[asset-sync] r2-purged key=${purge.r2ObjectKey}`);
+      }
+    }
+
     for (const item of plan.plan) {
       if (item.action === 'skip-unchanged') {
         skippedUploads += 1;
@@ -987,6 +1098,8 @@ async function executeAssetSync(options = {}) {
       }
 
       try {
+        let completedItem = item;
+
         if (item.action === 'move-dropbox-file-cleanup') {
           if (!assetMap[item.assetKey]) {
             addManifestAsset(assetMap, item, {
@@ -1018,38 +1131,60 @@ async function executeAssetSync(options = {}) {
 
         if (shouldUpload) {
           const buffer = await downloadDropboxFile(item.source, { dropboxClient });
+          const optimizedAsset = await optimizeAssetBuffer({
+            buffer,
+            fileName: item.originalName || item.normalizedName
+          });
+          completedItem = {
+            ...item,
+            optimized: optimizedAsset.optimized,
+            originalName: optimizedAsset.originalName,
+            originalContentType: optimizedAsset.originalContentType,
+            originalSize: optimizedAsset.originalSize,
+            optimizedSize: optimizedAsset.optimizedSize,
+            optimizerVersion: optimizedAsset.optimizerVersion,
+            contentType: optimizedAsset.contentType
+          };
           await putR2Object({
-            objectKey: item.r2ObjectKey,
-            body: buffer,
-            contentType: item.contentType,
-            contentLength: buffer.length,
+            objectKey: completedItem.r2ObjectKey,
+            body: optimizedAsset.buffer,
+            contentType: completedItem.contentType,
+            contentLength: optimizedAsset.buffer.length,
             metadata: {
-              'dropbox-rev': item.rev || '',
-              'asset-version': item.assetVersion || ''
+              'dropbox-rev': completedItem.rev || '',
+              'asset-version': completedItem.assetVersion || '',
+              'dropbox-asset-version': completedItem.dropboxAssetVersion || '',
+              'optimizer-version': completedItem.optimizerVersion || '',
+              'original-name': completedItem.originalName || '',
+              'original-content-type': completedItem.originalContentType || ''
             }
           });
           uploadedToR2 += 1;
-          console.log(`[asset-sync] r2-uploaded key=${item.r2ObjectKey}`);
+          console.log(`[asset-sync] r2-uploaded key=${completedItem.r2ObjectKey}`);
         } else {
           skippedUploads += 1;
         }
 
-        addManifestAsset(assetMap, item, {
+        addManifestAsset(assetMap, completedItem, {
           updatedAt: nowIso()
         });
-        uploadedItems.push(item);
-        fileStates[item.source] = {
-          originalDropboxPath: item.source,
-          organizedDropboxPath: item.dropboxDestination,
-          category: item.category,
-          assetKey: item.assetKey,
-          r2ObjectKey: item.r2ObjectKey,
-          url: item.url,
-          dropboxMoveStatus: item.source === item.dropboxDestination ? 'not-required' : 'pending',
+        uploadedItems.push(completedItem);
+        fileStates[completedItem.source] = {
+          originalDropboxPath: completedItem.source,
+          organizedDropboxPath: completedItem.dropboxDestination,
+          category: completedItem.category,
+          assetKey: completedItem.assetKey,
+          r2ObjectKey: completedItem.r2ObjectKey,
+          url: completedItem.url,
+          dropboxMoveStatus: completedItem.source === completedItem.dropboxDestination ? 'not-required' : 'pending',
           r2UploadStatus: shouldUpload ? 'uploaded' : 'skipped',
           manifestStatus: 'pending',
-          contentHash: item.contentHash,
-          rev: item.rev,
+          contentHash: completedItem.contentHash,
+          rev: completedItem.rev,
+          optimized: completedItem.optimized,
+          originalSize: completedItem.originalSize,
+          optimizedSize: completedItem.optimizedSize,
+          optimizerVersion: completedItem.optimizerVersion,
           processedAt: nowIso()
         };
       } catch (error) {
@@ -1069,6 +1204,18 @@ async function executeAssetSync(options = {}) {
         };
         console.error(`[asset-sync] r2-upload-failed key=${item.r2ObjectKey} error="${getErrorSummary(error).message}"`);
       }
+    }
+
+    if (options.failOnUploadErrorsBeforeManifest && failedItems.length) {
+      throw createExecutionError('Asset rebuild failed after R2 purge; manifest was not rewritten.', {
+        code: 'ASSET_REBUILD_UPLOAD_FAILED',
+        statusCode: 500,
+        failedItems: failedItems.map(({ item, error }) => ({
+          source: item.source,
+          r2ObjectKey: item.r2ObjectKey,
+          error
+        }))
+      });
     }
 
     const manifest = createAssetManifest(assetMap, 'dropbox-latest-to-r2');
@@ -1311,6 +1458,7 @@ function getSetupStatus(manifest = cachedManifest) {
     },
     sync: {
       enabled: syncConfig.enabled,
+      autoSyncEnabled: syncConfig.autoSyncEnabled,
       onBoot: syncConfig.onBoot,
       cron: syncConfig.cron,
       running: syncInProgress,
@@ -1394,7 +1542,21 @@ function startAssetScheduler() {
   schedulerState.cron = syncConfig.cron;
   schedulerState.watchedPaths = getWatchedDropboxPaths(syncConfig).map((watchedPath) => watchedPath.path);
 
-  if (!syncConfig.enabled || !isR2Configured()) {
+  if (!syncConfig.enabled) {
+    schedulerState.enabled = false;
+    schedulerState.lastSkippedReason = 'config-or-env';
+    console.warn('[asset-sync] scheduler-disabled reason=config-or-env');
+    return null;
+  }
+
+  if (!syncConfig.autoSyncEnabled) {
+    schedulerState.enabled = false;
+    schedulerState.lastSkippedReason = 'auto-sync-disabled';
+    console.warn('[asset-sync] scheduler-disabled reason=auto-sync-disabled');
+    return null;
+  }
+
+  if (!isR2Configured()) {
     schedulerState.enabled = false;
     schedulerState.lastSkippedReason = 'config-or-env';
     console.warn('[asset-sync] scheduler-disabled reason=config-or-env');
@@ -1430,12 +1592,15 @@ function stopAssetScheduler() {
 
 module.exports = {
   SYNC_STATE_PATH: DEFAULT_SYNC_STATE_PATH,
+  buildAssetRebuildPlan,
   buildAssetSyncPlan,
   checkDropboxManagedChanges,
   checkDropboxLatestChanges,
   checkDropboxPathChanges,
+  createAssetSyncPlanItem,
   createDropboxClient,
   createPlanFingerprint,
+  createRebuildPurgeDeletes,
   downloadDropboxFile,
   ensureDropboxFolder,
   executeAssetSync,
@@ -1459,6 +1624,7 @@ module.exports = {
   readSyncState,
   recordDryRun,
   runScheduledAssetSync,
+  runAssetRebuild,
   runTrustedAssetSync,
   sanitizeErrorMessage,
   setCachedManifest,

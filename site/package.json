@@ -12,6 +12,8 @@
     "build": "cd client && npm run build",
     "sync-assets": "node server/sync-assets.js",
     "sync-assets:dry-run": "node server/sync-assets.js --dry-run",
+    "rebuild-assets": "node server/rebuild-assets.js",
+    "rebuild-assets:dry-run": "node server/rebuild-assets.js --dry-run",
     "test": "node --test",
     "deploy:pi": "bash server/deploy-pi.sh",
     "deploy:pi:production": "DEPLOY_ENV=production bash server/deploy-pi.sh",
@@ -30,7 +32,8 @@
     "dropbox": "^10.34.0",
     "express": "^4.21.2",
     "express-session": "^1.18.1",
-    "node-cron": "^4.5.0"
+    "node-cron": "^4.5.0",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

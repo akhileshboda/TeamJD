@@ -45,9 +45,14 @@ R2_PUBLIC_BASE_URL=https://jake-site-assets.akhileshboda.com
 R2_ASSET_PREFIX=site-assets
 
 ASSET_SYNC_ENABLED=true
+ASSET_AUTO_SYNC_ENABLED=true
 ASSET_SYNC_ON_BOOT=true
 ASSET_SYNC_CRON=*/15 * * * *
 ASSET_SYNC_ADMIN_TOKEN=replace-with-a-long-random-secret
+ASSET_OPTIMIZE_IMAGES=true
+ASSET_OPTIMIZER_FORMAT=webp
+ASSET_OPTIMIZER_QUALITY=82
+ASSET_OPTIMIZER_MAX_WIDTH=2400
 
 DROPBOX_LATEST_PATH=/latest
 DROPBOX_ASSETS_ROOT=/assets
@@ -121,6 +126,18 @@ curl -I https://jake-site-assets.akhileshboda.com/site-assets/home/home-hero-jak
 
 A correct response should be `200 OK` with an image or video `Content-Type`.
 
+## Optimized Rebuild
+
+Raster images are converted to WebP before upload when `ASSET_OPTIMIZE_IMAGES=true`. To rebuild the R2 `site-assets/` prefix from Dropbox with optimized assets:
+
+```bash
+ASSET_AUTO_SYNC_ENABLED=false
+npm run rebuild-assets:dry-run
+npm run rebuild-assets -- --confirm PURGE_SITE_ASSETS
+```
+
+The real rebuild deletes current `site-assets/` objects before uploading replacements, so public asset URLs may be temporarily unavailable until the command completes. SVG, GIF, MP4, and WebM files are uploaded without format conversion.
+
 ## Frontend Verification
 
 Open the site in a browser and inspect the Network tab. Image and video requests should load from:
@@ -137,7 +154,14 @@ If R2 setup fails, disable scheduled sync:
 
 ```env
 ASSET_SYNC_ENABLED=false
+ASSET_AUTO_SYNC_ENABLED=false
 ASSET_SYNC_ON_BOOT=false
+```
+
+For staging environments that should keep manual sync available but avoid background Dropbox/R2 usage, leave `ASSET_SYNC_ENABLED=true` and set:
+
+```env
+ASSET_AUTO_SYNC_ENABLED=false
 ```
 
 The app will continue to serve the last known manifest when available. Existing local fallback behavior remains in place for missing manifest entries.

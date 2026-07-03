@@ -50,9 +50,14 @@ R2_PUBLIC_BASE_URL=https://jake-site-assets.akhileshboda.com
 R2_ASSET_PREFIX=site-assets
 
 ASSET_SYNC_ENABLED=true
+ASSET_AUTO_SYNC_ENABLED=true
 ASSET_SYNC_ON_BOOT=true
 ASSET_SYNC_CRON=*/15 * * * *
 ASSET_SYNC_ADMIN_TOKEN=
+ASSET_OPTIMIZE_IMAGES=true
+ASSET_OPTIMIZER_FORMAT=webp
+ASSET_OPTIMIZER_QUALITY=82
+ASSET_OPTIMIZER_MAX_WIDTH=2400
 
 DROPBOX_LATEST_PATH=/latest
 DROPBOX_ASSETS_ROOT=/assets
@@ -104,6 +109,7 @@ site-assets/video/hero-home-loop-v1.webm
 ```
 
 Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`, `.gif`, `.svg`, `.webm`, `.mp4`.
+Raster images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`) are optimized to WebP before upload when `ASSET_OPTIMIZE_IMAGES=true`. SVG, GIF, MP4, and WebM are passed through unchanged.
 
 Unsupported files remain in `/latest` and are reported as skipped.
 
@@ -161,7 +167,29 @@ npm run sync-assets:dry-run
 npm run sync-assets
 ```
 
-The dry run builds the same plan used by the protected endpoint. The real server-side sync self-primes with a fresh dry-run, then uploads changed assets, writes `data/asset-manifest.json`, and refreshes cache-busted R2 URLs. Express also runs the same trusted sync on startup when `ASSET_SYNC_ON_BOOT=true`, and periodically according to `ASSET_SYNC_CRON`.
+The dry run builds the same plan used by the protected endpoint. The real server-side sync self-primes with a fresh dry-run, then uploads changed assets, writes `data/asset-manifest.json`, and refreshes cache-busted R2 URLs. Express also runs the same trusted sync on startup when `ASSET_AUTO_SYNC_ENABLED=true` and `ASSET_SYNC_ON_BOOT=true`, and periodically according to `ASSET_SYNC_CRON` when automatic sync is enabled.
+
+## Rebuild Optimized R2 Assets
+
+To replace every object under the configured R2 `site-assets/` prefix with optimized Dropbox-sourced assets, first disable automatic sync in the target `.env`:
+
+```env
+ASSET_AUTO_SYNC_ENABLED=false
+```
+
+Preview the rebuild:
+
+```bash
+npm run rebuild-assets:dry-run
+```
+
+Run the purge-first rebuild:
+
+```bash
+npm run rebuild-assets -- --confirm PURGE_SITE_ASSETS
+```
+
+This command deletes the existing `site-assets/` R2 objects before uploading replacements. Public asset URLs can be temporarily broken until the rebuild finishes. If the upload phase fails, rerun the same command after fixing the reported source asset or configuration issue.
 
 ## Deploying to Raspberry Pi
 
@@ -188,7 +216,10 @@ Staging uses `/var/www/teamjd-staging/.env`, PM2 process `jake-site-staging`, an
 NODE_ENV=production
 PORT=3003
 HOST=localhost
+ASSET_AUTO_SYNC_ENABLED=false
 ```
+
+Keep `ASSET_AUTO_SYNC_ENABLED=false` in staging unless you are intentionally testing background Dropbox/R2 sync behavior. Manual admin API sync and `npm run sync-assets` still work with automatic sync disabled.
 
 Deploy production:
 
@@ -208,7 +239,7 @@ npm run deploy:pi:staging
 
 `npm run deploy:pi` defaults to production for backward compatibility. Override `DEPLOY_PATH` or `PM2_APP_NAME` only for custom Pi layouts.
 
-Deploys skip deploy-time asset sync so the app can restart cleanly. After PM2 starts, Express will run startup sync in the background when `ASSET_SYNC_ENABLED=true` and `ASSET_SYNC_ON_BOOT=true`. To force a protected API sync manually, run the API dry-run first, then the real sync against that target's port:
+Deploys skip deploy-time asset sync so the app can restart cleanly. After PM2 starts, Express will run startup sync in the background only when `ASSET_SYNC_ENABLED=true`, `ASSET_AUTO_SYNC_ENABLED=true`, and `ASSET_SYNC_ON_BOOT=true`. To force a protected API sync manually, run the API dry-run first, then the real sync against that target's port:
 
 ```bash
 curl -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
@@ -219,7 +250,7 @@ curl -X POST \
   http://localhost:3003/api/assets/sync
 ```
 
-Use port `3000` for production. You can also SSH into the Pi and run `npm run sync-assets` inside the target directory; that server-side command self-primes with a dry-run.
+Use port `3000` for production. You can also SSH into the Pi and run `npm run sync-assets` inside the target directory; that server-side command self-primes with a dry-run. `DEPLOY_RUN_SYNC=true` is also an explicit one-off deployment sync and is not blocked by `ASSET_AUTO_SYNC_ENABLED=false`.
 
 ## Cloudflare R2 Setup Guide
 

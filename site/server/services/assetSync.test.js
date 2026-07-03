@@ -24,6 +24,32 @@ function createEmptyPlan(fingerprint = 'test-fingerprint') {
   };
 }
 
+async function withEnv(overrides, run) {
+  const originals = {};
+
+  for (const key of Object.keys(overrides)) {
+    originals[key] = process.env[key];
+    const value = overrides[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  try {
+    await run();
+  } finally {
+    for (const [key, value] of Object.entries(originals)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
 async function withIsolatedSyncState(run) {
   const originalStatePath = process.env.ASSET_SYNC_STATE_PATH;
   const originalRefreshToken = process.env.DROPBOX_REFRESH_TOKEN;
@@ -99,6 +125,25 @@ test('trusted server-side sync records and approves its own dry-run', async () =
   });
 });
 
+test('trusted server-side sync still works when automatic sync is disabled', async () => {
+  await withEnv({ ASSET_AUTO_SYNC_ENABLED: 'false' }, async () => {
+    await withIsolatedSyncState(async () => {
+      const { readSyncState, runTrustedAssetSync } = require('./assetSync');
+      const plan = createEmptyPlan('trusted-manual-with-auto-disabled');
+
+      await assert.rejects(
+        runTrustedAssetSync({ plan, source: 'cli', allowConcurrent: true }),
+        /Dropbox refresh token is not configured/
+      );
+
+      const state = await readSyncState();
+      assert.equal(state.lastDryRunSource, 'cli');
+      assert.equal(state.lastDryRunFingerprint, 'trusted-manual-with-auto-disabled');
+      assert.equal(state.lastDryRunOk, true);
+    });
+  });
+});
+
 test('trusted server-side sync does not execute invalid dry-run plans', async () => {
   await withIsolatedSyncState(async () => {
     const { runTrustedAssetSync } = require('./assetSync');
@@ -116,6 +161,36 @@ test('trusted server-side sync does not execute invalid dry-run plans', async ()
         return true;
       }
     );
+  });
+});
+
+test('automatic sync config defaults to enabled when omitted', async () => {
+  await withEnv({ ASSET_AUTO_SYNC_ENABLED: undefined }, async () => {
+    const { getSyncConfig } = require('./assetSync');
+    assert.equal(getSyncConfig().autoSyncEnabled, true);
+  });
+});
+
+test('startup asset sync returns null when automatic sync is disabled', async () => {
+  await withEnv({ ASSET_AUTO_SYNC_ENABLED: 'false' }, async () => {
+    const { runStartupAssetSync } = require('./dropbox');
+    assert.equal(await runStartupAssetSync(), null);
+  });
+});
+
+test('asset scheduler does not start when automatic sync is disabled', async () => {
+  await withEnv({ ASSET_AUTO_SYNC_ENABLED: 'false' }, async () => {
+    const { getSetupStatus, startAssetScheduler, stopAssetScheduler } = require('./assetSync');
+
+    stopAssetScheduler();
+    assert.equal(startAssetScheduler(), null);
+
+    const status = getSetupStatus();
+    assert.equal(status.sync.autoSyncEnabled, false);
+    assert.equal(status.sync.scheduler.enabled, false);
+    assert.equal(status.sync.scheduler.lastSkippedReason, 'auto-sync-disabled');
+
+    stopAssetScheduler();
   });
 });
 
@@ -154,6 +229,90 @@ test('same-name organized Dropbox replacements are planned for upload when metad
       true
     ),
     'upload-existing-to-r2'
+  );
+});
+
+test('creates WebP R2 plan items for raster Dropbox assets', () => {
+  const { createAssetSyncPlanItem } = require('./assetSync');
+  const item = createAssetSyncPlanItem({
+    file: {
+      name: 'Hero Photo.JPG',
+      size: 1234,
+      rev: 'rev-a',
+      contentHash: 'hash-a',
+      assetVersion: 'rev-a:hash-a:1234'
+    },
+    source: '/latest/Hero Photo.JPG',
+    category: 'home',
+    normalizedName: 'hero-photo.jpg',
+    dropboxDestination: '/assets/home/hero-photo.jpg',
+    assetKey: 'hero-photo',
+    action: 'upload-to-r2-write-manifest-and-move-dropbox-file',
+    assetPrefix: 'site-assets'
+  });
+
+  assert.equal(item.normalizedName, 'hero-photo.webp');
+  assert.equal(item.originalName, 'hero-photo.jpg');
+  assert.equal(item.contentType, 'image/webp');
+  assert.equal(item.originalContentType, 'image/jpeg');
+  assert.equal(item.r2ObjectKey, 'site-assets/home/hero-photo.webp');
+  assert.equal(item.optimized, true);
+  assert.match(item.assetVersion, /asset-optimizer-v1:webp:q82:w2400/);
+});
+
+test('preserves pass-through R2 plan items for video assets', () => {
+  const { createAssetSyncPlanItem } = require('./assetSync');
+  const item = createAssetSyncPlanItem({
+    file: {
+      name: 'Hero Loop.webm',
+      size: 1234,
+      rev: 'rev-a',
+      contentHash: 'hash-a',
+      assetVersion: 'rev-a:hash-a:1234'
+    },
+    source: '/assets/video/hero-loop.webm',
+    category: 'video',
+    normalizedName: 'hero-loop.webm',
+    dropboxDestination: '/assets/video/hero-loop.webm',
+    assetKey: 'hero-loop',
+    action: 'upload-existing-to-r2',
+    assetPrefix: 'site-assets'
+  });
+
+  assert.equal(item.normalizedName, 'hero-loop.webm');
+  assert.equal(item.contentType, 'video/webm');
+  assert.equal(item.r2ObjectKey, 'site-assets/video/hero-loop.webm');
+  assert.equal(item.optimized, false);
+  assert.equal(item.assetVersion, 'rev-a:hash-a:1234');
+});
+
+test('creates purge-first rebuild delete items under the asset prefix only', () => {
+  const { createRebuildPurgeDeletes } = require('./assetSync');
+  const deletes = createRebuildPurgeDeletes([
+    'site-assets/home/hero.jpg',
+    'other-prefix/home/hero.jpg',
+    'site-assets/home/hero.jpg',
+    'site-assets/about/profile.webp'
+  ], 'site-assets');
+
+  assert.deepEqual(
+    deletes.map((item) => item.r2ObjectKey),
+    ['site-assets/about/profile.webp', 'site-assets/home/hero.jpg']
+  );
+  assert.equal(deletes[0].action, 'purge-r2-object-before-rebuild');
+  assert.equal(deletes[0].blocked, false);
+});
+
+test('asset rebuild requires exact confirmation before a real purge run', async () => {
+  const { runAssetRebuild } = require('./assetSync');
+
+  await assert.rejects(
+    runAssetRebuild(),
+    (error) => {
+      assert.equal(error.code, 'ASSET_REBUILD_CONFIRMATION_REQUIRED');
+      assert.equal(error.statusCode, 409);
+      return true;
+    }
   );
 });
 

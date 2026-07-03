@@ -101,8 +101,9 @@ else
   cat <<EOF
 Skipped automatic asset sync.
 
-Express will run startup sync in the background when ASSET_SYNC_ENABLED=true and
-ASSET_SYNC_ON_BOOT=true in ${DEPLOY_PATH}/.env.
+Express will run startup sync in the background only when ASSET_SYNC_ENABLED=true,
+ASSET_AUTO_SYNC_ENABLED=true, and ASSET_SYNC_ON_BOOT=true in ${DEPLOY_PATH}/.env.
+For staging, set ASSET_AUTO_SYNC_ENABLED=false to avoid background Dropbox/R2 usage.
 
 To force a protected API sync on ${DEPLOY_ENV}, run the dry-run first:
   curl -H "Authorization: Bearer \$ASSET_SYNC_ADMIN_TOKEN" \\
@@ -115,6 +116,9 @@ Then run the real sync:
 
 Or SSH to the Pi and run this server-side command from ${DEPLOY_PATH}:
   npm run sync-assets
+
+DEPLOY_RUN_SYNC=true remains an explicit one-off deployment sync if you intentionally
+want to run it.
 EOF
 fi
 

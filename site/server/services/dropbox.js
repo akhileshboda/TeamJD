@@ -138,7 +138,7 @@ async function preloadAssetMap() {
 
 async function runStartupAssetSync() {
   const syncConfig = getSyncConfig();
-  if (!syncConfig.enabled || !syncConfig.onBoot || !isR2Configured()) {
+  if (!syncConfig.enabled || !syncConfig.autoSyncEnabled || !syncConfig.onBoot || !isR2Configured()) {
     return null;
   }
 
