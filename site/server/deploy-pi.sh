@@ -3,12 +3,42 @@ set -euo pipefail
 
 : "${DEPLOY_USER:?Missing DEPLOY_USER}"
 : "${DEPLOY_HOST:?Missing DEPLOY_HOST}"
-: "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+
+DEPLOY_ENV="${DEPLOY_ENV:-production}"
+
+case "${DEPLOY_ENV}" in
+  production)
+    DEFAULT_DEPLOY_PATH="/var/www/teamjd"
+    DEFAULT_PM2_APP_NAME="jake-site"
+    EXPECTED_PORT="3000"
+    ;;
+  staging)
+    DEFAULT_DEPLOY_PATH="/var/www/teamjd-staging"
+    DEFAULT_PM2_APP_NAME="jake-site-staging"
+    EXPECTED_PORT="3002"
+    ;;
+  *)
+    cat >&2 <<EOF
+Unsupported DEPLOY_ENV="${DEPLOY_ENV}".
+
+Use one of:
+  DEPLOY_ENV=production
+  DEPLOY_ENV=staging
+EOF
+    exit 1
+    ;;
+esac
+
+DEPLOY_PATH="${DEPLOY_PATH:-${DEFAULT_DEPLOY_PATH}}"
+PM2_APP_NAME="${PM2_APP_NAME:-${DEFAULT_PM2_APP_NAME}}"
 
 DEPLOY_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
 REMOTE_DEPLOY_PATH="$(printf '%q' "${DEPLOY_PATH}")"
+REMOTE_PM2_APP_NAME="$(printf '%q' "${PM2_APP_NAME}")"
 
-echo "Preparing ${DEPLOY_TARGET}:${DEPLOY_PATH}"
+echo "Preparing ${DEPLOY_ENV} deploy to ${DEPLOY_TARGET}:${DEPLOY_PATH}"
+echo "PM2 process: ${PM2_APP_NAME}; expected app port: localhost:${EXPECTED_PORT}"
+echo "Asset sync after deploy: ${DEPLOY_RUN_SYNC:-false}"
 if ! ssh "${DEPLOY_TARGET}" "
   mkdir -p ${REMOTE_DEPLOY_PATH} &&
   test -d ${REMOTE_DEPLOY_PATH} &&
@@ -29,7 +59,10 @@ if ! ssh "${DEPLOY_TARGET}" "test -f ${REMOTE_DEPLOY_PATH}/.env"; then
   cat >&2 <<EOF
 Missing ${DEPLOY_TARGET}:${DEPLOY_PATH}/.env.
 
-Create it on the Pi with production values before deploying.
+Create it on the Pi before deploying. For ${DEPLOY_ENV}, it should include:
+  NODE_ENV=production
+  PORT=${EXPECTED_PORT}
+  HOST=localhost
 EOF
   exit 1
 fi
@@ -53,10 +86,30 @@ ssh "${DEPLOY_TARGET}" "
   set -e
   cd ${REMOTE_DEPLOY_PATH} &&
   npm install --omit=dev &&
-  if npm run | grep -q 'sync-assets'; then npm run sync-assets; fi &&
-  pm2 delete jake-site >/dev/null 2>&1 || true &&
-  pm2 start npm --name jake-site -- start &&
+  pm2 delete ${REMOTE_PM2_APP_NAME} >/dev/null 2>&1 || true &&
+  pm2 start npm --name ${REMOTE_PM2_APP_NAME} -- start &&
   pm2 save
 "
 
-echo "Deployment complete."
+if [[ "${DEPLOY_RUN_SYNC:-false}" == "true" ]]; then
+  ssh "${DEPLOY_TARGET}" "
+    set -e
+    cd ${REMOTE_DEPLOY_PATH} &&
+    npm run sync-assets
+  "
+else
+  cat <<EOF
+Skipped automatic asset sync.
+
+For the first real sync on ${DEPLOY_ENV}, run the protected API dry-run first:
+  curl -H "Authorization: Bearer \$ASSET_SYNC_ADMIN_TOKEN" \\
+    http://localhost:${EXPECTED_PORT}/api/assets/sync/plan
+
+Then run the real sync:
+  curl -X POST \\
+    -H "Authorization: Bearer \$ASSET_SYNC_ADMIN_TOKEN" \\
+    http://localhost:${EXPECTED_PORT}/api/assets/sync
+EOF
+fi
+
+echo "${DEPLOY_ENV} deployment complete."

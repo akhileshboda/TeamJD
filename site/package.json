@@ -13,7 +13,9 @@
     "sync-assets": "node server/sync-assets.js",
     "sync-assets:dry-run": "node server/sync-assets.js --dry-run",
     "test": "node --test",
-    "deploy:pi": "bash server/deploy-pi.sh"
+    "deploy:pi": "bash server/deploy-pi.sh",
+    "deploy:pi:production": "DEPLOY_ENV=production bash server/deploy-pi.sh",
+    "deploy:pi:staging": "DEPLOY_ENV=staging bash server/deploy-pi.sh"
   },
   "nodemonConfig": {
     "ignore": [

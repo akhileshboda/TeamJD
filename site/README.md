@@ -165,14 +165,61 @@ The dry run builds the same plan used by the protected endpoint. The real sync u
 
 ## Deploying to Raspberry Pi
 
+One-time Pi setup:
+
+```bash
+sudo mkdir -p /var/www/teamjd /var/www/teamjd-staging
+sudo chown pi:pi /var/www/teamjd /var/www/teamjd-staging
+```
+
+Keep separate `.env` files on the Pi; local `.env` files are intentionally not copied.
+
+Production uses `/var/www/teamjd/.env`, PM2 process `jake-site`, and `PORT=3000`:
+
+```bash
+NODE_ENV=production
+PORT=3000
+HOST=localhost
+```
+
+Staging uses `/var/www/teamjd-staging/.env`, PM2 process `jake-site-staging`, and `PORT=3003`:
+
+```bash
+NODE_ENV=production
+PORT=3003
+HOST=localhost
+```
+
+Deploy production:
+
 ```bash
 DEPLOY_USER=pi \
 DEPLOY_HOST=your-pi-hostname-or-ip \
-DEPLOY_PATH=/path/to/site \
-npm run deploy:pi
+npm run deploy:pi:production
 ```
 
-Keep production `.env` on the Pi at `DEPLOY_PATH/.env`; it is intentionally not copied from local.
+Deploy staging:
+
+```bash
+DEPLOY_USER=pi \
+DEPLOY_HOST=your-pi-hostname-or-ip \
+npm run deploy:pi:staging
+```
+
+`npm run deploy:pi` defaults to production for backward compatibility. Override `DEPLOY_PATH` or `PM2_APP_NAME` only for custom Pi layouts.
+
+Deploys skip automatic asset sync by default so the app can restart cleanly. For a first real sync on a target, run the protected API dry-run first, then the real sync against that target's port:
+
+```bash
+curl -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
+  http://localhost:3003/api/assets/sync/plan
+
+curl -X POST \
+  -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
+  http://localhost:3003/api/assets/sync
+```
+
+Use port `3000` for production. Set `DEPLOY_RUN_SYNC=true` only after the target has already completed its first API dry-run and real sync.
 
 ## Cloudflare R2 Setup Guide
 
