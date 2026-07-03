@@ -137,7 +137,7 @@ curl -X POST \
   http://localhost:3000/api/assets/sync
 ```
 
-The first real sync always performs or verifies a successful dry-run plan before mutating Dropbox/R2.
+The protected API real sync requires a matching API dry-run before mutating Dropbox/R2. Server-side syncs started by the Express scheduler, startup hook, or `npm run sync-assets` create and verify their own dry-run plan before mutating.
 
 ## Public Asset Endpoints
 
@@ -161,7 +161,7 @@ npm run sync-assets:dry-run
 npm run sync-assets
 ```
 
-The dry run builds the same plan used by the protected endpoint. The real sync uses the same first-sync preflight gate.
+The dry run builds the same plan used by the protected endpoint. The real server-side sync self-primes with a fresh dry-run, then uploads changed assets, writes `data/asset-manifest.json`, and refreshes cache-busted R2 URLs. Express also runs the same trusted sync on startup when `ASSET_SYNC_ON_BOOT=true`, and periodically according to `ASSET_SYNC_CRON`.
 
 ## Deploying to Raspberry Pi
 
@@ -208,7 +208,7 @@ npm run deploy:pi:staging
 
 `npm run deploy:pi` defaults to production for backward compatibility. Override `DEPLOY_PATH` or `PM2_APP_NAME` only for custom Pi layouts.
 
-Deploys skip automatic asset sync by default so the app can restart cleanly. For a first real sync on a target, run the protected API dry-run first, then the real sync against that target's port:
+Deploys skip deploy-time asset sync so the app can restart cleanly. After PM2 starts, Express will run startup sync in the background when `ASSET_SYNC_ENABLED=true` and `ASSET_SYNC_ON_BOOT=true`. To force a protected API sync manually, run the API dry-run first, then the real sync against that target's port:
 
 ```bash
 curl -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
@@ -219,7 +219,7 @@ curl -X POST \
   http://localhost:3003/api/assets/sync
 ```
 
-Use port `3000` for production. Set `DEPLOY_RUN_SYNC=true` only after the target has already completed its first API dry-run and real sync.
+Use port `3000` for production. You can also SSH into the Pi and run `npm run sync-assets` inside the target directory; that server-side command self-primes with a dry-run.
 
 ## Cloudflare R2 Setup Guide
 

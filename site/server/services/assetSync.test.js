@@ -82,6 +82,131 @@ test('first real sync requires a matching successful API dry-run plan', async ()
   });
 });
 
+test('trusted server-side sync records and approves its own dry-run', async () => {
+  await withIsolatedSyncState(async () => {
+    const { readSyncState, runTrustedAssetSync } = require('./assetSync');
+    const plan = createEmptyPlan('trusted-cli-fingerprint');
+
+    await assert.rejects(
+      runTrustedAssetSync({ plan, source: 'cli', allowConcurrent: true }),
+      /Dropbox refresh token is not configured/
+    );
+
+    const state = await readSyncState();
+    assert.equal(state.lastDryRunSource, 'cli');
+    assert.equal(state.lastDryRunFingerprint, 'trusted-cli-fingerprint');
+    assert.equal(state.lastDryRunOk, true);
+  });
+});
+
+test('trusted server-side sync does not execute invalid dry-run plans', async () => {
+  await withIsolatedSyncState(async () => {
+    const { runTrustedAssetSync } = require('./assetSync');
+    const plan = {
+      ...createEmptyPlan('invalid-plan-fingerprint'),
+      ok: false,
+      errors: [{ code: 'r2_not_configured', message: 'R2 is missing.' }]
+    };
+
+    await assert.rejects(
+      runTrustedAssetSync({ plan, source: 'scheduler', allowConcurrent: true }),
+      (error) => {
+        assert.equal(error.code, 'ASSET_SYNC_PLAN_FAILED');
+        assert.equal(error.statusCode, 409);
+        return true;
+      }
+    );
+  });
+});
+
+test('same-name organized Dropbox replacements are planned for upload when metadata changes', () => {
+  const { getOrganizedAssetSyncAction } = require('./assetSync');
+  const existingAsset = {
+    assetVersion: 'rev-a:hash-a:100',
+    rev: 'rev-a',
+    contentHash: 'hash-a',
+    r2ObjectKey: 'site-assets/home/hero.jpg'
+  };
+
+  assert.equal(
+    getOrganizedAssetSyncAction(
+      existingAsset,
+      {
+        dropboxPath: '/assets/home/hero.jpg',
+        assetVersion: 'rev-a:hash-a:100',
+        rev: 'rev-a',
+        contentHash: 'hash-a'
+      },
+      true
+    ),
+    'skip-unchanged'
+  );
+
+  assert.equal(
+    getOrganizedAssetSyncAction(
+      existingAsset,
+      {
+        dropboxPath: '/assets/home/hero.jpg',
+        assetVersion: 'rev-b:hash-b:100',
+        rev: 'rev-b',
+        contentHash: 'hash-b'
+      },
+      true
+    ),
+    'upload-existing-to-r2'
+  );
+});
+
+test('scheduled sync skips when another sync is already running', async () => {
+  const { runScheduledAssetSync } = require('./assetSync');
+  const result = await runScheduledAssetSync({ syncInProgress: true });
+
+  assert.equal(result.skipped, true);
+  assert.equal(result.reason, 'already-running');
+});
+
+test('scheduled sync skips cleanly when watched Dropbox paths have no changes', async () => {
+  const { runScheduledAssetSync } = require('./assetSync');
+  const result = await runScheduledAssetSync({
+    checkChanges: async () => ({ changed: false, changedPaths: [] })
+  });
+
+  assert.equal(result.skipped, true);
+  assert.equal(result.reason, 'no-dropbox-changes');
+});
+
+test('scheduled sync runs when /latest changes', async () => {
+  const { runScheduledAssetSync } = require('./assetSync');
+  let ran = false;
+  const result = await runScheduledAssetSync({
+    checkChanges: async () => ({ changed: true, changedPaths: ['/latest'] }),
+    runSync: async () => {
+      ran = true;
+      return { ok: true };
+    }
+  });
+
+  assert.equal(ran, true);
+  assert.equal(result.skipped, false);
+  assert.deepEqual(result.changedPaths, ['/latest']);
+});
+
+test('scheduled sync runs when organized /assets changes', async () => {
+  const { runScheduledAssetSync } = require('./assetSync');
+  let ran = false;
+  const result = await runScheduledAssetSync({
+    checkChanges: async () => ({ changed: true, changedPaths: ['/assets'] }),
+    runSync: async () => {
+      ran = true;
+      return { ok: true };
+    }
+  });
+
+  assert.equal(ran, true);
+  assert.equal(result.skipped, false);
+  assert.deepEqual(result.changedPaths, ['/assets']);
+});
+
 test('creates cleanup-only plan items for uploaded assets whose Dropbox move failed', () => {
   const { getCleanupRetryItems } = require('./assetSync');
   const items = getCleanupRetryItems(

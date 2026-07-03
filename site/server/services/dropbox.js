@@ -11,6 +11,7 @@ const {
   isR2Configured,
   listFilesRecursive,
   recordDryRun,
+  runTrustedAssetSync,
   setCachedManifest,
   startAssetScheduler,
   stopAssetScheduler
@@ -126,19 +127,6 @@ async function preloadAssetMap() {
     markLoadFailed(error);
   }
 
-  const syncConfig = getSyncConfig();
-  if (syncConfig.enabled && syncConfig.onBoot && isR2Configured()) {
-    try {
-      const report = await executeAssetSync({ reason: 'startup-sync' });
-      const manifest = await getCachedManifest({ forceDisk: true });
-      markLoadSucceeded(manifest, report.plan?.source || manifest.source);
-      return manifest.assets;
-    } catch (error) {
-      markLoadFailed(error);
-      console.error(`[assets] Startup asset sync failed: ${getErrorSummary(error).message}`);
-    }
-  }
-
   const manifest = await getCachedManifest();
   if (manifest) {
     markLoadSucceeded(manifest, manifest.source);
@@ -146,6 +134,29 @@ async function preloadAssetMap() {
   }
 
   throw new AssetMapNotReadyError('Asset manifest is not ready.');
+}
+
+async function runStartupAssetSync() {
+  const syncConfig = getSyncConfig();
+  if (!syncConfig.enabled || !syncConfig.onBoot || !isR2Configured()) {
+    return null;
+  }
+
+  markLoadStarted();
+
+  try {
+    const report = await runTrustedAssetSync({
+      source: 'startup',
+      reason: 'startup-sync'
+    });
+    const manifest = await getCachedManifest({ forceDisk: true });
+    markLoadSucceeded(manifest, report.plan?.source || manifest.source);
+    return { manifest, report };
+  } catch (error) {
+    markLoadFailed(error);
+    console.error(`[assets] Startup asset sync failed: ${getErrorSummary(error).message}`);
+    return null;
+  }
 }
 
 async function refreshAssetMap(options = {}) {
@@ -185,11 +196,13 @@ async function syncDropboxAssetsAndPersist(options = {}) {
   if (options.dryRun) {
     return planAssetSync({ ...options, record: true, source: options.source || 'cli' });
   }
-  const { manifest, report } = await refreshAssetMap({
+  const report = await runTrustedAssetSync({
     ...options,
-    reason: 'cli-sync',
-    requireFreshPlan: true
+    source: options.source || 'cli',
+    reason: options.reason || 'cli-sync'
   });
+  const manifest = await getCachedManifest({ forceDisk: true });
+  markLoadSucceeded(manifest, report.plan?.source || manifest.source);
   return { ...manifest, report };
 }
 
@@ -277,6 +290,7 @@ module.exports = {
   preloadAssetMap,
   refreshAssetMap,
   runManualAssetSync,
+  runStartupAssetSync,
   startAssetPoller,
   stopAssetPoller,
   streamDropboxAsset,

@@ -8,7 +8,7 @@ const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const siteAuthRouter = require('./routes/siteAuth');
 const { gateAssets, visitLogger } = require('./middleware/siteGate');
-const { getAssetManifest, preloadAssetMap, startAssetPoller } = require('./services/dropbox');
+const { getAssetManifest, preloadAssetMap, runStartupAssetSync, startAssetPoller } = require('./services/dropbox');
 
 dotenv.config();
 
@@ -176,7 +176,6 @@ app.use((req, res) => {
 
 async function startServer() {
   await preloadAssetMap();
-  startAssetPoller();
 
   await new Promise((resolve, reject) => {
     const server = app.listen(port, listenHost);
@@ -186,6 +185,13 @@ async function startServer() {
       resolve();
     });
     server.once('error', reject);
+  });
+
+  startAssetPoller();
+  setImmediate(() => {
+    runStartupAssetSync().catch((error) => {
+      console.error('Failed to run startup asset sync:', error);
+    });
   });
 }
 

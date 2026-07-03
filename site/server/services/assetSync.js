@@ -44,6 +44,18 @@ let syncInProgress = false;
 let scheduledTask = null;
 let lastError = null;
 let lastSyncReport = null;
+const schedulerState = {
+  enabled: false,
+  startedAt: null,
+  cron: null,
+  watchedPaths: [],
+  lastRunStartedAt: null,
+  lastRunCompletedAt: null,
+  lastChangeCheckAt: null,
+  lastSyncStartedAt: null,
+  lastSyncCompletedAt: null,
+  lastSkippedReason: null
+};
 
 function nowIso() {
   return new Date().toISOString();
@@ -63,6 +75,13 @@ function getSyncConfig() {
     latestPath: normalizeDropboxPath(process.env.DROPBOX_LATEST_PATH || '/latest'),
     assetsRoot: normalizeDropboxPath(process.env.DROPBOX_ASSETS_ROOT || '/assets')
   };
+}
+
+function getWatchedDropboxPaths(syncConfig = getSyncConfig()) {
+  return [
+    { key: 'latest', path: syncConfig.latestPath },
+    { key: 'assets', path: syncConfig.assetsRoot }
+  ];
 }
 
 function getMissingConfig() {
@@ -144,6 +163,7 @@ async function writeJsonFile(filePath, payload) {
 function normalizeSyncState(state = {}) {
   return {
     dropboxCursor: state.dropboxCursor || null,
+    dropboxCursors: state.dropboxCursors && typeof state.dropboxCursors === 'object' ? state.dropboxCursors : {},
     lastSyncAt: state.lastSyncAt || null,
     lastSuccessfulSyncAt: state.lastSuccessfulSyncAt || null,
     lastDryRunCompletedAt: state.lastDryRunCompletedAt || null,
@@ -374,6 +394,10 @@ function sameVersion(asset, fileInfo) {
   if (asset.assetVersion && fileInfo.assetVersion) return asset.assetVersion === fileInfo.assetVersion;
   if (asset.rev && fileInfo.rev) return asset.rev === fileInfo.rev;
   return asset.size === fileInfo.size && asset.serverModified === fileInfo.serverModified;
+}
+
+function getOrganizedAssetSyncAction(existingAsset, fileInfo, r2ObjectExists) {
+  return sameVersion(existingAsset, fileInfo) && r2ObjectExists ? 'skip-unchanged' : 'upload-existing-to-r2';
 }
 
 function isDropboxNotFoundError(error) {
@@ -666,7 +690,7 @@ async function buildAssetSyncPlan(options = {}) {
     const r2ObjectKey = createR2ObjectKey({ assetPrefix, category, fileName: normalizedName });
     const existingAsset = getExistingAssetFromManifest(existingManifest, assetKey);
     const r2ObjectExists = r2Keys.includes(r2ObjectKey);
-    const action = sameVersion(existingAsset, file) && r2ObjectExists ? 'skip-unchanged' : 'upload-existing-to-r2';
+    const action = getOrganizedAssetSyncAction(existingAsset, file, r2ObjectExists);
 
     seenR2Keys.add(r2ObjectKey);
     addManifestAsset(assetMap, {
@@ -874,6 +898,20 @@ async function recordDryRun(plan, options = {}) {
   });
 }
 
+async function runTrustedAssetSync(options = {}) {
+  const source = options.source || 'cli';
+  const plan = options.plan || await buildAssetSyncPlan(options);
+
+  await recordDryRun(plan, { source });
+  return executeAssetSync({
+    ...options,
+    plan,
+    requireFreshPlan: false,
+    approvedDryRunSources: [source],
+    reason: options.reason || `${source}-sync`
+  });
+}
+
 function createExecutionError(message, details = {}) {
   const error = new Error(message);
   error.details = details;
@@ -912,9 +950,10 @@ async function executeAssetSync(options = {}) {
       });
     }
 
+    const approvedDryRunSources = options.approvedDryRunSources || ['api'];
     if (
       !state.firstRealSyncCompletedAt &&
-      (state.lastDryRunSource !== 'api' ||
+      (!approvedDryRunSources.includes(state.lastDryRunSource) ||
         state.lastDryRunOk !== true ||
         state.lastDryRunFingerprint !== plan.fingerprint)
     ) {
@@ -1161,9 +1200,9 @@ function setCachedManifest(manifest) {
   cachedManifest = manifest;
 }
 
-async function getLatestCursor(dropboxClient) {
+async function getLatestCursor(dropboxClient, folderPath = getSyncConfig().latestPath) {
   const response = await dropboxClient.filesListFolderGetLatestCursor({
-    path: getSyncConfig().latestPath,
+    path: folderPath,
     recursive: true,
     include_deleted: false,
     include_non_downloadable_files: false
@@ -1171,33 +1210,81 @@ async function getLatestCursor(dropboxClient) {
   return response.result.cursor;
 }
 
-async function checkDropboxLatestChanges() {
-  const dropboxClient = createDropboxClient();
+async function checkDropboxPathChanges(watchedPath, options = {}) {
+  const dropboxClient = options.dropboxClient || createDropboxClient();
   if (!dropboxClient) throw new Error('Dropbox refresh token is not configured.');
 
   const state = await readSyncState();
-  if (!state.dropboxCursor) {
-    const latestEntries = await listDropboxEntries(dropboxClient, getSyncConfig().latestPath).catch((error) => {
+  const cursorKey = watchedPath.key;
+  const previousCursor =
+    state.dropboxCursors[cursorKey] ||
+    (cursorKey === 'latest' ? state.dropboxCursor : null);
+
+  if (!previousCursor) {
+    const latestEntries = await listDropboxEntries(dropboxClient, watchedPath.path).catch((error) => {
       if (isDropboxNotFoundError(error)) return [];
       throw error;
     });
-    const cursor = await getLatestCursor(dropboxClient);
-    await writeSyncState({ ...state, dropboxCursor: cursor, latestInboxInspectedAt: nowIso() });
+    const cursor = await getLatestCursor(dropboxClient, watchedPath.path);
+    await writeSyncState({
+      ...state,
+      dropboxCursor: cursorKey === 'latest' ? cursor : state.dropboxCursor,
+      dropboxCursors: {
+        ...state.dropboxCursors,
+        [cursorKey]: cursor
+      },
+      latestInboxInspectedAt: nowIso()
+    });
     return latestEntries.some(isFileEntry);
   }
 
   try {
-    const response = await dropboxClient.filesListFolderContinue({ cursor: state.dropboxCursor });
-    await writeSyncState({ ...state, dropboxCursor: response.result.cursor });
+    const response = await dropboxClient.filesListFolderContinue({ cursor: previousCursor });
+    await writeSyncState({
+      ...state,
+      dropboxCursor: cursorKey === 'latest' ? response.result.cursor : state.dropboxCursor,
+      dropboxCursors: {
+        ...state.dropboxCursors,
+        [cursorKey]: response.result.cursor
+      }
+    });
     return response.result.entries.length > 0;
   } catch (error) {
     if (!isDropboxCursorResetError(error)) throw error;
 
-    const cursor = await getLatestCursor(dropboxClient);
-    await writeSyncState({ ...state, dropboxCursor: cursor, latestInboxInspectedAt: nowIso() });
-    console.warn('[asset-sync] dropbox-cursor-reset forcing-full-plan-on-next-run');
+    const cursor = await getLatestCursor(dropboxClient, watchedPath.path);
+    await writeSyncState({
+      ...state,
+      dropboxCursor: cursorKey === 'latest' ? cursor : state.dropboxCursor,
+      dropboxCursors: {
+        ...state.dropboxCursors,
+        [cursorKey]: cursor
+      },
+      latestInboxInspectedAt: nowIso()
+    });
+    console.warn(`[asset-sync] dropbox-cursor-reset path=${watchedPath.path} forcing-full-plan-on-next-run`);
     return true;
   }
+}
+
+async function checkDropboxManagedChanges(options = {}) {
+  const syncConfig = getSyncConfig();
+  const dropboxClient = options.dropboxClient || createDropboxClient();
+  if (!dropboxClient) throw new Error('Dropbox refresh token is not configured.');
+
+  let changed = false;
+  const changedPaths = [];
+  for (const watchedPath of getWatchedDropboxPaths(syncConfig)) {
+    const pathChanged = await checkDropboxPathChanges(watchedPath, { dropboxClient });
+    changed = changed || pathChanged;
+    if (pathChanged) changedPaths.push(watchedPath.path);
+  }
+
+  return { changed, changedPaths };
+}
+
+async function checkDropboxLatestChanges(options = {}) {
+  return checkDropboxPathChanges(getWatchedDropboxPaths()[0], options);
 }
 
 function getSetupStatus(manifest = cachedManifest) {
@@ -1227,6 +1314,18 @@ function getSetupStatus(manifest = cachedManifest) {
       onBoot: syncConfig.onBoot,
       cron: syncConfig.cron,
       running: syncInProgress,
+      scheduler: {
+        enabled: schedulerState.enabled,
+        startedAt: schedulerState.startedAt,
+        cron: schedulerState.cron,
+        watchedPaths: schedulerState.watchedPaths,
+        lastRunStartedAt: schedulerState.lastRunStartedAt,
+        lastRunCompletedAt: schedulerState.lastRunCompletedAt,
+        lastChangeCheckAt: schedulerState.lastChangeCheckAt,
+        lastSyncStartedAt: schedulerState.lastSyncStartedAt,
+        lastSyncCompletedAt: schedulerState.lastSyncCompletedAt,
+        lastSkippedReason: schedulerState.lastSkippedReason
+      },
       readyForFirstRealSync: Boolean(
         missingConfig.length === 0 &&
           r2Status.configured &&
@@ -1252,35 +1351,71 @@ function getSetupStatus(manifest = cachedManifest) {
   };
 }
 
+async function runScheduledAssetSync(options = {}) {
+  schedulerState.lastRunStartedAt = nowIso();
+  schedulerState.lastRunCompletedAt = null;
+
+  if (options.syncInProgress ?? syncInProgress) {
+    schedulerState.lastSkippedReason = 'already-running';
+    schedulerState.lastRunCompletedAt = nowIso();
+    console.log('[asset-sync] scheduled-sync-skipped reason=already-running');
+    return { skipped: true, reason: 'already-running' };
+  }
+
+  try {
+    schedulerState.lastChangeCheckAt = nowIso();
+    const changes = options.checkChanges ? await options.checkChanges() : await checkDropboxManagedChanges(options);
+    if (!changes.changed) {
+      schedulerState.lastSkippedReason = 'no-dropbox-changes';
+      schedulerState.lastRunCompletedAt = nowIso();
+      return { skipped: true, reason: 'no-dropbox-changes', changedPaths: [] };
+    }
+
+    schedulerState.lastSkippedReason = null;
+    schedulerState.lastSyncStartedAt = nowIso();
+    const report = options.runSync ? await options.runSync() : await runTrustedAssetSync({
+      source: 'scheduler',
+      reason: 'scheduled-sync'
+    });
+    schedulerState.lastSyncCompletedAt = nowIso();
+    schedulerState.lastRunCompletedAt = schedulerState.lastSyncCompletedAt;
+    return { skipped: false, changedPaths: changes.changedPaths, report };
+  } catch (error) {
+    lastError = getErrorSummary(error);
+    schedulerState.lastSkippedReason = 'sync-failed';
+    schedulerState.lastRunCompletedAt = nowIso();
+    console.error(`[asset-sync] scheduled-sync-failed error="${lastError.message}"`);
+    throw error;
+  }
+}
+
 function startAssetScheduler() {
   const syncConfig = getSyncConfig();
+  schedulerState.cron = syncConfig.cron;
+  schedulerState.watchedPaths = getWatchedDropboxPaths(syncConfig).map((watchedPath) => watchedPath.path);
+
   if (!syncConfig.enabled || !isR2Configured()) {
+    schedulerState.enabled = false;
+    schedulerState.lastSkippedReason = 'config-or-env';
     console.warn('[asset-sync] scheduler-disabled reason=config-or-env');
     return null;
   }
 
   if (scheduledTask) return scheduledTask;
   if (!cron.validate(syncConfig.cron)) {
+    schedulerState.enabled = false;
+    schedulerState.lastSkippedReason = 'invalid-cron';
     console.warn(`[asset-sync] scheduler-disabled reason=invalid-cron cron="${syncConfig.cron}"`);
     return null;
   }
 
   scheduledTask = cron.schedule(syncConfig.cron, async () => {
-    if (syncInProgress) {
-      console.log('[asset-sync] scheduled-sync-skipped reason=already-running');
-      return;
-    }
-
-    try {
-      const changed = await checkDropboxLatestChanges();
-      if (!changed) return;
-      await executeAssetSync({ reason: 'scheduled-sync' });
-    } catch (error) {
-      lastError = getErrorSummary(error);
-      console.error(`[asset-sync] scheduled-sync-failed error="${lastError.message}"`);
-    }
+    await runScheduledAssetSync().catch(() => {});
   });
 
+  schedulerState.enabled = true;
+  schedulerState.startedAt = nowIso();
+  schedulerState.lastSkippedReason = null;
   console.log(`[asset-sync] scheduler-started cron="${syncConfig.cron}"`);
   return scheduledTask;
 }
@@ -1290,12 +1425,15 @@ function stopAssetScheduler() {
     scheduledTask.stop();
     scheduledTask = null;
   }
+  schedulerState.enabled = false;
 }
 
 module.exports = {
   SYNC_STATE_PATH: DEFAULT_SYNC_STATE_PATH,
   buildAssetSyncPlan,
+  checkDropboxManagedChanges,
   checkDropboxLatestChanges,
+  checkDropboxPathChanges,
   createDropboxClient,
   createPlanFingerprint,
   downloadDropboxFile,
@@ -1306,9 +1444,11 @@ module.exports = {
   getDropboxFileMetadata,
   getErrorSummary,
   getMissingConfig,
+  getOrganizedAssetSyncAction,
   getSetupStatus,
   getSyncConfig,
   getSyncStatePath,
+  getWatchedDropboxPaths,
   getCleanupRetryItems,
   isDropboxFolderConflictError,
   isDropboxFromLookupNotFoundError,
@@ -1318,6 +1458,8 @@ module.exports = {
   moveDropboxFile,
   readSyncState,
   recordDryRun,
+  runScheduledAssetSync,
+  runTrustedAssetSync,
   sanitizeErrorMessage,
   setCachedManifest,
   startAssetScheduler,

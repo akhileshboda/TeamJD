@@ -101,7 +101,10 @@ else
   cat <<EOF
 Skipped automatic asset sync.
 
-For the first real sync on ${DEPLOY_ENV}, run the protected API dry-run first:
+Express will run startup sync in the background when ASSET_SYNC_ENABLED=true and
+ASSET_SYNC_ON_BOOT=true in ${DEPLOY_PATH}/.env.
+
+To force a protected API sync on ${DEPLOY_ENV}, run the dry-run first:
   curl -H "Authorization: Bearer \$ASSET_SYNC_ADMIN_TOKEN" \\
     http://localhost:${EXPECTED_PORT}/api/assets/sync/plan
 
@@ -109,6 +112,9 @@ Then run the real sync:
   curl -X POST \\
     -H "Authorization: Bearer \$ASSET_SYNC_ADMIN_TOKEN" \\
     http://localhost:${EXPECTED_PORT}/api/assets/sync
+
+Or SSH to the Pi and run this server-side command from ${DEPLOY_PATH}:
+  npm run sync-assets
 EOF
 fi
 
