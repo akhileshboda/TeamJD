@@ -6,8 +6,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
-const siteAuthRouter = require('./routes/siteAuth');
-const { gateAssets, visitLogger } = require('./middleware/siteGate');
+const { visitLogger } = require('./middleware/visitLogger');
 const { getAssetManifest, preloadAssetMap, runStartupAssetSync, startAssetPoller } = require('./services/dropbox');
 
 dotenv.config();
@@ -210,8 +209,7 @@ app.use(
 );
 app.use(visitLogger);
 app.use('/auth', authRouter);
-app.use('/api/auth', siteAuthRouter);
-app.use('/api/assets', gateAssets, assetsRouter);
+app.use('/api/assets', assetsRouter);
 app.use(serveManifestBackedHtml);
 app.use(
   '/assets/generated',
