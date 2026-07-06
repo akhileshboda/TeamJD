@@ -141,7 +141,7 @@ export default function Contact() {
                 </p>
 
                 <form
-                  action="mailto:hello@jakededert.fit"
+                  action="mailto:jake@team-jd.com.au"
                   method="POST"
                   encType="text/plain"
                   style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}

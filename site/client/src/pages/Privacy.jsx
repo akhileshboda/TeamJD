@@ -149,8 +149,8 @@ export default function Privacy() {
                 <p>
                   If you have questions about this Privacy Policy or wish to exercise your
                   rights, please contact us at{' '}
-                  <a href="mailto:hello@jakededert.fit" style={{ color: 'var(--color-accent)' }}>
-                    hello@jakededert.fit
+                  <a href="mailto:jake@team-jd.com.au" style={{ color: 'var(--color-accent)' }}>
+                    jake@team-jd.com.au
                   </a>{' '}
                   or book a call via{' '}
                   <a
