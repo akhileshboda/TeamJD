@@ -35,6 +35,8 @@ const listenHost = host === 'localhost' ? '127.0.0.1' : host;
 const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
+const staticErrorPages = new Set(['/404.html', '/500.html', '/503.html', '/offline.html']);
+const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy']);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(generatedAssetsDir, { recursive: true });
@@ -72,6 +74,62 @@ function shouldServeHtml(req) {
   return req.accepts('html');
 }
 
+function getNormalizedRequestPath(requestPath) {
+  let decodedPath;
+
+  try {
+    decodedPath = decodeURIComponent(requestPath.split('?')[0]);
+  } catch (error) {
+    return null;
+  }
+
+  if (!decodedPath.startsWith('/')) {
+    decodedPath = `/${decodedPath}`;
+  }
+
+  if (decodedPath.length > 1) {
+    decodedPath = decodedPath.replace(/\/+$/, '');
+  }
+
+  return decodedPath || '/';
+}
+
+function isStaticErrorPage(req) {
+  const normalizedPath = getNormalizedRequestPath(req.path);
+  return Boolean(normalizedPath && staticErrorPages.has(normalizedPath));
+}
+
+function shouldServeSpaShell(req) {
+  if (!shouldServeHtml(req)) {
+    return false;
+  }
+
+  const normalizedPath = getNormalizedRequestPath(req.path);
+
+  if (!normalizedPath || path.extname(normalizedPath)) {
+    return false;
+  }
+
+  if (spaRoutes.has(normalizedPath)) {
+    return true;
+  }
+
+  return /^\/services\/[^/]+$/.test(normalizedPath);
+}
+
+function sendStaticErrorPage(res, statusCode, fileName, fallbackMessage) {
+  const errorPagePath = path.join(publicDir, fileName);
+
+  res.status(statusCode);
+  res.set('Cache-Control', 'no-cache');
+  return res.sendFile(errorPagePath, (error) => {
+    if (!error) return;
+    if (!res.headersSent) {
+      res.type('text/plain').status(statusCode).send(fallbackMessage);
+    }
+  });
+}
+
 function rewriteAssetUrls(html, manifest) {
   return html.replace(
     /(?:https:\/\/jakededert\.fit)?\/api\/assets\/([a-z0-9-]+)/gi,
@@ -90,6 +148,10 @@ function rewriteAssetUrls(html, manifest) {
 
 async function serveManifestBackedHtml(req, res, next) {
   if (!shouldServeHtml(req)) {
+    return next();
+  }
+
+  if (isStaticErrorPage(req)) {
     return next();
   }
 
@@ -166,12 +228,35 @@ const distDir = path.join(__dirname, '..', 'dist');
 app.use(express.static(distDir));
 app.get('*', (req, res, next) => {
   const distIndex = path.join(distDir, 'index.html');
-  if (!fs.existsSync(distIndex)) return next();
+  if (!fs.existsSync(distIndex) || !shouldServeSpaShell(req)) return next();
   res.sendFile(distIndex);
 });
 
+app.use((error, req, res, next) => {
+  console.error('Unhandled Team JD site error:', error);
+  if (res.headersSent) return next(error);
+
+  if (req.path.startsWith('/api/')) {
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+
+  if (!shouldServeHtml(req)) {
+    return res.type('text/plain').status(500).send('Internal server error.');
+  }
+
+  return sendStaticErrorPage(res, 500, '500.html', 'Internal server error.');
+});
+
 app.use((req, res) => {
-  res.status(404).send('Not found.');
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+
+  if (!shouldServeHtml(req)) {
+    return res.type('text/plain').status(404).send('Not found.');
+  }
+
+  return sendStaticErrorPage(res, 404, '404.html', 'Not found.');
 });
 
 async function startServer() {

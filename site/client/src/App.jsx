@@ -7,6 +7,7 @@ import ServiceDetailPage from './pages/ServiceDetailPage'
 import Results from './pages/Results'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -19,7 +20,7 @@ export default function App() {
         <Route path="/results" element={<Results />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="*" element={<Home />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
   )

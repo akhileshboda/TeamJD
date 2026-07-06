@@ -160,6 +160,27 @@ Confirm the manifest returns R2 URLs:
 curl http://localhost:3000/api/assets
 ```
 
+## Error and Outage Pages
+
+The React app has a branded in-app 404 route for unknown client-side navigation.
+Express also serves lightweight static fallback pages from `site/public`:
+
+```text
+/404.html      — missing browser routes and proxy-level 404s
+/500.html      — unexpected server errors
+/503.html      — maintenance, upstream failure, or app unavailable
+/offline.html  — offline/browser fallback page
+```
+
+These files use local generated assets and inline CSS only. They do not depend on
+React, `/api/assets`, Cloudflare R2, or the asset manifest, so they are safe to
+serve from a reverse proxy when the Node process or upstream app is unhealthy.
+
+When configuring nginx, Cloudflare, or another reverse proxy, map upstream
+`502`, `503`, and `504` responses to `/503.html`. Use `/500.html` for generic
+internal server errors where the proxy supports that distinction, and `/404.html`
+for proxy-level missing routes.
+
 ## CLI Sync
 
 ```bash
