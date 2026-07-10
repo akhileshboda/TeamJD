@@ -1824,11 +1824,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-bottom: var(--space-12);
   }
 
-  .hero-video,
-  .hero-replay {
-    display: none;
-  }
-
   .cta-banner {
     padding: var(--space-10) var(--space-6);
   }
@@ -1947,6 +1942,11 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 @media (max-width: 640px) {
+  .hero-video,
+  .hero-replay {
+    display: none;
+  }
+
   .home-service-pathways {
     grid-template-columns: 1fr;
     gap: var(--space-3);

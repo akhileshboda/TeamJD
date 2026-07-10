@@ -1,14 +1,13 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fallbackHeroPosterUrl, fallbackHeroVideoUrl } from '../config/heroMedia'
-import { useAssets } from '../hooks/useAssets'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 28 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } },
 }
 
-const MOBILE_HERO_QUERY = '(max-width: 768px)'
+const MOBILE_HERO_QUERY = '(max-width: 640px)'
 
 function getInitialMobileState() {
   if (typeof window === 'undefined') return true
@@ -22,14 +21,13 @@ function getSaveDataEnabled() {
 
 export default function Hero() {
   const shouldReduce = useReducedMotion()
-  const resolveAsset = useAssets()
   const videoRef = useRef(null)
   const [isMobileHero, setIsMobileHero] = useState(getInitialMobileState)
   const [saveDataEnabled, setSaveDataEnabled] = useState(getSaveDataEnabled)
   const [videoFailed, setVideoFailed] = useState(false)
   const [hasVideoEnded, setHasVideoEnded] = useState(false)
-  const heroVideoUrl = resolveAsset('hero-home-loop-v1', fallbackHeroVideoUrl)
-  const heroPosterUrl = resolveAsset('hero-home-poster-v1', fallbackHeroPosterUrl)
+  const heroVideoUrl = fallbackHeroVideoUrl
+  const heroPosterUrl = fallbackHeroPosterUrl
 
   const canUseVideo =
     Boolean(heroVideoUrl) && !isMobileHero && !shouldReduce && !saveDataEnabled && !videoFailed
