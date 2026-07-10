@@ -12,7 +12,26 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://jake-site-assets.akhileshboda.com" crossorigin>
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'"
+  >
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </noscript>
+  <script>
+    if (window.location.pathname === '/about') {
+      const aboutHeroPreload = document.createElement('link')
+      aboutHeroPreload.rel = 'preload'
+      aboutHeroPreload.as = 'image'
+      aboutHeroPreload.href = '/api/assets/jake-hero'
+      aboutHeroPreload.fetchPriority = 'high'
+      document.head.appendChild(aboutHeroPreload)
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>

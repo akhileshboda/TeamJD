@@ -113,6 +113,9 @@ export default function Home() {
                       to={`/services/${serviceSlug}`}
                       className="home-service-pathway"
                       aria-label={`${pathway.label}: explore ${serviceName}`}
+                      data-analytics-event="service_discovery"
+                      data-analytics-location="home_service_pathways"
+                      data-analytics-id={pathway.id}
                       style={{ '--pathway-bg': `url("${backgroundSrc}")` }}
                       {...pathwayMotion}
                     >

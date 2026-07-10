@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PageHero from '../components/PageHero'
+import CTABanner from '../components/CTABanner'
 import ResultCard from '../components/ResultCard'
 import Lightbox from '../components/Lightbox'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
@@ -69,39 +70,29 @@ export default function Results() {
             </p>
           )}
 
-          {/* CTA */}
-          <SectionReveal delay={0.1}>
-            <div
-              style={{
-                textAlign: 'center',
-                marginTop: '3rem',
-                padding: '2rem',
-                background: 'var(--color-surface)',
-                borderRadius: 'var(--radius-xl)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <p
-                style={{
-                  color: 'var(--color-text-muted)',
-                  marginBottom: '1rem',
-                  fontSize: '1.0625rem',
-                }}
-              >
-                Want your results here?
-              </p>
-              <a
-                href="https://calendly.com/team-jd/15min"
-                className="btn btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Book a Free Consult
-              </a>
-            </div>
-          </SectionReveal>
         </div>
       </section>
+
+      <CTABanner
+        analyticsLocation="results_final_cta"
+        eyebrow="Your Result Starts Here"
+        title="Ready to build your own result?"
+        description="Explore the coaching options, find the level of support that fits your goal, and take the next step with a clear plan."
+        actions={[
+          {
+            label: 'Explore Services',
+            to: '/services',
+            variant: 'primary',
+            analyticsId: 'explore_services',
+          },
+          {
+            label: 'Book a Free Consult',
+            href: 'https://calendly.com/team-jd/15min',
+            variant: 'secondary',
+            analyticsId: 'book_consult',
+          },
+        ]}
+      />
 
       <Lightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />
     </>

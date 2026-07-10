@@ -16,6 +16,8 @@ export default function Footer() {
                 alt="Team JD Jake Dedert"
                 loading="lazy"
                 decoding="async"
+                width="1017"
+                height="469"
               />
             </div>
             <p className="footer-tagline">
@@ -66,7 +68,7 @@ export default function Footer() {
           </p>
           <Link
             to="/privacy"
-            style={{ color: 'var(--color-text-subtle)', fontSize: '0.875rem', transition: 'color 150ms ease' }}
+            style={{ color: '#a3a3a3', fontSize: '0.875rem', transition: 'color 150ms ease' }}
           >
             Privacy Policy
           </Link>

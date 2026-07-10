@@ -40,11 +40,24 @@ export default function Services() {
       </section>
 
       <CTABanner
+        analyticsLocation="services_final_cta"
         title="Not Sure Which Is Right for You?"
         description="Book a free 15-minute consultation. Jake will help you figure out the best path based on your goals, experience, and lifestyle."
-        secondaryLabel="Get in Touch"
-        secondaryTo="/contact"
         eyebrow=""
+        actions={[
+          {
+            label: 'Book a Free Consult',
+            href: 'https://calendly.com/team-jd/15min',
+            variant: 'primary',
+            analyticsId: 'book_consult',
+          },
+          {
+            label: 'Get in Touch',
+            to: '/contact',
+            variant: 'secondary',
+            analyticsId: 'get_in_touch',
+          },
+        ]}
       />
     </>
   )

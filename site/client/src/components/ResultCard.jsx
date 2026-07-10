@@ -1,10 +1,21 @@
+import { useRef } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 
 export default function ResultCard({ result, onOpen }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
+  const cardRef = useRef(null)
   const src = resolveAsset(result.src)
+
+  const openResult = () => {
+    onOpen({
+      src,
+      alt: result.alt,
+      caption: result.caption,
+      trigger: cardRef.current,
+    })
+  }
 
   const Card = shouldReduce ? 'div' : motion.div
   const cardProps = shouldReduce
@@ -18,15 +29,19 @@ export default function ResultCard({ result, onOpen }) {
 
   return (
     <Card
+      ref={cardRef}
       className="result-card"
-      onClick={() => onOpen({ src, alt: result.alt, caption: result.caption })}
+      onClick={openResult}
       role="button"
       tabIndex={0}
       aria-label={`View: ${result.caption}`}
+      data-analytics-event="result_open"
+      data-analytics-location="results_grid"
+      data-analytics-id={result.id}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          onOpen({ src, alt: result.alt, caption: result.caption })
+          openResult()
         }
       }}
       {...cardProps}

@@ -1,27 +1,31 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
-import Home from './pages/Home'
 import About from './pages/About'
-import Services from './pages/Services'
-import ServiceDetailPage from './pages/ServiceDetailPage'
-import Results from './pages/Results'
-import Contact from './pages/Contact'
-import Privacy from './pages/Privacy'
-import NotFound from './pages/NotFound'
+
+const Home = lazy(() => import('./pages/Home'))
+const Services = lazy(() => import('./pages/Services'))
+const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'))
+const Results = lazy(() => import('./pages/Results'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 export default function App() {
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/services/:slug" element={<ServiceDetailPage />} />
-        <Route path="/results" element={<Results />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={<div className="route-loading" role="status">Loading page&hellip;</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/services/:slug" element={<ServiceDetailPage />} />
+          <Route path="/results" element={<Results />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </Layout>
   )
 }

@@ -33,6 +33,8 @@ export default function Nav() {
             src={resolveAsset('/api/assets/logo')}
             alt="Team JD Jake Dedert"
             decoding="async"
+            width="1017"
+            height="469"
           />
         </Link>
 

@@ -27,6 +27,9 @@ export default function ServiceCard({ service }) {
       to={`/services/${service.slug}`}
       className="service-tile-link"
       aria-label={`${service.name} — learn more`}
+      data-analytics-event="service_discovery"
+      data-analytics-location="services_grid"
+      data-analytics-id={service.id}
     >
       <Card className="service-tile" {...cardProps}>
         <Media
