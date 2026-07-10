@@ -70,7 +70,6 @@ export default function CTABanner({
               <p>{description}</p>
             </div>
             <div className="cta-banner-action-zone">
-              <span className="cta-banner-direction" aria-hidden="true">01 / Decide</span>
               <div className="actions">
                 {actions.map((action) => (
                   <CTAAction

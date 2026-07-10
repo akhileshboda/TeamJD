@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useReducedMotion } from 'motion/react'
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ClientResultsCarousel from '../components/ClientResultsCarousel'
@@ -7,6 +8,7 @@ import Lightbox from '../components/Lightbox'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
+import wnbfLogo from '../assets/wnbf.svg'
 
 const STATS = [
   { value: '100+', label: 'Clients Transformed' },
@@ -68,12 +70,13 @@ const FIT_SIGNALS = [
   'You want coaching that adapts as your body and circumstances change.',
 ]
 
-const GOAL_SPECTRUM = [
-  'Body composition',
-  'Strength',
-  'Confidence',
-  'Presentation',
-  'Competition',
+const COACHED_FEDERATIONS = [
+  { name: 'IFBB', asset: 'ifbb' },
+  { name: 'FMG', asset: 'fmg' },
+  { name: 'ICN', asset: 'icn' },
+  { name: 'ANB', asset: 'anb' },
+  { name: 'NABBA', asset: 'nabba' },
+  { name: 'WNBF', src: wnbfLogo },
 ]
 
 const ABOUT_FINAL_ACTIONS = [
@@ -90,6 +93,94 @@ const ABOUT_FINAL_ACTIONS = [
     analyticsId: 'view_results',
   },
 ]
+
+const PROCESS_STEP_THRESHOLDS = [0, 0.28, 0.58, 0.88]
+
+function ProcessTimeline({ steps }) {
+  const timelineRef = useRef(null)
+  const shouldReduceMotion = useReducedMotion()
+
+  useEffect(() => {
+    const timeline = timelineRef.current
+    if (!timeline) return undefined
+
+    const stepElements = Array.from(timeline.querySelectorAll('[data-process-step]'))
+
+    if (shouldReduceMotion) {
+      timeline.style.setProperty('--process-progress', '1')
+      timeline.classList.remove('is-ambient-active')
+      stepElements.forEach((step) => { step.dataset.active = 'true' })
+      return undefined
+    }
+
+    let isVisible = false
+    let frameId = null
+
+    const updateProgress = () => {
+      frameId = null
+      if (!isVisible) return
+
+      const rect = timeline.getBoundingClientRect()
+      const startLine = window.innerHeight * 0.78
+      const endLine = window.innerHeight * 0.28
+      const travel = Math.max(1, rect.height + startLine - endLine)
+      const progress = Math.min(1, Math.max(0, (startLine - rect.top) / travel))
+
+      timeline.style.setProperty('--process-progress', progress.toFixed(4))
+      stepElements.forEach((step, index) => {
+        step.dataset.active = String(progress >= PROCESS_STEP_THRESHOLDS[index])
+      })
+    }
+
+    const requestProgressUpdate = () => {
+      if (!isVisible || frameId !== null) return
+      frameId = window.requestAnimationFrame(updateProgress)
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting
+        timeline.classList.toggle('is-ambient-active', isVisible)
+        if (isVisible) requestProgressUpdate()
+      },
+      { rootMargin: '20% 0px 20% 0px' },
+    )
+
+    observer.observe(timeline)
+    window.addEventListener('scroll', requestProgressUpdate, { passive: true })
+    window.addEventListener('resize', requestProgressUpdate)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('scroll', requestProgressUpdate)
+      window.removeEventListener('resize', requestProgressUpdate)
+      if (frameId !== null) window.cancelAnimationFrame(frameId)
+    }
+  }, [shouldReduceMotion])
+
+  return (
+    <div ref={timelineRef} className="about-process-timeline-wrap">
+      <span className="about-process-track" aria-hidden="true">
+        <span className="about-process-track-fill" />
+      </span>
+      <ol className="about-process-timeline">
+        {steps.map((step, index) => (
+          <li key={step.number} data-process-step data-active={index === 0 ? 'true' : 'false'}>
+            <SectionReveal delay={index * 0.05} y={20}>
+              <article className="about-process-step">
+                <span className="about-process-number" aria-hidden="true">{step.number}</span>
+                <div>
+                  <h3>{step.title}</h3>
+                  <p>{step.body}</p>
+                </div>
+              </article>
+            </SectionReveal>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
 
 export default function About() {
   const resolveAsset = useAssets()
@@ -145,7 +236,7 @@ export default function About() {
                   </div>
               </div>
 
-              <SectionReveal delay={0.1}>
+              <SectionReveal className="about-bio-reveal" delay={0.1}>
                 <div className="about-bio-copy">
                   <span className="accent-line" />
                   <span className="eyebrow">The Person Behind the Plan</span>
@@ -190,6 +281,24 @@ export default function About() {
                     >
                       See Client Results <span aria-hidden="true">→</span>
                     </Link>
+                  </div>
+
+                  <div className="about-federations-panel" aria-labelledby="coached-federations-heading">
+                    <p id="coached-federations-heading">Federations I Coach</p>
+                    <ul>
+                      {COACHED_FEDERATIONS.map((federation) => (
+                        <li key={federation.name}>
+                          <img
+                            src={federation.src || resolveAsset(`/api/assets/${federation.asset}`)}
+                            alt={`${federation.name} logo`}
+                            loading="lazy"
+                            decoding="async"
+                            width="112"
+                            height="56"
+                          />
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               </SectionReveal>
@@ -261,21 +370,7 @@ export default function About() {
                 </figure>
               </SectionReveal>
 
-              <ol className="about-process-timeline">
-                {PROCESS_STEPS.map((step, index) => (
-                  <li key={step.number}>
-                    <SectionReveal delay={index * 0.05} y={20}>
-                      <article className="about-process-step">
-                        <span className="about-process-number" aria-hidden="true">{step.number}</span>
-                        <div>
-                          <h3>{step.title}</h3>
-                          <p>{step.body}</p>
-                        </div>
-                      </article>
-                    </SectionReveal>
-                  </li>
-                ))}
-              </ol>
+              <ProcessTimeline steps={PROCESS_STEPS} />
             </div>
           </div>
         </section>
@@ -316,38 +411,20 @@ export default function About() {
               </SectionReveal>
             </div>
 
-            <SectionReveal delay={0.1}>
-              <div className="about-goal-spectrum" aria-label="Goals supported by Team JD">
-                <span>Your goal might be</span>
-                <ul>
-                  {GOAL_SPECTRUM.map((goal) => <li key={goal}>{goal}</li>)}
-                </ul>
-              </div>
-            </SectionReveal>
           </div>
         </section>
 
         <section className="section about-section about-results-section" aria-labelledby="about-results-heading">
           <div className="container">
             <SectionReveal>
-              <div className="about-section-intro about-section-intro--split">
-                <div>
-                  <span className="eyebrow">Client Results</span>
-                  <h2 id="about-results-heading">The work shows.</h2>
-                </div>
-                <p>
-                  For now, this track highlights competition outcomes. As the result library grows,
-                  it will also carry the body-composition and lifestyle progress created through the
-                  same coaching standard.
-                </p>
-              </div>
+              <ClientResultsCarousel
+                results={results || []}
+                onOpen={setLightboxImage}
+                eyebrow="Client Results"
+                title="The work shows."
+                headingId="about-results-heading"
+              />
             </SectionReveal>
-
-            {results && (
-              <SectionReveal delay={0.06}>
-                <ClientResultsCarousel results={results} onOpen={setLightboxImage} />
-              </SectionReveal>
-            )}
           </div>
         </section>
 
