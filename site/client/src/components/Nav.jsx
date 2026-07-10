@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
+/* R2 logo-hover reframed to the same canvas/content box as R2 logo (no size jump on swap) */
+import logoHoverNav from '../assets/logo-hover-nav.webp'
 
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
@@ -29,13 +31,25 @@ export default function Nav() {
     <nav className="nav" role="navigation" aria-label="Main navigation">
       <div className="container nav-inner">
         <Link to="/" className="nav-logo" aria-label="Team JD — Home">
-          <img
-            src={resolveAsset('/api/assets/logo')}
-            alt="Team JD Jake Dedert"
-            decoding="async"
-            width="1017"
-            height="469"
-          />
+          <span className="nav-logo-stack">
+            <img
+              className="nav-logo-default"
+              src={resolveAsset('/api/assets/logo')}
+              alt="Team JD Jake Dedert"
+              decoding="async"
+              width="1847"
+              height="851"
+            />
+            <img
+              className="nav-logo-alt"
+              src={logoHoverNav}
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              width="1847"
+              height="851"
+            />
+          </span>
         </Link>
 
         <ul className="nav-links" role="list">

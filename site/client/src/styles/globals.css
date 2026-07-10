@@ -328,11 +328,45 @@ p  { line-height: 1.7; color: var(--color-text); }
   flex-shrink: 0;
 }
 
-.nav-logo img {
+/* Both logos share one grid cell — same box, same aspect (1847×851) */
+.nav-logo-stack {
+  display: inline-grid;
+  grid-template: 1fr / 1fr;
+  line-height: 0;
+  place-items: center start;
+}
+
+.nav-logo-stack > img {
+  grid-area: 1 / 1;
   height: clamp(2.25rem, 4.2vw, 2.85rem);
   width: auto;
   max-width: 12rem;
   object-fit: contain;
+  display: block;
+  transition: opacity var(--transition-normal);
+}
+
+.nav-logo-alt {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 769px) {
+  .nav-logo:hover .nav-logo-default,
+  .nav-logo:focus-visible .nav-logo-default {
+    opacity: 0;
+  }
+
+  .nav-logo:hover .nav-logo-alt,
+  .nav-logo:focus-visible .nav-logo-alt {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-logo-stack > img {
+    transition: none;
+  }
 }
 
 .nav-links {
@@ -2285,7 +2319,7 @@ p  { line-height: 1.7; color: var(--color-text); }
     height: 3.25rem;
   }
 
-  .nav-logo img {
+  .nav-logo-stack > img {
     height: 2.35rem;
     max-width: 10.5rem;
   }
