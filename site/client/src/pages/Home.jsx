@@ -52,7 +52,7 @@ const servicePathways = [
     copy:
       'Posing work focuses on angles, transitions, stage confidence, and showing your strengths clearly under judging conditions.',
     fit: 'Best fit: competitors refining presentation and presence',
-    fallbackName: 'Posing Only',
+    fallbackName: 'Posing',
     fallbackSlug: 'posing-only',
     fallbackImage: 'service-posing',
   },

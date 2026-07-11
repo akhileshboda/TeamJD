@@ -211,7 +211,7 @@ export default function Contact() {
                       <option value="competition-prep">Competition Preparation</option>
                       <option value="online-coaching">Online Coaching</option>
                       <option value="personal-training">Personal Training</option>
-                      <option value="posing-only">Posing Only</option>
+                      <option value="posing-only">Posing</option>
                       <option value="unsure">Not Sure Yet</option>
                     </select>
                   </div>

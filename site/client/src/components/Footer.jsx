@@ -41,10 +41,10 @@ export default function Footer() {
           <div>
             <p className="footer-heading">Services</p>
             <ul className="footer-links" role="list">
-              <li><Link to="/services#competition-prep">Competition Prep</Link></li>
-              <li><Link to="/services#online-coaching">Online Coaching</Link></li>
-              <li><Link to="/services#personal-training">Personal Training</Link></li>
-              <li><Link to="/services#posing-only">Posing Only</Link></li>
+              <li><Link to="/services/competition-preparation">Competition Prep</Link></li>
+              <li><Link to="/services/online-coaching">Online Coaching</Link></li>
+              <li><Link to="/services/personal-training">Personal Training</Link></li>
+              <li><Link to="/services/posing-only">Posing</Link></li>
             </ul>
             <p className="footer-heading" style={{ marginTop: '1.5rem' }}>Connect</p>
             <ul className="footer-links" role="list">

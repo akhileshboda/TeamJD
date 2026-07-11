@@ -25,6 +25,14 @@ function CTAAction({ action, location }) {
     'data-analytics-id': action.analyticsId,
   }
 
+  if (action.type === 'button' || action.asButton) {
+    return (
+      <button type="button" className={className} {...analyticsProps}>
+        {action.label}
+      </button>
+    )
+  }
+
   if (action.to) {
     return (
       <Link to={action.to} className={className} {...analyticsProps}>
@@ -73,7 +81,7 @@ export default function CTABanner({
               <div className="actions">
                 {actions.map((action) => (
                   <CTAAction
-                    key={`${action.to || action.href}-${action.label}`}
+                    key={`${action.analyticsId || action.to || action.href || 'action'}-${action.label}`}
                     action={action}
                     location={analyticsLocation}
                   />

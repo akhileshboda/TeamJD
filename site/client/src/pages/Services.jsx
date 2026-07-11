@@ -1,6 +1,6 @@
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
-import ServiceCard from '../components/ServiceCard'
+import ServiceGlassCard from '../components/ServiceGlassCard'
 import { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
 
@@ -12,53 +12,50 @@ export default function Services() {
       <PageHero
         eyebrow="Coaching Packages"
         title="Pick Your Path."
-        subtitle="Every service is 100% personalised to your goals, your body, and your timeline. No templates. No copy-paste programs. No shortcuts."
+        subtitle="Personalised coaching for stage, training, and presentation — pick the path that matches your next move."
       />
 
-      <section className="section" aria-label="Coaching services">
-        <div className="container">
+      <section className="services-hub" aria-label="Coaching services">
+        <div className="container services-hub-inner">
           {services ? (
-            <StaggerContainer className="grid-service-tiles" inView={false}>
+            <StaggerContainer className="services-glass-grid" inView={false}>
               {services.map((service) => (
                 <StaggerItem key={service.id}>
-                  <ServiceCard service={service} />
+                  <ServiceGlassCard service={service} />
                 </StaggerItem>
               ))}
             </StaggerContainer>
           ) : (
-            <div className="grid-service-tiles">
+            <div className="services-glass-grid" aria-hidden="true">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="service-tile service-tile--skeleton"
-                  aria-hidden="true"
-                />
+                <div key={i} className="service-glass-card service-glass-card--skeleton" />
               ))}
             </div>
           )}
         </div>
-      </section>
 
-      <CTABanner
-        analyticsLocation="services_final_cta"
-        title="Not Sure Which Is Right for You?"
-        description="Book a free 15-minute consultation. Jake will help you figure out the best path based on your goals, experience, and lifestyle."
-        eyebrow=""
-        actions={[
-          {
-            label: 'Book a Free Consult',
-            href: 'https://calendly.com/team-jd/15min',
-            variant: 'primary',
-            analyticsId: 'book_consult',
-          },
-          {
-            label: 'Get in Touch',
-            to: '/contact',
-            variant: 'secondary',
-            analyticsId: 'get_in_touch',
-          },
-        ]}
-      />
+        <CTABanner
+          sectionClassName="services-final-cta"
+          analyticsLocation="services_final_cta"
+          eyebrow="Not Sure Yet?"
+          title="Find Your Perfect Fit."
+          description="Answer a few quick questions — or get in touch and Jake will help you choose the right path."
+          actions={[
+            {
+              label: 'Take the Service Quiz',
+              type: 'button',
+              variant: 'primary',
+              analyticsId: 'service_quiz',
+            },
+            {
+              label: 'Get in Touch',
+              to: '/contact',
+              variant: 'secondary',
+              analyticsId: 'get_in_touch',
+            },
+          ]}
+        />
+      </section>
     </>
   )
 }

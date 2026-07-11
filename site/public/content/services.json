@@ -4,6 +4,7 @@
     "name": "Competition Preparation",
     "slug": "competition-preparation",
     "tagline": "Transform your dedication into stage-ready excellence.",
+    "hero_image": "jake-stage",
     "short_description": "A full-service package to get you on stage looking your absolute best. From training and nutrition to posing and peak week — every detail covered.",
     "description": "Competition preparation is more than just getting in shape – it's about achieving peak conditioning, mastering stage presence, and presenting your absolute best self when it matters most. As a Pro Physique athlete with years of competition experience, Jake understands every aspect of what it takes to succeed on stage.",
     "who_its_for": [
@@ -140,7 +141,7 @@
   },
   {
     "id": "posing-only",
-    "name": "Posing Only",
+    "name": "Posing",
     "slug": "posing-only",
     "tagline": "Master the art of presentation and maximise your competitive edge on stage.",
     "hero_image": "service-posing",

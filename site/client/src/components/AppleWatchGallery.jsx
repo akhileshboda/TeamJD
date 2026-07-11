@@ -79,7 +79,7 @@ const REAL_RESULT_DETAILS = {
     testimonial: {
       quote: 'Jake helped me understand how to show my strengths instead of just hitting poses. That changed everything.',
       author: 'Posing Client',
-      service: 'Posing Only',
+      service: 'Posing',
       result: 'Stage Presence Transformation',
     },
     stats: [
@@ -113,7 +113,7 @@ const REAL_RESULT_DETAILS = {
     testimonial: {
       quote: 'The posing work made me look more composed and more prepared. I stopped rushing and started owning the routine.',
       author: 'Presentation Client',
-      service: 'Posing Only',
+      service: 'Posing',
       result: 'Routine Confidence',
     },
     stats: [
@@ -198,7 +198,7 @@ const FALLBACK_RESULTS = [
     testimonial: {
       quote: 'Learning how to present the physique changed how confident I felt under pressure.',
       author: 'Posing Client',
-      service: 'Posing Only',
+      service: 'Posing',
       result: 'Stage Confidence',
     },
     stats: [
@@ -298,7 +298,7 @@ const FALLBACK_RESULTS = [
     testimonial: {
       quote: 'The difference was learning how to show what I had already built.',
       author: 'Presentation Client',
-      service: 'Posing Only',
+      service: 'Posing',
       result: 'Sharper Presence',
     },
     stats: [
@@ -438,7 +438,7 @@ const FALLBACK_RESULTS = [
     testimonial: {
       quote: 'I stopped feeling rushed once the routine had structure and the transitions made sense.',
       author: 'Posing Client',
-      service: 'Posing Only',
+      service: 'Posing',
       result: 'Cleaner Routine',
     },
     stats: [
@@ -1030,6 +1030,7 @@ export default function AppleWatchGallery() {
       'Competition Preparation': 'competition',
       'Online Coaching': 'online',
       'Personal Training': 'training',
+      Posing: 'posing',
       'Posing Only': 'posing',
       'Lifestyle Coaching': 'lifestyle',
     }
