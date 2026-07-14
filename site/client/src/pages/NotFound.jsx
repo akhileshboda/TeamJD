@@ -35,13 +35,7 @@ export default function NotFound() {
               <Link to="/contact">Book or send Jake a message</Link>
             </li>
             <li>
-              <a
-                href="https://calendly.com/team-jd/15min"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Grab a free consult
-              </a>
+              <Link to="/services#find-your-fit">Find the right coaching path</Link>
             </li>
             <li>
               <a

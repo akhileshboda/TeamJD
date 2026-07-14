@@ -1,167 +1,273 @@
-import { Link, useParams, Navigate } from 'react-router-dom'
-import PageHero from '../components/PageHero'
+import { useEffect, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
+import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
+import ServiceDetailHero from '../components/ServiceDetailHero'
+import ServiceGlassCard from '../components/ServiceGlassCard'
+import ServiceQualification from '../components/ServiceQualification'
+import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
+import { isServiceQualified } from '../utils/qualification'
+
+const inclusionGroups = [
+  { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
+  { title: 'Delivery and support', range: [2, Infinity], variant: 'delivery' },
+]
+
+function getInitialState(slug) {
+  return isServiceQualified(slug) ? { status: 'qualified' } : { status: 'locked' }
+}
 
 export default function ServiceDetailPage() {
   const { slug } = useParams()
   const { data: services } = useJSON('/content/services.json')
   const resolveAsset = useAssets()
+  const [qualificationState, setQualificationState] = useState(() => getInitialState(slug))
+
+  useEffect(() => {
+    setQualificationState(getInitialState(slug))
+  }, [slug])
 
   if (!services) {
     return (
-      <div style={{ textAlign: 'center', padding: '6rem 1.5rem', color: 'var(--color-text-muted)' }}>
-        Loading&hellip;
+      <div className="service-route-loading" role="status">
+        <span className="visually-hidden">Loading service</span>
+        <div className="service-skeleton-hero" aria-hidden="true">
+          <div className="service-skeleton-copy">
+            <div className="service-skeleton-bar service-skeleton-bar--chip" />
+            <div className="service-skeleton-bar service-skeleton-bar--title" />
+            <div className="service-skeleton-bar service-skeleton-bar--title-short" />
+            <div className="service-skeleton-bar service-skeleton-bar--text" />
+          </div>
+          <div className="service-skeleton-frame" />
+        </div>
       </div>
     )
   }
 
-  const service = services.find((s) => s.slug === slug)
-  if (!service) {
-    return <Navigate to="/services" replace />
-  }
+  const service = services.find((candidate) => candidate.slug === slug)
+  if (!service) return <Navigate to="/services" replace />
 
-  const others = services.filter((s) => s.slug !== slug)
+  const others = services.filter((candidate) => candidate.slug !== slug)
+  const recommendation = qualificationState.recommendationSlug
+    ? services.find((candidate) => candidate.slug === qualificationState.recommendationSlug)
+    : null
+
+  const theme = service.theme ?? {}
+  const themeVars = {
+    '--svc-accent': theme.accent,
+    '--svc-accent-rgb': theme.accent_rgb,
+    '--svc-accent-2': theme.accent2,
+    '--svc-accent-2-rgb': theme.accent2_rgb,
+  }
+  const bodyImageSrc = resolveAsset(service.body_image ?? service.hero_image)
 
   return (
-    <>
-      <PageHero
-        eyebrow="Coaching Package"
-        title={service.name}
-        subtitle={service.tagline}
-      />
+    <div className="service-journey-theme" style={themeVars}>
+      <ServiceDetailHero service={service} />
 
-      <section className="service-detail-page section">
-        <div className="container">
+      <div className="service-journey-page">
+        <div className="service-journey-page-glow" aria-hidden="true" />
+        <div className="service-journey-drift service-journey-drift--one" aria-hidden="true" />
+        <div className="service-journey-drift service-journey-drift--two" aria-hidden="true" />
+        <div className="container service-journey-container">
           <SectionReveal inView={false}>
-            <div className="service-detail-body">
-              <Link to="/services" className="service-back-link">
-                &larr; All Services
-              </Link>
+            <section className="service-intro-section" aria-labelledby="service-intro-title">
+              <div className="service-intro-copy">
+                <span className="eyebrow">Know What You Are Choosing</span>
+                <h2 id="service-intro-title">The right service starts with the right expectation.</h2>
+                <p>{service.description}</p>
+              </div>
 
-              <p style={{ marginBottom: 'var(--space-8)', color: 'var(--color-text-muted)' }}>
-                {service.description}
-              </p>
+              <figure className="service-intro-photo">
+                <img
+                  src={bodyImageSrc}
+                  alt={service.body_alt ?? ''}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="service-intro-photo-scrim" aria-hidden="true" />
+              </figure>
+            </section>
+          </SectionReveal>
 
-              <h3 style={{ marginBottom: 'var(--space-5)', fontSize: '1.125rem' }}>
-                What&apos;s Included
-              </h3>
-              <ul className="includes-list" style={{ marginBottom: 'var(--space-8)' }}>
-                {service.includes.map((item) => (
-                  <li key={item.title} className="includes-item">
-                    <img
-                      src={resolveAsset(item.icon)}
-                      alt=""
-                      aria-hidden="true"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="includes-item-text">
-                      <strong>{item.title}</strong>
-                      <span>{item.description}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+          <ServiceStandardTimeline service={service} />
 
-              {service.who_its_for && (
-                <>
-                  <h3 style={{ marginBottom: 'var(--space-4)', fontSize: '1.125rem' }}>
-                    You&apos;re a Great Fit If&hellip;
-                  </h3>
-                  <ul
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 'var(--space-2)',
-                      marginBottom: 'var(--space-8)',
-                    }}
+          <section className="service-inclusions-section" aria-labelledby="service-inclusions-title">
+            <SectionReveal>
+              <div className="service-section-heading">
+                <div>
+                  <span className="eyebrow">What Is Included</span>
+                  <h2 id="service-inclusions-title">Support built around the whole job.</h2>
+                </div>
+                <p>
+                  Each part of the service has a purpose. Together they create the structure,
+                  feedback, and accountability behind the result.
+                </p>
+              </div>
+            </SectionReveal>
+
+            <div className="service-inclusions-groups">
+              {inclusionGroups.map((group, groupIndex) => {
+                const [start, end] = group.range
+                const items = service.includes.slice(start, end)
+                if (items.length === 0) return null
+
+                const groupId = `${service.slug}-inclusion-group-${groupIndex + 1}`
+
+                return (
+                  <section
+                    className={`service-content-block service-content-block--${group.variant} service-inclusions-group`}
+                    aria-labelledby={groupId}
+                    key={group.title}
                   >
+                    <SectionReveal>
+                      <div className="service-content-block-heading">
+                        <span aria-hidden="true">{String(groupIndex + 1).padStart(2, '0')}</span>
+                        <div>
+                          <span>Included support</span>
+                          <h3 id={groupId}>{group.title}</h3>
+                        </div>
+                      </div>
+                    </SectionReveal>
+
+                    <div className="service-inclusions-grid">
+                      {items.map((item, itemIndex) => {
+                        const index = start + itemIndex
+
+                        return (
+                          <SectionReveal
+                            key={item.title}
+                            delay={Math.min(itemIndex * 0.05, 0.12)}
+                          >
+                            <article
+                              className={`service-inclusion-card glass-panel${
+                                index === 0 ? ' service-inclusion-card--feature' : ''
+                              }`}
+                              style={
+                                index === 0
+                                  ? { '--svc-card-photo': `url("${bodyImageSrc}")` }
+                                  : undefined
+                              }
+                            >
+                              <div className="service-inclusion-number" aria-hidden="true">
+                                {String(index + 1).padStart(2, '0')}
+                              </div>
+                              <div className="service-inclusion-icon" aria-hidden="true">
+                                <img
+                                  src={resolveAsset(item.icon)}
+                                  alt=""
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              </div>
+                              <h3>{item.title}</h3>
+                              <p>{item.description}</p>
+                            </article>
+                          </SectionReveal>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          </section>
+
+          <SectionReveal>
+            <section className="service-content-block service-content-block--fit" aria-labelledby="service-fit-title">
+              <div className="service-content-block-heading">
+                <span aria-hidden="true">03</span>
+                <div>
+                  <span>Before you continue</span>
+                  <h3 id="service-fit-title">Good fit</h3>
+                </div>
+              </div>
+
+              <div className="service-fit-split">
+                <article className="service-fit-panel service-fit-split-copy">
+                  <div className="service-fit-panel-heading">
+                    <JourneyIcon name="user" size={24} />
+                    <div>
+                      <span className="eyebrow">A Good Fit Looks Like</span>
+                      <h2>This matches you if&hellip;</h2>
+                    </div>
+                  </div>
+                  <ul>
                     {service.who_its_for.map((item) => (
-                      <li
-                        key={item}
-                        style={{
-                          display: 'flex',
-                          gap: 'var(--space-3)',
-                          alignItems: 'flex-start',
-                          color: 'var(--color-text-muted)',
-                          fontSize: '0.9375rem',
-                        }}
-                      >
-                        <span
-                          style={{ color: 'var(--color-accent)', flexShrink: 0, marginTop: '2px' }}
-                        >
-                          ✓
-                        </span>
+                      <li key={item}>
+                        <span aria-hidden="true"><JourneyIcon name="check" size={17} /></span>
                         {item}
                       </li>
                     ))}
                   </ul>
-                </>
-              )}
+                </article>
 
-              {service.pricing && (
-                <p
-                  style={{
-                    color: 'var(--color-accent)',
-                    fontWeight: 700,
-                    fontSize: '1.125rem',
-                    marginBottom: 'var(--space-6)',
-                  }}
-                >
-                  {service.pricing}
-                </p>
-              )}
-
-              {service.federations && (
-                <p
-                  style={{
-                    color: 'var(--color-text-muted)',
-                    fontSize: '0.875rem',
-                    marginBottom: 'var(--space-8)',
-                  }}
-                >
-                  <strong style={{ color: 'var(--color-text)' }}>Supported Federations:</strong>{' '}
-                  {service.federations.join(' · ')}
-                </p>
-              )}
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-                <a
-                  href={service.cta_url}
-                  className="btn btn-primary btn-lg"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {service.cta_text}
-                </a>
-                {service.application_required && (
-                  <span className="badge" style={{ alignSelf: 'center' }}>
-                    Application Required
-                  </span>
-                )}
+                <div
+                  className="service-fit-split-photo"
+                  role="img"
+                  aria-label={service.body_alt ?? ''}
+                  style={{ '--svc-fit-photo': `url("${bodyImageSrc}")` }}
+                />
               </div>
-            </div>
+            </section>
           </SectionReveal>
 
-          {others.length > 0 && (
-            <div className="explore-others">
-              <span className="explore-others-label">Explore other services</span>
-              <div className="explore-others-links">
-                {others.map((s) => (
-                  <Link key={s.slug} to={`/services/${s.slug}`} className="filter-btn">
-                    {s.name} &rarr;
-                  </Link>
-                ))}
+          <SectionReveal>
+            <section className="service-content-block service-content-block--readiness" aria-labelledby="service-readiness-title">
+              <div className="service-content-block-heading">
+                <span aria-hidden="true">04</span>
+                <div>
+                  <span>Your next step</span>
+                  <h3 id="service-readiness-title">Readiness check</h3>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </section>
 
-      <StickyBookBar service={service} />
-    </>
+              <ServiceQualification
+                key={service.slug}
+                service={service}
+                services={services}
+                initialQualified={qualificationState.status === 'qualified'}
+                onStateChange={setQualificationState}
+                embedded
+              />
+            </section>
+          </SectionReveal>
+
+          <section className="service-related-section" aria-labelledby="service-related-title">
+            <SectionReveal>
+              <div className="service-section-heading service-related-heading">
+                <div>
+                  <span className="eyebrow">Explore Other Services</span>
+                  <h2 id="service-related-title">More coaching paths</h2>
+                </div>
+                <p>Scroll to compare the other ways to work with Jake.</p>
+              </div>
+            </SectionReveal>
+
+            <div
+              className="service-related-grid"
+              role="region"
+              aria-label="Other coaching services"
+              tabIndex="0"
+            >
+              {others.map((candidate, index) => (
+                <SectionReveal key={candidate.id} delay={Math.min(index * 0.06, 0.12)}>
+                  <ServiceGlassCard service={candidate} />
+                </SectionReveal>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <StickyBookBar
+        service={service}
+        qualificationState={qualificationState}
+        recommendation={recommendation}
+      />
+    </div>
   )
 }

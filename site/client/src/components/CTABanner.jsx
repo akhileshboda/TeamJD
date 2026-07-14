@@ -10,10 +10,10 @@ const DEFAULT_ACTIONS = [
     analyticsId: 'explore_services',
   },
   {
-    label: 'Book a Free Consult',
-    href: 'https://calendly.com/team-jd/15min',
+    label: 'Find Your Fit',
+    to: '/services#find-your-fit',
     variant: 'secondary',
-    analyticsId: 'book_consult',
+    analyticsId: 'find_your_fit',
   },
 ]
 

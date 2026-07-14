@@ -1,0 +1,122 @@
+import { useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { useAssets } from '../hooks/useAssets'
+import JourneyIcon from './JourneyIcon'
+
+const EASE = [0.25, 0.1, 0.25, 1]
+
+const copyVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
+}
+
+const copyItem = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+}
+
+export default function ServiceDetailHero({ service }) {
+  const sectionRef = useRef(null)
+  const resolveAsset = useAssets()
+  const shouldReduce = useReducedMotion()
+  const heroSrc = resolveAsset(service.hero_image)
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  })
+  const parallaxY = useTransform(scrollYProgress, [0, 1], [0, 48])
+
+  const itemProps = shouldReduce ? {} : { variants: copyItem }
+
+  return (
+    <section
+      ref={sectionRef}
+      className="service-journey-hero"
+      aria-labelledby="service-journey-title"
+    >
+      <div
+        className="service-journey-hero-backdrop"
+        aria-hidden="true"
+        style={{ '--svc-hero-photo': `url("${heroSrc}")` }}
+      />
+      <div className="service-journey-orb service-journey-orb--cyan" aria-hidden="true" />
+      <div className="service-journey-orb service-journey-orb--coral" aria-hidden="true" />
+
+      <div className="container service-journey-hero-inner">
+        <motion.div
+          className="service-journey-hero-copy"
+          variants={shouldReduce ? undefined : copyVariants}
+          initial={shouldReduce ? false : 'hidden'}
+          animate={shouldReduce ? undefined : 'visible'}
+        >
+          <motion.div {...itemProps}>
+            <Link to="/services" className="service-menu-link">
+              <JourneyIcon name="arrowLeft" size={18} />
+              <span>Service Menu</span>
+            </Link>
+          </motion.div>
+
+          <motion.div className="service-journey-kickers" {...itemProps}>
+            <span className="eyebrow">Coaching Pathway</span>
+            <span className="service-fit-chip">
+              <JourneyIcon name="lock" size={14} />
+              Fit check before booking
+            </span>
+          </motion.div>
+
+          <motion.h1 id="service-journey-title" {...itemProps}>
+            {service.name}
+          </motion.h1>
+          <motion.p {...itemProps}>{service.tagline}</motion.p>
+
+          {service.facts?.length > 0 && (
+            <motion.ul
+              className="service-hero-stats"
+              aria-label={`${service.name} at a glance`}
+              {...itemProps}
+            >
+              {service.facts.map((fact) => (
+                <li key={fact.label}>
+                  <span>{fact.label}</span>
+                  <strong>{fact.value}</strong>
+                </li>
+              ))}
+            </motion.ul>
+          )}
+
+          <motion.div {...itemProps}>
+            <a className="service-hero-fit-link" href="#service-fit-check">
+              Understand the service first
+              <JourneyIcon name="arrowRight" size={18} />
+            </a>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          className="service-journey-visual"
+          initial={shouldReduce ? false : { opacity: 0, x: 28 }}
+          animate={shouldReduce ? undefined : { opacity: 1, x: 0 }}
+          transition={{ duration: 0.65, ease: EASE, delay: 0.08 }}
+        >
+          <div className="service-journey-visual-glow" aria-hidden="true" />
+          <motion.div
+            className="service-journey-parallax"
+            style={shouldReduce ? undefined : { y: parallaxY }}
+          >
+            <div className="service-journey-ring" aria-hidden="true" />
+            <div className="service-journey-image-frame">
+              <img src={heroSrc} alt={service.hero_alt} decoding="async" fetchpriority="high" />
+              <div className="service-journey-image-scrim" aria-hidden="true" />
+              <div className="service-journey-image-plate">
+                <span>Team JD standard</span>
+                <strong>{service.expectation_title}</strong>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}

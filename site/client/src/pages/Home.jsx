@@ -146,14 +146,9 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="home-services-consult-actions">
-                  <a
-                    href="https://calendly.com/team-jd/15min"
-                    className="btn btn-primary"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Book a Free Consult
-                  </a>
+                  <Link to="/services#find-your-fit" className="btn btn-primary">
+                    Find Your Fit
+                  </Link>
                   <Link to="/services" className="btn btn-secondary">
                     View All Services &rarr;
                   </Link>

@@ -5,14 +5,36 @@
     "slug": "competition-preparation",
     "tagline": "Transform your dedication into stage-ready excellence.",
     "hero_image": "jake-stage",
-    "short_description": "A full-service package to get you on stage looking your absolute best. From training and nutrition to posing and peak week — every detail covered.",
-    "description": "Competition preparation is more than just getting in shape – it's about achieving peak conditioning, mastering stage presence, and presenting your absolute best self when it matters most. As a Pro Physique athlete with years of competition experience, Jake understands every aspect of what it takes to succeed on stage.",
+    "hero_alt": "Jake celebrating on stage with a competition athlete",
+    "theme": {
+      "accent": "#FA8072",
+      "accent_rgb": "250, 128, 114",
+      "accent2": "#16c9dd",
+      "accent2_rgb": "22, 201, 221"
+    },
+    "body_image": "client-comp-1",
+    "body_alt": "Team JD athletes flexing during a competition stage lineup",
+    "short_description": "A full-service package to get you on stage looking your absolute best. From training and nutrition to posing and show day — every detail covered.",
+    "description": "Competition preparation is more than just getting in shape — it is about achieving peak conditioning, mastering stage presence, and presenting your absolute best self when it matters most. As a Pro Physique athlete with years of competition experience, Jake understands every aspect of what it takes to succeed on stage.",
+    "facts": [
+      { "label": "Entry", "value": "Readiness assessed" },
+      { "label": "Timeline", "value": "Set by athlete readiness" },
+      { "label": "Support", "value": "Complete contest coaching" }
+    ],
+    "expectation_title": "Your target show is a direction, not a promise.",
+    "expectation_lede": "Most athletes who enquire about prep need more time than they expect. Jake will assess where you are now, be direct about what is realistic, and may recommend a later season before he agrees to begin a prep.",
+    "expectations": [
+      "Jake decides whether you are ready to begin competition preparation.",
+      "Your preferred season may move if more time will produce a safer, stronger result.",
+      "A consultation is a readiness assessment — it is not automatic acceptance into prep.",
+      "The right first move may be Online Coaching to build towards the stage with purpose."
+    ],
     "who_its_for": [
-      "You have at least 1–2 years of consistent training experience",
-      "You're committed to following a structured program for 12–24 weeks",
-      "You understand that competition prep requires dedication and sacrifice",
-      "You want expert guidance through every aspect of preparation",
-      "You want to challenge yourself and achieve something extraordinary"
+      "You have at least one year of consistent training experience",
+      "You are committed to following a highly structured coaching process",
+      "You understand that competition preparation requires dedication and sacrifice",
+      "You will let readiness — not impatience — determine the timeline",
+      "You want expert guidance through every aspect of preparation"
     ],
     "includes": [
       {
@@ -41,11 +63,48 @@
         "icon": "icons/physique-optimisation.png"
       }
     ],
+    "qualification": {
+      "eyebrow": "Readiness check",
+      "title": "Before you request a prep assessment",
+      "intro": "Answer honestly. The goal is not to keep serious athletes out — it is to make sure the next step matches where you actually are.",
+      "pass_title": "You understand what a prep enquiry means.",
+      "pass_copy": "You can now request a 30-minute readiness assessment. Jake may still recommend a longer runway before competition preparation begins.",
+      "redirect_title": "Competition prep is not the right next booking yet.",
+      "redirect_copy": "A different coaching path will give you a stronger next step without forcing a stage timeline before you are ready.",
+      "questions": [
+        {
+          "id": "training_history",
+          "prompt": "How long have you trained consistently with a structured plan?",
+          "options": [
+            { "value": "under-one", "label": "Less than one year", "qualifies": false, "recommend_slug": "online-coaching" },
+            { "value": "one-to-two", "label": "One to two years", "qualifies": true },
+            { "value": "two-plus", "label": "More than two years", "qualifies": true }
+          ]
+        },
+        {
+          "id": "timeline",
+          "prompt": "If Jake believes your preferred season is too soon, are you willing to move the timeline?",
+          "options": [
+            { "value": "yes", "label": "Yes — readiness comes first", "qualifies": true },
+            { "value": "unsure", "label": "I am not sure yet", "qualifies": false, "recommend_slug": "online-coaching" },
+            { "value": "no", "label": "No — I only want my current season", "qualifies": false, "recommend_slug": "online-coaching" }
+          ]
+        },
+        {
+          "id": "commitment",
+          "prompt": "Are you ready to follow a demanding coaching process and communicate honestly throughout it?",
+          "options": [
+            { "value": "yes", "label": "Yes — I am ready for that standard", "qualifies": true },
+            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Take the time you need. Coaching works when you are ready to follow the process consistently; there is no benefit in forcing the booking today." }
+          ]
+        }
+      ]
+    },
     "application_required": true,
-    "cta_text": "Book Consultation",
+    "cta_text": "Request Prep Assessment",
     "cta_url": "https://calendly.com/team-jd/30min",
-    "cta_secondary": "Apply Now",
-    "cta_secondary_url": "https://calendly.com/team-jd/30min"
+    "cta_secondary": null,
+    "cta_secondary_url": null
   },
   {
     "id": "online-coaching",
@@ -53,14 +112,36 @@
     "slug": "online-coaching",
     "tagline": "Personalised training and nutrition guidance with real-time support. Delivered entirely online.",
     "hero_image": "service-online-coaching",
-    "short_description": "A tailored coaching package designed entirely according to your unique needs and goals — delivered anywhere in the world.",
-    "description": "Distance shouldn't compromise the quality of your coaching experience. Our online coaching program delivers the same level of personalised attention, expert guidance, and proven results as in-person training – with the convenience and flexibility of training anywhere, anytime. This isn't about generic programs or automated responses. It's about building a real coaching relationship.",
+    "hero_alt": "Jake reviewing a personalised online coaching plan",
+    "theme": {
+      "accent": "#16c9dd",
+      "accent_rgb": "22, 201, 221",
+      "accent2": "#FA8072",
+      "accent2_rgb": "250, 128, 114"
+    },
+    "body_image": "service-personal-training-2",
+    "body_alt": "Coach reviewing a client's training remotely from a phone",
+    "short_description": "A tailored coaching package designed entirely around your needs and goals — delivered anywhere in the world.",
+    "description": "Distance should not compromise the quality of your coaching experience. Online coaching delivers personalised attention, expert guidance, and proven structure with the flexibility to train anywhere. This is not a generic program or an automated response — it is an ongoing coaching relationship.",
+    "facts": [
+      { "label": "Delivery", "value": "Worldwide" },
+      { "label": "Coaching", "value": "Training + nutrition" },
+      { "label": "Contact", "value": "Live check-ins + support" }
+    ],
+    "expectation_title": "This is coaching, not a program download.",
+    "expectation_lede": "Jake can only make useful decisions from useful feedback. The clients who get the most from online coaching train with intent, complete their check-ins, and communicate clearly when life or performance changes.",
+    "expectations": [
+      "Record training accurately and provide the feedback Jake asks for.",
+      "Complete check-ins on time so adjustments are based on current information.",
+      "Apply feedback rather than changing the plan whenever motivation shifts.",
+      "Ask questions early instead of letting uncertainty derail the week."
+    ],
     "who_its_for": [
-      "You want professional coaching but can't train in-person with Jake",
+      "You want professional coaching but cannot train in person with Jake",
       "You need a flexible program that fits your lifestyle",
-      "You're looking for real accountability and live check-ins",
+      "You are looking for real accountability and live check-ins",
       "You want individualised plans, not generic templates",
-      "You're committed to consistent progress with expert guidance"
+      "You are committed to consistent progress with expert guidance"
     ],
     "includes": [
       {
@@ -75,7 +156,7 @@
       },
       {
         "title": "Dedicated Coaching App Access",
-        "description": "All programs delivered through a professional platform with progress tracking, direct messaging, and exercise library with videos.",
+        "description": "All programs delivered through a professional platform with progress tracking, direct messaging, and an exercise video library.",
         "icon": "icons/coaching-app.png"
       },
       {
@@ -85,12 +166,49 @@
       },
       {
         "title": "Fortnightly Live Virtual Check-Ins",
-        "description": "Scheduled one-on-one video calls for real-time program adjustments, direct feedback on technique, and personal accountability sessions.",
+        "description": "Scheduled one-on-one video calls for program adjustments, technique feedback, and personal accountability.",
         "icon": "icons/virtual-checkins.png"
       }
     ],
+    "qualification": {
+      "eyebrow": "Coaching fit check",
+      "title": "Does online coaching match the support you need?",
+      "intro": "Choose the answers that describe the coaching relationship you actually want. If another service fits better, you will see it immediately.",
+      "pass_title": "Online coaching matches your next move.",
+      "pass_copy": "You are looking for the level of remote structure and accountability this service is built to provide. You can now book the online coaching consultation.",
+      "redirect_title": "There is a better match for what you need.",
+      "redirect_copy": "Your answers point to a more specific Team JD service. Review that path before requesting a booking.",
+      "questions": [
+        {
+          "id": "support_type",
+          "prompt": "What type of support are you primarily looking for?",
+          "options": [
+            { "value": "ongoing-online", "label": "Ongoing remote training and nutrition coaching", "qualifies": true },
+            { "value": "hands-on", "label": "Hands-on gym sessions in Melbourne", "qualifies": false, "recommend_slug": "personal-training" },
+            { "value": "posing", "label": "Posing and stage presentation only", "qualifies": false, "recommend_slug": "posing-only" },
+            { "value": "contest", "label": "Complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" }
+          ]
+        },
+        {
+          "id": "checkins",
+          "prompt": "Will you track your work, complete check-ins, and give Jake accurate feedback?",
+          "options": [
+            { "value": "yes", "label": "Yes — I will keep Jake informed", "qualifies": true },
+            { "value": "not-yet", "label": "I am not ready to do that consistently", "qualifies": false, "response": "Online coaching depends on consistent feedback. Explore the services, or send Jake a message when you are ready to work that way." }
+          ]
+        },
+        {
+          "id": "feedback",
+          "prompt": "Are you prepared to apply feedback and stay with the plan between check-ins?",
+          "options": [
+            { "value": "yes", "label": "Yes — I want that accountability", "qualifies": true },
+            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "There is no pressure to book before you want an accountable coaching relationship. Come back when that structure feels useful." }
+          ]
+        }
+      ]
+    },
     "application_required": true,
-    "cta_text": "Book Free Consult",
+    "cta_text": "Book Online Coaching Consult",
     "cta_url": "https://calendly.com/team-jd/15min",
     "cta_secondary": null,
     "cta_secondary_url": null
@@ -101,14 +219,36 @@
     "slug": "personal-training",
     "tagline": "Face-to-face coaching with expert guidance to build confidence, competence, and results.",
     "hero_image": "service-personal-training",
-    "short_description": "One-on-one coaching sessions focused on proper form, progressive programming, and achieving your individual fitness goals.",
-    "description": "Nothing replaces the power of face-to-face coaching in a professional gym environment. Our personal training delivers unmatched attention, expert guidance, and accelerated results through dedicated one-on-one sessions. This isn't about working out alone or figuring things out through trial and error. It's about building proper technique, real competence, and the confidence needed to achieve your goals.",
+    "hero_alt": "Jake coaching a client through an in-person gym session",
+    "theme": {
+      "accent": "#12aebf",
+      "accent_rgb": "18, 174, 191",
+      "accent2": "#16c9dd",
+      "accent2_rgb": "22, 201, 221"
+    },
+    "body_image": "service-training-2",
+    "body_alt": "Coach guiding a battle-rope session on the gym floor",
+    "short_description": "One-on-one coaching focused on proper form, progressive programming, and achieving your individual fitness goals.",
+    "description": "Nothing replaces face-to-face coaching in a professional gym environment. Personal training delivers focused attention, expert guidance, and immediate feedback through dedicated one-on-one sessions. It is a practical route to better technique, real competence, and confidence under load.",
+    "facts": [
+      { "label": "Location", "value": "Melbourne" },
+      { "label": "Format", "value": "One-to-one sessions" },
+      { "label": "Investment", "value": "$120 per session" }
+    ],
+    "expectation_title": "Turn up ready to learn, not just to sweat.",
+    "expectation_lede": "The value of personal training comes from applying feedback, repeating good movement, and building skill over time. Sessions are focused and progressive — not random workouts chosen for entertainment.",
+    "expectations": [
+      "Attend sessions in Melbourne reliably and arrive ready to train.",
+      "Use immediate technique feedback instead of chasing load at any cost.",
+      "Practise the standards established in sessions when training independently.",
+      "Treat progress as a skill-building process, not a single hard workout."
+    ],
     "who_its_for": [
       "You want hands-on coaching and immediate form correction",
-      "You're new to training and want to build a strong foundation",
-      "You've hit a plateau and need expert programming to break through",
+      "You are new to training and want to build a strong foundation",
+      "You have hit a plateau and need expert programming to break through",
       "You want structured, progressive sessions with full accountability",
-      "You're in or near Melbourne and can train in-person"
+      "You are in or near Melbourne and can train in person"
     ],
     "includes": [
       {
@@ -118,23 +258,60 @@
       },
       {
         "title": "Structured Training Sessions",
-        "description": "Progressive strength training programs, equipment mastery and safety protocols, workout intensity optimisation, and session-based progress tracking.",
+        "description": "Progressive strength training, equipment mastery, workout intensity optimisation, and session-based progress tracking.",
         "icon": "icons/structured-training.png"
       },
       {
         "title": "Technique Mastery Focus",
-        "description": "Compound movement fundamentals, equipment-specific training methods, form correction and refinement, and confidence building with weights.",
+        "description": "Compound movement fundamentals, equipment-specific methods, form refinement, and confidence building with weights.",
         "icon": "icons/personalised-training.png"
       },
       {
         "title": "Ongoing Support & Accountability",
-        "description": "Weekly progress assessments, training log management, goal setting and milestone celebrations, and motivational coaching.",
+        "description": "Progress assessments, training log management, goal setting, milestone recognition, and motivational coaching.",
         "icon": "icons/ongoing-support.png"
       }
     ],
+    "qualification": {
+      "eyebrow": "Training fit check",
+      "title": "Is in-person coaching the right format?",
+      "intro": "Personal training is specific: one-to-one gym coaching in Melbourne. These questions make sure that is the support you are trying to book.",
+      "pass_title": "Personal training fits what you need.",
+      "pass_copy": "You are looking for hands-on Melbourne coaching and are ready to use the sessions consistently. You can now book the personal training consultation.",
+      "redirect_title": "A different format will serve you better.",
+      "redirect_copy": "Your goal is valid, but it belongs in a different Team JD coaching path. Review the recommended service before booking.",
+      "questions": [
+        {
+          "id": "support_type",
+          "prompt": "What support are you primarily looking for?",
+          "options": [
+            { "value": "hands-on", "label": "Hands-on training and technique coaching", "qualifies": true },
+            { "value": "remote-complete", "label": "Remote training and nutrition coaching", "qualifies": false, "recommend_slug": "online-coaching" },
+            { "value": "posing", "label": "Posing and stage presentation", "qualifies": false, "recommend_slug": "posing-only" },
+            { "value": "contest", "label": "Complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" }
+          ]
+        },
+        {
+          "id": "location",
+          "prompt": "Can you attend regular training sessions in Melbourne?",
+          "options": [
+            { "value": "yes", "label": "Yes", "qualifies": true },
+            { "value": "no", "label": "No — I need remote support", "qualifies": false, "recommend_slug": "online-coaching" }
+          ]
+        },
+        {
+          "id": "attendance",
+          "prompt": "Are you ready to attend reliably and practise the feedback between sessions?",
+          "options": [
+            { "value": "yes", "label": "Yes — I am ready to be consistent", "qualifies": true },
+            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Wait until regular sessions fit your schedule. You can browse the other services or message Jake without booking." }
+          ]
+        }
+      ]
+    },
     "application_required": false,
     "pricing": "$120 per session",
-    "cta_text": "Book a Session",
+    "cta_text": "Book Personal Training Consult",
     "cta_url": "https://calendly.com/team-jd/15min",
     "cta_secondary": null,
     "cta_secondary_url": null
@@ -145,37 +322,87 @@
     "slug": "posing-only",
     "tagline": "Master the art of presentation and maximise your competitive edge on stage.",
     "hero_image": "service-posing",
+    "hero_alt": "Jake demonstrating a competition pose during a coaching session",
+    "theme": {
+      "accent": "#ffa294",
+      "accent_rgb": "255, 162, 148",
+      "accent2": "#16c9dd",
+      "accent2_rgb": "22, 201, 221"
+    },
+    "body_image": "client-comp-3",
+    "body_alt": "Athlete holding a sculpted pose under stage lights",
     "short_description": "Expert posing instruction that showcases your physique's strengths and maximises your competitive edge — for all federations.",
-    "description": "Your physique tells a story, but your posing brings it to life. Whether you're competing in IFBB, NABBA, INBA, or any other federation, the way you present yourself on stage can be the difference between placing and winning. As a professional with a track record of developing winning athletes, Jake provides specialised coaching to ensure you command attention, showcase your strengths, and present with the confidence of a true competitor.",
+    "description": "Your physique tells a story, but your posing brings it to life. The way you present on stage can be the difference between being overlooked and commanding attention. Jake provides specialised coaching to help competitors showcase their strengths and present with control and confidence.",
+    "facts": [
+      { "label": "Format", "value": "One-to-one instruction" },
+      { "label": "Federations", "value": "All federations welcome" },
+      { "label": "Focus", "value": "Presentation + stage craft" }
+    ],
+    "expectation_title": "The session teaches it. Practice makes it yours.",
+    "expectation_lede": "Posing improves through repetition. Jake can refine positions, transitions, and presentation, but you need to practise between sessions until the details feel deliberate under pressure.",
+    "expectations": [
+      "Practise the positions and transitions Jake gives you between sessions.",
+      "Be open to direct feedback on how your physique presents from every angle.",
+      "Learn the requirements of your division rather than copying another athlete.",
+      "Build a presentation you can repeat with confidence under stage conditions."
+    ],
     "who_its_for": [
-      "You're preparing for a competition and need posing guidance",
+      "You are preparing for a competition and need posing guidance",
       "You have your physique dialled in but want to present it better",
-      "You're competing in any federation — IFBB, NABBA, INBA, ICN, FMG, ANB",
-      "You're a first-timer who wants to walk on stage with confidence",
-      "You're an experienced competitor refining your routine"
+      "You are competing in any federation or division",
+      "You are a first-timer who wants to walk on stage with confidence",
+      "You are an experienced competitor refining your presentation"
     ],
     "includes": [
       {
         "title": "Mandatory Pose Mastery",
-        "description": "Division-specific instruction, proper form, angles, and technique refinement, with individual adjustments for your unique physique.",
+        "description": "Division-specific instruction, proper form, angles, and technique refinement, with individual adjustments for your physique.",
         "icon": "icons/posing.png"
       },
       {
         "title": "Individual Posing Routine",
-        "description": "Custom choreography tailored to your physique strengths, music selection guidance, seamless transitions, and personality integration.",
+        "description": "Custom choreography tailored to your strengths, music guidance, seamless transitions, and personality integration.",
         "icon": "icons/physique-optimisation.png"
       },
       {
-        "title": "Physique Optimisation Strategy",
-        "description": "Highlighting your best features, minimising weaker areas through positioning, division-specific presentation, and federation rule compliance.",
+        "title": "Physique Presentation Strategy",
+        "description": "Highlighting your best features, improving positioning, and aligning presentation with division expectations.",
         "icon": "icons/nutrition-coaching.png"
       },
       {
         "title": "Stage Presence Training",
-        "description": "Confidence building, performance psychology, stage walking skills, audience engagement, judge connection, and competition day mindset.",
+        "description": "Confidence, performance psychology, stage walking, audience engagement, judge connection, and competition-day mindset.",
         "icon": "icons/ongoing-support.png"
       }
     ],
+    "qualification": {
+      "eyebrow": "Session fit check",
+      "title": "Are you looking for posing-specific coaching?",
+      "intro": "Posing is a focused service. If you need complete contest or physique coaching, another Team JD path will cover the work you are actually asking for.",
+      "pass_title": "Posing coaching matches your goal.",
+      "pass_copy": "You are looking for focused presentation coaching and are ready to practise the detail between sessions. You can now book a posing session.",
+      "redirect_title": "Your goal needs more than a posing session.",
+      "redirect_copy": "Your answers point to a broader coaching service. Start there so the full scope of your goal is handled properly.",
+      "questions": [
+        {
+          "id": "support_type",
+          "prompt": "What are you trying to improve?",
+          "options": [
+            { "value": "posing", "label": "Posing, transitions, and stage presentation", "qualifies": true },
+            { "value": "contest", "label": "My complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" },
+            { "value": "physique", "label": "My overall physique, training, and nutrition", "qualifies": false, "recommend_slug": "online-coaching" }
+          ]
+        },
+        {
+          "id": "practice",
+          "prompt": "Will you practise the feedback between posing sessions?",
+          "options": [
+            { "value": "yes", "label": "Yes — I will practise consistently", "qualifies": true },
+            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Book when you have time to practise between sessions. That is what turns instruction into a presentation you can repeat on stage." }
+          ]
+        }
+      ]
+    },
     "federations": ["IFBB", "NABBA", "INBA", "ICN", "FMG", "ANB"],
     "application_required": false,
     "cta_text": "Book Posing Session",

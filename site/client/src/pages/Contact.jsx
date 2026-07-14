@@ -1,33 +1,43 @@
+import { Link } from 'react-router-dom'
+import JourneyIcon from '../components/JourneyIcon'
 import PageHero from '../components/PageHero'
 import SectionReveal from '../components/SectionReveal'
 
 const BOOKING_OPTIONS = [
   {
-    href: 'https://calendly.com/team-jd/15min',
-    label: 'Free 15-Min Consultation',
-    description: 'Discuss your goals and find the right service — ideal for online coaching & personal training',
-    icon: '📅',
+    to: '/services#find-your-fit',
+    label: 'Find Your Fit',
+    description: 'Answer two quick questions and start with the service that matches your goal.',
+    icon: 'compass',
     featured: true,
-    iconBg: 'var(--color-accent-glow)',
-    iconBorder: 'rgba(22,201,221,0.3)',
   },
   {
-    href: 'https://calendly.com/team-jd/30min',
-    label: 'Competition Prep Consultation',
-    description: '30 minutes — for those serious about getting on stage. Application required.',
-    icon: '🏆',
+    to: '/services/competition-preparation',
+    label: 'Competition Preparation',
+    description: 'Understand Jake’s readiness standard and realistic stage-timeline process.',
+    icon: 'target',
     featured: false,
-    iconBg: 'var(--color-surface-2)',
-    iconBorder: 'var(--color-border)',
   },
   {
-    href: 'https://calendly.com/team-jd/1-on-1-posing-session',
-    label: 'Posing Session',
-    description: 'Book directly for posing instruction — all federations welcome.',
-    icon: '💪',
+    to: '/services/online-coaching',
+    label: 'Online Coaching',
+    description: 'Review the remote training, nutrition, check-in, and accountability relationship.',
+    icon: 'spark',
     featured: false,
-    iconBg: 'var(--color-surface-2)',
-    iconBorder: 'var(--color-border)',
+  },
+  {
+    to: '/services/personal-training',
+    label: 'Personal Training',
+    description: 'Explore hands-on one-to-one training and technique coaching in Melbourne.',
+    icon: 'user',
+    featured: false,
+  },
+  {
+    to: '/services/posing-only',
+    label: 'Posing',
+    description: 'Explore focused posing, presentation, and stage-presence coaching.',
+    icon: 'target',
+    featured: false,
   },
 ]
 
@@ -36,8 +46,8 @@ export default function Contact() {
     <>
       <PageHero
         eyebrow="Let's Talk"
-        title="Ready to Start?"
-        subtitle="The first step is simple. Book a free 15-minute call and let's figure out the best path for your goals. No pressure, no obligation."
+        title="Start in the Right Place."
+        subtitle="Review the coaching path that matches your goal, complete its fit check, then request the right booking with clear expectations."
       />
 
       <section className="section">
@@ -47,7 +57,7 @@ export default function Contact() {
             <SectionReveal>
               <div>
                 <span className="accent-line" />
-                <h2 style={{ marginBottom: '1rem' }}>Book Your Free Consult.</h2>
+                <h2 style={{ marginBottom: '1rem' }}>Choose Your Starting Point.</h2>
                 <p
                   style={{
                     color: 'var(--color-text-muted)',
@@ -56,26 +66,21 @@ export default function Contact() {
                     lineHeight: 1.7,
                   }}
                 >
-                  The best way to get started is a quick 15-minute call. Jake will listen to
-                  your goals, answer your questions, and help you understand which service is
-                  the right fit — with zero pressure.
+                  Jake&apos;s time is most useful when you arrive in the right conversation. Use
+                  the finder if you are unsure, or review a service directly before completing
+                  its booking fit check.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-                  {BOOKING_OPTIONS.map(({ href, label, description, icon, featured, iconBg, iconBorder }) => (
-                    <a
-                      key={href}
-                      href={href}
+                  {BOOKING_OPTIONS.map(({ to, label, description, icon, featured }) => (
+                    <Link
+                      key={to}
+                      to={to}
                       className={`booking-card${featured ? ' featured' : ''}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div
-                          className="booking-icon"
-                          style={{ background: iconBg, border: `1px solid ${iconBorder}` }}
-                        >
-                          {icon}
+                        <div className="booking-icon">
+                          <JourneyIcon name={icon} size={22} />
                         </div>
                         <div>
                           <div style={{ fontWeight: 800, color: 'var(--color-white)', marginBottom: '0.25rem' }}>
@@ -86,7 +91,8 @@ export default function Contact() {
                           </div>
                         </div>
                       </div>
-                    </a>
+                      <JourneyIcon name="arrowRight" size={18} />
+                    </Link>
                   ))}
                 </div>
 
@@ -135,9 +141,7 @@ export default function Contact() {
                 <h2 style={{ marginBottom: '0.5rem' }}>Send a Message.</h2>
                 <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem', fontSize: '0.9375rem' }}>
                   Prefer to write first? Send Jake a message below. This form submits directly
-                  to email.{' '}
-                  <strong style={{ color: 'var(--color-accent)' }}>Note:</strong> For fastest
-                  response, use Calendly to book your consult above.
+                  to email. Use this for a question or context that does not require a booking.
                 </p>
 
                 <form
@@ -233,17 +237,11 @@ export default function Contact() {
                     Send Message
                   </button>
                   <p style={{ color: 'var(--color-text-subtle)', fontSize: '0.8125rem', marginTop: '-0.5rem' }}>
-                    This form opens your email client to send the message. For instant booking,
-                    use{' '}
-                    <a
-                      href="https://calendly.com/team-jd/15min"
-                      style={{ color: 'var(--color-accent)' }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Calendly
-                    </a>
-                    .
+                    This form opens your email client. If you want coaching, begin with the{' '}
+                    <Link to="/services#find-your-fit" style={{ color: 'var(--color-accent)' }}>
+                      service finder
+                    </Link>
+                    {' '}so the right booking unlocks only after its fit check.
                   </p>
                 </form>
               </div>

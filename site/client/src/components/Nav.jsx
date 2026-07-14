@@ -170,14 +170,9 @@ export default function Nav() {
         </ul>
 
         <div className="nav-cta">
-          <a
-            href="https://calendly.com/team-jd/15min"
-            className="btn btn-primary btn-sm"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Book a Consult
-          </a>
+          <Link to="/services#find-your-fit" className="btn btn-primary btn-sm">
+            Find Your Fit
+          </Link>
         </div>
 
         <button
@@ -260,16 +255,14 @@ export default function Nav() {
               )
             })}
             <div className="mobile-cta">
-              <a
-                href="https://calendly.com/team-jd/15min"
+              <Link
+                to="/services#find-your-fit"
                 className="btn btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{ width: '100%', justifyContent: 'center' }}
                 onClick={closeMobile}
               >
-                Book a Consult
-              </a>
+                Find Your Fit
+              </Link>
             </div>
           </motion.div>
         )}

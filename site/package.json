@@ -14,7 +14,7 @@
     "sync-assets:dry-run": "node server/sync-assets.js --dry-run",
     "rebuild-assets": "node server/rebuild-assets.js",
     "rebuild-assets:dry-run": "node server/rebuild-assets.js --dry-run",
-    "test": "node --test",
+    "test": "node --test server/routes/*.test.js server/services/*.test.js",
     "deploy:pi": "bash server/deploy-pi.sh",
     "deploy:pi:production": "DEPLOY_ENV=production bash server/deploy-pi.sh",
     "deploy:pi:staging": "DEPLOY_ENV=staging bash server/deploy-pi.sh"

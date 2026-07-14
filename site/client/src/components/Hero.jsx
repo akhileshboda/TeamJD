@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fallbackHeroPosterUrl, fallbackHeroVideoUrl } from '../config/heroMedia'
 
 const itemVariants = {
@@ -178,17 +179,12 @@ export default function Hero() {
 
           <Item variants={itemVariants}>
             <div className="hero-actions">
-              <a
-                href="https://calendly.com/team-jd/15min"
-                className="btn btn-primary btn-lg"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Book a Free Consult
-              </a>
-              <a href="/services" className="btn btn-secondary btn-lg">
+              <Link to="/services#find-your-fit" className="btn btn-primary btn-lg">
+                Find Your Fit
+              </Link>
+              <Link to="/services" className="btn btn-secondary btn-lg">
                 View Services
-              </a>
+              </Link>
             </div>
           </Item>
         </motion.div>

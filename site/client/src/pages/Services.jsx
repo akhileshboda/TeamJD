@@ -1,6 +1,6 @@
 import PageHero from '../components/PageHero'
-import CTABanner from '../components/CTABanner'
 import ServiceGlassCard from '../components/ServiceGlassCard'
+import ServiceFinder from '../components/ServiceFinder'
 import { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
 
@@ -32,29 +32,9 @@ export default function Services() {
               ))}
             </div>
           )}
-        </div>
 
-        <CTABanner
-          sectionClassName="services-final-cta"
-          analyticsLocation="services_final_cta"
-          eyebrow="Not Sure Yet?"
-          title="Find Your Perfect Fit."
-          description="Answer a few quick questions — or get in touch and Jake will help you choose the right path."
-          actions={[
-            {
-              label: 'Take the Service Quiz',
-              type: 'button',
-              variant: 'primary',
-              analyticsId: 'service_quiz',
-            },
-            {
-              label: 'Get in Touch',
-              to: '/contact',
-              variant: 'secondary',
-              analyticsId: 'get_in_touch',
-            },
-          ]}
-        />
+          {services && <ServiceFinder services={services} />}
+        </div>
       </section>
     </>
   )

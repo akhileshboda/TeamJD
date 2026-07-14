@@ -54,9 +54,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://calendly.com/team-jd/15min" target="_blank" rel="noopener noreferrer">
-                  Book a Consult
-                </a>
+                <Link to="/services#find-your-fit">Find Your Fit</Link>
               </li>
             </ul>
           </div>

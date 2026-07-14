@@ -1,5 +1,6 @@
 import PageHero from '../components/PageHero'
 import SectionReveal from '../components/SectionReveal'
+import { Link } from 'react-router-dom'
 
 export default function Privacy() {
   return (
@@ -152,15 +153,10 @@ export default function Privacy() {
                   <a href="mailto:jake@team-jd.com.au" style={{ color: 'var(--color-accent)' }}>
                     jake@team-jd.com.au
                   </a>{' '}
-                  or book a call via{' '}
-                  <a
-                    href="https://calendly.com/team-jd/15min"
-                    style={{ color: 'var(--color-accent)' }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Calendly
-                  </a>
+                  or start with the{' '}
+                  <Link to="/services#find-your-fit" style={{ color: 'var(--color-accent)' }}>
+                    service finder
+                  </Link>
                   .
                 </p>
               </div>

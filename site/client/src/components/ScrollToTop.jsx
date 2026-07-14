@@ -5,11 +5,27 @@ import { useLocation } from 'react-router-dom'
 // pathname change so moving between pages (e.g. into a service detail page)
 // always starts at the top, like a real multi-page site.
 export default function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    if (!hash) {
+      window.scrollTo(0, 0)
+      return undefined
+    }
+
+    const scrollToTarget = () => {
+      const target = document.getElementById(hash.slice(1))
+      if (target) target.scrollIntoView({ block: 'start' })
+    }
+
+    const frame = requestAnimationFrame(scrollToTarget)
+    const retry = window.setTimeout(scrollToTarget, 180)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(retry)
+    }
+  }, [pathname, hash])
 
   return null
 }
