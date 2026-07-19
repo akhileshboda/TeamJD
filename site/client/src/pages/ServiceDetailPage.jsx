@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import JourneyIcon from '../components/JourneyIcon'
+import ScrollChromeSection from '../components/ScrollChromeSection'
 import SectionReveal from '../components/SectionReveal'
 import ServiceDetailHero from '../components/ServiceDetailHero'
 import ServiceGlassCard from '../components/ServiceGlassCard'
-import ServiceQualification from '../components/ServiceQualification'
+import ServiceMediaCarousel from '../components/ServiceMediaCarousel'
+import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
@@ -63,6 +65,8 @@ export default function ServiceDetailPage() {
     '--svc-accent-2-rgb': theme.accent2_rgb,
   }
   const bodyImageSrc = resolveAsset(service.body_image ?? service.hero_image)
+  const bannerImageSrc = resolveAsset(service.banner_image ?? service.body_image ?? service.hero_image)
+  const investment = service.facts?.find((fact) => fact.label.toLowerCase() === 'investment')
 
   return (
     <div className="service-journey-theme" style={themeVars}>
@@ -81,15 +85,7 @@ export default function ServiceDetailPage() {
                 <p>{service.description}</p>
               </div>
 
-              <figure className="service-intro-photo">
-                <img
-                  src={bodyImageSrc}
-                  alt={service.body_alt ?? ''}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="service-intro-photo-scrim" aria-hidden="true" />
-              </figure>
+              <ServiceMediaCarousel service={service} />
             </section>
           </SectionReveal>
 
@@ -118,7 +114,7 @@ export default function ServiceDetailPage() {
                 const groupId = `${service.slug}-inclusion-group-${groupIndex + 1}`
 
                 return (
-                  <section
+                  <ScrollChromeSection
                     className={`service-content-block service-content-block--${group.variant} service-inclusions-group`}
                     aria-labelledby={groupId}
                     key={group.title}
@@ -170,14 +166,37 @@ export default function ServiceDetailPage() {
                         )
                       })}
                     </div>
-                  </section>
+                  </ScrollChromeSection>
                 )
               })}
             </div>
+
+            <SectionReveal>
+              <figure className="service-ultrawide-media" data-service-media-slot="video-ready">
+                <img
+                  src={bannerImageSrc}
+                  alt={`${service.name} coaching in action`}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="service-ultrawide-media-scrim" aria-hidden="true" />
+                <figcaption>
+                  <span>Inside the service</span>
+                  <strong>{service.name} in practice</strong>
+                </figcaption>
+              </figure>
+            </SectionReveal>
+
+            {investment && (
+              <details className="service-investment-disclosure">
+                <summary>Session investment</summary>
+                <span>{investment.value}</span>
+              </details>
+            )}
           </section>
 
           <SectionReveal>
-            <section className="service-content-block service-content-block--fit" aria-labelledby="service-fit-title">
+            <ScrollChromeSection className="service-content-block service-content-block--fit" aria-labelledby="service-fit-title">
               <div className="service-content-block-heading">
                 <span aria-hidden="true">03</span>
                 <div>
@@ -212,28 +231,17 @@ export default function ServiceDetailPage() {
                   style={{ '--svc-fit-photo': `url("${bodyImageSrc}")` }}
                 />
               </div>
-            </section>
+            </ScrollChromeSection>
           </SectionReveal>
 
           <SectionReveal>
-            <section className="service-content-block service-content-block--readiness" aria-labelledby="service-readiness-title">
-              <div className="service-content-block-heading">
-                <span aria-hidden="true">04</span>
-                <div>
-                  <span>Your next step</span>
-                  <h3 id="service-readiness-title">Readiness check</h3>
-                </div>
-              </div>
-
-              <ServiceQualification
-                key={service.slug}
-                service={service}
-                services={services}
-                initialQualified={qualificationState.status === 'qualified'}
-                onStateChange={setQualificationState}
-                embedded
-              />
-            </section>
+            <ServiceReadinessGate
+              key={service.slug}
+              service={service}
+              services={services}
+              qualificationState={qualificationState}
+              onStateChange={setQualificationState}
+            />
           </SectionReveal>
 
           <section className="service-related-section" aria-labelledby="service-related-title">
@@ -243,7 +251,6 @@ export default function ServiceDetailPage() {
                   <span className="eyebrow">Explore Other Services</span>
                   <h2 id="service-related-title">More coaching paths</h2>
                 </div>
-                <p>Scroll to compare the other ways to work with Jake.</p>
               </div>
             </SectionReveal>
 

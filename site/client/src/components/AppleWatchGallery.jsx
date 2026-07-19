@@ -153,7 +153,7 @@ const FALLBACK_RESULTS = [
     caption: 'Private Coaching - Technique First',
     category: 'training',
     name: 'Hands-on coaching for cleaner movement',
-    location: 'Melbourne',
+    location: 'Adelaide',
     summary: 'A private coaching pathway focused on immediate feedback, better loading patterns, and cleaner execution.',
     testimonial: {
       quote: 'Small technical changes made every session feel more confident and controlled.',

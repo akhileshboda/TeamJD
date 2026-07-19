@@ -17,6 +17,7 @@ export default function ServiceQualification({
   initialQualified = false,
   onStateChange,
   embedded = false,
+  sectionId = 'service-fit-check',
 }) {
   const [answers, setAnswers] = useState({})
   const [result, setResult] = useState(initialQualified ? qualifiedResult : { status: 'locked' })
@@ -75,7 +76,7 @@ export default function ServiceQualification({
 
   return (
     <section
-      id="service-fit-check"
+      id={sectionId}
       className={`service-qualification${embedded ? ' service-qualification--embedded' : ' glass-panel'}`}
       aria-labelledby="service-qualification-title"
     >

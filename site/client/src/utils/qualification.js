@@ -15,7 +15,7 @@ export const FINDER_QUESTIONS = [
     id: 'delivery',
     prompt: 'How do you need the coaching delivered?',
     options: [
-      { value: 'melbourne', label: 'I can train in Melbourne' },
+      { value: 'adelaide', label: 'I can train in Adelaide' },
       { value: 'remote', label: 'I need remote or flexible support' },
       { value: 'either', label: 'I am open to either' },
     ],
@@ -80,7 +80,7 @@ export function evaluateFinder(answers) {
     reason = 'Posing gives you focused instruction on presentation, transitions, and stage confidence.'
   } else if (answers.goal === 'hands-on' && answers.delivery !== 'remote') {
     recommendationSlug = 'personal-training'
-    reason = 'Personal Training gives you face-to-face technique coaching in Melbourne.'
+    reason = 'Personal Training gives you face-to-face technique coaching in Adelaide.'
   } else if (answers.goal === 'hands-on' && answers.delivery === 'remote') {
     reason = 'Because you need remote delivery, Online Coaching is the closest fit for personalised training support.'
   }

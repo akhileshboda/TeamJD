@@ -21,6 +21,9 @@ export default function ServiceDetailHero({ service }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const heroSrc = resolveAsset(service.hero_image)
+  const heroFacts = service.facts?.filter(
+    (fact) => fact.label.toLowerCase() !== 'investment',
+  ) ?? []
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -71,13 +74,13 @@ export default function ServiceDetailHero({ service }) {
           </motion.h1>
           <motion.p {...itemProps}>{service.tagline}</motion.p>
 
-          {service.facts?.length > 0 && (
+          {heroFacts.length > 0 && (
             <motion.ul
               className="service-hero-stats"
               aria-label={`${service.name} at a glance`}
               {...itemProps}
             >
-              {service.facts.map((fact) => (
+              {heroFacts.map((fact) => (
                 <li key={fact.label}>
                   <span>{fact.label}</span>
                   <strong>{fact.value}</strong>

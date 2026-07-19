@@ -14,6 +14,8 @@
     },
     "body_image": "client-comp-1",
     "body_alt": "Team JD athletes flexing during a competition stage lineup",
+    "gallery_images": ["client-comp-1", "jake-stage", "client-comp-2", "client-comp-3", "client-comp-4"],
+    "banner_image": "client-comp-4",
     "short_description": "A full-service package to get you on stage looking your absolute best. From training and nutrition to posing and show day — every detail covered.",
     "description": "Competition preparation is more than just getting in shape — it is about achieving peak conditioning, mastering stage presence, and presenting your absolute best self when it matters most. As a Pro Physique athlete with years of competition experience, Jake understands every aspect of what it takes to succeed on stage.",
     "facts": [
@@ -121,6 +123,8 @@
     },
     "body_image": "service-personal-training-2",
     "body_alt": "Coach reviewing a client's training remotely from a phone",
+    "gallery_images": ["service-online-coaching", "service-personal-training-2", "service-personal-training", "service-training-2", "jake-hero"],
+    "banner_image": "service-online-coaching",
     "short_description": "A tailored coaching package designed entirely around your needs and goals — delivered anywhere in the world.",
     "description": "Distance should not compromise the quality of your coaching experience. Online coaching delivers personalised attention, expert guidance, and proven structure with the flexibility to train anywhere. This is not a generic program or an automated response — it is an ongoing coaching relationship.",
     "facts": [
@@ -184,7 +188,7 @@
           "prompt": "What type of support are you primarily looking for?",
           "options": [
             { "value": "ongoing-online", "label": "Ongoing remote training and nutrition coaching", "qualifies": true },
-            { "value": "hands-on", "label": "Hands-on gym sessions in Melbourne", "qualifies": false, "recommend_slug": "personal-training" },
+            { "value": "hands-on", "label": "Hands-on gym sessions in Adelaide", "qualifies": false, "recommend_slug": "personal-training" },
             { "value": "posing", "label": "Posing and stage presentation only", "qualifies": false, "recommend_slug": "posing-only" },
             { "value": "contest", "label": "Complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" }
           ]
@@ -228,17 +232,19 @@
     },
     "body_image": "service-training-2",
     "body_alt": "Coach guiding a battle-rope session on the gym floor",
+    "gallery_images": ["service-training-2", "service-personal-training", "service-personal-training-2", "jake-hero", "movement-assessment-2"],
+    "banner_image": "service-training-2",
     "short_description": "One-on-one coaching focused on proper form, progressive programming, and achieving your individual fitness goals.",
     "description": "Nothing replaces face-to-face coaching in a professional gym environment. Personal training delivers focused attention, expert guidance, and immediate feedback through dedicated one-on-one sessions. It is a practical route to better technique, real competence, and confidence under load.",
     "facts": [
-      { "label": "Location", "value": "Melbourne" },
+      { "label": "Location", "value": "Adelaide, SA" },
       { "label": "Format", "value": "One-to-one sessions" },
       { "label": "Investment", "value": "$120 per session" }
     ],
     "expectation_title": "Turn up ready to learn, not just to sweat.",
     "expectation_lede": "The value of personal training comes from applying feedback, repeating good movement, and building skill over time. Sessions are focused and progressive — not random workouts chosen for entertainment.",
     "expectations": [
-      "Attend sessions in Melbourne reliably and arrive ready to train.",
+      "Attend sessions in Adelaide reliably and arrive ready to train.",
       "Use immediate technique feedback instead of chasing load at any cost.",
       "Practise the standards established in sessions when training independently.",
       "Treat progress as a skill-building process, not a single hard workout."
@@ -248,7 +254,7 @@
       "You are new to training and want to build a strong foundation",
       "You have hit a plateau and need expert programming to break through",
       "You want structured, progressive sessions with full accountability",
-      "You are in or near Melbourne and can train in person"
+      "You are in or near Adelaide and can train in person"
     ],
     "includes": [
       {
@@ -275,9 +281,9 @@
     "qualification": {
       "eyebrow": "Training fit check",
       "title": "Is in-person coaching the right format?",
-      "intro": "Personal training is specific: one-to-one gym coaching in Melbourne. These questions make sure that is the support you are trying to book.",
+      "intro": "Personal training is specific: one-to-one gym coaching in Adelaide. These questions make sure that is the support you are trying to book.",
       "pass_title": "Personal training fits what you need.",
-      "pass_copy": "You are looking for hands-on Melbourne coaching and are ready to use the sessions consistently. You can now book the personal training consultation.",
+      "pass_copy": "You are looking for hands-on Adelaide coaching and are ready to use the sessions consistently. You can now book the personal training consultation.",
       "redirect_title": "A different format will serve you better.",
       "redirect_copy": "Your goal is valid, but it belongs in a different Team JD coaching path. Review the recommended service before booking.",
       "questions": [
@@ -293,7 +299,7 @@
         },
         {
           "id": "location",
-          "prompt": "Can you attend regular training sessions in Melbourne?",
+          "prompt": "Can you attend regular training sessions in Adelaide?",
           "options": [
             { "value": "yes", "label": "Yes", "qualifies": true },
             { "value": "no", "label": "No — I need remote support", "qualifies": false, "recommend_slug": "online-coaching" }
@@ -331,6 +337,8 @@
     },
     "body_image": "client-comp-3",
     "body_alt": "Athlete holding a sculpted pose under stage lights",
+    "gallery_images": ["client-comp-3", "service-posing", "client-posing-1", "ab-posing", "jake-posing"],
+    "banner_image": "jake-posing",
     "short_description": "Expert posing instruction that showcases your physique's strengths and maximises your competitive edge — for all federations.",
     "description": "Your physique tells a story, but your posing brings it to life. The way you present on stage can be the difference between being overlooked and commanding attention. Jake provides specialised coaching to help competitors showcase their strengths and present with control and confidence.",
     "facts": [

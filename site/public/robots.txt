@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /assets/
 
-Sitemap: https://jakededert.fit/sitemap.xml
+Sitemap: https://team-jd.com.au/sitemap.xml

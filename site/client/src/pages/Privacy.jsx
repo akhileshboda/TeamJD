@@ -17,7 +17,7 @@ export default function Privacy() {
                   Jake Dedert trading as Team JD (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
                   &ldquo;our&rdquo;) is committed to protecting your personal information. This
                   Privacy Policy explains how we collect, use, disclose, and safeguard your
-                  information when you visit our website jakededert.fit or engage with our
+                  information when you visit our website team-jd.com.au or engage with our
                   coaching services.
                 </p>
               </div>

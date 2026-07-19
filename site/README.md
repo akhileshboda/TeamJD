@@ -1,6 +1,6 @@
 # Team JD — Jake Dedert Fitness
 
-Marketing site for Jake Dedert Fitness (`jakededert.fit`), served by an Express app with a React/Vite frontend and server-managed assets.
+Marketing site for Jake Dedert Fitness (`team-jd.com.au`), served by an Express app with a React/Vite frontend and server-managed assets.
 
 ## Asset Pipeline
 
@@ -33,8 +33,10 @@ The Vite frontend runs on `http://localhost:5173`; Express runs on `http://local
 Copy `.env.example` to `.env` and fill in private values:
 
 ```env
+NODE_ENV=development
 PORT=3000
 HOST=localhost
+PUBLIC_BASE_URL=http://localhost:3000
 SESSION_SECRET=replace-with-a-long-random-string
 
 DROPBOX_APP_KEY=
@@ -144,6 +146,14 @@ curl -X POST \
 ```
 
 The protected API real sync requires a matching API dry-run before mutating Dropbox/R2. Server-side syncs started by the Express scheduler, startup hook, or `npm run sync-assets` create and verify their own dry-run plan before mutating.
+
+## Health Check
+
+`GET /healthz` returns HTTP 200 only after the asset manifest cache is ready. The response includes liveness and non-secret asset-cache status and is safe for local process monitoring.
+
+## Oracle Production
+
+Production deployment and operation on Oracle are documented in [`docs/deployment-oracle.md`](docs/deployment-oracle.md). Cloudflare and cloudflared are intentionally outside that runbook.
 
 ## Public Asset Endpoints
 

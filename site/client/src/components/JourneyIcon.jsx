@@ -2,6 +2,7 @@ const ICON_PATHS = {
   arrowLeft: <path d="m15 18-6-6 6-6M9 12h10" />,
   arrowRight: <path d="m9 18 6-6-6-6M5 12h10" />,
   check: <path d="m5 12 4 4L19 6" />,
+  close: <path d="m6 6 12 12M18 6 6 18" />,
   compass: (
     <>
       <circle cx="12" cy="12" r="9" />

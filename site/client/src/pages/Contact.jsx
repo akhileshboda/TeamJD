@@ -28,7 +28,7 @@ const BOOKING_OPTIONS = [
   {
     to: '/services/personal-training',
     label: 'Personal Training',
-    description: 'Explore hands-on one-to-one training and technique coaching in Melbourne.',
+    description: 'Explore hands-on one-to-one training and technique coaching in Adelaide.',
     icon: 'user',
     featured: false,
   },

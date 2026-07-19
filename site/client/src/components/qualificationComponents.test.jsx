@@ -57,7 +57,7 @@ describe('ServiceQualification', () => {
     const service = getService('online-coaching')
     const { container } = renderQualification(service.slug)
 
-    fireEvent.click(screen.getByLabelText('Hands-on gym sessions in Melbourne', { exact: true }))
+    fireEvent.click(screen.getByLabelText('Hands-on gym sessions in Adelaide', { exact: true }))
     fireEvent.click(screen.getByLabelText('Yes — I will keep Jake informed', { exact: true }))
     fireEvent.click(screen.getByLabelText('Yes — I want that accountability', { exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
@@ -148,7 +148,7 @@ describe('ServiceFinder', () => {
     )
 
     fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
-    fireEvent.click(screen.getByLabelText('I can train in Melbourne', { exact: true }))
+    fireEvent.click(screen.getByLabelText('I can train in Adelaide', { exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Show My Best Match' }))
 
     expect(await screen.findByRole('heading', { name: 'Personal Training' })).toBeInTheDocument()

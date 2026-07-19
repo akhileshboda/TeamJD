@@ -12,7 +12,7 @@ export default function Services() {
       <PageHero
         eyebrow="Coaching Packages"
         title="Pick Your Path."
-        subtitle="Personalised coaching for stage, training, and presentation — pick the path that matches your next move."
+        subtitle="Based in Adelaide and coaching without borders — connect with Jake in South Australia or work with him online from anywhere in the world."
       />
 
       <section className="services-hub" aria-label="Coaching services">

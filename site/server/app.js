@@ -7,7 +7,13 @@ const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const { visitLogger } = require('./middleware/visitLogger');
-const { getAssetManifest, preloadAssetMap, runStartupAssetSync, startAssetPoller } = require('./services/dropbox');
+const {
+  getAssetManifest,
+  getAssetServiceStatus,
+  preloadAssetMap,
+  runStartupAssetSync,
+  startAssetPoller
+} = require('./services/dropbox');
 
 dotenv.config();
 
@@ -31,6 +37,7 @@ app.set('trust proxy', 1);
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '127.0.0.1';
 const listenHost = host === 'localhost' ? '127.0.0.1' : host;
+const publicBaseUrl = (process.env.PUBLIC_BASE_URL || 'https://team-jd.com.au').replace(/\/+$/, '');
 const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
@@ -138,7 +145,7 @@ function rewriteAssetUrls(html, manifest) {
       if (/^https?:\/\//i.test(localUrl)) return localUrl;
       // OG/Twitter meta tags use absolute URLs — preserve domain when the original was absolute
       if (matchedUrl.startsWith('https://')) {
-        return new URL(localUrl, 'https://jakededert.fit').toString();
+        return new URL(localUrl, publicBaseUrl).toString();
       }
       return localUrl;
     }
@@ -186,6 +193,21 @@ async function serveManifestBackedHtml(req, res, next) {
 }
 
 app.use(express.json());
+app.get('/healthz', (req, res) => {
+  const assets = getAssetServiceStatus();
+  const ready = assets.cacheReady && assets.state === 'ready';
+
+  res.set('Cache-Control', 'no-store');
+  return res.status(ready ? 200 : 503).json({
+    status: ready ? 'ok' : 'unavailable',
+    uptimeSeconds: Math.floor(process.uptime()),
+    assets: {
+      state: assets.state,
+      cacheReady: assets.cacheReady,
+      source: assets.source
+    }
+  });
+});
 app.use(
   session({
     store: new SQLiteStore({

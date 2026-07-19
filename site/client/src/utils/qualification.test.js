@@ -103,9 +103,9 @@ describe('evaluateFinder', () => {
 
   it.each([
     ['competition', 'remote', 'competition-preparation'],
-    ['posing', 'melbourne', 'posing-only'],
+    ['posing', 'adelaide', 'posing-only'],
     ['coaching', 'either', 'online-coaching'],
-    ['hands-on', 'melbourne', 'personal-training'],
+    ['hands-on', 'adelaide', 'personal-training'],
     ['hands-on', 'remote', 'online-coaching'],
   ])('maps %s with %s delivery to %s', (goal, delivery, recommendationSlug) => {
     expect(evaluateFinder({ goal, delivery })).toMatchObject({

@@ -40,7 +40,7 @@ const servicePathways = [
     title: 'You want hands-on coaching and immediate correction.',
     copy:
       'Jake works with you session by session to build better movement, confidence under load, and a training rhythm you can actually trust.',
-    fit: 'Best fit: Melbourne-based clients who want direct guidance',
+    fit: 'Best fit: Adelaide-based clients who want direct guidance',
     fallbackName: 'Personal Training',
     fallbackSlug: 'personal-training',
     fallbackImage: 'service-personal-training',
