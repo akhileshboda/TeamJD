@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'jake-production',
-      cwd: '/var/www/teamjd',
+      cwd: __dirname,
       script: 'server/app.js',
       instances: 1,
       exec_mode: 'fork',

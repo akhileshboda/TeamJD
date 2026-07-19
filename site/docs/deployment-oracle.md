@@ -1,6 +1,6 @@
 # Oracle production deployment
 
-Team JD production runs as a single PM2 process at `/var/www/teamjd` on `127.0.0.1:3000`. Preview is a separate deployment at `/var/www/teamjd-staging` on port `3002`; do not change it during production updates.
+The canonical repository is cloned at `/var/www/teamjd`, and the Team JD application runs from its `site/` subdirectory as a single PM2 process on `127.0.0.1:3000`. Preview is a separate deployment at `/var/www/teamjd-staging` on port `3002`; do not change it during production updates.
 
 Cloudflare and cloudflared are managed separately and are intentionally not installed, configured, restarted, or inspected by this procedure. The production origin target is `http://127.0.0.1:3000`.
 
@@ -9,8 +9,8 @@ Cloudflare and cloudflared are managed separately and are intentionally not inst
 - Node.js 22 and npm lockfiles
 - PM2 process: `jake-production`
 - PM2 configuration: `ecosystem.config.cjs`
-- Environment: `/var/www/teamjd/.env`, mode `600`
-- Persistent state: `/var/www/teamjd/data`
+- Environment: `/var/www/teamjd/site/.env`, mode `600`
+- Persistent state: `/var/www/teamjd/site/data`
 - Production scheduled asset sync enabled; preview scheduled asset sync disabled
 - One forked process; no watch or cluster mode
 
