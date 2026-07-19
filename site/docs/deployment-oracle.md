@@ -10,7 +10,7 @@ Cloudflare and cloudflared are managed separately and are intentionally not inst
 - PM2 process: `jake-production`
 - PM2 configuration: `ecosystem.config.cjs`
 - Environment: `/var/www/teamjd/site/.env`, mode `600`
-- Persistent state: `/var/www/teamjd/site/data`
+- Persistent state: `/var/www/teamjd/site/data`, directory mode `700` and files mode `600`
 - Production scheduled asset sync enabled; preview scheduled asset sync disabled
 - One forked process; no watch or cluster mode
 

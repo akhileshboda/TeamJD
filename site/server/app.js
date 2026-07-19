@@ -17,6 +17,10 @@ const {
 
 dotenv.config();
 
+// Runtime state can contain session and provider metadata. Keep newly created
+// files private even when the host user's default umask is permissive.
+process.umask(0o077);
+
 const requiredAuthEnvVars = [
   'DROPBOX_APP_KEY',
   'DROPBOX_APP_SECRET',
