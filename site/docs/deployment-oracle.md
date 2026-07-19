@@ -14,6 +14,8 @@ Cloudflare and cloudflared are managed separately and are intentionally not inst
 - Production scheduled asset sync enabled; preview scheduled asset sync disabled
 - One forked process; no watch or cluster mode
 
+The checked-in `ops/pm2-ubuntu.service` uses a oneshot resurrection command with `RemainAfterExit=yes`. This avoids the `Type=forking` PID-file adoption failure seen when PM2 is already running. Back up the installed unit before replacing it, validate it with `systemd-analyze verify`, and confirm both application PIDs remain unchanged when starting the unit.
+
 The production environment requires the variables documented by `.env.example`. Use `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT=3000`, `PUBLIC_BASE_URL=https://team-jd.com.au`, and `DROPBOX_REDIRECT_URI=https://team-jd.com.au/auth/dropbox/callback`. Keep secrets out of Git.
 
 ## Safe update
