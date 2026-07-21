@@ -6,6 +6,14 @@ import { useJSON } from '../hooks/useJSON'
 /* R2 logo-hover reframed to the same canvas/content box as R2 logo (no size jump on swap) */
 import logoHoverNav from '../assets/logo-hover-nav.webp'
 
+const LOGO_FALLBACK = '/assets/branding/team-jd-logo.png'
+
+function restoreLocalLogo(event) {
+  if (event.currentTarget.getAttribute('src') !== LOGO_FALLBACK) {
+    event.currentTarget.setAttribute('src', LOGO_FALLBACK)
+  }
+}
+
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
   { to: '/about', label: 'About' },
@@ -76,11 +84,12 @@ export default function Nav() {
           <span className="nav-logo-stack">
             <img
               className="nav-logo-default"
-              src={resolveAsset('/api/assets/logo')}
+              src={resolveAsset('/api/assets/logo', LOGO_FALLBACK)}
               alt="Team JD Jake Dedert"
               decoding="async"
               width="1847"
               height="851"
+              onError={restoreLocalLogo}
             />
             <img
               className="nav-logo-alt"

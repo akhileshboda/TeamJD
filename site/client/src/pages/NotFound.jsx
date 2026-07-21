@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="not-found-copy">
           <img
             className="not-found-logo"
-            src="/assets/generated/logo.png"
+            src="/assets/branding/team-jd-logo.png"
             alt="Team JD Jake Dedert"
             decoding="async"
           />

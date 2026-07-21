@@ -1,6 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useAssets } from '../hooks/useAssets'
 
+const LOGO_FALLBACK = '/assets/branding/team-jd-logo.png'
+
+function restoreLocalLogo(event) {
+  if (event.currentTarget.getAttribute('src') !== LOGO_FALLBACK) {
+    event.currentTarget.setAttribute('src', LOGO_FALLBACK)
+  }
+}
+
 export default function Footer() {
   const resolveAsset = useAssets()
   const year = new Date().getFullYear()
@@ -12,12 +20,13 @@ export default function Footer() {
           <div>
             <div className="footer-logo">
               <img
-                src={resolveAsset('/api/assets/logo')}
+                src={resolveAsset('/api/assets/logo', LOGO_FALLBACK)}
                 alt="Team JD Jake Dedert"
                 loading="lazy"
                 decoding="async"
                 width="1017"
                 height="469"
+                onError={restoreLocalLogo}
               />
             </div>
             <p className="footer-tagline">
@@ -51,6 +60,15 @@ export default function Footer() {
               <li>
                 <a href="https://www.instagram.com/jakededert/" target="_blank" rel="noopener noreferrer">
                   Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Facebook
                 </a>
               </li>
               <li>
