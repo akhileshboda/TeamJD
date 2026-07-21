@@ -1,68 +1,63 @@
-import { useRef } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
+import { useEffect, useState } from 'react'
 import { useAssets } from '../hooks/useAssets'
 
-export default function ResultCard({ result, onOpen }) {
+const CATEGORY_LABELS = {
+  competition: 'Competition Prep',
+  posing: 'Posing',
+  online: 'Online Coaching',
+  training: 'Personal Training',
+  lifestyle: 'Lifestyle',
+}
+
+export default function ResultCard({ result, onOpen, priority = false }) {
   const resolveAsset = useAssets()
-  const shouldReduce = useReducedMotion()
-  const cardRef = useRef(null)
   const src = resolveAsset(result.src)
+  const [imageFailed, setImageFailed] = useState(false)
 
-  const openResult = () => {
-    onOpen({
-      src,
-      alt: result.alt,
-      caption: result.caption,
-      trigger: cardRef.current,
-    })
-  }
-
-  const Card = shouldReduce ? 'div' : motion.div
-  const cardProps = shouldReduce
-    ? {}
-    : { whileHover: 'hover', initial: 'rest', animate: 'rest' }
-
-  const overlayVariants = {
-    rest: { opacity: 0 },
-    hover: { opacity: 1, transition: { duration: 0.25 } },
-  }
+  useEffect(() => {
+    setImageFailed(false)
+  }, [src])
 
   return (
-    <Card
-      ref={cardRef}
-      className="result-card"
-      onClick={openResult}
-      role="button"
-      tabIndex={0}
-      aria-label={`View: ${result.caption}`}
+    <button
+      type="button"
+      className={`result-card result-card--${result.kind}`}
+      onClick={(event) => onOpen(result, event.currentTarget)}
+      aria-label={`View ${result.caption}`}
       data-analytics-event="result_open"
-      data-analytics-location="results_grid"
+      data-analytics-location="results_library"
       data-analytics-id={result.id}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          openResult()
-        }
-      }}
-      {...cardProps}
+      data-result-id={result.id}
     >
-      <img
-        src={src}
-        alt={result.alt}
-        loading="eager"
-        decoding="async"
-        width="683"
-        height="1024"
-      />
-      {shouldReduce ? (
-        <div className="result-card-overlay">
-          <span className="result-caption">{result.caption}</span>
-        </div>
-      ) : (
-        <motion.div className="result-card-overlay" variants={overlayVariants}>
-          <span className="result-caption">{result.caption}</span>
-        </motion.div>
-      )}
-    </Card>
+      <span className="result-card-media">
+        {imageFailed ? (
+          <span className="result-card-image-fallback" role="img" aria-label="Image unavailable">
+            <span aria-hidden="true">JD</span>
+            Image unavailable
+          </span>
+        ) : (
+          <img
+            src={src}
+            alt={result.alt}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            width="900"
+            height="1200"
+            onError={() => setImageFailed(true)}
+          />
+        )}
+        <span className="result-card-badges" aria-hidden="true">
+          <span className="result-card-category">{CATEGORY_LABELS[result.category]}</span>
+          <span className={`result-card-kind result-card-kind--${result.kind}`}>
+            {result.kind === 'client' ? 'Client result' : 'Reference'}
+          </span>
+        </span>
+      </span>
+
+      <span className="result-card-copy">
+        <span className="result-card-caption">{result.caption}</span>
+        <span className="result-card-action" aria-hidden="true">View result ↗</span>
+      </span>
+    </button>
   )
 }

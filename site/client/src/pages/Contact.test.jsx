@@ -1,0 +1,93 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import Contact from './Contact'
+
+vi.mock('../components/SectionReveal', () => ({
+  default: ({ children, className = '' }) => <div className={className}>{children}</div>,
+}))
+
+afterEach(() => cleanup())
+
+function renderContact() {
+  return render(
+    <MemoryRouter>
+      <Contact />
+    </MemoryRouter>,
+  )
+}
+
+describe('Contact page route chooser', () => {
+  it('renders both entry routes and the four service destinations', () => {
+    const { container } = renderContact()
+
+    expect(
+      screen.getByRole('heading', { name: 'What are you working toward?' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Explore coaching/i })).toHaveAttribute(
+      'href',
+      '#contact-services',
+    )
+    expect(screen.getByRole('link', { name: /Ask Jake/i })).toHaveAttribute(
+      'href',
+      '#contact-enquiry',
+    )
+    expect(container.querySelector('#contact-services')).toBeInTheDocument()
+    expect(container.querySelector('#contact-enquiry')).toBeInTheDocument()
+
+    const serviceDestinations = [
+      ['Competition Preparation', '/services/competition-preparation'],
+      ['Online Coaching', '/services/online-coaching'],
+      ['Personal Training', '/services/personal-training'],
+      ['Posing', '/services/posing-only'],
+    ]
+
+    serviceDestinations.forEach(([name, href]) => {
+      expect(screen.getByRole('link', { name: new RegExp(name, 'i') })).toHaveAttribute(
+        'href',
+        href,
+      )
+    })
+
+    screen.getAllByRole('link', { name: /Find Your Fit/i }).forEach((link) => {
+      expect(link).toHaveAttribute('href', '/services#find-your-fit')
+    })
+  })
+
+  it('keeps the enquiry form accessible and configured for the current email flow', () => {
+    renderContact()
+
+    const form = screen.getByRole('form', { name: 'Contact Jake' })
+    expect(form).toHaveAttribute('action', 'mailto:jake@team-jd.com.au')
+    expect(form).toHaveAttribute('method', 'POST')
+    expect(form).toHaveAttribute('enctype', 'text/plain')
+
+    expect(screen.getByLabelText('First Name')).toBeRequired()
+    expect(screen.getByLabelText('Last Name')).not.toBeRequired()
+    expect(screen.getByLabelText('Email Address')).toBeRequired()
+    expect(screen.getByLabelText('Your Message')).toBeRequired()
+
+    const serviceSelect = screen.getByLabelText('Interested In')
+    expect(within(serviceSelect).getByRole('option', { name: 'Competition Preparation' })).toBeInTheDocument()
+    expect(within(serviceSelect).getByRole('option', { name: 'General Question' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Send enquiry/i })).toHaveAttribute('type', 'submit')
+  })
+
+  it('keeps both contact social links external and secure', () => {
+    renderContact()
+
+    const instagram = screen.getByRole('link', { name: /Instagram @jakededert/i })
+    const facebook = screen.getByRole('link', { name: /^Facebook/i })
+
+    expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/jakededert/')
+    expect(facebook).toHaveAttribute(
+      'href',
+      'https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/',
+    )
+
+    ;[instagram, facebook].forEach((link) => {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    })
+  })
+})

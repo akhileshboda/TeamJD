@@ -1,0 +1,2151 @@
+[
+  {
+    "id": 1,
+    "src": "/api/assets/client-posing-1",
+    "alt": "Team JD client on stage at ANB competition, winning gold medal",
+    "caption": "ANB Champion — Competition Prep Client",
+    "category": "competition",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "competition",
+      "client result",
+      "team jd",
+      "stage prep"
+    ],
+    "order": 1
+  },
+  {
+    "id": 2,
+    "src": "/api/assets/client-comp-1",
+    "alt": "Team JD client competing on stage, showcasing peak conditioning",
+    "caption": "Stage Ready — Bodybuilding Division",
+    "category": "competition",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "competition",
+      "client result",
+      "team jd",
+      "stage prep"
+    ],
+    "order": 2
+  },
+  {
+    "id": 3,
+    "src": "/api/assets/client-comp-2",
+    "alt": "Team JD client posing on stage at bodybuilding competition",
+    "caption": "Peak Conditioning — Competition Prep",
+    "category": "competition",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "competition",
+      "client result",
+      "team jd",
+      "stage prep"
+    ],
+    "order": 3
+  },
+  {
+    "id": 4,
+    "src": "/api/assets/client-comp-3",
+    "alt": "Team JD client on stage displaying physique at competition",
+    "caption": "Stage Presence — Online Coaching Client",
+    "category": "posing",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "posing",
+      "client result",
+      "team jd",
+      "posing"
+    ],
+    "order": 4
+  },
+  {
+    "id": 5,
+    "src": "/api/assets/client-comp-4",
+    "alt": "Team JD client competing in physique division",
+    "caption": "Best Shape of Their Life — Comp Prep Client",
+    "category": "competition",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "competition",
+      "client result",
+      "team jd",
+      "stage prep"
+    ],
+    "order": 5
+  },
+  {
+    "id": 6,
+    "src": "/api/assets/ab-posing",
+    "alt": "Athlete demonstrating abdominal and thigh posing routine",
+    "caption": "Posing Mastery — Mandatory Poses",
+    "category": "posing",
+    "kind": "client",
+    "featured": true,
+    "tags": [
+      "posing",
+      "client result",
+      "team jd",
+      "posing"
+    ],
+    "order": 6
+  },
+  {
+    "id": "reference-competition-01",
+    "src": "https://plus.unsplash.com/premium_photo-1683121412659-0ca5a09d1d2c?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Three quarter length of topless muscular sportsman shorts standing in garage with hands on hips at night and looking at camera. Urban life concept.",
+    "caption": "Competition Prep Reference — Stage preparation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "stage preparation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 7
+  },
+  {
+    "id": "reference-competition-02",
+    "src": "https://images.unsplash.com/flagged/photo-1577657673222-8bd9ed29d179?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "smiling man flexing his muscle",
+    "caption": "Competition Prep Reference — Physique presentation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "physique presentation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 8
+  },
+  {
+    "id": "reference-competition-03",
+    "src": "https://images.unsplash.com/photo-1612441611175-f101b02c930d?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man standing on a stage flexing his muscles",
+    "caption": "Competition Prep Reference — Show-day focus",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "show-day focus",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 9
+  },
+  {
+    "id": "reference-competition-04",
+    "src": "https://images.unsplash.com/photo-1683509602596-f04aca698097?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man and a woman posing for a picture",
+    "caption": "Competition Prep Reference — Conditioning reference",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "conditioning reference",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 10
+  },
+  {
+    "id": "reference-competition-05",
+    "src": "https://plus.unsplash.com/premium_photo-1664298352263-9cf691753fce?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Muscular shirtless sportsman posing with hands on hips while standing on the court inn the morning.",
+    "caption": "Competition Prep Reference — Competition mindset",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "competition mindset",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 11
+  },
+  {
+    "id": "reference-competition-06",
+    "src": "https://images.unsplash.com/photo-1656785280286-3cd303399113?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man with no shirt dancing",
+    "caption": "Competition Prep Reference — Stage preparation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "stage preparation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 12
+  },
+  {
+    "id": "reference-competition-07",
+    "src": "https://images.unsplash.com/photo-1612441612875-650a116e922d?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man standing on a stage with his hands on his hips",
+    "caption": "Competition Prep Reference — Physique presentation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "physique presentation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 13
+  },
+  {
+    "id": "reference-competition-08",
+    "src": "https://images.unsplash.com/photo-1612441611566-49cf608b2d84?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a bodybuilding man doing a trick on a wooden floor",
+    "caption": "Competition Prep Reference — Show-day focus",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "show-day focus",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 14
+  },
+  {
+    "id": "reference-competition-09",
+    "src": "https://plus.unsplash.com/premium_photo-1672783585200-36f229c4fc4c?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a silhouette of a woman with her arms raised",
+    "caption": "Competition Prep Reference — Conditioning reference",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "conditioning reference",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 15
+  },
+  {
+    "id": "reference-competition-10",
+    "src": "https://images.unsplash.com/photo-1612441613100-0de8ccc0d4cd?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a group of men standing next to each other on a stage",
+    "caption": "Competition Prep Reference — Competition mindset",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "competition mindset",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 16
+  },
+  {
+    "id": "reference-competition-11",
+    "src": "https://images.unsplash.com/photo-1612441611249-4d3aa714c7fd?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "an older man flexing his muscles on a stage",
+    "caption": "Competition Prep Reference — Stage preparation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "stage preparation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 17
+  },
+  {
+    "id": "reference-competition-12",
+    "src": "https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man lifting barbell",
+    "caption": "Competition Prep Reference — Physique presentation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "physique presentation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 18
+  },
+  {
+    "id": "reference-competition-13",
+    "src": "https://plus.unsplash.com/premium_photo-1726618574530-adf7568a6ed0?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man and a woman doing exercises in front of a wall",
+    "caption": "Competition Prep Reference — Show-day focus",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "show-day focus",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 19
+  },
+  {
+    "id": "reference-competition-14",
+    "src": "https://images.unsplash.com/photo-1643028588901-87770ed4469c?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man with dreadlocks and no shirt on",
+    "caption": "Competition Prep Reference — Conditioning reference",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "conditioning reference",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 20
+  },
+  {
+    "id": "reference-competition-15",
+    "src": "https://images.unsplash.com/photo-1585258074413-be2883f30885?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "topless man in blue brief standing on black textile",
+    "caption": "Competition Prep Reference — Competition mindset",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "competition mindset",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 21
+  },
+  {
+    "id": "reference-competition-16",
+    "src": "https://images.unsplash.com/photo-1636007613585-48b105cfe3be?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man doing a push up on a red rope",
+    "caption": "Competition Prep Reference — Stage preparation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "stage preparation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 22
+  },
+  {
+    "id": "reference-competition-17",
+    "src": "https://plus.unsplash.com/premium_photo-1661604389020-0f342aa5efbb?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Cropped photo of a muscular shirtless man lifting weights and working out at the gym",
+    "caption": "Competition Prep Reference — Physique presentation",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "physique presentation",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 23
+  },
+  {
+    "id": "reference-competition-18",
+    "src": "https://images.unsplash.com/photo-1636007596622-90bf5679f5dc?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man standing on top of a hard wood floor",
+    "caption": "Competition Prep Reference — Show-day focus",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "show-day focus",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 24
+  },
+  {
+    "id": "reference-competition-19",
+    "src": "https://images.unsplash.com/photo-1754475412029-3a4896a930c7?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A muscular man flexes his biceps.",
+    "caption": "Competition Prep Reference — Conditioning reference",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "conditioning reference",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 25
+  },
+  {
+    "id": "reference-competition-20",
+    "src": "https://images.unsplash.com/photo-1754475205146-23ca0cd6e73f?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A muscular bodybuilder poses.",
+    "caption": "Competition Prep Reference — Competition mindset",
+    "category": "competition",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "competition",
+      "competition prep",
+      "competition mindset",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 26
+  },
+  {
+    "id": "reference-posing-01",
+    "src": "https://plus.unsplash.com/premium_photo-1674059550127-91a5aa9d1195?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman holding two dumbs in a gym",
+    "caption": "Posing Reference — Lines and balance",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "lines and balance",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 27
+  },
+  {
+    "id": "reference-posing-02",
+    "src": "https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "greyscale photo of woman in bralette inside room",
+    "caption": "Posing Reference — Presentation practice",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "presentation practice",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 28
+  },
+  {
+    "id": "reference-posing-03",
+    "src": "https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman in black tank top and black shorts sitting on floor",
+    "caption": "Posing Reference — Confident positioning",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "confident positioning",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 29
+  },
+  {
+    "id": "reference-posing-04",
+    "src": "https://images.unsplash.com/photo-1548690312-e3b507d8c110?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman holding black rope",
+    "caption": "Posing Reference — Stage movement",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "stage movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 30
+  },
+  {
+    "id": "reference-posing-05",
+    "src": "https://plus.unsplash.com/premium_photo-1672783584003-60d590a1d3e9?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman in a black sports bra top and shorts",
+    "caption": "Posing Reference — Physique control",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "physique control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 31
+  },
+  {
+    "id": "reference-posing-06",
+    "src": "https://images.unsplash.com/photo-1579758682665-53a1a614eea6?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "topless man in black shorts and white socks running on gray concrete floor",
+    "caption": "Posing Reference — Lines and balance",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "lines and balance",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 32
+  },
+  {
+    "id": "reference-posing-07",
+    "src": "https://images.unsplash.com/photo-1609377375724-8fadc82cd50e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "topless man in black pants and black shoes",
+    "caption": "Posing Reference — Presentation practice",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "presentation practice",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 33
+  },
+  {
+    "id": "reference-posing-08",
+    "src": "https://images.unsplash.com/photo-1605296866985-34ba3c0b527b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "topless man in black shorts wearing black and white nike shoes",
+    "caption": "Posing Reference — Confident positioning",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "confident positioning",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 34
+  },
+  {
+    "id": "reference-posing-09",
+    "src": "https://plus.unsplash.com/premium_photo-1663045836063-b89d0223ef99?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Portrait of Young brunette woman in sport active wear in fitness club",
+    "caption": "Posing Reference — Stage movement",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "stage movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 35
+  },
+  {
+    "id": "reference-posing-10",
+    "src": "https://images.unsplash.com/photo-1434719079929-f61498a4828e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "women's black sports bra",
+    "caption": "Posing Reference — Physique control",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "physique control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 36
+  },
+  {
+    "id": "reference-posing-11",
+    "src": "https://images.unsplash.com/photo-1518617840859-acd542e13a99?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman holding red dumbbells",
+    "caption": "Posing Reference — Lines and balance",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "lines and balance",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 37
+  },
+  {
+    "id": "reference-posing-12",
+    "src": "https://images.unsplash.com/photo-1434682966726-19ad3a76e143?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman wearing black sports bra",
+    "caption": "Posing Reference — Presentation practice",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "presentation practice",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 38
+  },
+  {
+    "id": "reference-posing-13",
+    "src": "https://images.unsplash.com/photo-1572459815549-873917ec8c0a?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man wears black bottoms",
+    "caption": "Posing Reference — Confident positioning",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "confident positioning",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 39
+  },
+  {
+    "id": "reference-posing-14",
+    "src": "https://images.unsplash.com/photo-1434847868581-86e8a2b8e7a3?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "body builder woman wearing black crop-top cross armed closeup photography",
+    "caption": "Posing Reference — Stage movement",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "stage movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 40
+  },
+  {
+    "id": "reference-posing-15",
+    "src": "https://plus.unsplash.com/premium_photo-1672783585000-775653f32141?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman in a sports bra posing for a picture",
+    "caption": "Posing Reference — Physique control",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "physique control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 41
+  },
+  {
+    "id": "reference-posing-16",
+    "src": "https://images.unsplash.com/photo-1733077151455-113715b5a4be?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman in a black sports bra top and leggings",
+    "caption": "Posing Reference — Lines and balance",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "lines and balance",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 42
+  },
+  {
+    "id": "reference-posing-17",
+    "src": "https://images.unsplash.com/photo-1683848644078-f339179c4ff6?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman with her arms crossed posing for a picture",
+    "caption": "Posing Reference — Presentation practice",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "presentation practice",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 43
+  },
+  {
+    "id": "reference-posing-18",
+    "src": "https://images.unsplash.com/photo-1659899300199-82c5cdbf7a25?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman posing for a picture",
+    "caption": "Posing Reference — Confident positioning",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "confident positioning",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 44
+  },
+  {
+    "id": "reference-posing-19",
+    "src": "https://plus.unsplash.com/premium_photo-1661602026760-1cb70be513fd?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Posing for the camera. Young fitness woman with slim body type is outdoors.",
+    "caption": "Posing Reference — Stage movement",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "stage movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 45
+  },
+  {
+    "id": "reference-posing-20",
+    "src": "https://images.unsplash.com/photo-1683848644235-7ac932a8aaea?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman in a sports bra top and shorts flexing her muscles",
+    "caption": "Posing Reference — Physique control",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "physique control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 46
+  },
+  {
+    "id": "reference-posing-21",
+    "src": "https://images.unsplash.com/photo-1680761827444-9214a9c3129f?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man flexing his muscles in a gym.",
+    "caption": "Posing Reference — Lines and balance",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "lines and balance",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 47
+  },
+  {
+    "id": "reference-posing-22",
+    "src": "https://images.unsplash.com/photo-1770628086880-db5ab893c420?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A muscular man flexing his back muscles.",
+    "caption": "Posing Reference — Presentation practice",
+    "category": "posing",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "posing",
+      "posing",
+      "presentation practice",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 48
+  },
+  {
+    "id": "reference-online-01",
+    "src": "https://plus.unsplash.com/premium_photo-1666736568848-cb694966457e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman training at home with two blue dumbbells.",
+    "caption": "Online Coaching Reference — Training from anywhere",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "training from anywhere",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 49
+  },
+  {
+    "id": "reference-online-02",
+    "src": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman exercising indoors",
+    "caption": "Online Coaching Reference — Flexible programming",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "flexible programming",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 50
+  },
+  {
+    "id": "reference-online-03",
+    "src": "https://images.unsplash.com/photo-1758599878908-596c2042f563?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman doing a plank exercise on a yoga mat.",
+    "caption": "Online Coaching Reference — Remote training rhythm",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "remote training rhythm",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 51
+  },
+  {
+    "id": "reference-online-04",
+    "src": "https://images.unsplash.com/photo-1714646442330-9068099f5521?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman is doing push ups on the floor",
+    "caption": "Online Coaching Reference — At-home structure",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "at-home structure",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 52
+  },
+  {
+    "id": "reference-online-05",
+    "src": "https://plus.unsplash.com/premium_photo-1666736569172-0c435487b6ef?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman is doing exercises with dumbbells",
+    "caption": "Online Coaching Reference — Consistent movement",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "consistent movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 53
+  },
+  {
+    "id": "reference-online-06",
+    "src": "https://images.unsplash.com/photo-1758599878772-fca5a727a9e0?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman stretching on a yoga mat in a living room.",
+    "caption": "Online Coaching Reference — Training from anywhere",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "training from anywhere",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 54
+  },
+  {
+    "id": "reference-online-07",
+    "src": "https://images.unsplash.com/photo-1683758575782-a632dbbe9eed?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man is doing exercises on a mat with a barbell",
+    "caption": "Online Coaching Reference — Flexible programming",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "flexible programming",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 55
+  },
+  {
+    "id": "reference-online-08",
+    "src": "https://images.unsplash.com/photo-1635367216109-aa3353c0c22e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman is doing a yoga pose on a mat",
+    "caption": "Online Coaching Reference — Remote training rhythm",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "remote training rhythm",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 56
+  },
+  {
+    "id": "reference-online-09",
+    "src": "https://plus.unsplash.com/premium_photo-1672352100479-b09df32e7ed0?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman doing squats on a yoga mat",
+    "caption": "Online Coaching Reference — At-home structure",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "at-home structure",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 57
+  },
+  {
+    "id": "reference-online-10",
+    "src": "https://images.unsplash.com/photo-1758599879024-7379d769f664?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman stretching her leg during a home workout.",
+    "caption": "Online Coaching Reference — Consistent movement",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "consistent movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 58
+  },
+  {
+    "id": "reference-online-11",
+    "src": "https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man in black t-shirt and black shorts doing push up",
+    "caption": "Online Coaching Reference — Training from anywhere",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "training from anywhere",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 59
+  },
+  {
+    "id": "reference-online-12",
+    "src": "https://plus.unsplash.com/premium_photo-1664300607508-f8fce5d434b4?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "An athlete doing elevated push-ups during a home workout.",
+    "caption": "Online Coaching Reference — Flexible programming",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "flexible programming",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 60
+  },
+  {
+    "id": "reference-online-13",
+    "src": "https://plus.unsplash.com/premium_photo-1661941522724-456db31f940d?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "African American athlete in plank pose doing running abs exercise during sports training at home. Copy space.",
+    "caption": "Online Coaching Reference — Remote training rhythm",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "remote training rhythm",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 61
+  },
+  {
+    "id": "reference-online-14",
+    "src": "https://images.unsplash.com/photo-1603503364272-6e28e046b37a?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man in black tank top and black shorts holding black dumbbells",
+    "caption": "Online Coaching Reference — At-home structure",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "at-home structure",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 62
+  },
+  {
+    "id": "reference-online-15",
+    "src": "https://images.unsplash.com/photo-1760084081757-6f918c08403b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man doing push-ups in a sunlit living room.",
+    "caption": "Online Coaching Reference — Consistent movement",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "consistent movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 63
+  },
+  {
+    "id": "reference-online-16",
+    "src": "https://images.unsplash.com/photo-1758599880050-b33b1fbf3713?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man and woman doing push-ups on yoga mats.",
+    "caption": "Online Coaching Reference — Training from anywhere",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "training from anywhere",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 64
+  },
+  {
+    "id": "reference-online-17",
+    "src": "https://images.unsplash.com/photo-1758599879065-46fd59235166?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman recording a fitness workout with a phone and tripod.",
+    "caption": "Online Coaching Reference — Flexible programming",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "flexible programming",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 65
+  },
+  {
+    "id": "reference-online-18",
+    "src": "https://images.unsplash.com/photo-1714646442122-ca4b5dc2461d?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man is dancing in a living room",
+    "caption": "Online Coaching Reference — Remote training rhythm",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "remote training rhythm",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 66
+  },
+  {
+    "id": "reference-online-19",
+    "src": "https://images.unsplash.com/photo-1714646442265-9cec35271c7a?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman in a sports bra top is holding a dumb",
+    "caption": "Online Coaching Reference — At-home structure",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "at-home structure",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 67
+  },
+  {
+    "id": "reference-online-20",
+    "src": "https://images.unsplash.com/photo-1758599879693-9e06f55a4ded?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man recording a guided meditation session at home.",
+    "caption": "Online Coaching Reference — Consistent movement",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "consistent movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 68
+  },
+  {
+    "id": "reference-online-21",
+    "src": "https://plus.unsplash.com/premium_photo-1663088822729-c88c53900228?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Front view portrait of young man with tablet doing workout exercise indoors at home.",
+    "caption": "Online Coaching Reference — Training from anywhere",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "training from anywhere",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 69
+  },
+  {
+    "id": "reference-online-22",
+    "src": "https://images.unsplash.com/photo-1758599880618-3f03f2a401b4?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Woman exercising on yoga mat in living room.",
+    "caption": "Online Coaching Reference — Flexible programming",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "flexible programming",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 70
+  },
+  {
+    "id": "reference-online-23",
+    "src": "https://images.unsplash.com/photo-1773332611528-566f16120979?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman does a yoga pose on a mat.",
+    "caption": "Online Coaching Reference — Remote training rhythm",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "remote training rhythm",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 71
+  },
+  {
+    "id": "reference-online-24",
+    "src": "https://images.unsplash.com/photo-1758599880598-1e8c8bb237a4?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Woman practicing yoga tree pose in living room.",
+    "caption": "Online Coaching Reference — At-home structure",
+    "category": "online",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "online",
+      "online coaching",
+      "at-home structure",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 72
+  },
+  {
+    "id": "reference-training-01",
+    "src": "https://plus.unsplash.com/premium_photo-1661580282598-6883482b4c8e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man wearing dark clothes fixing the leg position of a female athlete before the start of dumbbell activity",
+    "caption": "Personal Training Reference — Guided strength work",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "guided strength work",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 73
+  },
+  {
+    "id": "reference-training-02",
+    "src": "https://images.unsplash.com/photo-1648542036561-e1d66a5ae2b1?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man and woman exercising",
+    "caption": "Personal Training Reference — Technique and control",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "technique and control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 74
+  },
+  {
+    "id": "reference-training-03",
+    "src": "https://images.unsplash.com/photo-1738523686534-7055df5858d6?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man and a woman working out in a gym",
+    "caption": "Personal Training Reference — Hands-on coaching",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "hands-on coaching",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 75
+  },
+  {
+    "id": "reference-training-04",
+    "src": "https://images.unsplash.com/photo-1738523687459-963f3fb56522?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man lifting a barbell in a gym",
+    "caption": "Personal Training Reference — Movement quality",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "movement quality",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 76
+  },
+  {
+    "id": "reference-training-05",
+    "src": "https://plus.unsplash.com/premium_photo-1663050901483-ee8703cc8372?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A senior man with a young male trainer doing strength workout exercise in gym.",
+    "caption": "Personal Training Reference — Training support",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "training support",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 77
+  },
+  {
+    "id": "reference-training-06",
+    "src": "https://images.unsplash.com/photo-1738523686619-1b3b5d2405ee?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man talking to a woman in a gym",
+    "caption": "Personal Training Reference — Guided strength work",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "guided strength work",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 78
+  },
+  {
+    "id": "reference-training-07",
+    "src": "https://images.unsplash.com/photo-1758875569256-f37c438cac65?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Woman lifting weights with trainer watching",
+    "caption": "Personal Training Reference — Technique and control",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "technique and control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 79
+  },
+  {
+    "id": "reference-training-08",
+    "src": "https://images.unsplash.com/photo-1704223523381-bb976da90793?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man working out in a gym",
+    "caption": "Personal Training Reference — Hands-on coaching",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "hands-on coaching",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 80
+  },
+  {
+    "id": "reference-training-09",
+    "src": "https://plus.unsplash.com/premium_photo-1672862927484-cfc92dd88081?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man and a woman working out in a gym",
+    "caption": "Personal Training Reference — Movement quality",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "movement quality",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 81
+  },
+  {
+    "id": "reference-training-10",
+    "src": "https://images.unsplash.com/photo-1738523686578-f18348c8292b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man in a white shirt is standing in a gym",
+    "caption": "Personal Training Reference — Training support",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "training support",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 82
+  },
+  {
+    "id": "reference-training-11",
+    "src": "https://images.unsplash.com/photo-1751456357793-9f626e986113?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Woman performs exercise with trainer at gym.",
+    "caption": "Personal Training Reference — Guided strength work",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "guided strength work",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 83
+  },
+  {
+    "id": "reference-training-12",
+    "src": "https://images.unsplash.com/photo-1738523686521-278410293ee9?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man and a woman working out in a gym",
+    "caption": "Personal Training Reference — Technique and control",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "technique and control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 84
+  },
+  {
+    "id": "reference-training-13",
+    "src": "https://plus.unsplash.com/premium_photo-1726481790100-408b0b3fd120?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man and a woman in a gym",
+    "caption": "Personal Training Reference — Hands-on coaching",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "hands-on coaching",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 85
+  },
+  {
+    "id": "reference-training-14",
+    "src": "https://images.unsplash.com/photo-1533560904424-a0c61dc306fc?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man taking exercise",
+    "caption": "Personal Training Reference — Movement quality",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "movement quality",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 86
+  },
+  {
+    "id": "reference-training-15",
+    "src": "https://images.unsplash.com/photo-1745329532593-53a9ec306787?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man works out at the gym lifting weights.",
+    "caption": "Personal Training Reference — Training support",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "training support",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 87
+  },
+  {
+    "id": "reference-training-16",
+    "src": "https://images.unsplash.com/photo-1745329532588-1394a50671f0?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man is working out at the gym.",
+    "caption": "Personal Training Reference — Guided strength work",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "guided strength work",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 88
+  },
+  {
+    "id": "reference-training-17",
+    "src": "https://plus.unsplash.com/premium_photo-1661580260078-4c554d5b01dc?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Male instructor straightening the back position of a gym visitor for a dumbbell exercise",
+    "caption": "Personal Training Reference — Technique and control",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "technique and control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 89
+  },
+  {
+    "id": "reference-training-18",
+    "src": "https://images.unsplash.com/photo-1745329532589-4f33352c4b10?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man lifts a dumbbell at the gym.",
+    "caption": "Personal Training Reference — Hands-on coaching",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "hands-on coaching",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 90
+  },
+  {
+    "id": "reference-training-19",
+    "src": "https://images.unsplash.com/photo-1745329532608-bbda3b742e00?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man at the gym choosing a dumbbell.",
+    "caption": "Personal Training Reference — Movement quality",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "movement quality",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 91
+  },
+  {
+    "id": "reference-training-20",
+    "src": "https://images.unsplash.com/photo-1745329532598-aba00d5d09fa?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Man adds weight plates to the barbell.",
+    "caption": "Personal Training Reference — Training support",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "training support",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 92
+  },
+  {
+    "id": "reference-training-21",
+    "src": "https://plus.unsplash.com/premium_photo-1672862925604-9079f0a492e8?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man and a woman working out in a gym",
+    "caption": "Personal Training Reference — Guided strength work",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "guided strength work",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 93
+  },
+  {
+    "id": "reference-training-22",
+    "src": "https://images.unsplash.com/photo-1745329532629-8e1768963d3a?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A man is lifting heavy weights at the gym.",
+    "caption": "Personal Training Reference — Technique and control",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "technique and control",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 94
+  },
+  {
+    "id": "reference-training-23",
+    "src": "https://images.unsplash.com/photo-1634225252941-66fd95aaa7c3?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a man doing a handstand on a wooden floor",
+    "caption": "Personal Training Reference — Hands-on coaching",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "hands-on coaching",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 95
+  },
+  {
+    "id": "reference-training-24",
+    "src": "https://plus.unsplash.com/premium_photo-1661574913674-74e268d7dbb3?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A smiling athlete working with dumbbells in front of a gym mirror.",
+    "caption": "Personal Training Reference — Movement quality",
+    "category": "training",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "training",
+      "personal training",
+      "movement quality",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 96
+  },
+  {
+    "id": "reference-lifestyle-01",
+    "src": "https://plus.unsplash.com/premium_photo-1674059549221-e2943b475f62?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a couple of women standing on top of a yoga mat",
+    "caption": "Lifestyle Reference — Sustainable movement",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "sustainable movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 97
+  },
+  {
+    "id": "reference-lifestyle-02",
+    "src": "https://images.unsplash.com/photo-1607962837359-5e7e89f86776?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man in black t-shirt and black shorts running on road during daytime",
+    "caption": "Lifestyle Reference — Everyday strength",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "everyday strength",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 98
+  },
+  {
+    "id": "reference-lifestyle-03",
+    "src": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "person about to lift the barbel",
+    "caption": "Lifestyle Reference — Healthy routine",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "healthy routine",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 99
+  },
+  {
+    "id": "reference-lifestyle-04",
+    "src": "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man exercising with battle ropes outdoors",
+    "caption": "Lifestyle Reference — Active living",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "active living",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 100
+  },
+  {
+    "id": "reference-lifestyle-05",
+    "src": "https://plus.unsplash.com/premium_photo-1661265933107-85a5dbd815af?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Young woman exercising with dumbbells in the gym.",
+    "caption": "Lifestyle Reference — Consistent habits",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "consistent habits",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 101
+  },
+  {
+    "id": "reference-lifestyle-06",
+    "src": "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "grayscale photo of man working out",
+    "caption": "Lifestyle Reference — Sustainable movement",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "sustainable movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 102
+  },
+  {
+    "id": "reference-lifestyle-07",
+    "src": "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "person in gray shirt holding black dumbbell",
+    "caption": "Lifestyle Reference — Everyday strength",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "everyday strength",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 103
+  },
+  {
+    "id": "reference-lifestyle-08",
+    "src": "https://images.unsplash.com/photo-1591258370814-01609b341790?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman in black tank top and black leggings lying on black floor",
+    "caption": "Lifestyle Reference — Healthy routine",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "healthy routine",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 104
+  },
+  {
+    "id": "reference-lifestyle-09",
+    "src": "https://plus.unsplash.com/premium_photo-1664910806127-d52cb0e0d091?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Latino young beautiful sport woman working out alone in fitness gym. Attractive active female excercise by using pulling equipment to maintain muscle and strengthens body for health care in stadium.",
+    "caption": "Lifestyle Reference — Active living",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "active living",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 105
+  },
+  {
+    "id": "reference-lifestyle-10",
+    "src": "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "group of women doing yoga",
+    "caption": "Lifestyle Reference — Consistent habits",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "consistent habits",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 106
+  },
+  {
+    "id": "reference-lifestyle-11",
+    "src": "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "two person inside gym exercising",
+    "caption": "Lifestyle Reference — Sustainable movement",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "sustainable movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 107
+  },
+  {
+    "id": "reference-lifestyle-12",
+    "src": "https://plus.unsplash.com/premium_photo-1663040230077-80d4b18e16e8?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "An athlete running on a treadmill in a modern gym.",
+    "caption": "Lifestyle Reference — Everyday strength",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "everyday strength",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 108
+  },
+  {
+    "id": "reference-lifestyle-13",
+    "src": "https://images.unsplash.com/photo-1633394782240-f81aba3f850d?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman running on a treadmill in a gym.",
+    "caption": "Lifestyle Reference — Healthy routine",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "healthy routine",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 109
+  },
+  {
+    "id": "reference-lifestyle-14",
+    "src": "https://images.unsplash.com/photo-1722925541142-5db2668ca492?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman lifting a barbell in a gym",
+    "caption": "Lifestyle Reference — Active living",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "active living",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 110
+  },
+  {
+    "id": "reference-lifestyle-15",
+    "src": "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man tying his shoes",
+    "caption": "Lifestyle Reference — Consistent habits",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "consistent habits",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 111
+  },
+  {
+    "id": "reference-lifestyle-16",
+    "src": "https://plus.unsplash.com/premium_photo-1733328015522-c497d190f74b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "Fit sporty couple in shape is doing kettlebell twist in a gym together.",
+    "caption": "Lifestyle Reference — Sustainable movement",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "sustainable movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 112
+  },
+  {
+    "id": "reference-lifestyle-17",
+    "src": "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "topless man in black shorts carrying black dumbbell",
+    "caption": "Lifestyle Reference — Everyday strength",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "everyday strength",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 113
+  },
+  {
+    "id": "reference-lifestyle-18",
+    "src": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "man holding black barbell",
+    "caption": "Lifestyle Reference — Healthy routine",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "healthy routine",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 114
+  },
+  {
+    "id": "reference-lifestyle-19",
+    "src": "https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A woman performing a focused strength exercise in a gym.",
+    "caption": "Lifestyle Reference — Active living",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "active living",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 115
+  },
+  {
+    "id": "reference-lifestyle-20",
+    "src": "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman kneeling beside man",
+    "caption": "Lifestyle Reference — Consistent habits",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "consistent habits",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 116
+  },
+  {
+    "id": "reference-lifestyle-21",
+    "src": "https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "three person lifting barbels",
+    "caption": "Lifestyle Reference — Sustainable movement",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "sustainable movement",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 117
+  },
+  {
+    "id": "reference-lifestyle-22",
+    "src": "https://images.unsplash.com/photo-1633707236776-1188a396f223?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "a woman is doing exercises on a yoga mat",
+    "caption": "Lifestyle Reference — Everyday strength",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "everyday strength",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 118
+  },
+  {
+    "id": "reference-lifestyle-23",
+    "src": "https://images.unsplash.com/photo-1546483875-ad9014c88eba?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "woman using dumbbells",
+    "caption": "Lifestyle Reference — Healthy routine",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "healthy routine",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 119
+  },
+  {
+    "id": "reference-lifestyle-24",
+    "src": "https://plus.unsplash.com/premium_photo-1683120911890-386d99bbd3b1?auto=format&fit=crop&w=900&h=1200&q=82",
+    "alt": "A group of athletes talking together after a workout.",
+    "caption": "Lifestyle Reference — Active living",
+    "category": "lifestyle",
+    "kind": "representative",
+    "featured": false,
+    "tags": [
+      "lifestyle",
+      "lifestyle",
+      "active living",
+      "fitness",
+      "training",
+      "representative"
+    ],
+    "order": 120
+  }
+]
+
