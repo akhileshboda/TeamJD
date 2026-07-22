@@ -16,7 +16,7 @@ Dropbox /latest
   -> Frontend loads public R2 URLs from /api/assets
 ```
 
-The browser should load large media from `R2_PUBLIC_BASE_URL`, not Dropbox and not the Pi.
+The browser should load large media from `R2_PUBLIC_BASE_URL`, not Dropbox or the Express origin.
 
 ## Running Locally
 
@@ -151,9 +151,30 @@ The protected API real sync requires a matching API dry-run before mutating Drop
 
 `GET /healthz` returns HTTP 200 only after the asset manifest cache is ready. The response includes liveness and non-secret asset-cache status and is safe for local process monitoring.
 
-## Oracle Production
+## Oracle Deployments
 
-Production deployment and operation on Oracle are documented in [`docs/deployment-oracle.md`](docs/deployment-oracle.md). Cloudflare and cloudflared are intentionally outside that runbook.
+Production and staging are deployed from the local `site/` directory into separate application roots on Oracle. The host does not need a Git checkout or repository content outside `site/`.
+
+| Environment | Application root | PM2 process | Origin |
+| --- | --- | --- | --- |
+| Production | `/var/www/teamjd` | `jake-production` | `127.0.0.1:3000` |
+| Staging | `/var/www/teamjd-staging` | `jake-staging` | `127.0.0.1:3002` |
+
+```bash
+DEPLOY_USER=ubuntu \
+DEPLOY_HOST=your-oracle-hostname-or-ip \
+npm run deploy:production
+
+DEPLOY_USER=ubuntu \
+DEPLOY_HOST=your-oracle-hostname-or-ip \
+npm run deploy:staging
+```
+
+Each script uploads and installs into a temporary incoming directory before promoting the release. Deployments preserve their own `.env`, `data/`, and `public/assets/generated/`, and can flatten an older nested `site/` layout after checking for state conflicts.
+
+Staging uses production security semantics on port `3002`, requires `ASSET_AUTO_SYNC_ENABLED=false` and `ASSET_SYNC_ON_BOOT=false`, and receives production's current asset manifest without copying other runtime state. `DEPLOY_RUN_SYNC=true` is supported only for production.
+
+Setup, migration, rollback, and routine operations are documented in [`docs/deployment-oracle.md`](docs/deployment-oracle.md). Host-specific commands live in the ignored local `deploy.md`. Cloudflare and cloudflared remain outside the deploy scripts.
 
 ## Public Asset Endpoints
 
@@ -221,67 +242,6 @@ npm run rebuild-assets -- --confirm PURGE_SITE_ASSETS
 ```
 
 This command deletes the existing `site-assets/` R2 objects before uploading replacements. Public asset URLs can be temporarily broken until the rebuild finishes. If the upload phase fails, rerun the same command after fixing the reported source asset or configuration issue.
-
-## Deploying to Raspberry Pi
-
-One-time Pi setup:
-
-```bash
-sudo mkdir -p /var/www/teamjd /var/www/teamjd-staging
-sudo chown pi:pi /var/www/teamjd /var/www/teamjd-staging
-```
-
-Keep separate `.env` files on the Pi; local `.env` files are intentionally not copied.
-
-Production uses `/var/www/teamjd/.env`, PM2 process `jake-site`, and `PORT=3000`:
-
-```bash
-NODE_ENV=production
-PORT=3000
-HOST=localhost
-```
-
-Staging uses `/var/www/teamjd-staging/.env`, PM2 process `jake-site-staging`, and `PORT=3003`:
-
-```bash
-NODE_ENV=production
-PORT=3003
-HOST=localhost
-ASSET_AUTO_SYNC_ENABLED=false
-```
-
-Keep `ASSET_AUTO_SYNC_ENABLED=false` in staging unless you are intentionally testing background Dropbox/R2 sync behavior. Manual admin API sync and `npm run sync-assets` still work with automatic sync disabled.
-
-Deploy production:
-
-```bash
-DEPLOY_USER=pi \
-DEPLOY_HOST=your-pi-hostname-or-ip \
-npm run deploy:pi:production
-```
-
-Deploy staging:
-
-```bash
-DEPLOY_USER=pi \
-DEPLOY_HOST=your-pi-hostname-or-ip \
-npm run deploy:pi:staging
-```
-
-`npm run deploy:pi` defaults to production for backward compatibility. Override `DEPLOY_PATH` or `PM2_APP_NAME` only for custom Pi layouts.
-
-Deploys skip deploy-time asset sync so the app can restart cleanly. After PM2 starts, Express will run startup sync in the background only when `ASSET_SYNC_ENABLED=true`, `ASSET_AUTO_SYNC_ENABLED=true`, and `ASSET_SYNC_ON_BOOT=true`. To force a protected API sync manually, run the API dry-run first, then the real sync against that target's port:
-
-```bash
-curl -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
-  http://localhost:3003/api/assets/sync/plan
-
-curl -X POST \
-  -H "Authorization: Bearer $ASSET_SYNC_ADMIN_TOKEN" \
-  http://localhost:3003/api/assets/sync
-```
-
-Use port `3000` for production. You can also SSH into the Pi and run `npm run sync-assets` inside the target directory; that server-side command self-primes with a dry-run. `DEPLOY_RUN_SYNC=true` is also an explicit one-off deployment sync and is not blocked by `ASSET_AUTO_SYNC_ENABLED=false`.
 
 ## Cloudflare R2 Setup Guide
 

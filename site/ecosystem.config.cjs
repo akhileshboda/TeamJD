@@ -21,6 +21,31 @@ module.exports = {
         HOST: '127.0.0.1',
         PORT: '3000'
       }
+    },
+    {
+      name: 'jake-staging',
+      cwd: __dirname,
+      script: 'server/app.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      min_uptime: '10s',
+      max_restarts: 10,
+      exp_backoff_restart_delay: 100,
+      max_memory_restart: '300M',
+      kill_timeout: 10000,
+      time: true,
+      out_file: '/home/ubuntu/.pm2/logs/jake-staging-out.log',
+      error_file: '/home/ubuntu/.pm2/logs/jake-staging-error.log',
+      env: {
+        NODE_ENV: 'production',
+        APP_ENV: 'staging',
+        HOST: '127.0.0.1',
+        PORT: '3002',
+        ASSET_AUTO_SYNC_ENABLED: 'false',
+        ASSET_SYNC_ON_BOOT: 'false'
+      }
     }
   ]
 };

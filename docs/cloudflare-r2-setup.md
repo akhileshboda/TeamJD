@@ -146,7 +146,7 @@ Open the site in a browser and inspect the Network tab. Image and video requests
 jake-site-assets.akhileshboda.com
 ```
 
-They should not load from Dropbox, and normal asset rendering should not proxy large media through the Pi.
+They should not load from Dropbox, and normal asset rendering should not proxy large media through the application origin.
 
 ## Rollback
 
@@ -162,6 +162,7 @@ For staging environments that should keep manual sync available but avoid backgr
 
 ```env
 ASSET_AUTO_SYNC_ENABLED=false
+ASSET_SYNC_ON_BOOT=false
 ```
 
 The app will continue to serve the last known manifest when available. Existing local fallback behavior remains in place for missing manifest entries.

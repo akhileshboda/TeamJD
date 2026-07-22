@@ -1,56 +1,101 @@
-# Oracle production deployment
+# Oracle production and staging deployment
 
-The canonical repository is cloned at `/var/www/teamjd`, and the Team JD application runs from its `site/` subdirectory as a single PM2 process on `127.0.0.1:3000`. Preview is a separate deployment at `/var/www/teamjd-staging` on port `3002`; do not change it during production updates.
-
-Cloudflare and cloudflared are managed separately and are intentionally not installed, configured, restarted, or inspected by this procedure. The production origin target is `http://127.0.0.1:3000`.
+Team JD production and staging are separate applications on the same Oracle Ubuntu host. Deployments transfer only the local `site/` project; Oracle does not keep a Git checkout or the rest of the repository. Cloudflare and cloudflared are managed separately and are not changed by these scripts.
 
 ## Runtime contract
 
-- Node.js 22 and npm lockfiles
-- PM2 process: `jake-production`
-- PM2 configuration: `ecosystem.config.cjs`
-- Environment: `/var/www/teamjd/site/.env`, mode `600`
-- Persistent state: `/var/www/teamjd/site/data`, directory mode `700` and files mode `600`
-- Production scheduled asset sync enabled; preview scheduled asset sync disabled
-- One forked process; no watch or cluster mode
+| Environment | Application root | PM2 process | Origin | Asset automation |
+| --- | --- | --- | --- | --- |
+| Production | `/var/www/teamjd` | `jake-production` | `127.0.0.1:3000` | Enabled by production `.env` |
+| Staging | `/var/www/teamjd-staging` | `jake-staging` | `127.0.0.1:3002` | Forced off |
 
-The checked-in `ops/pm2-ubuntu.service` uses a oneshot resurrection command with `RemainAfterExit=yes`. This avoids the `Type=forking` PID-file adoption failure seen when PM2 is already running. Back up the installed unit before replacing it, validate it with `systemd-analyze verify`, and confirm both application PIDs remain unchanged when starting the unit.
+Both applications use Node.js 22, npm lockfiles, one PM2 fork, `cwd: __dirname`, and no watch mode. The host and local development machine require rsync; Oracle additionally requires PM2 and curl. The checked-in `ops/pm2-ubuntu.service` resurrects the saved process list for the `ubuntu` user.
 
-The production environment requires the variables documented by `.env.example`. Use `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT=3000`, `PUBLIC_BASE_URL=https://team-jd.com.au`, and `DROPBOX_REDIRECT_URI=https://team-jd.com.au/auth/dropbox/callback`. Keep secrets out of Git.
+## One-time setup
 
-## Safe update
-
-Record the current revision and back up `.env`, `data`, the PM2 dump, and any server-local configuration before an update. From the production checkout:
+Create writable application roots:
 
 ```bash
-git fetch --prune origin
-git checkout --detach <tested-commit>
+sudo mkdir -p /var/www/teamjd /var/www/teamjd-staging
+sudo chown ubuntu:ubuntu /var/www/teamjd /var/www/teamjd-staging
+```
+
+Create separate environment files at `/var/www/teamjd/.env` and `/var/www/teamjd-staging/.env`, using all required values from `.env.example`.
+
+Production must include:
+
+```env
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=3000
+PUBLIC_BASE_URL=https://team-jd.com.au
+DROPBOX_REDIRECT_URI=https://team-jd.com.au/auth/dropbox/callback
+ASSET_AUTO_SYNC_ENABLED=true
+ASSET_SYNC_ON_BOOT=false
+```
+
+Staging must include its routed HTTPS hostname and these safety settings:
+
+```env
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=3002
+PUBLIC_BASE_URL=https://<staging-domain>
+DROPBOX_REDIRECT_URI=https://<staging-domain>/auth/dropbox/callback
+ASSET_AUTO_SYNC_ENABLED=false
+ASSET_SYNC_ON_BOOT=false
+```
+
+Use `NODE_ENV=production` in staging so secure cookies and production-safe response behavior remain enabled. The PM2 staging entry also forces both automatic-sync variables to `false`. Restrict each `.env` to mode `600`; the deploy scripts enforce that mode after validation.
+
+## Deploy
+
+Install and test locally before deployment:
+
+```bash
+cd /path/to/TeamJD/site
 npm ci
 npm ci --prefix client
 npm test
 npm test --prefix client
-npm run build
-pm2 restart ecosystem.config.cjs --only jake-production --update-env
-pm2 save
-curl -fsS http://127.0.0.1:3000/healthz
 ```
 
-Do not use `git reset --hard`, `git clean`, or copy `node_modules` between machines. Do not deploy a dirty worktree.
+Deploy either target with its explicit command:
+
+```bash
+DEPLOY_USER=ubuntu DEPLOY_HOST=<oracle-host> npm run deploy:production
+DEPLOY_USER=ubuntu DEPLOY_HOST=<oracle-host> npm run deploy:staging
+```
+
+The shared deploy engine performs local and remote dependency checks, validates the selected `.env`, builds the client locally, and uploads only `site/` into `.deploy-incoming`. It runs `npm ci --omit=dev` and validates the selected PM2 entry there before changing the active application. Promotion preserves `.env`, `data/`, and `public/assets/generated/`, removes stale files, restarts only the selected PM2 process, saves the process list, and waits for that environment's `/healthz` response.
+
+`DEPLOY_RUN_SYNC=true` is an explicit production-only post-health-check sync. Staging rejects it. On a shared host, staging copies only `/var/www/teamjd/data/asset-manifest.json` into its own data directory when the production manifest exists; sessions, logs, generated assets, and sync state stay isolated.
+
+## Legacy migration
+
+Either environment can flatten an older nested `site/` layout. Before promotion, the deploy moves legacy `.env`, `data/`, and `public/assets/generated/` into the selected application root. If a legacy path and its flattened destination both exist, deployment stops without deleting either copy.
+
+The first successful staging promotion also removes the retired `jake-site-staging` PM2 entry before starting `jake-staging`. Production and staging scripts validate their fixed paths and never clean or restart the other environment.
 
 ## Routine operations
 
 ```bash
 pm2 status
 pm2 logs jake-production --lines 200 --nostream
-pm2 restart jake-production --update-env
+pm2 logs jake-staging --lines 200 --nostream
+
+cd /var/www/teamjd
+pm2 restart ecosystem.config.cjs --only jake-production --update-env
+
+cd /var/www/teamjd-staging
+pm2 restart ecosystem.config.cjs --only jake-staging --update-env
+
+pm2 save
 systemctl status pm2-ubuntu --no-pager
 curl -fsS http://127.0.0.1:3000/healthz
+curl -fsS http://127.0.0.1:3002/healthz
 ```
-
-## Asset scheduler
-
-Keep `ASSET_AUTO_SYNC_ENABLED=false` while staging a new production process. After local health, R2, Dropbox, and dry-run checks pass, set production to `ASSET_AUTO_SYNC_ENABLED=true` and `ASSET_SYNC_ON_BOOT=false`, then restart with `--update-env`. Preview must remain `ASSET_AUTO_SYNC_ENABLED=false` so only production mutates Dropbox, R2, and manifests.
 
 ## Rollback
 
-Check out the previously recorded production commit, reinstall from both lockfiles, rebuild, restart `jake-production`, and verify `/healthz`. Public routing rollback is performed separately by the Cloudflare administrator.
+On the development machine, check out the previously tested commit or tag, reinstall both lockfiles, rerun both test suites, and execute the deployment command for only the affected environment. Redeployment preserves that environment's `.env` and runtime state. Public routing rollback remains a separate Cloudflare operation.
