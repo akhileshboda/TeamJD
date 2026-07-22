@@ -75,9 +75,21 @@ function getAssetKey(fileName = '') {
 function classifyAsset({ fileName = '', dropboxPath = '' } = {}) {
   const extension = getExtension(fileName);
   const haystack = `${dropboxPath} ${fileName}`.toLowerCase().replace(/[_\s]+/g, '-');
+  const normalizedFileName = normalizeAssetFileName(fileName);
 
   if (['.webm', '.mp4'].includes(extension)) {
     return 'video';
+  }
+
+  const explicitCategory = CATEGORIES.find((category) =>
+    category !== 'misc' && (
+      normalizedFileName.startsWith(`${category}-`) ||
+      haystack.includes(`/assets/${category}/`)
+    )
+  );
+
+  if (explicitCategory) {
+    return explicitCategory;
   }
 
   for (const category of CATEGORIES) {

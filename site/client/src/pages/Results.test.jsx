@@ -51,4 +51,25 @@ describe('Results page library', () => {
     )
     expect(screen.getByText('Showing 1–24 of 24 results')).toBeInTheDocument()
   })
+
+  it('can hide and restore the search field without changing the active library filters', () => {
+    renderResults('/results?q=posing')
+
+    const toggle = screen.getByRole('button', { name: 'Hide search' })
+    expect(screen.getByLabelText('Search the library')).toHaveValue('posing')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+    fireEvent.click(toggle)
+
+    expect(screen.queryByLabelText('Search the library')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show search' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    expect(screen.getByText('Showing 1–24 of 27 results')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show search' }))
+
+    expect(screen.getByLabelText('Search the library')).toHaveValue('posing')
+  })
 })

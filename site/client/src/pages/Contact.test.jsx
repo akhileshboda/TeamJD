@@ -7,6 +7,23 @@ vi.mock('../components/SectionReveal', () => ({
   default: ({ children, className = '' }) => <div className={className}>{children}</div>,
 }))
 
+vi.mock('../components/ContactMediaReel', () => ({
+  default: ({ youtubeId, poster, credit, creditHref }) => (
+    <figure
+      data-testid="contact-media-reel"
+      data-youtube-id={youtubeId}
+      data-credit={credit}
+      data-credit-href={creditHref}
+    >
+      <img data-testid="contact-media-poster" src={poster} alt="" />
+    </figure>
+  ),
+}))
+
+vi.mock('../hooks/useAssets', () => ({
+  useAssets: () => (assetPath) => assetPath,
+}))
+
 afterEach(() => cleanup())
 
 function renderContact() {
@@ -89,5 +106,38 @@ describe('Contact page route chooser', () => {
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     })
+  })
+
+  it('resolves the contact reel and social images through mapped asset keys', () => {
+    renderContact()
+
+    expect(screen.getByTestId('contact-media-reel')).toHaveAttribute(
+      'data-youtube-id',
+      'GbQomqb28os',
+    )
+    expect(screen.getByTestId('contact-media-reel')).toHaveAttribute('data-credit', 'Nike')
+    expect(screen.getByTestId('contact-media-reel')).toHaveAttribute(
+      'data-credit-href',
+      'https://www.youtube.com/watch?v=GbQomqb28os',
+    )
+    expect(screen.getByTestId('contact-media-poster')).toHaveAttribute(
+      'src',
+      '/api/assets/video-contact-athlete-reel-poster',
+    )
+    const socialAssets = [
+      ['Jake standing with another physique competitor on stage', 'gallery-social-facebook-stage-2022'],
+      ['Jake posing during an industrial-location fitness photoshoot', 'gallery-social-facebook-editorial-2022'],
+      ['Jake with two competitors at an ICN South Australia event', 'gallery-social-facebook-coaching-2020'],
+      ['Side profile of Jake training in a gym', 'gallery-social-facebook-training-detail-2019'],
+      ['Jake posing for a studio physique portrait', 'gallery-social-facebook-studio-portrait-2019'],
+      ['Jake standing among strength equipment in a gym', 'gallery-social-facebook-gym-2019'],
+      ['Jake in an off-duty mirror portrait', 'gallery-jake-off-duty-facebook-2019'],
+    ]
+
+    socialAssets.forEach(([alt, asset]) => {
+      expect(screen.getByAltText(alt)).toHaveAttribute('src', `/api/assets/${asset}`)
+    })
+
+    expect(screen.getByRole('region', { name: 'Recent Team JD social posts' })).toBeInTheDocument()
   })
 })

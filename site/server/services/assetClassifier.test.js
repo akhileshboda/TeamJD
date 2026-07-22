@@ -32,6 +32,14 @@ test('classifies assets into site categories deterministically', () => {
   assert.equal(classifyAsset({ fileName: 'client transformation before after.png' }), 'results');
   assert.equal(classifyAsset({ fileName: 'logo white transparent.svg' }), 'branding');
   assert.equal(classifyAsset({ fileName: 'hero-home-loop-v1.webm' }), 'video');
+  assert.equal(classifyAsset({ fileName: 'gallery-jake-training-facebook-2019.jpg' }), 'gallery');
+  assert.equal(
+    classifyAsset({
+      fileName: 'jake-training-facebook-2019.jpg',
+      dropboxPath: '/assets/gallery/jake-training-facebook-2019.jpg'
+    }),
+    'gallery'
+  );
   assert.equal(classifyAsset({ fileName: 'unlabelled upload.jpg' }), 'misc');
 });
 

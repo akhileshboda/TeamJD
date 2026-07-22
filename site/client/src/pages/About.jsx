@@ -4,6 +4,7 @@ import { useReducedMotion } from 'motion/react'
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ClientResultsCarousel from '../components/ClientResultsCarousel'
+import AboutProcessCarousel from '../components/AboutProcessCarousel'
 import Lightbox from '../components/Lightbox'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useAssets } from '../hooks/useAssets'
@@ -60,6 +61,21 @@ const PROCESS_STEPS = [
     number: '04',
     title: 'Refine',
     body: 'Progress photos, performance, feedback, and check-ins guide the next adjustment. What works is reinforced; what does not is changed.',
+  },
+]
+
+const PROCESS_IMAGES = [
+  {
+    asset: 'jake-stage',
+    alt: 'Jake celebrating on stage with a successful competition client',
+  },
+  {
+    asset: 'gallery-social-facebook-coaching-2020',
+    alt: 'Jake with two Team JD competitors at an ICN South Australia event',
+  },
+  {
+    asset: 'gallery-jake-training-facebook-2019',
+    alt: 'Jake documenting his own training progress in the gym',
   },
 ]
 
@@ -357,17 +373,10 @@ export default function About() {
 
             <div className="about-process-story">
               <SectionReveal className="about-process-media">
-                <figure>
-                  <img
-                    src={resolveAsset('/api/assets/jake-stage')}
-                    alt="Jake celebrating on stage with a successful competition client"
-                    loading="lazy"
-                    decoding="async"
-                    width="640"
-                    height="800"
-                  />
-                  <figcaption>The standard carries from the first conversation to the final detail.</figcaption>
-                </figure>
+                <AboutProcessCarousel
+                  images={PROCESS_IMAGES}
+                  caption="The standard carries from the first conversation to the final detail."
+                />
               </SectionReveal>
 
               <ProcessTimeline steps={PROCESS_STEPS} />
