@@ -52,23 +52,28 @@ describe('Results page library', () => {
     expect(screen.getByText('Showing 1–24 of 24 results')).toBeInTheDocument()
   })
 
-  it('can hide and restore the search field without changing the active library filters', () => {
+  it('can hide and restore the entire browse toolbar without changing active library filters', () => {
     renderResults('/results?q=posing')
 
-    const toggle = screen.getByRole('button', { name: 'Hide search' })
+    const toggle = screen.getByRole('button', { name: 'Hide' })
     expect(screen.getByLabelText('Search the library')).toHaveValue('posing')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle.querySelector('svg')).toBeInTheDocument()
 
     fireEvent.click(toggle)
 
     expect(screen.queryByLabelText('Search the library')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Show search' })).toHaveAttribute(
+    expect(screen.queryByLabelText('Content type')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Filter by category' })).not.toBeInTheDocument()
+    const reveal = screen.getByRole('button', { name: 'Show search' })
+    expect(reveal).toHaveAttribute(
       'aria-expanded',
       'false',
     )
+    expect(reveal.querySelector('svg')).toBeInTheDocument()
     expect(screen.getByText('Showing 1–24 of 27 results')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show search' }))
+    fireEvent.click(reveal)
 
     expect(screen.getByLabelText('Search the library')).toHaveValue('posing')
   })

@@ -6,6 +6,7 @@ import CTABanner from '../components/CTABanner'
 import ResultCard from '../components/ResultCard'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal from '../components/SectionReveal'
+import JourneyIcon from '../components/JourneyIcon'
 import { useJSON } from '../hooks/useJSON'
 import {
   RESULT_CATEGORIES,
@@ -34,7 +35,7 @@ export default function Results() {
   const summaryRef = useRef(null)
   const viewerOriginRef = useRef(null)
   const [selectedId, setSelectedId] = useState(null)
-  const [isSearchVisible, setIsSearchVisible] = useState(true)
+  const [isToolbarVisible, setIsToolbarVisible] = useState(true)
 
   const filters = getResultsParams(searchParams)
   const filtered = useMemo(
@@ -161,38 +162,38 @@ export default function Results() {
             </div>
           </SectionReveal>
 
-          <div className="results-toolbar-sticky">
-            <div className="results-toolbar" aria-label="Browse results">
+          <div className={`results-toolbar-sticky${isToolbarVisible ? '' : ' is-collapsed'}`}>
+            {isToolbarVisible ? (
+              <div id="results-browse-toolbar" className="results-toolbar" aria-label="Browse results">
               <div className="results-toolbar-inner">
                 <div className="results-toolbar-actions">
                   <button
                     type="button"
-                    className="results-search-toggle"
-                    aria-expanded={isSearchVisible}
-                    aria-controls={isSearchVisible ? 'results-search-field' : undefined}
-                    onClick={() => setIsSearchVisible((visible) => !visible)}
+                    className="results-toolbar-toggle"
+                    aria-expanded="true"
+                    aria-controls="results-browse-toolbar"
+                  onClick={() => setIsToolbarVisible(false)}
                   >
-                    {isSearchVisible ? 'Hide search' : 'Show search'}
+                    <JourneyIcon name="eyeOff" size={16} />
+                    <span>Hide</span>
                   </button>
                 </div>
 
-                <div className={`results-toolbar-primary${isSearchVisible ? '' : ' is-search-hidden'}`}>
-                  {isSearchVisible && (
-                    <label className="results-search">
-                      <span>Search the library</span>
-                      <input
-                        id="results-search-field"
-                        type="search"
-                        value={filters.query}
-                        placeholder="Search by service, focus, or keyword"
-                        aria-controls="results-grid"
-                        onChange={(event) => updateParams(
-                          { q: event.target.value, page: 1 },
-                          { replace: true },
-                        )}
-                      />
-                    </label>
-                  )}
+                <div className="results-toolbar-primary">
+                  <label className="results-search">
+                    <span>Search the library</span>
+                    <input
+                      id="results-search-field"
+                      type="search"
+                      value={filters.query}
+                      placeholder="Search by service, focus, or keyword"
+                      aria-controls="results-grid"
+                      onChange={(event) => updateParams(
+                        { q: event.target.value, page: 1 },
+                        { replace: true },
+                      )}
+                    />
+                  </label>
 
                   <label className="results-select">
                     <span>Content type</span>
@@ -243,7 +244,20 @@ export default function Results() {
                   )}
                 </div>
               </div>
-            </div>
+              </div>
+            ) : (
+              <div className="results-toolbar-reveal">
+                <button
+                  type="button"
+                  className="results-toolbar-toggle"
+                  aria-expanded="false"
+                  onClick={() => setIsToolbarVisible(true)}
+                  >
+                    <JourneyIcon name="eye" size={16} />
+                    <span>Show search</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div

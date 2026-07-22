@@ -6897,13 +6897,17 @@ p  { line-height: 1.7; color: var(--color-text); }
   margin-bottom: var(--space-3);
 }
 
-.results-search-toggle {
-  min-height: 2.25rem;
-  padding-inline: var(--space-3);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+.results-toolbar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding-inline: var(--space-4);
+  border: 1px solid var(--color-accent);
   border-radius: 999px;
-  color: var(--color-text-muted);
-  background: rgba(255, 255, 255, 0.025);
+  color: #071012;
+  background: var(--color-accent);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.07em;
@@ -6911,15 +6915,20 @@ p  { line-height: 1.7; color: var(--color-text); }
   transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.results-search-toggle:hover {
-  border-color: rgba(250, 128, 114, 0.52);
-  color: var(--color-hover-accent);
-  background: rgba(250, 128, 114, 0.07);
+.results-toolbar-toggle:hover,
+.results-toolbar-toggle:focus {
+  border-color: var(--color-hover-accent);
+  color: #1b0d0a;
+  background: var(--color-hover-accent);
 }
 
-.results-search-toggle:focus-visible {
+.results-toolbar-toggle:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
+}
+
+.results-toolbar-toggle svg {
+  flex: 0 0 auto;
 }
 
 .results-toolbar-primary {
@@ -6928,10 +6937,13 @@ p  { line-height: 1.7; color: var(--color-text); }
   gap: var(--space-4);
 }
 
-.results-toolbar-primary.is-search-hidden {
-  grid-template-columns: minmax(180px, 1fr) minmax(170px, 0.9fr);
-  max-width: 36rem;
-  margin-left: auto;
+.results-toolbar-reveal {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding: var(--space-2) var(--container-pad);
 }
 
 .results-search,
@@ -7624,10 +7636,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     gap: var(--space-3);
   }
 
-  .results-toolbar-primary.is-search-hidden {
-    max-width: none;
-    margin-left: 0;
-  }
 
   .results-search {
     grid-column: 1 / -1;
