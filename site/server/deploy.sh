@@ -8,13 +8,11 @@ case "${DEPLOY_ENVIRONMENT}" in
     readonly DEPLOY_PATH="/var/www/teamjd"
     readonly PM2_APP_NAME="jake-production"
     readonly EXPECTED_PORT="3000"
-    readonly LEGACY_PM2_APP_NAME=""
     ;;
   staging)
     readonly DEPLOY_PATH="/var/www/teamjd-staging"
     readonly PM2_APP_NAME="jake-staging"
     readonly EXPECTED_PORT="3002"
-    readonly LEGACY_PM2_APP_NAME="jake-site-staging"
     ;;
   *)
     echo "Usage: $0 <production|staging>" >&2
@@ -53,23 +51,27 @@ echo "Building React client from ${SITE_ROOT}..."
   npm run build
 )
 
-if ! ssh "${DEPLOY_TARGET}" bash -s -- \
-  "${DEPLOY_ENVIRONMENT}" "${DEPLOY_PATH}" "${INCOMING_PATH}" "${EXPECTED_PORT}" <<'REMOTE_PREPARE'
+if ! ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_PREPARE'
 set -euo pipefail
 
 deploy_environment="$1"
-deploy_path="$2"
-incoming_path="$3"
-expected_port="$4"
-legacy_path="${deploy_path}/site"
-
-case "${deploy_environment}:${deploy_path}:${expected_port}" in
-  production:/var/www/teamjd:3000|staging:/var/www/teamjd-staging:3002) ;;
+case "${deploy_environment}" in
+  production)
+    deploy_path="/var/www/teamjd"
+    expected_port="3000"
+    ;;
+  staging)
+    deploy_path="/var/www/teamjd-staging"
+    expected_port="3002"
+    ;;
   *)
-    echo "Refusing unexpected deployment target: ${deploy_environment}:${deploy_path}:${expected_port}" >&2
+    echo "Refusing unexpected deployment environment: ${deploy_environment}" >&2
     exit 1
     ;;
 esac
+
+incoming_path="${deploy_path}/.deploy-incoming"
+legacy_path="${deploy_path}/site"
 
 for remote_command in node npm pm2 rsync curl; do
   if ! command -v "${remote_command}" >/dev/null 2>&1; then
@@ -106,48 +108,6 @@ if [[ ! -f "${env_path}" ]]; then
   exit 1
 fi
 
-get_env_value() {
-  local key="$1"
-  local line
-  local value
-
-  line="$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "${env_path}" | tail -n 1 || true)"
-  value="${line#*=}"
-  value="${value#"${value%%[![:space:]]*}"}"
-  value="${value%"${value##*[![:space:]]}"}"
-
-  if [[ ${#value} -ge 2 ]]; then
-    if [[ "${value:0:1}" == '"' && "${value: -1}" == '"' ]]; then
-      value="${value:1:${#value}-2}"
-    elif [[ "${value:0:1}" == "'" && "${value: -1}" == "'" ]]; then
-      value="${value:1:${#value}-2}"
-    fi
-  fi
-
-  printf '%s' "${value}"
-}
-
-require_env_value() {
-  local key="$1"
-  local expected="$2"
-  local actual
-  actual="$(get_env_value "${key}")"
-
-  if [[ "${actual}" != "${expected}" ]]; then
-    echo "${env_path} must set ${key}=${expected}; found ${actual:-<missing>}." >&2
-    exit 1
-  fi
-}
-
-require_env_value NODE_ENV production
-require_env_value HOST 127.0.0.1
-require_env_value PORT "${expected_port}"
-
-if [[ "${deploy_environment}" == "staging" ]]; then
-  require_env_value ASSET_AUTO_SYNC_ENABLED false
-  require_env_value ASSET_SYNC_ON_BOOT false
-fi
-
 rm -rf -- "${incoming_path}"
 mkdir -p "${incoming_path}"
 REMOTE_PREPARE
@@ -155,8 +115,8 @@ then
   cat >&2 <<EOF
 Unable to prepare ${DEPLOY_TARGET}:${DEPLOY_PATH}.
 
-Confirm the Oracle user owns the target and that its .env matches the ${DEPLOY_ENVIRONMENT}
-values documented in deploy.md. For a new target, run once on Oracle:
+Confirm the Oracle user owns the target and that its .env exists. The recommended
+${DEPLOY_ENVIRONMENT} values are documented in deploy.md. For a new target, run once on Oracle:
   sudo mkdir -p ${DEPLOY_PATH}
   sudo chown ${DEPLOY_USER}:${DEPLOY_USER} ${DEPLOY_PATH}
 EOF
@@ -182,27 +142,59 @@ rsync -avzh --delete --progress \
   --exclude 'npm-debug.log' \
   "${SITE_ROOT}/" "${DEPLOY_TARGET}:${INCOMING_PATH}/"
 
-ssh "${DEPLOY_TARGET}" bash -s -- \
-  "${DEPLOY_ENVIRONMENT}" "${DEPLOY_PATH}" "${INCOMING_PATH}" "${PM2_APP_NAME}" \
-  "${EXPECTED_PORT}" "${LEGACY_PM2_APP_NAME}" <<'REMOTE_PROMOTE'
+ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_PROMOTE'
 set -euo pipefail
 
 deploy_environment="$1"
-deploy_path="$2"
-incoming_path="$3"
-pm2_app_name="$4"
-expected_port="$5"
-legacy_pm2_app_name="$6"
+case "${deploy_environment}" in
+  production)
+    deploy_path="/var/www/teamjd"
+    pm2_app_name="jake-production"
+    expected_port="3000"
+    legacy_pm2_app_name=""
+    ;;
+  staging)
+    deploy_path="/var/www/teamjd-staging"
+    pm2_app_name="jake-staging"
+    expected_port="3002"
+    legacy_pm2_app_name="jake-site-staging"
+    ;;
+  *)
+    echo "Refusing unexpected deployment environment: ${deploy_environment}" >&2
+    exit 1
+    ;;
+esac
+
+incoming_path="${deploy_path}/.deploy-incoming"
 legacy_path="${deploy_path}/site"
 
 cd "${incoming_path}"
 npm ci --omit=dev
 
-node - "${pm2_app_name}" <<'NODE_CONFIG'
+node - "${pm2_app_name}" "${expected_port}" "${deploy_environment}" <<'NODE_CONFIG'
+const path = require('node:path');
 const expectedName = process.argv[2];
+const expectedPort = process.argv[3];
+const environment = process.argv[4];
 const config = require('./ecosystem.config.cjs');
-if (!Array.isArray(config.apps) || !config.apps.some((app) => app.name === expectedName)) {
+const app = Array.isArray(config.apps) && config.apps.find((candidate) => candidate.name === expectedName);
+if (!app) {
   throw new Error(`Missing PM2 ecosystem app: ${expectedName}`);
+}
+if (path.resolve(app.cwd || '') !== process.cwd()) {
+  throw new Error(`PM2 ecosystem cwd for ${expectedName} must be __dirname`);
+}
+if (String(app.env?.NODE_ENV) !== 'production' || String(app.env?.HOST) !== '127.0.0.1') {
+  throw new Error(`PM2 ecosystem security settings are invalid for ${expectedName}`);
+}
+if (String(app.env?.PORT) !== expectedPort) {
+  throw new Error(`PM2 ecosystem port is invalid for ${expectedName}`);
+}
+if (environment === 'staging' && (
+  String(app.env?.ASSET_AUTO_SYNC_ENABLED) !== 'false' ||
+  String(app.env?.ASSET_SYNC_ON_BOOT) !== 'false'
+)) {
+  throw new Error('PM2 staging asset automation must be forced off');
 }
 NODE_CONFIG
 
@@ -253,28 +245,120 @@ rsync -a --delete \
 rm -rf -- "${incoming_path}"
 
 cd "${deploy_path}"
+
+read_pm2_pid() {
+  local process_name="$1"
+  local pid
+  pid="$(pm2 pid "${process_name}" 2>/dev/null | tail -n 1 || true)"
+  if [[ "${pid}" =~ ^[1-9][0-9]*$ ]]; then
+    printf '%s' "${pid}"
+  else
+    printf '0'
+  fi
+}
+
+verify_pm2_process() {
+  local previous_pid="$1"
+  local state_file
+  state_file="$(mktemp)"
+  pm2 jlist > "${state_file}"
+
+  if ! node - "${state_file}" "${pm2_app_name}" "${deploy_path}" "${expected_port}" \
+    "${previous_pid}" "${legacy_pm2_app_name}" <<'NODE_VERIFY'
+const fs = require('node:fs');
+const path = require('node:path');
+
+const [stateFile, expectedName, expectedCwd, expectedPort, previousPidValue, legacyName] = process.argv.slice(2);
+const processes = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+const matches = processes.filter((process) => process.name === expectedName);
+if (matches.length !== 1) {
+  throw new Error(`Expected exactly one ${expectedName} process; found ${matches.length}`);
+}
+
+const pm2Process = matches[0];
+const environment = pm2Process.pm2_env || {};
+if (environment.status !== 'online') {
+  throw new Error(`${expectedName} is ${environment.status || 'missing a PM2 status'}, not online`);
+}
+if (!Number.isInteger(pm2Process.pid) || pm2Process.pid <= 0) {
+  throw new Error(`${expectedName} does not have a live PID`);
+}
+
+const previousPid = Number(previousPidValue);
+if (previousPid > 0 && pm2Process.pid === previousPid) {
+  throw new Error(`${expectedName} retained its old PID ${previousPid}`);
+}
+const actualCwd = fs.realpathSync(path.resolve(environment.pm_cwd || ''));
+const requiredCwd = fs.realpathSync(path.resolve(expectedCwd));
+if (actualCwd !== requiredCwd) {
+  throw new Error(`${expectedName} has cwd ${environment.pm_cwd || '<missing>'}; expected ${expectedCwd}`);
+}
+if (String(environment.PORT) !== expectedPort) {
+  throw new Error(`${expectedName} has PORT=${environment.PORT || '<missing>'}; expected ${expectedPort}`);
+}
+if (String(environment.NODE_ENV) !== 'production') {
+  throw new Error(`${expectedName} has NODE_ENV=${environment.NODE_ENV || '<missing>'}; expected production`);
+}
+if (legacyName && processes.some((candidate) => candidate.name === legacyName)) {
+  throw new Error(`Legacy PM2 process ${legacyName} still exists`);
+}
+NODE_VERIFY
+  then
+    rm -f -- "${state_file}"
+    return 1
+  fi
+
+  rm -f -- "${state_file}"
+}
+
+previous_pid="$(read_pm2_pid "${pm2_app_name}")"
+legacy_pid="0"
+if [[ -n "${legacy_pm2_app_name}" ]]; then
+  legacy_pid="$(read_pm2_pid "${legacy_pm2_app_name}")"
+fi
+
+echo "Replacing PM2 process ${pm2_app_name} (previous PID: ${previous_pid})."
+if [[ -n "${legacy_pm2_app_name}" && "${legacy_pid}" != "0" ]]; then
+  echo "Removing legacy PM2 process ${legacy_pm2_app_name} (PID: ${legacy_pid})."
+fi
+
+pm2 delete "${pm2_app_name}" >/dev/null 2>&1 || true
 if [[ -n "${legacy_pm2_app_name}" ]]; then
   pm2 delete "${legacy_pm2_app_name}" >/dev/null 2>&1 || true
 fi
-pm2 startOrRestart ecosystem.config.cjs --only "${pm2_app_name}" --update-env
-pm2 save
+pm2 start ecosystem.config.cjs --only "${pm2_app_name}" --update-env
+verify_pm2_process "${previous_pid}"
 
 for attempt in {1..15}; do
   if curl -fsS "http://127.0.0.1:${expected_port}/healthz"; then
     printf '\n'
-    exit 0
+    verify_pm2_process "${previous_pid}"
+    pm2 save
+    break
+  fi
+  if [[ "${attempt}" == "15" ]]; then
+    echo "${deploy_environment} health check did not become ready on port ${expected_port}." >&2
+    exit 1
   fi
   sleep 2
 done
-
-echo "${deploy_environment} health check did not become ready on port ${expected_port}." >&2
-exit 1
 REMOTE_PROMOTE
 
 if [[ "${DEPLOY_RUN_SYNC:-false}" == "true" ]]; then
-  ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_PATH}" <<'REMOTE_SYNC'
+  ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_SYNC'
 set -euo pipefail
-cd "$1"
+case "$1" in
+  production) deploy_path="/var/www/teamjd" ;;
+  staging)
+    echo "Deploy-time asset sync is not allowed for staging." >&2
+    exit 1
+    ;;
+  *)
+    echo "Refusing unexpected deployment environment: $1" >&2
+    exit 1
+    ;;
+esac
+cd "${deploy_path}"
 npm run sync-assets
 REMOTE_SYNC
 else

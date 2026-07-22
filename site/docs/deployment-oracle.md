@@ -20,7 +20,7 @@ sudo mkdir -p /var/www/teamjd /var/www/teamjd-staging
 sudo chown ubuntu:ubuntu /var/www/teamjd /var/www/teamjd-staging
 ```
 
-Create separate environment files at `/var/www/teamjd/.env` and `/var/www/teamjd-staging/.env`, using all required values from `.env.example`.
+Create separate environment files at `/var/www/teamjd/.env` and `/var/www/teamjd-staging/.env`, using all required values from `.env.example`. The deploy preflight requires these files but deliberately does not reject legacy values for settings enforced by the PM2 ecosystem file.
 
 Production must include:
 
@@ -46,7 +46,7 @@ ASSET_AUTO_SYNC_ENABLED=false
 ASSET_SYNC_ON_BOOT=false
 ```
 
-Use `NODE_ENV=production` in staging so secure cookies and production-safe response behavior remain enabled. The PM2 staging entry also forces both automatic-sync variables to `false`. Restrict each `.env` to mode `600`; the deploy scripts enforce that mode after validation.
+Keep `NODE_ENV=production` in staging so the file documents the effective runtime correctly. For safe recovery from older staging configurations, the PM2 staging entry overrides `NODE_ENV`, `HOST`, `PORT`, and both automatic-sync variables with the values in the runtime contract. Restrict each `.env` to mode `600`; the deploy scripts enforce that mode during promotion without rewriting its contents.
 
 ## Deploy
 
@@ -67,7 +67,9 @@ DEPLOY_USER=ubuntu DEPLOY_HOST=<oracle-host> npm run deploy:production
 DEPLOY_USER=ubuntu DEPLOY_HOST=<oracle-host> npm run deploy:staging
 ```
 
-The shared deploy engine performs local and remote dependency checks, validates the selected `.env`, builds the client locally, and uploads only `site/` into `.deploy-incoming`. It runs `npm ci --omit=dev` and validates the selected PM2 entry there before changing the active application. Promotion preserves `.env`, `data/`, and `public/assets/generated/`, removes stale files, restarts only the selected PM2 process, saves the process list, and waits for that environment's `/healthz` response.
+The shared deploy engine performs local and remote dependency checks, requires the selected `.env`, builds the client locally, removes any abandoned `.deploy-incoming`, and uploads only `site/` into a fresh incoming directory. It runs `npm ci --omit=dev` and validates the selected PM2 entry there before changing the active application. Promotion preserves `.env`, `data/`, and `public/assets/generated/` while removing stale application files.
+
+After promotion, deployment records the existing PID, deletes only the selected PM2 process, and starts its ecosystem entry fresh with `--only`. It verifies that PM2 reports a new online PID with the expected working directory, port, and `NODE_ENV=production`; then it waits for that environment's `/healthz` response and saves PM2 state. A start or health failure does not overwrite the previously saved startup list.
 
 `DEPLOY_RUN_SYNC=true` is an explicit production-only post-health-check sync. Staging rejects it. On a shared host, staging copies only `/var/www/teamjd/data/asset-manifest.json` into its own data directory when the production manifest exists; sessions, logs, generated assets, and sync state stay isolated.
 

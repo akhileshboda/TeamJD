@@ -170,9 +170,9 @@ DEPLOY_HOST=your-oracle-hostname-or-ip \
 npm run deploy:staging
 ```
 
-Each script uploads and installs into a temporary incoming directory before promoting the release. Deployments preserve their own `.env`, `data/`, and `public/assets/generated/`, and can flatten an older nested `site/` layout after checking for state conflicts.
+Each script removes an abandoned incoming directory, then uploads and installs into a fresh temporary incoming directory before promoting the release. Deployments preserve their own `.env`, `data/`, and `public/assets/generated/`, and can flatten an older nested `site/` layout after checking for state conflicts. After promotion, the selected PM2 process is deleted and started fresh; its new PID, runtime settings, and health endpoint must pass before PM2 state is saved.
 
-Staging uses production security semantics on port `3002`, requires `ASSET_AUTO_SYNC_ENABLED=false` and `ASSET_SYNC_ON_BOOT=false`, and receives production's current asset manifest without copying other runtime state. `DEPLOY_RUN_SYNC=true` is supported only for production.
+Staging uses production security semantics on port `3002`. Its PM2 ecosystem entry forces `NODE_ENV=production`, loopback binding, and both asset automation settings to `false`, including when a preserved legacy `.env` still contains older runtime values. Staging receives production's current asset manifest without copying other runtime state. `DEPLOY_RUN_SYNC=true` is supported only for production.
 
 Setup, migration, rollback, and routine operations are documented in [`docs/deployment-oracle.md`](docs/deployment-oracle.md). Host-specific commands live in the ignored local `deploy.md`. Cloudflare and cloudflared remain outside the deploy scripts.
 
