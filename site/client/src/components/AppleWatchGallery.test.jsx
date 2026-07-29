@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
-import AppleWatchGallery, { getGalleryIconSize, getPanGeometry } from './AppleWatchGallery'
+import AppleWatchGallery, {
+  getGalleryIconSize,
+  getGalleryMagnificationScale,
+  getPanGeometry,
+} from './AppleWatchGallery'
 
 const motionPreference = vi.hoisted(() => ({ reduced: false }))
 
@@ -63,9 +67,10 @@ describe('AppleWatchGallery canonical library', () => {
       </MemoryRouter>,
     )
 
-    const buttons = screen.getAllByRole('button', { name: /^Open result:/ })
-    buttons.forEach((button) => {
-      expect(button).toHaveStyle({ width: '70px', height: '70px' })
+    const shells = document.querySelectorAll('.watch-grid-item-shell')
+    expect(shells).toHaveLength(results.length)
+    shells.forEach((shell) => {
+      expect(shell).toHaveStyle({ width: '70px', height: '70px' })
     })
   })
 
@@ -87,6 +92,81 @@ describe('AppleWatchGallery canonical library', () => {
 
     expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
     expect(document.querySelector('.watch-grid-viewport')).not.toHaveClass('watch-grid-viewport--pannable')
+  })
+})
+
+describe('AppleWatchGallery magnification', () => {
+  const desktopViewport = { viewportWidth: 1000, viewportHeight: 600 }
+
+  it('uses the desktop peak, wider focus boundary, and stronger edge scale', () => {
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 500,
+      iconY: 300,
+    })).toBeCloseTo(1.45)
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 800,
+      iconY: 300,
+    })).toBeGreaterThan(1)
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 875,
+      iconY: 300,
+    })).toBeCloseTo(1)
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 1000,
+      iconY: 300,
+    })).toBeCloseTo(0.72)
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 500,
+      iconY: 600,
+    })).toBeCloseTo(0.72)
+  })
+
+  it('clamps corners to the edge scale and remains symmetrical', () => {
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 1000,
+      iconY: 600,
+    })).toBeCloseTo(0.72)
+
+    const left = getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 200,
+      iconY: 300,
+    })
+    const right = getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 800,
+      iconY: 300,
+    })
+    expect(left).toBeCloseTo(right)
+  })
+
+  it('uses the adaptive mobile profile and disables scaling for reduced motion', () => {
+    expect(getGalleryMagnificationScale({
+      viewportWidth: 390,
+      viewportHeight: 360,
+      iconX: 195,
+      iconY: 180,
+      isMobile: true,
+    })).toBeCloseTo(1.3)
+    expect(getGalleryMagnificationScale({
+      viewportWidth: 390,
+      viewportHeight: 360,
+      iconX: 390,
+      iconY: 180,
+      isMobile: true,
+    })).toBeCloseTo(0.8)
+    expect(getGalleryMagnificationScale({
+      ...desktopViewport,
+      iconX: 500,
+      iconY: 300,
+      reducedMotion: true,
+    })).toBe(1)
   })
 })
 

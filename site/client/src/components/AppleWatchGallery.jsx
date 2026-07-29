@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useMotionValue, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -17,11 +17,45 @@ const CATEGORY_LABELS = {
 const CATEGORY_ORDER = ['all', 'competition', 'online', 'posing', 'lifestyle', 'training']
 const DESKTOP_ICON_SIZE_PX = 70
 const MOBILE_ICON_SIZE_PX = 62
+const FOCUS_REGION_RATIO = 0.75
+const DESKTOP_MAGNIFICATION = { peak: 1.45, edge: 0.72 }
+const MOBILE_MAGNIFICATION = { peak: 1.3, edge: 0.8 }
 
 export function getGalleryIconSize(viewportWidth) {
   return viewportWidth > 0 && viewportWidth <= 480
     ? MOBILE_ICON_SIZE_PX
     : DESKTOP_ICON_SIZE_PX
+}
+
+function smoothstep(value) {
+  const clamped = Math.min(1, Math.max(0, value))
+  return clamped * clamped * (3 - 2 * clamped)
+}
+
+export function getGalleryMagnificationScale({
+  iconX,
+  iconY,
+  viewportWidth,
+  viewportHeight,
+  isMobile = false,
+  reducedMotion = false,
+}) {
+  if (reducedMotion || viewportWidth <= 0 || viewportHeight <= 0) return 1
+
+  const normalizedX = (iconX - viewportWidth / 2) / (viewportWidth / 2)
+  const normalizedY = (iconY - viewportHeight / 2) / (viewportHeight / 2)
+  const distance = Math.hypot(normalizedX, normalizedY)
+  const profile = isMobile ? MOBILE_MAGNIFICATION : DESKTOP_MAGNIFICATION
+
+  if (distance <= FOCUS_REGION_RATIO) {
+    const focusProgress = smoothstep(distance / FOCUS_REGION_RATIO)
+    return profile.peak + (1 - profile.peak) * focusProgress
+  }
+
+  const edgeProgress = smoothstep(
+    (distance - FOCUS_REGION_RATIO) / (1 - FOCUS_REGION_RATIO),
+  )
+  return 1 + (profile.edge - 1) * edgeProgress
 }
 
 export function getPanGeometry(canvasSize, viewportSize) {
@@ -223,25 +257,66 @@ function StatIcon({ stat }) {
   return <CheckCircleIcon />
 }
 
-function WatchGridItem({ item, src, left, top, sizePx, isActive, shouldReduce, index, onClick }) {
+function WatchGridItem({
+  item,
+  src,
+  left,
+  top,
+  sizePx,
+  isActive,
+  isMobile,
+  shouldReduce,
+  canvasX,
+  canvasY,
+  viewportSize,
+  index,
+  onClick,
+}) {
+  const magnificationScale = useTransform(
+    [canvasX, canvasY],
+    ([offsetX, offsetY]) => getGalleryMagnificationScale({
+      iconX: left + offsetX,
+      iconY: top + offsetY,
+      viewportWidth: viewportSize.w,
+      viewportHeight: viewportSize.h,
+      isMobile,
+      reducedMotion: shouldReduce,
+    }),
+  )
+  const magnificationZIndex = useTransform(
+    magnificationScale,
+    (scale) => Math.round(scale * 100),
+  )
+
   return (
-    <motion.button
-      type="button"
-      className={`watch-grid-item ${isActive ? 'active' : ''}`}
-      data-category={item.category}
-      onClick={() => onClick(item)}
-      aria-label={`Open result: ${displayTitle(item)}`}
-      aria-pressed={isActive}
-      style={{ left: `${left - sizePx / 2}px`, top: `${top - sizePx / 2}px`, width: sizePx, height: sizePx }}
-      initial={shouldReduce ? false : { opacity: 0, scale: 0.48 }}
-      animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
-      exit={shouldReduce ? {} : { opacity: 0, scale: 0.58 }}
-      transition={{ duration: 0.34, ease: 'easeOut', delay: Math.min(index * 0.025, 0.25) }}
-      whileHover={shouldReduce ? {} : { scale: 1.1 }}
-      whileTap={shouldReduce ? {} : { scale: 0.96 }}
+    <motion.div
+      className={`watch-grid-item-shell ${isActive ? 'is-active' : ''}`}
+      style={{
+        left: `${left - sizePx / 2}px`,
+        top: `${top - sizePx / 2}px`,
+        width: sizePx,
+        height: sizePx,
+        scale: magnificationScale,
+        zIndex: magnificationZIndex,
+      }}
     >
-      <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
-    </motion.button>
+      <motion.button
+        type="button"
+        className={`watch-grid-item ${isActive ? 'active' : ''}`}
+        data-category={item.category}
+        onClick={() => onClick(item)}
+        aria-label={`Open result: ${displayTitle(item)}`}
+        aria-pressed={isActive}
+        initial={shouldReduce ? false : { opacity: 0, scale: 0.48 }}
+        animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
+        exit={shouldReduce ? {} : { opacity: 0, scale: 0.58 }}
+        transition={{ duration: 0.34, ease: 'easeOut', delay: Math.min(index * 0.025, 0.25) }}
+        whileHover={shouldReduce ? {} : { scale: 1.1 }}
+        whileTap={shouldReduce ? {} : { scale: 0.96 }}
+      >
+        <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
+      </motion.button>
+    </motion.div>
   )
 }
 
@@ -826,7 +901,11 @@ export default function AppleWatchGallery() {
                             top={position.y}
                             sizePx={iconSizePx}
                             isActive={selectedItem?.id === item.id}
+                            isMobile={isPhoneResultsLayout}
                             shouldReduce={shouldReduce}
+                            canvasX={canvasX}
+                            canvasY={canvasY}
+                            viewportSize={viewportSize}
                             index={index}
                             onClick={handleOpen}
                           />
