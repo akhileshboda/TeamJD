@@ -30,7 +30,7 @@ describe('evaluateQualification', () => {
     expect(result.missingQuestionIds).toEqual(['training_history', 'timeline', 'commitment'])
   })
 
-  it.each(services.map((candidate) => candidate.slug))(
+  it.each(services.filter((candidate) => candidate.qualification).map((candidate) => candidate.slug))(
     'qualifies a complete passing answer set for %s',
     (slug) => {
       const result = evaluateQualification(service(slug).qualification, passingAnswers(slug))
@@ -75,21 +75,14 @@ describe('evaluateQualification', () => {
     expect(result.response).toContain('Take the time you need')
   })
 
-  it.each([
-    ['online-coaching', 'support_type', 'hands-on', 'personal-training'],
-    ['online-coaching', 'support_type', 'posing', 'posing-only'],
-    ['online-coaching', 'support_type', 'contest', 'competition-preparation'],
-    ['personal-training', 'support_type', 'remote-complete', 'online-coaching'],
-    ['personal-training', 'support_type', 'posing', 'posing-only'],
-    ['personal-training', 'support_type', 'contest', 'competition-preparation'],
-    ['personal-training', 'location', 'no', 'online-coaching'],
-    ['posing-only', 'support_type', 'contest', 'competition-preparation'],
-    ['posing-only', 'support_type', 'physique', 'online-coaching'],
-  ])('routes %s answer %s=%s to %s', (slug, questionId, value, recommendationSlug) => {
-    const answers = { ...passingAnswers(slug), [questionId]: value }
-    const result = evaluateQualification(service(slug).qualification, answers)
-
-    expect(result).toMatchObject({ status: 'redirect', recommendationSlug })
+  it('keeps qualification data exclusive to Competition Preparation', () => {
+    expect(
+      services.filter((candidate) => candidate.qualification).map((candidate) => candidate.slug),
+    ).toEqual(['competition-preparation'])
+    expect(
+      services.filter((candidate) => candidate.slug !== 'competition-preparation')
+        .every((candidate) => candidate.application_required === false),
+    ).toBe(true)
   })
 })
 
@@ -127,7 +120,7 @@ describe('session-only qualification storage', () => {
 
   it('stores only a qualified flag under the service-specific key', () => {
     const storage = storageDouble()
-    const slug = 'online-coaching'
+    const slug = 'competition-preparation'
 
     expect(isServiceQualified(slug, storage)).toBe(false)
     markServiceQualified(slug, storage)

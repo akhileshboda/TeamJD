@@ -16,7 +16,7 @@ export const RESULT_TYPES = [
 ]
 
 export const RESULT_SORTS = [
-  { value: 'curated', label: 'Curated order' },
+  { value: 'curated', label: 'Library order' },
   { value: 'category', label: 'Category A–Z' },
   { value: 'caption', label: 'Caption A–Z' },
 ]

@@ -15,478 +15,36 @@ const CATEGORY_LABELS = {
 }
 
 const CATEGORY_ORDER = ['all', 'competition', 'online', 'posing', 'lifestyle', 'training']
-const MIN_GALLERY_ITEMS = 18
-const DESKTOP_SIZE_PX = { hero: 100, lg: 88, md: 74, sm: 62 }
-const MOBILE_SIZE_PX = { hero: 82, lg: 72, md: 62, sm: 54 }
+const DESKTOP_ICON_SIZE_PX = 70
+const MOBILE_ICON_SIZE_PX = 62
 
-const REAL_RESULT_DETAILS = {
-  1: {
-    name: 'ANB champion with stage-ready control',
-    location: 'Competition Preparation',
-    duration: '16 Weeks',
-    summary: 'A full prep result built around tighter presentation, clearer conditioning, and confidence when it mattered.',
-    testimonial: {
-      quote: 'Jake kept every part of prep organised, from the training adjustments to the stage details. I knew exactly what we were chasing each week.',
-      author: 'ANB Champion',
-      service: 'Competition Preparation',
-      result: 'Gold Medal Stage Result',
-    },
-    stats: [
-      { label: 'Service', value: 'Prep' },
-      { label: 'Outcome', value: 'Gold', trend: 'up' },
-      { label: 'Focus', value: 'Stage' },
-    ],
-  },
-  2: {
-    name: 'Stage ready in the bodybuilding division',
-    location: 'Contest Prep',
-    duration: '20 Weeks',
-    summary: 'Conditioning, posing, and peak-week decisions brought together into one calm, executable show-day plan.',
-    testimonial: {
-      quote: 'I had competed before, but this was the first time the final weeks felt controlled instead of chaotic.',
-      author: 'Returning Competitor',
-      service: 'Competition Preparation',
-      result: 'Best Conditioning Yet',
-    },
-    stats: [
-      { label: 'Division', value: 'Bodybuilding' },
-      { label: 'Prep', value: 'Complete', trend: 'up' },
-      { label: 'Focus', value: 'Peak Week' },
-    ],
-  },
-  3: {
-    name: 'Peak conditioning with sharper stage presence',
-    location: 'Competition Preparation',
-    duration: '18 Weeks',
-    summary: 'A detail-led contest prep result focused on holding shape, tightening the final look, and presenting clearly.',
-    testimonial: {
-      quote: 'The difference was the detail. Nothing felt random, and every change had a reason behind it.',
-      author: 'Contest Prep Client',
-      service: 'Competition Preparation',
-      result: 'Peak Conditioning',
-    },
-    stats: [
-      { label: 'Focus', value: 'Condition' },
-      { label: 'Support', value: 'Weekly' },
-      { label: 'Result', value: 'Sharper', trend: 'up' },
-    ],
-  },
-  4: {
-    name: 'Presentation that translated under lights',
-    location: 'Posing Coaching',
-    duration: '8 Weeks',
-    summary: 'A posing-focused result built around angles, transitions, breathing, and making the physique read from the judging table.',
-    testimonial: {
-      quote: 'Jake helped me understand how to show my strengths instead of just hitting poses. That changed everything.',
-      author: 'Posing Client',
-      service: 'Posing',
-      result: 'Stage Presence Transformation',
-    },
-    stats: [
-      { label: 'Service', value: 'Posing' },
-      { label: 'Focus', value: 'Angles' },
-      { label: 'Confidence', value: 'Higher', trend: 'up' },
-    ],
-  },
-  5: {
-    name: 'Best shape brought into show condition',
-    location: 'Competition Preparation',
-    duration: '20 Weeks',
-    summary: 'A complete prep pathway balancing structure, accountability, and the final details needed for a polished stage look.',
-    testimonial: {
-      quote: 'Jake treated my goal like it mattered. The accountability was firm, but it always felt personal.',
-      author: 'Comp Prep Client',
-      service: 'Competition Preparation',
-      result: 'Best Shape Yet',
-    },
-    stats: [
-      { label: 'Program', value: 'Full Prep' },
-      { label: 'Check-ins', value: 'Weekly' },
-      { label: 'Shape', value: 'Best', trend: 'up' },
-    ],
-  },
-  6: {
-    name: 'Mandatory posing with better control',
-    location: 'Posing Coaching',
-    duration: '6 Weeks',
-    summary: 'A presentation result focused on cleaner transitions, stronger abdominal control, and confident mandatory poses.',
-    testimonial: {
-      quote: 'The posing work made me look more composed and more prepared. I stopped rushing and started owning the routine.',
-      author: 'Presentation Client',
-      service: 'Posing',
-      result: 'Routine Confidence',
-    },
-    stats: [
-      { label: 'Service', value: 'Posing' },
-      { label: 'Focus', value: 'Control' },
-      { label: 'Stage', value: 'Cleaner', trend: 'up' },
-    ],
-  },
+export function getGalleryIconSize(viewportWidth) {
+  return viewportWidth > 0 && viewportWidth <= 480
+    ? MOBILE_ICON_SIZE_PX
+    : DESKTOP_ICON_SIZE_PX
 }
 
-// Temporary royalty-free fallback images until Jake supplies enough Dropbox assets.
-const FALLBACK_RESULTS = [
-  {
-    id: 'fallback-online-1',
-    src: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training with a barbell in a gym',
-    caption: 'Remote Structure - Training Block',
-    category: 'online',
-    name: 'Remote structure that keeps momentum',
-    location: 'Online Coaching',
-    summary: 'Programming, nutrition targets, and check-ins shaped around a real schedule rather than a generic template.',
-    testimonial: {
-      quote: 'The plan finally felt like it was built around my week, not someone else\'s template.',
-      author: 'Online Coaching Client',
-      service: 'Online Coaching',
-      result: 'Consistent Training Rhythm',
+export function getPanGeometry(canvasSize, viewportSize) {
+  const hasViewport = viewportSize.width > 0 && viewportSize.height > 0
+  const overflowX = hasViewport ? Math.max(0, canvasSize.width - viewportSize.width) : 0
+  const overflowY = hasViewport ? Math.max(0, canvasSize.height - viewportSize.height) : 0
+
+  return {
+    overflowX,
+    overflowY,
+    canPan: overflowX > 1 || overflowY > 1,
+    constraints: {
+      left: -overflowX,
+      right: 0,
+      top: -overflowY,
+      bottom: 0,
     },
-    stats: [
-      { label: 'Check-ins', value: 'Weekly', trend: 'up' },
-      { label: 'Support', value: 'Online' },
-    ],
-  },
-  {
-    id: 'fallback-training-1',
-    src: 'https://images.unsplash.com/photo-1571019613914-85f342c6a11e?auto=format&fit=crop&w=900&q=80',
-    alt: 'Coach assisting a client with strength training',
-    caption: 'Private Coaching - Technique First',
-    category: 'training',
-    name: 'Hands-on coaching for cleaner movement',
-    location: 'Adelaide',
-    summary: 'A private coaching pathway focused on immediate feedback, better loading patterns, and cleaner execution.',
-    testimonial: {
-      quote: 'Small technical changes made every session feel more confident and controlled.',
-      author: 'Private Coaching Client',
-      service: 'Personal Training',
-      result: 'Better Movement Quality',
+    initial: {
+      x: -overflowX / 2,
+      y: -overflowY / 2,
     },
-    stats: [
-      { label: 'Format', value: '1:1' },
-      { label: 'Focus', value: 'Technique', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-lifestyle-1',
-    src: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete stretching after a training session',
-    caption: 'Lifestyle - Sustainable Training',
-    category: 'lifestyle',
-    name: 'A routine that fits real life',
-    location: 'Lifestyle Coaching',
-    summary: 'A sustainable coaching result centred on habits, structure, and consistency outside of a competition timeline.',
-    testimonial: {
-      quote: 'The biggest shift was having structure that did not collapse as soon as life got busy.',
-      author: 'Lifestyle Client',
-      service: 'Lifestyle Coaching',
-      result: 'Sustainable Routine',
-    },
-    stats: [
-      { label: 'Routine', value: 'Stable', trend: 'up' },
-      { label: 'Focus', value: 'Habits' },
-    ],
-  },
-  {
-    id: 'fallback-posing-1',
-    src: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete standing under dramatic gym lighting',
-    caption: 'Presentation - Confidence Under Lights',
-    category: 'posing',
-    name: 'Presentation that reads clearly',
-    location: 'Stage Skills',
-    summary: 'A posing-focused result built around calm transitions, stronger lines, and confidence under bright lights.',
-    testimonial: {
-      quote: 'Learning how to present the physique changed how confident I felt under pressure.',
-      author: 'Posing Client',
-      service: 'Posing',
-      result: 'Stage Confidence',
-    },
-    stats: [
-      { label: 'Focus', value: 'Stage' },
-      { label: 'Presence', value: 'Sharper', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-competition-1',
-    src: 'https://images.unsplash.com/photo-1549476464-37392f717541?auto=format&fit=crop&w=900&q=80',
-    alt: 'Bodybuilder training in a focused gym environment',
-    caption: 'Contest Prep - Detail Driven',
-    category: 'competition',
-    name: 'Prep decisions with a clear standard',
-    location: 'Contest Prep',
-    summary: 'A prep result built on clear decision-making, accountability, and sharper execution as show day approaches.',
-    testimonial: {
-      quote: 'Having a coach watch the details took the guesswork out of the hardest weeks.',
-      author: 'Contest Prep Client',
-      service: 'Competition Preparation',
-      result: 'More Confident Prep',
-    },
-    stats: [
-      { label: 'Service', value: 'Prep' },
-      { label: 'Standard', value: 'Clear', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-online-2',
-    src: 'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training with dumbbells in a gym',
-    caption: 'Online Coaching - Progressive Plan',
-    category: 'online',
-    name: 'Progress you can actually track',
-    location: 'Remote Coaching',
-    summary: 'Online coaching that turns training, nutrition, and accountability into visible weekly progress.',
-    testimonial: {
-      quote: 'The check-ins made progress obvious, even when the week felt messy.',
-      author: 'Remote Client',
-      service: 'Online Coaching',
-      result: 'Better Accountability',
-    },
-    stats: [
-      { label: 'Check-ins', value: 'Weekly' },
-      { label: 'Progress', value: 'Tracked', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-training-2',
-    src: 'https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete performing a controlled strength movement',
-    caption: 'Private Coaching - Stronger Sessions',
-    category: 'training',
-    name: 'In-person feedback that lands fast',
-    location: 'Private Coaching',
-    summary: 'Direct coaching for clients who want better movement, stronger sessions, and faster technical correction.',
-    testimonial: {
-      quote: 'The immediate feedback helped me understand what good reps should feel like.',
-      author: 'Training Client',
-      service: 'Personal Training',
-      result: 'Stronger Sessions',
-    },
-    stats: [
-      { label: 'Format', value: '1:1' },
-      { label: 'Feedback', value: 'Direct', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-lifestyle-2',
-    src: 'https://images.unsplash.com/photo-1554344728-77cf90d9ed26?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete preparing for a workout with gym equipment nearby',
-    caption: 'Lifestyle - Repeatable Habits',
-    category: 'lifestyle',
-    name: 'Habits that carry the physique',
-    location: 'Lifestyle Coaching',
-    summary: 'A lifestyle coaching result focused on making training and nutrition repeatable without all-or-nothing swings.',
-    testimonial: {
-      quote: 'The structure made training and nutrition feel repeatable instead of all-or-nothing.',
-      author: 'Lifestyle Client',
-      service: 'Lifestyle Coaching',
-      result: 'Repeatable Habits',
-    },
-    stats: [
-      { label: 'Habits', value: 'Built', trend: 'up' },
-      { label: 'Support', value: 'Flexible' },
-    ],
-  },
-  {
-    id: 'fallback-posing-2',
-    src: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete posing in a gym mirror',
-    caption: 'Posing - Better Angles',
-    category: 'posing',
-    name: 'Sharper angles and transitions',
-    location: 'Posing Coaching',
-    summary: 'Presentation work focused on better angles, more confident transitions, and a stronger stage rhythm.',
-    testimonial: {
-      quote: 'The difference was learning how to show what I had already built.',
-      author: 'Presentation Client',
-      service: 'Posing',
-      result: 'Sharper Presence',
-    },
-    stats: [
-      { label: 'Angles', value: 'Sharper', trend: 'up' },
-      { label: 'Routine', value: 'Cleaner' },
-    ],
-  },
-  {
-    id: 'fallback-competition-2',
-    src: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training intensely with gym lighting',
-    caption: 'Contest Prep - Peak Focus',
-    category: 'competition',
-    name: 'A clearer path into show day',
-    location: 'Competition Prep',
-    summary: 'A contest prep result designed to keep the final phase purposeful, calm, and detail-driven.',
-    testimonial: {
-      quote: 'Every adjustment had a reason, which made prep feel calmer and more controlled.',
-      author: 'Prep Client',
-      service: 'Competition Preparation',
-      result: 'Show Day Confidence',
-    },
-    stats: [
-      { label: 'Phase', value: 'Peak' },
-      { label: 'Readiness', value: 'Higher', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-online-3',
-    src: 'https://images.unsplash.com/photo-1576678927484-cc907957088c?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete using battle ropes during conditioning',
-    caption: 'Online Coaching - Flexible Accountability',
-    category: 'online',
-    name: 'Coaching that adapts to the week',
-    location: 'Online Coaching',
-    summary: 'Remote coaching that keeps structure intact when work, travel, or training availability changes.',
-    testimonial: {
-      quote: 'When my schedule changed, the plan changed with it instead of falling apart.',
-      author: 'Online Client',
-      service: 'Online Coaching',
-      result: 'Flexible Consistency',
-    },
-    stats: [
-      { label: 'Plan', value: 'Adaptive', trend: 'up' },
-      { label: 'Support', value: 'Remote' },
-    ],
-  },
-  {
-    id: 'fallback-training-3',
-    src: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete lifting in a strength gym',
-    caption: 'Private Coaching - Load With Confidence',
-    category: 'training',
-    name: 'Confidence under load',
-    location: 'Private Coaching',
-    summary: 'In-person coaching that improves confidence, execution, and intent through every working set.',
-    testimonial: {
-      quote: 'I stopped second-guessing the lift because I finally knew what Jake wanted me to feel.',
-      author: 'Private Coaching Client',
-      service: 'Personal Training',
-      result: 'Better Confidence',
-    },
-    stats: [
-      { label: 'Format', value: '1:1' },
-      { label: 'Confidence', value: 'Higher', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-lifestyle-3',
-    src: 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete warming up in a training studio',
-    caption: 'Lifestyle - Better Training Rhythm',
-    category: 'lifestyle',
-    name: 'Training that fits the week',
-    location: 'Lifestyle Coaching',
-    summary: 'A lifestyle result focused on making sessions, meals, and recovery feel realistic enough to repeat.',
-    testimonial: {
-      quote: 'Jake helped me stop chasing perfect weeks and start building consistent ones.',
-      author: 'Lifestyle Coaching Client',
-      service: 'Lifestyle Coaching',
-      result: 'Consistent Weekly Rhythm',
-    },
-    stats: [
-      { label: 'Rhythm', value: 'Weekly', trend: 'up' },
-      { label: 'Focus', value: 'Consistency' },
-    ],
-  },
-  {
-    id: 'fallback-competition-3',
-    src: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training back under dramatic gym lighting',
-    caption: 'Contest Prep - Back Detail',
-    category: 'competition',
-    name: 'More detail where judging notices',
-    location: 'Competition Preparation',
-    summary: 'A contest prep result built around shape, condition, and making the back shots hold up under judging conditions.',
-    testimonial: {
-      quote: 'The feedback was specific enough that I knew exactly what needed to improve each week.',
-      author: 'Physique Competitor',
-      service: 'Competition Preparation',
-      result: 'Improved Stage Detail',
-    },
-    stats: [
-      { label: 'Focus', value: 'Detail' },
-      { label: 'Condition', value: 'Sharper', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-online-4',
-    src: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training in a spacious gym',
-    caption: 'Online Coaching - Structured Weeks',
-    category: 'online',
-    name: 'Structured weeks without guesswork',
-    location: 'Online Coaching',
-    summary: 'A remote coaching result where programming, accountability, and nutrition targets made the next step obvious.',
-    testimonial: {
-      quote: 'I always knew what the priority was, which made training easier to execute.',
-      author: 'Online Coaching Client',
-      service: 'Online Coaching',
-      result: 'Clear Weekly Priorities',
-    },
-    stats: [
-      { label: 'Plan', value: 'Clear', trend: 'up' },
-      { label: 'Mode', value: 'Remote' },
-    ],
-  },
-  {
-    id: 'fallback-posing-3',
-    src: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete holding a controlled gym pose',
-    caption: 'Posing - Stronger Lines',
-    category: 'posing',
-    name: 'Cleaner lines and calmer transitions',
-    location: 'Posing Coaching',
-    summary: 'A posing result focused on slowing the routine down, finding better angles, and making each transition deliberate.',
-    testimonial: {
-      quote: 'I stopped feeling rushed once the routine had structure and the transitions made sense.',
-      author: 'Posing Client',
-      service: 'Posing',
-      result: 'Cleaner Routine',
-    },
-    stats: [
-      { label: 'Lines', value: 'Cleaner', trend: 'up' },
-      { label: 'Focus', value: 'Routine' },
-    ],
-  },
-  {
-    id: 'fallback-training-4',
-    src: 'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete preparing dumbbells before a working set',
-    caption: 'Private Coaching - Better Execution',
-    category: 'training',
-    name: 'Better execution every set',
-    location: 'Private Coaching',
-    summary: 'A hands-on coaching result where in-person cues made training feel stronger, safer, and more deliberate.',
-    testimonial: {
-      quote: 'Having Jake there to correct the small things made every set feel more productive.',
-      author: 'Private Coaching Client',
-      service: 'Personal Training',
-      result: 'Better Execution',
-    },
-    stats: [
-      { label: 'Format', value: '1:1' },
-      { label: 'Execution', value: 'Better', trend: 'up' },
-    ],
-  },
-  {
-    id: 'fallback-competition-4',
-    src: 'https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=900&q=80',
-    alt: 'Athlete training shoulders in a gym',
-    caption: 'Contest Prep - Complete Support',
-    category: 'competition',
-    name: 'Prep support from training to stage',
-    location: 'Contest Prep',
-    summary: 'A competition result shaped by training, nutrition, presentation, and the final details that bring prep together.',
-    testimonial: {
-      quote: 'The value was having one clear process instead of trying to piece everything together myself.',
-      author: 'Competition Prep Client',
-      service: 'Competition Preparation',
-      result: 'Complete Prep Support',
-    },
-    stats: [
-      { label: 'Support', value: 'Complete', trend: 'up' },
-      { label: 'Service', value: 'Prep' },
-    ],
-  },
-]
+  }
+}
 
 function honeycombLayout(count, spacing = 96) {
   if (count <= 0) return []
@@ -515,13 +73,6 @@ function honeycombLayout(count, spacing = 96) {
   }))
 }
 
-function ringSize(ring, index) {
-  if (index === 0) return 'hero'
-  if (ring === 1) return 'lg'
-  if (ring === 2) return 'md'
-  return 'sm'
-}
-
 function resolveItemSrc(item, resolveAsset) {
   return item?.src ? resolveAsset(item.src) : ''
 }
@@ -532,25 +83,24 @@ function displayTitle(item) {
 
 function completeResultItem(item, index = 0) {
   const categoryLabel = CATEGORY_LABELS[item.category] || 'Coaching'
-  const service = item.testimonial?.service || categoryLabel
+  const isRepresentative = item.kind === 'representative'
 
   return {
     ...item,
     name: item.name || item.caption || `${categoryLabel} result`,
-    location: item.location || service,
-    summary: item.summary || `A Team JD ${categoryLabel.toLowerCase()} result built around clear structure, accountability, and a coaching plan matched to the client.`,
-    testimonial: item.testimonial || {
-      quote: 'The structure, feedback, and accountability made the process feel personal from the first check-in.',
-      author: `${categoryLabel} Client`,
-      service,
-      result: 'Coaching Progress',
-    },
+    location: item.location || (isRepresentative ? 'Representative imagery' : categoryLabel),
+    summary: item.summary || (
+      isRepresentative
+        ? `Representative fitness imagery for the ${categoryLabel.toLowerCase()} category. It is not presented as a Team JD client outcome.`
+        : `A genuine Team JD client result from the ${categoryLabel.toLowerCase()} coaching archive.`
+    ),
+    testimonial: item.testimonial || null,
     stats: Array.isArray(item.stats) && item.stats.length > 0
       ? item.stats
       : [
-          { label: 'Service', value: categoryLabel },
-          { label: 'Support', value: index % 2 === 0 ? 'Weekly' : 'Personal' },
-          { label: 'Result', value: 'Progress', trend: 'up' },
+          { label: 'Type', value: isRepresentative ? 'Reference' : 'Client' },
+          { label: 'Category', value: categoryLabel },
+          { label: 'Library', value: String(index + 1).padStart(2, '0') },
         ],
   }
 }
@@ -673,11 +223,11 @@ function StatIcon({ stat }) {
   return <CheckCircleIcon />
 }
 
-function WatchGridItem({ item, src, size, left, top, sizePx, isActive, shouldReduce, index, onClick }) {
+function WatchGridItem({ item, src, left, top, sizePx, isActive, shouldReduce, index, onClick }) {
   return (
     <motion.button
       type="button"
-      className={`watch-grid-item watch-grid-item--${size} ${isActive ? 'active' : ''}`}
+      className={`watch-grid-item ${isActive ? 'active' : ''}`}
       data-category={item.category}
       onClick={() => onClick(item)}
       aria-label={`Open result: ${displayTitle(item)}`}
@@ -1004,8 +554,7 @@ function ResultModal({ item, src, open, onClose }) {
 }
 
 export default function AppleWatchGallery() {
-  const { data: results } = useJSON('/content/results.json')
-  const { data: testimonials } = useJSON('/content/testimonials.json')
+  const { data: results } = useJSON('/content/results-library.json')
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const viewportRef = useRef(null)
@@ -1025,41 +574,10 @@ export default function AppleWatchGallery() {
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 })
 
   const enrichedItems = useMemo(() => {
-    const sourceResults = results || []
-    const serviceToCategory = {
-      'Competition Preparation': 'competition',
-      'Online Coaching': 'online',
-      'Personal Training': 'training',
-      Posing: 'posing',
-      'Posing Only': 'posing',
-      'Lifestyle Coaching': 'lifestyle',
-    }
-
-    const testimonialsByCategory = {}
-    ;(testimonials || []).forEach((testimonial) => {
-      const category = serviceToCategory[testimonial.service] || 'lifestyle'
-      if (!testimonialsByCategory[category]) testimonialsByCategory[category] = []
-      testimonialsByCategory[category].push(testimonial)
-    })
-
-    const usedTestimonials = new Set()
-    const realItems = sourceResults.map((result) => {
-      const detail = REAL_RESULT_DETAILS[result.id] || {}
-      const pool = testimonialsByCategory[result.category] || []
-      const testimonial = pool.find((entry) => !usedTestimonials.has(entry.id)) || null
-      if (testimonial) usedTestimonials.add(testimonial.id)
-
-      return completeResultItem({
-        ...result,
-        ...detail,
-        id: `real-${result.id}`,
-        testimonial: detail.testimonial || testimonial,
-      }, result.id)
-    })
-
-    const fallbackNeeded = Math.max(0, MIN_GALLERY_ITEMS - realItems.length)
-    return [...realItems, ...FALLBACK_RESULTS.slice(0, fallbackNeeded)].map(completeResultItem)
-  }, [results, testimonials])
+    return [...(results || [])]
+      .sort((left, right) => left.order - right.order)
+      .map(completeResultItem)
+  }, [results])
 
   const categories = useMemo(() => {
     const available = new Set(enrichedItems.map((item) => item.category))
@@ -1071,7 +589,7 @@ export default function AppleWatchGallery() {
     return enrichedItems.filter((item) => item.category === activeFilter)
   }, [activeFilter, enrichedItems])
 
-  const sizeMap = viewportSize.w > 0 && viewportSize.w <= 480 ? MOBILE_SIZE_PX : DESKTOP_SIZE_PX
+  const iconSizePx = getGalleryIconSize(viewportSize.w)
 
   const canvas = useMemo(() => {
     const spacing = viewportSize.w > 0 && viewportSize.w <= 480 ? 78 : 104
@@ -1086,9 +604,8 @@ export default function AppleWatchGallery() {
     let minY = Infinity
     let maxY = -Infinity
 
-    rawPositions.forEach((position, index) => {
-      const size = ringSize(position.ring, index)
-      const half = sizeMap[size] / 2
+    rawPositions.forEach((position) => {
+      const half = iconSizePx / 2
       minX = Math.min(minX, position.x - half)
       maxX = Math.max(maxX, position.x + half)
       minY = Math.min(minY, position.y - half)
@@ -1112,7 +629,7 @@ export default function AppleWatchGallery() {
     }))
 
     return { positions, width, height }
-  }, [filteredItems.length, sizeMap, viewportSize.h, viewportSize.w])
+  }, [filteredItems.length, iconSizePx, viewportSize.h, viewportSize.w])
 
   useEffect(() => {
     const el = viewportRef.current
@@ -1187,16 +704,26 @@ export default function AppleWatchGallery() {
     el.scrollTop = Math.max(0, (el.scrollHeight - el.clientHeight) / 2)
   }, [activeFilter, canvas.height, canvas.width, shouldReduce])
 
-  const slackX = Math.max(0, (canvas.width - viewportSize.w) / 2)
-  const slackY = Math.max(0, (canvas.height - viewportSize.h) / 2)
-  const canPan = !shouldReduce && (slackX > 1 || slackY > 1)
-  const dragConstraints = { left: -slackX, right: slackX, top: -slackY, bottom: slackY }
+  const panGeometry = getPanGeometry(
+    { width: canvas.width, height: canvas.height },
+    { width: viewportSize.w, height: viewportSize.h },
+  )
+  const canPan = !shouldReduce && panGeometry.canPan
 
   useEffect(() => {
     if (shouldReduce) return
-    canvasX.set(-slackX)
-    canvasY.set(-slackY)
-  }, [activeFilter, canvas.height, canvas.width, canvasX, canvasY, shouldReduce, slackX, slackY])
+    canvasX.set(panGeometry.initial.x)
+    canvasY.set(panGeometry.initial.y)
+  }, [
+    activeFilter,
+    canvas.height,
+    canvas.width,
+    canvasX,
+    canvasY,
+    panGeometry.initial.x,
+    panGeometry.initial.y,
+    shouldReduce,
+  ])
 
   // The draggable canvas sets `touch-action: none`, which makes trackpad/wheel
   // gestures over the frame stop scrolling the page. Forward wheel deltas to the
@@ -1279,7 +806,7 @@ export default function AppleWatchGallery() {
                     className="watch-grid-canvas"
                     style={shouldReduce ? { width: canvas.width, height: canvas.height } : { width: canvas.width, height: canvas.height, x: canvasX, y: canvasY }}
                     drag={canPan}
-                    dragConstraints={dragConstraints}
+                    dragConstraints={panGeometry.constraints}
                     dragElastic={0.08}
                     dragMomentum={false}
                     initial={shouldReduce ? false : { opacity: 0, scale: 0.98 }}
@@ -1289,17 +816,15 @@ export default function AppleWatchGallery() {
                     <AnimatePresence>
                       {filteredItems.map((item, index) => {
                         const position = canvas.positions[index]
-                        const size = ringSize(position.ring, index)
 
                         return (
                           <WatchGridItem
                             key={item.id}
                             item={item}
                             src={resolveItemSrc(item, resolveAsset)}
-                            size={size}
                             left={position.x}
                             top={position.y}
-                            sizePx={sizeMap[size]}
+                            sizePx={iconSizePx}
                             isActive={selectedItem?.id === item.id}
                             shouldReduce={shouldReduce}
                             index={index}

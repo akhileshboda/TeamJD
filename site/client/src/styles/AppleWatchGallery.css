@@ -191,14 +191,6 @@
     opacity var(--transition-normal);
 }
 
-.watch-grid-item--md {
-  opacity: 0.9;
-}
-
-.watch-grid-item--sm {
-  opacity: 0.74;
-}
-
 .watch-grid-item:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 4px;

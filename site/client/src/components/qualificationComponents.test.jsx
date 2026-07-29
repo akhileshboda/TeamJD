@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import services from '../../../public/content/services.json'
 import ServiceFinder from './ServiceFinder'
@@ -54,29 +54,29 @@ describe('ServiceQualification', () => {
   })
 
   it('keeps booking locked and recommends the better service after a mismatch', async () => {
-    const service = getService('online-coaching')
+    const service = getService('competition-preparation')
     const { container } = renderQualification(service.slug)
 
-    fireEvent.click(screen.getByLabelText('Hands-on gym sessions in Adelaide', { exact: true }))
-    fireEvent.click(screen.getByLabelText('Yes — I will keep Jake informed', { exact: true }))
-    fireEvent.click(screen.getByLabelText('Yes — I want that accountability', { exact: true }))
+    fireEvent.click(screen.getByLabelText('Less than one year', { exact: true }))
+    fireEvent.click(screen.getByLabelText('Yes — readiness comes first', { exact: true }))
+    fireEvent.click(screen.getByLabelText('Yes — I am ready for that standard', { exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
 
-    expect(await screen.findByRole('heading', { name: 'There is a better match for what you need.' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Explore Personal Training/ })).toHaveAttribute(
+    expect(await screen.findByRole('heading', { name: 'Competition prep is not the right next booking yet.' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Explore Online Coaching/ })).toHaveAttribute(
       'href',
-      '/services/personal-training'
+      '/services/online-coaching'
     )
     expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
   })
 
   it('re-locks booking when a visitor chooses to review the fit check', async () => {
-    const service = getService('posing-only')
+    const service = getService('competition-preparation')
     const { container } = renderQualification(service.slug)
 
     choosePassingAnswers(service.slug)
     fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
-    expect(await screen.findByRole('link', { name: /Book Posing Session/ })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /Request Prep Assessment/ })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Review fit check' }))
     expect(screen.getByRole('button', { name: 'Check My Fit' })).toBeInTheDocument()
@@ -85,10 +85,10 @@ describe('ServiceQualification', () => {
   })
 
   it('restores a previously qualified session without retaining answers', () => {
-    const service = getService('personal-training')
+    const service = getService('competition-preparation')
     renderQualification(service.slug, { initialQualified: true })
 
-    expect(screen.getByRole('link', { name: /Book Personal Training Consult/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Request Prep Assessment/ })).toHaveAttribute(
       'href',
       service.cta_url
     )
@@ -97,7 +97,7 @@ describe('ServiceQualification', () => {
 })
 
 describe('StickyBookBar', () => {
-  const service = getService('online-coaching')
+  const service = getService('competition-preparation')
 
   it('links to the fit check while locked', () => {
     const { container } = render(
@@ -121,7 +121,7 @@ describe('StickyBookBar', () => {
   })
 
   it('links to the recommended service after a mismatch', () => {
-    const recommendation = getService('personal-training')
+    const recommendation = getService('online-coaching')
     render(
       <MemoryRouter>
         <StickyBookBar
@@ -134,20 +134,41 @@ describe('StickyBookBar', () => {
 
     expect(screen.getByRole('link', { name: /View match/ })).toHaveAttribute(
       'href',
-      '/services/personal-training'
+      '/services/online-coaching'
+    )
+  })
+
+  it('books a non-competition service directly without a fit check', () => {
+    const directService = getService('online-coaching')
+    render(
+      <MemoryRouter>
+        <StickyBookBar service={directService} qualificationState={{ status: 'locked' }} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Booking available')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Book now/ })).toHaveAttribute(
+      'href',
+      directService.cta_url,
     )
   })
 })
 
 describe('ServiceFinder', () => {
   it('recommends a detail page without exposing Calendly', async () => {
-    const { container } = render(
+    render(
       <MemoryRouter>
         <ServiceFinder services={services} />
       </MemoryRouter>
     )
 
+    fireEvent.click(screen.getByRole('button', { name: /Find My Best Match/ }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Question 1 of 2')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.queryByLabelText('Train with Jake in person', { exact: true })).not.toBeInTheDocument()
+    expect(screen.getByText('Question 2 of 2')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('I can train in Adelaide', { exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Show My Best Match' }))
 
@@ -156,6 +177,20 @@ describe('ServiceFinder', () => {
       'href',
       '/services/personal-training'
     )
-    expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
+    expect(document.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
+  })
+
+  it('opens from the shared hash route and closes with Escape', async () => {
+    render(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   })
 })

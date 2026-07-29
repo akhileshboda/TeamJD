@@ -234,15 +234,56 @@ export default function ServiceDetailPage() {
             </ScrollChromeSection>
           </SectionReveal>
 
-          <SectionReveal>
-            <ServiceReadinessGate
-              key={service.slug}
-              service={service}
-              services={services}
-              qualificationState={qualificationState}
-              onStateChange={setQualificationState}
-            />
-          </SectionReveal>
+          {service.qualification ? (
+            <SectionReveal>
+              <ServiceReadinessGate
+                key={service.slug}
+                service={service}
+                services={services}
+                qualificationState={qualificationState}
+                onStateChange={setQualificationState}
+              />
+            </SectionReveal>
+          ) : (
+            <SectionReveal>
+              <ScrollChromeSection
+                id="service-booking"
+                className="service-content-block service-content-block--readiness service-direct-booking"
+                aria-labelledby="service-booking-title"
+              >
+                <div className="service-content-block-heading">
+                  <span aria-hidden="true">04</span>
+                  <div>
+                    <span>Your next step</span>
+                    <h3 id="service-booking-title">Ready to get started?</h3>
+                  </div>
+                </div>
+
+                <div className="service-readiness-gate-body">
+                  <div className="service-readiness-gate-icon" aria-hidden="true">
+                    <JourneyIcon name="check" size={26} />
+                  </div>
+                  <div>
+                    <span className="eyebrow">Booking available</span>
+                    <h2>{service.name}</h2>
+                    <p>
+                      Review the service details above, then choose a time to speak with Jake
+                      about your goal and next steps.
+                    </p>
+                  </div>
+                  <a
+                    href={service.cta_url}
+                    className="btn btn-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {service.cta_text}
+                    <JourneyIcon name="arrowRight" size={17} />
+                  </a>
+                </div>
+              </ScrollChromeSection>
+            </SectionReveal>
+          )}
 
           <section className="service-related-section" aria-labelledby="service-related-title">
             <SectionReveal>

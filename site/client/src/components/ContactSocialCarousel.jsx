@@ -109,7 +109,7 @@ export default function ContactSocialCarousel({ posts = [] }) {
         target="_blank"
         rel="noopener noreferrer"
         tabIndex={duplicate ? -1 : 0}
-        aria-label={duplicate ? undefined : `View Facebook post from ${post.date}`}
+        aria-label={duplicate ? undefined : `View Facebook post: ${post.label}`}
       >
         <img
           src={resolveAsset(`/api/assets/${post.asset}`)}
@@ -122,7 +122,7 @@ export default function ContactSocialCarousel({ posts = [] }) {
         <span className="contact-social-card-overlay">
           <span>{post.label}</span>
           <span>
-            Facebook · {post.date}
+            Facebook
             <span aria-hidden="true"> ↗</span>
           </span>
         </span>

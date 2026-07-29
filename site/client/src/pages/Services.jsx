@@ -17,6 +17,8 @@ export default function Services() {
 
       <section className="services-hub" aria-label="Coaching services">
         <div className="container services-hub-inner">
+          {services && <ServiceFinder services={services} />}
+
           {services ? (
             <StaggerContainer className="services-glass-grid" inView={false}>
               {services.map((service) => (
@@ -32,8 +34,6 @@ export default function Services() {
               ))}
             </div>
           )}
-
-          {services && <ServiceFinder services={services} />}
         </div>
       </section>
     </>

@@ -200,7 +200,10 @@ function ProcessTimeline({ steps }) {
 
 export default function About() {
   const resolveAsset = useAssets()
-  const { data: results } = useJSON('/content/results.json')
+  const { data: resultsLibrary } = useJSON('/content/results-library.json')
+  const results = (resultsLibrary || [])
+    .filter((result) => result.kind === 'client' && result.featured)
+    .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id))
   const [lightboxImage, setLightboxImage] = useState(null)
 
   return (

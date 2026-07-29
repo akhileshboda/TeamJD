@@ -7,6 +7,21 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "name": "ANB champion with stage-ready control",
+    "location": "Competition Preparation",
+    "duration": "16 Weeks",
+    "summary": "A full prep result built around tighter presentation, clearer conditioning, and confidence when it mattered.",
+    "testimonial": {
+      "quote": "Jake kept every part of prep organised, from the training adjustments to the stage details. I knew exactly what we were chasing each week.",
+      "author": "ANB Champion",
+      "service": "Competition Preparation",
+      "result": "Gold Medal Stage Result"
+    },
+    "stats": [
+      { "label": "Service", "value": "Prep" },
+      { "label": "Outcome", "value": "Gold", "trend": "up" },
+      { "label": "Focus", "value": "Stage" }
+    ],
     "tags": [
       "competition",
       "client result",
@@ -23,6 +38,21 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "name": "Stage ready in the bodybuilding division",
+    "location": "Contest Prep",
+    "duration": "20 Weeks",
+    "summary": "Conditioning, posing, and peak-week decisions brought together into one calm, executable show-day plan.",
+    "testimonial": {
+      "quote": "I had competed before, but this was the first time the final weeks felt controlled instead of chaotic.",
+      "author": "Returning Competitor",
+      "service": "Competition Preparation",
+      "result": "Best Conditioning Yet"
+    },
+    "stats": [
+      { "label": "Division", "value": "Bodybuilding" },
+      { "label": "Prep", "value": "Complete", "trend": "up" },
+      { "label": "Focus", "value": "Peak Week" }
+    ],
     "tags": [
       "competition",
       "client result",
@@ -39,6 +69,21 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "name": "Peak conditioning with sharper stage presence",
+    "location": "Competition Preparation",
+    "duration": "18 Weeks",
+    "summary": "A detail-led contest prep result focused on holding shape, tightening the final look, and presenting clearly.",
+    "testimonial": {
+      "quote": "The difference was the detail. Nothing felt random, and every change had a reason behind it.",
+      "author": "Contest Prep Client",
+      "service": "Competition Preparation",
+      "result": "Peak Conditioning"
+    },
+    "stats": [
+      { "label": "Focus", "value": "Condition" },
+      { "label": "Support", "value": "Weekly" },
+      { "label": "Result", "value": "Sharper", "trend": "up" }
+    ],
     "tags": [
       "competition",
       "client result",
@@ -55,6 +100,21 @@
     "category": "posing",
     "kind": "client",
     "featured": true,
+    "name": "Presentation that translated under lights",
+    "location": "Posing Coaching",
+    "duration": "8 Weeks",
+    "summary": "A posing-focused result built around angles, transitions, breathing, and making the physique read from the judging table.",
+    "testimonial": {
+      "quote": "Jake helped me understand how to show my strengths instead of just hitting poses. That changed everything.",
+      "author": "Posing Client",
+      "service": "Posing",
+      "result": "Stage Presence Transformation"
+    },
+    "stats": [
+      { "label": "Service", "value": "Posing" },
+      { "label": "Focus", "value": "Angles" },
+      { "label": "Confidence", "value": "Higher", "trend": "up" }
+    ],
     "tags": [
       "posing",
       "client result",
@@ -71,6 +131,21 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "name": "Best shape brought into show condition",
+    "location": "Competition Preparation",
+    "duration": "20 Weeks",
+    "summary": "A complete prep pathway balancing structure, accountability, and the final details needed for a polished stage look.",
+    "testimonial": {
+      "quote": "Jake treated my goal like it mattered. The accountability was firm, but it always felt personal.",
+      "author": "Comp Prep Client",
+      "service": "Competition Preparation",
+      "result": "Best Shape Yet"
+    },
+    "stats": [
+      { "label": "Program", "value": "Full Prep" },
+      { "label": "Check-ins", "value": "Weekly" },
+      { "label": "Shape", "value": "Best", "trend": "up" }
+    ],
     "tags": [
       "competition",
       "client result",
@@ -87,6 +162,21 @@
     "category": "posing",
     "kind": "client",
     "featured": true,
+    "name": "Mandatory posing with better control",
+    "location": "Posing Coaching",
+    "duration": "6 Weeks",
+    "summary": "A presentation result focused on cleaner transitions, stronger abdominal control, and confident mandatory poses.",
+    "testimonial": {
+      "quote": "The posing work made me look more composed and more prepared. I stopped rushing and started owning the routine.",
+      "author": "Presentation Client",
+      "service": "Posing",
+      "result": "Routine Confidence"
+    },
+    "stats": [
+      { "label": "Service", "value": "Posing" },
+      { "label": "Focus", "value": "Control" },
+      { "label": "Stage", "value": "Cleaner", "trend": "up" }
+    ],
     "tags": [
       "posing",
       "client result",
@@ -2148,4 +2238,3 @@
     "order": 120
   }
 ]
-

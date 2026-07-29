@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom'
 import JourneyIcon from './JourneyIcon'
 
-// Mobile-only persistent next-step bar. Booking is deliberately unavailable
-// until the service fit check has been completed successfully.
 export default function StickyBookBar({ service, qualificationState, recommendation }) {
   if (!service) return null
 
-  const status = qualificationState?.status || 'locked'
+  const requiresQualification = Boolean(service.qualification)
+  const status = requiresQualification ? qualificationState?.status || 'locked' : 'available'
 
   return (
     <div className="sticky-book-bar" role="region" aria-label="Service next step">
@@ -15,13 +14,15 @@ export default function StickyBookBar({ service, qualificationState, recommendat
         <span className="sticky-book-bar-price">
           {status === 'qualified'
             ? 'Fit check complete'
+            : status === 'available'
+              ? 'Booking available'
             : status === 'redirect'
               ? 'Better path found'
               : 'A quick fit check comes first'}
         </span>
       </div>
 
-      {status === 'qualified' ? (
+      {status === 'qualified' || status === 'available' ? (
         <a
           href={service.cta_url}
           className="btn btn-primary"

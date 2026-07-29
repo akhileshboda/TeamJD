@@ -174,44 +174,7 @@
         "icon": "icons/virtual-checkins.png"
       }
     ],
-    "qualification": {
-      "eyebrow": "Coaching fit check",
-      "title": "Does online coaching match the support you need?",
-      "intro": "Choose the answers that describe the coaching relationship you actually want. If another service fits better, you will see it immediately.",
-      "pass_title": "Online coaching matches your next move.",
-      "pass_copy": "You are looking for the level of remote structure and accountability this service is built to provide. You can now book the online coaching consultation.",
-      "redirect_title": "There is a better match for what you need.",
-      "redirect_copy": "Your answers point to a more specific Team JD service. Review that path before requesting a booking.",
-      "questions": [
-        {
-          "id": "support_type",
-          "prompt": "What type of support are you primarily looking for?",
-          "options": [
-            { "value": "ongoing-online", "label": "Ongoing remote training and nutrition coaching", "qualifies": true },
-            { "value": "hands-on", "label": "Hands-on gym sessions in Adelaide", "qualifies": false, "recommend_slug": "personal-training" },
-            { "value": "posing", "label": "Posing and stage presentation only", "qualifies": false, "recommend_slug": "posing-only" },
-            { "value": "contest", "label": "Complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" }
-          ]
-        },
-        {
-          "id": "checkins",
-          "prompt": "Will you track your work, complete check-ins, and give Jake accurate feedback?",
-          "options": [
-            { "value": "yes", "label": "Yes — I will keep Jake informed", "qualifies": true },
-            { "value": "not-yet", "label": "I am not ready to do that consistently", "qualifies": false, "response": "Online coaching depends on consistent feedback. Explore the services, or send Jake a message when you are ready to work that way." }
-          ]
-        },
-        {
-          "id": "feedback",
-          "prompt": "Are you prepared to apply feedback and stay with the plan between check-ins?",
-          "options": [
-            { "value": "yes", "label": "Yes — I want that accountability", "qualifies": true },
-            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "There is no pressure to book before you want an accountable coaching relationship. Come back when that structure feels useful." }
-          ]
-        }
-      ]
-    },
-    "application_required": true,
+    "application_required": false,
     "cta_text": "Book Online Coaching Consult",
     "cta_url": "https://calendly.com/team-jd/15min",
     "cta_secondary": null,
@@ -278,43 +241,6 @@
         "icon": "icons/ongoing-support.png"
       }
     ],
-    "qualification": {
-      "eyebrow": "Training fit check",
-      "title": "Is in-person coaching the right format?",
-      "intro": "Personal training is specific: one-to-one gym coaching in Adelaide. These questions make sure that is the support you are trying to book.",
-      "pass_title": "Personal training fits what you need.",
-      "pass_copy": "You are looking for hands-on Adelaide coaching and are ready to use the sessions consistently. You can now book the personal training consultation.",
-      "redirect_title": "A different format will serve you better.",
-      "redirect_copy": "Your goal is valid, but it belongs in a different Team JD coaching path. Review the recommended service before booking.",
-      "questions": [
-        {
-          "id": "support_type",
-          "prompt": "What support are you primarily looking for?",
-          "options": [
-            { "value": "hands-on", "label": "Hands-on training and technique coaching", "qualifies": true },
-            { "value": "remote-complete", "label": "Remote training and nutrition coaching", "qualifies": false, "recommend_slug": "online-coaching" },
-            { "value": "posing", "label": "Posing and stage presentation", "qualifies": false, "recommend_slug": "posing-only" },
-            { "value": "contest", "label": "Complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" }
-          ]
-        },
-        {
-          "id": "location",
-          "prompt": "Can you attend regular training sessions in Adelaide?",
-          "options": [
-            { "value": "yes", "label": "Yes", "qualifies": true },
-            { "value": "no", "label": "No — I need remote support", "qualifies": false, "recommend_slug": "online-coaching" }
-          ]
-        },
-        {
-          "id": "attendance",
-          "prompt": "Are you ready to attend reliably and practise the feedback between sessions?",
-          "options": [
-            { "value": "yes", "label": "Yes — I am ready to be consistent", "qualifies": true },
-            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Wait until regular sessions fit your schedule. You can browse the other services or message Jake without booking." }
-          ]
-        }
-      ]
-    },
     "application_required": false,
     "pricing": "$120 per session",
     "cta_text": "Book Personal Training Consult",
@@ -383,34 +309,6 @@
         "icon": "icons/ongoing-support.png"
       }
     ],
-    "qualification": {
-      "eyebrow": "Session fit check",
-      "title": "Are you looking for posing-specific coaching?",
-      "intro": "Posing is a focused service. If you need complete contest or physique coaching, another Team JD path will cover the work you are actually asking for.",
-      "pass_title": "Posing coaching matches your goal.",
-      "pass_copy": "You are looking for focused presentation coaching and are ready to practise the detail between sessions. You can now book a posing session.",
-      "redirect_title": "Your goal needs more than a posing session.",
-      "redirect_copy": "Your answers point to a broader coaching service. Start there so the full scope of your goal is handled properly.",
-      "questions": [
-        {
-          "id": "support_type",
-          "prompt": "What are you trying to improve?",
-          "options": [
-            { "value": "posing", "label": "Posing, transitions, and stage presentation", "qualifies": true },
-            { "value": "contest", "label": "My complete competition preparation", "qualifies": false, "recommend_slug": "competition-preparation" },
-            { "value": "physique", "label": "My overall physique, training, and nutrition", "qualifies": false, "recommend_slug": "online-coaching" }
-          ]
-        },
-        {
-          "id": "practice",
-          "prompt": "Will you practise the feedback between posing sessions?",
-          "options": [
-            { "value": "yes", "label": "Yes — I will practise consistently", "qualifies": true },
-            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Book when you have time to practise between sessions. That is what turns instruction into a presentation you can repeat on stage." }
-          ]
-        }
-      ]
-    },
     "federations": ["IFBB", "NABBA", "INBA", "ICN", "FMG", "ANB"],
     "application_required": false,
     "cta_text": "Book Posing Session",

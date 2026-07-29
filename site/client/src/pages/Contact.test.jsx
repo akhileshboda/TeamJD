@@ -131,7 +131,7 @@ describe('Contact page route chooser', () => {
       ['Side profile of Jake training in a gym', 'gallery-social-facebook-training-detail-2019'],
       ['Jake posing for a studio physique portrait', 'gallery-social-facebook-studio-portrait-2019'],
       ['Jake standing among strength equipment in a gym', 'gallery-social-facebook-gym-2019'],
-      ['Jake in an off-duty mirror portrait', 'gallery-jake-off-duty-facebook-2019'],
+      ['Jake documenting his training progress in the gym', 'gallery-jake-training-facebook-2019'],
     ]
 
     socialAssets.forEach(([alt, asset]) => {
@@ -139,5 +139,6 @@ describe('Contact page route chooser', () => {
     })
 
     expect(screen.getByRole('region', { name: 'Recent Team JD social posts' })).toBeInTheDocument()
+    expect(screen.queryByText(/Facebook · \d/i)).not.toBeInTheDocument()
   })
 })

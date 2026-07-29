@@ -156,8 +156,8 @@ export default function Results() {
                 <h2 id="results-heading">Find the work that matches your goal.</h2>
               </div>
               <p>
-                Search by coaching focus, narrow the category, or move through the curated
-                collection without loading hundreds of images at once.
+                Search by coaching focus, narrow the category, or move through the full
+                library without loading hundreds of images at once.
               </p>
             </div>
           </SectionReveal>
@@ -166,22 +166,9 @@ export default function Results() {
             {isToolbarVisible ? (
               <div id="results-browse-toolbar" className="results-toolbar" aria-label="Browse results">
               <div className="results-toolbar-inner">
-                <div className="results-toolbar-actions">
-                  <button
-                    type="button"
-                    className="results-toolbar-toggle"
-                    aria-expanded="true"
-                    aria-controls="results-browse-toolbar"
-                  onClick={() => setIsToolbarVisible(false)}
-                  >
-                    <JourneyIcon name="eyeOff" size={16} />
-                    <span>Hide</span>
-                  </button>
-                </div>
-
                 <div className="results-toolbar-primary">
                   <label className="results-search">
-                    <span>Search the library</span>
+                    <span className="visually-hidden">Search the library</span>
                     <input
                       id="results-search-field"
                       type="search"
@@ -196,7 +183,7 @@ export default function Results() {
                   </label>
 
                   <label className="results-select">
-                    <span>Content type</span>
+                    <span className="visually-hidden">Content type</span>
                     <select
                       value={filters.type}
                       onChange={(event) => updateParams({ type: event.target.value, page: 1 })}
@@ -208,7 +195,7 @@ export default function Results() {
                   </label>
 
                   <label className="results-select">
-                    <span>Sort results</span>
+                    <span className="visually-hidden">Sort results</span>
                     <select
                       value={filters.sort}
                       onChange={(event) => updateParams({ sort: event.target.value, page: 1 })}
@@ -218,6 +205,17 @@ export default function Results() {
                       ))}
                     </select>
                   </label>
+
+                  <button
+                    type="button"
+                    className="results-toolbar-toggle"
+                    aria-expanded="true"
+                    aria-controls="results-browse-toolbar"
+                    onClick={() => setIsToolbarVisible(false)}
+                  >
+                    <JourneyIcon name="eyeOff" size={16} />
+                    <span>Hide</span>
+                  </button>
                 </div>
 
                 <div className="results-category-row">

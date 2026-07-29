@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import results from '../../../public/content/results-library.json'
-import sharedResults from '../../../public/content/results.json'
 import {
   RESULTS_PER_PAGE,
   filterAndSortResults,
@@ -16,14 +15,21 @@ const defaultFilters = {
   sort: 'curated',
 }
 
-describe('Results-only library data', () => {
-  it('contains 120 unique records without changing the six shared results', () => {
+describe('Canonical results library data', () => {
+  it('contains 120 unique records and the six enriched client results', () => {
     expect(results).toHaveLength(120)
     expect(new Set(results.map(({ id }) => id))).toHaveProperty('size', 120)
-    expect(sharedResults).toHaveLength(6)
     expect(results.slice(0, 6).map(({ kind, featured }) => ({ kind, featured }))).toEqual(
       Array.from({ length: 6 }, () => ({ kind: 'client', featured: true })),
     )
+    results.slice(0, 6).forEach((result) => {
+      expect(result).toMatchObject({
+        name: expect.any(String),
+        summary: expect.any(String),
+        testimonial: expect.any(Object),
+        stats: expect.any(Array),
+      })
+    })
   })
 
   it('keeps every representative image on a direct external URL', () => {
@@ -35,6 +41,7 @@ describe('Results-only library data', () => {
       expect(src).not.toContain('/api/assets')
       expect(src.toLowerCase()).not.toContain('r2')
     })
+    expect(representative.every(({ testimonial }) => testimonial === undefined)).toBe(true)
   })
 })
 
