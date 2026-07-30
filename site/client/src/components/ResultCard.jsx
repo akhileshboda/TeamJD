@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAssets } from '../hooks/useAssets'
-
-const CATEGORY_LABELS = {
-  competition: 'Competition Prep',
-  posing: 'Posing',
-  online: 'Online Coaching',
-  training: 'Personal Training',
-  lifestyle: 'Lifestyle',
-}
+import { RESULT_CATEGORY_LABELS } from '../utils/resultsLibrary'
 
 export default function ResultCard({ result, onOpen, priority = false }) {
   const resolveAsset = useAssets()
@@ -47,7 +40,7 @@ export default function ResultCard({ result, onOpen, priority = false }) {
           />
         )}
         <span className="result-card-badges" aria-hidden="true">
-          <span className="result-card-category">{CATEGORY_LABELS[result.category]}</span>
+          <span className="result-card-category">{RESULT_CATEGORY_LABELS[result.category]}</span>
           <span className={`result-card-kind result-card-kind--${result.kind}`}>
             {result.kind === 'client' ? 'Client result' : 'Reference'}
           </span>

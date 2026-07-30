@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
 import AppleWatchGallery, {
   getGalleryIconSize,
   getGalleryMagnificationScale,
   getPanGeometry,
+  getStoryOverlayGeometry,
 } from './AppleWatchGallery'
 
 const motionPreference = vi.hoisted(() => ({ reduced: false }))
@@ -36,6 +37,45 @@ afterEach(() => {
   cleanup()
 })
 
+function mockStorySheetGeometry(sheet, {
+  frameHeight = 600,
+  storyHeight = 720,
+} = {}) {
+  const frame = sheet.closest('.result-preview')
+  const story = sheet.querySelector('.result-overlay-story-anchor')
+  const scroll = sheet.querySelector('.result-overlay-scroll')
+
+  Object.defineProperty(frame, 'clientHeight', {
+    configurable: true,
+    value: frameHeight,
+  })
+  Object.defineProperty(story, 'scrollHeight', {
+    configurable: true,
+    value: storyHeight,
+  })
+  Object.defineProperty(scroll, 'clientHeight', {
+    configurable: true,
+    get: () => Number.parseFloat(sheet.style.height) || frameHeight * 0.55,
+  })
+  Object.defineProperty(scroll, 'scrollHeight', {
+    configurable: true,
+    value: storyHeight,
+  })
+
+  fireEvent(window, new Event('resize'))
+  return { frame, scroll, story }
+}
+
+function fireCancelableWheel(target, deltaY) {
+  const event = new WheelEvent('wheel', {
+    bubbles: true,
+    cancelable: true,
+    deltaY,
+  })
+  fireEvent(target, event)
+  return event
+}
+
 describe('AppleWatchGallery canonical library', () => {
   it('renders the complete shared library and labels representative imagery honestly', async () => {
     render(
@@ -58,6 +98,32 @@ describe('AppleWatchGallery canonical library', () => {
     expect(
       screen.queryByText(/made the process feel personal from the first check-in/),
     ).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Result attributes')).not.toBeInTheDocument()
+  })
+
+  it('omits result attributes from the phone modal', () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(max-width: 768px)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }))
+
+    try {
+      render(
+        <MemoryRouter>
+          <AppleWatchGallery />
+        </MemoryRouter>,
+      )
+
+      fireEvent.click(screen.getAllByRole('button', { name: /^Open result:/ })[0])
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.queryByLabelText('Result attributes')).not.toBeInTheDocument()
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
   })
 
   it('renders every result at the same desktop size', () => {
@@ -92,6 +158,217 @@ describe('AppleWatchGallery canonical library', () => {
 
     expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
     expect(document.querySelector('.watch-grid-viewport')).not.toHaveClass('watch-grid-viewport--pannable')
+  })
+})
+
+describe('AppleWatchGallery full-story overlays', () => {
+  it('derives fit and overflow modes from measured content', () => {
+    expect(getStoryOverlayGeometry(600, 250)).toEqual({
+      frameHeight: 600,
+      storyHeight: 250,
+      minimumHeight: 330,
+      displayHeight: 330,
+      hasOverflow: false,
+    })
+    expect(getStoryOverlayGeometry(600, 480)).toEqual({
+      frameHeight: 600,
+      storyHeight: 480,
+      minimumHeight: 330,
+      displayHeight: 480,
+      hasOverflow: false,
+    })
+    expect(getStoryOverlayGeometry(600, 800)).toEqual({
+      frameHeight: 600,
+      storyHeight: 800,
+      minimumHeight: 330,
+      displayHeight: 600,
+      hasOverflow: true,
+    })
+  })
+
+  it('shows the complete client story immediately without enabling scrolling', () => {
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    mockStorySheetGeometry(sheet, { storyHeight: 480 })
+
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'fit')
+    expect(sheet).toHaveStyle({ height: '480px' })
+    expect(sheet).not.toHaveAttribute('aria-expanded')
+    expect(sheet).not.toHaveAttribute('tabindex')
+  })
+
+  it('retains the 55% minimum and does not capture fit-story gestures', () => {
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    mockStorySheetGeometry(sheet, { storyHeight: 250 })
+
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'fit')
+    expect(sheet).toHaveStyle({ height: '330px' })
+    expect(fireCancelableWheel(sheet, 180).defaultPrevented).toBe(false)
+    expect(sheet).toHaveAttribute('data-scroll-lock', 'false')
+  })
+
+  it('remeasures fit content after dismissing and reopening the story', () => {
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    let sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    mockStorySheetGeometry(sheet, { storyHeight: 480 })
+    expect(sheet).toHaveStyle({ height: '480px' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss result details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show Story' }))
+
+    sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    mockStorySheetGeometry(sheet, { storyHeight: 460 })
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'fit')
+    expect(sheet).toHaveStyle({ height: '460px' })
+  })
+
+  it('switches to full-frame overflow mode after responsive remeasurement', () => {
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    mockStorySheetGeometry(sheet, { storyHeight: 480 })
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'fit')
+
+    mockStorySheetGeometry(sheet, { storyHeight: 800 })
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'overflow')
+    expect(sheet).toHaveStyle({ height: '600px' })
+    expect(sheet).toHaveAttribute('tabindex', '0')
+  })
+
+  it('locks overflow wheel momentum and hands off at both bounds on the next burst', () => {
+    vi.useFakeTimers()
+
+    try {
+      render(
+        <MemoryRouter>
+          <AppleWatchGallery />
+        </MemoryRouter>,
+      )
+
+      const sheet = screen.getByRole('group', {
+        name: 'ANB champion with stage-ready control',
+      })
+      const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
+
+      expect(fireCancelableWheel(sheet, 160).defaultPrevented).toBe(true)
+      expect(scroll.scrollTop).toBe(160)
+      expect(sheet).toHaveAttribute('data-scroll-lock', 'true')
+
+      expect(fireCancelableWheel(sheet, 80).defaultPrevented).toBe(true)
+      expect(scroll.scrollTop).toBe(200)
+
+      act(() => {
+        vi.advanceTimersByTime(121)
+      })
+      expect(sheet).toHaveAttribute('data-scroll-lock', 'false')
+      expect(fireCancelableWheel(sheet, 80).defaultPrevented).toBe(false)
+
+      act(() => {
+        vi.advanceTimersByTime(121)
+      })
+      expect(fireCancelableWheel(sheet, -200).defaultPrevented).toBe(true)
+      expect(scroll.scrollTop).toBe(0)
+      expect(fireCancelableWheel(sheet, -80).defaultPrevented).toBe(true)
+
+      act(() => {
+        vi.advanceTimersByTime(121)
+      })
+      expect(fireCancelableWheel(sheet, -80).defaultPrevented).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('contains overflow touch scrolling in the phone modal until release', () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(max-width: 768px)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }))
+
+    try {
+      render(
+        <MemoryRouter>
+          <AppleWatchGallery />
+        </MemoryRouter>,
+      )
+
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Open result: ANB champion with stage-ready control',
+        }),
+      )
+
+      const sheet = screen.getByRole('document', {
+        name: 'ANB champion with stage-ready control',
+      })
+      const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
+
+      fireEvent.touchStart(sheet, { touches: [{ clientY: 320 }] })
+      fireEvent.touchMove(sheet, { touches: [{ clientY: 120 }] })
+      expect(scroll.scrollTop).toBe(200)
+      expect(sheet).toHaveAttribute('data-scroll-lock', 'true')
+
+      fireEvent.touchMove(sheet, { touches: [{ clientY: 80 }] })
+      expect(scroll.scrollTop).toBe(200)
+      expect(sheet).toHaveAttribute('data-scroll-lock', 'true')
+
+      fireEvent.touchEnd(sheet)
+      expect(sheet).toHaveAttribute('data-scroll-lock', 'false')
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
+  })
+
+  it('uses keyboard scrolling only for overflow stories', () => {
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const sheet = screen.getByRole('group', {
+      name: 'ANB champion with stage-ready control',
+    })
+    const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
+
+    fireEvent.keyDown(sheet, { key: 'PageDown' })
+    expect(scroll.scrollTop).toBe(200)
+
+    fireEvent.keyDown(sheet, { key: 'Home' })
+    expect(scroll.scrollTop).toBe(0)
   })
 })
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
+import ResultStory from './ResultStory'
 
 const FOCUSABLE = [
   'a[href]',
@@ -9,14 +10,6 @@ const FOCUSABLE = [
   'select:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
-
-const CATEGORY_LABELS = {
-  competition: 'Competition Prep',
-  posing: 'Posing',
-  online: 'Online Coaching',
-  training: 'Personal Training',
-  lifestyle: 'Lifestyle',
-}
 
 export default function ResultsViewer({
   result,
@@ -201,13 +194,13 @@ export default function ResultsViewer({
               </div>
 
               <aside className="results-viewer-details">
-                <span className="results-viewer-category">{CATEGORY_LABELS[result.category]}</span>
-                <h2 id="results-viewer-title">{result.caption}</h2>
-                <p id="results-viewer-description">
-                  {result.kind === 'client'
-                    ? 'A genuine Team JD client result from Jake’s coaching archive.'
-                    : 'Representative fitness imagery used to explore this coaching category while the client archive grows.'}
-                </p>
+                <ResultStory
+                  result={result}
+                  titleId="results-viewer-title"
+                  descriptionId="results-viewer-description"
+                  headingLevel={2}
+                  className="result-story--viewer"
+                />
 
                 <div className="results-viewer-navigation">
                   <button type="button" onClick={onPrevious} disabled={!previousResult}>

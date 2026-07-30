@@ -1,23 +1,20 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getResultStory, RESULT_CATEGORY_LABELS } from '../utils/resultsLibrary'
+import ResultStory from './ResultStory'
 import SectionReveal from './SectionReveal'
 import '../styles/AppleWatchGallery.css'
-
-const CATEGORY_LABELS = {
-  competition: 'Contest Prep',
-  online: 'Online Coaching',
-  posing: 'Posing',
-  lifestyle: 'Lifestyle',
-  training: 'Private Coaching',
-}
 
 const CATEGORY_ORDER = ['all', 'competition', 'online', 'posing', 'lifestyle', 'training']
 const DESKTOP_ICON_SIZE_PX = 70
 const MOBILE_ICON_SIZE_PX = 62
 const FOCUS_REGION_RATIO = 0.75
+const OVERLAY_GESTURE_THRESHOLD = 2
+const OVERLAY_SETTLE_DELAY_MS = 120
+const OVERLAY_RESTING_RATIO = 0.55
 const DESKTOP_MAGNIFICATION = { peak: 1.45, edge: 0.72 }
 const MOBILE_MAGNIFICATION = { peak: 1.3, edge: 0.8 }
 
@@ -112,60 +109,7 @@ function resolveItemSrc(item, resolveAsset) {
 }
 
 function displayTitle(item) {
-  return item?.name || item?.caption || 'Team JD result'
-}
-
-function completeResultItem(item, index = 0) {
-  const categoryLabel = CATEGORY_LABELS[item.category] || 'Coaching'
-  const isRepresentative = item.kind === 'representative'
-
-  return {
-    ...item,
-    name: item.name || item.caption || `${categoryLabel} result`,
-    location: item.location || (isRepresentative ? 'Representative imagery' : categoryLabel),
-    summary: item.summary || (
-      isRepresentative
-        ? `Representative fitness imagery for the ${categoryLabel.toLowerCase()} category. It is not presented as a Team JD client outcome.`
-        : `A genuine Team JD client result from the ${categoryLabel.toLowerCase()} coaching archive.`
-    ),
-    testimonial: item.testimonial || null,
-    stats: Array.isArray(item.stats) && item.stats.length > 0
-      ? item.stats
-      : [
-          { label: 'Type', value: isRepresentative ? 'Reference' : 'Client' },
-          { label: 'Category', value: categoryLabel },
-          { label: 'Library', value: String(index + 1).padStart(2, '0') },
-        ],
-  }
-}
-
-function PinIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  )
-}
-
-function TrendIcon({ trend }) {
-  if (!trend) return null
-
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {trend === 'down' ? (
-        <>
-          <path d="M12 5v14" />
-          <path d="m6 13 6 6 6-6" />
-        </>
-      ) : (
-        <>
-          <path d="M12 19V5" />
-          <path d="m6 11 6-6 6 6" />
-        </>
-      )}
-    </svg>
-  )
+  return getResultStory(item).title
 }
 
 function StoryIcon() {
@@ -199,62 +143,289 @@ function EyeOffIcon() {
   )
 }
 
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4.5" width="18" height="16" rx="2" />
-      <path d="M3 9h18M8 3v3M16 3v3" />
-    </svg>
-  )
+export function getStoryOverlayGeometry(frameHeight, storyHeight) {
+  const safeFrameHeight = Math.max(0, frameHeight)
+  const safeStoryHeight = Math.max(0, storyHeight)
+  const minimumHeight = safeFrameHeight * OVERLAY_RESTING_RATIO
+  const hasOverflow = safeStoryHeight > safeFrameHeight + 1
+
+  return {
+    frameHeight: safeFrameHeight,
+    storyHeight: safeStoryHeight,
+    minimumHeight,
+    displayHeight: hasOverflow
+      ? safeFrameHeight
+      : Math.min(safeFrameHeight, Math.max(minimumHeight, safeStoryHeight)),
+    hasOverflow,
+  }
 }
 
-function CheckCircleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="m8.5 12 2.5 2.5 4.5-5" />
-    </svg>
-  )
-}
+function useOverflowResultOverlay({ active = true, isModal = false } = {}) {
+  const [geometry, setGeometry] = useState(() => getStoryOverlayGeometry(0, 0))
+  const [scrollLocked, setScrollLocked] = useState(false)
+  const overlayRef = useRef(null)
+  const scrollRef = useRef(null)
+  const storyMeasureRef = useRef(null)
+  const geometryRef = useRef(geometry)
+  const releaseTimerRef = useRef(null)
+  const touchYRef = useRef(null)
+  const wheelSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
+  const touchSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
 
-function TargetIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="4.5" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
+  const clearGestureOwnership = useCallback(() => {
+    if (releaseTimerRef.current) {
+      window.clearTimeout(releaseTimerRef.current)
+      releaseTimerRef.current = null
+    }
+    wheelSessionRef.current = { active: false, direction: 0, owner: 'page' }
+    touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
+    touchYRef.current = null
+    setScrollLocked(false)
+  }, [])
 
-function PulseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 12h4l2.5-6 5 12 2.5-6H21" />
-    </svg>
-  )
-}
+  const reset = useCallback(() => {
+    clearGestureOwnership()
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+  }, [clearGestureOwnership])
 
-// Pick a footer icon for a result stat. Explicit `stat.icon` wins, then an
-// upward/downward trend, then a light keyword inference, falling back to a dot.
-function StatIcon({ stat }) {
-  if (stat.trend) return <TrendIcon trend={stat.trend} />
+  useLayoutEffect(() => {
+    if (!active) {
+      clearGestureOwnership()
+      return undefined
+    }
 
-  const key = stat.icon || `${stat.label || ''} ${stat.value || ''}`.toLowerCase()
+    const overlay = overlayRef.current
+    const storyMeasure = storyMeasureRef.current
+    const frame = overlay?.closest('.result-preview')
+    if (!overlay || !storyMeasure || !frame) return undefined
 
-  if (/calendar|program|prep|phase|cycle|plan|week|division|format|service|mode/.test(key)) {
-    return <CalendarIcon />
+    const measure = () => {
+      const frameHeight = frame.clientHeight || frame.getBoundingClientRect().height
+      const storyHeight = (
+        storyMeasure.scrollHeight
+        || storyMeasure.getBoundingClientRect().height
+      )
+      if (frameHeight <= 0) return
+
+      const nextGeometry = getStoryOverlayGeometry(frameHeight, storyHeight)
+      geometryRef.current = nextGeometry
+      setGeometry(nextGeometry)
+      clearGestureOwnership()
+      if (scrollRef.current) scrollRef.current.scrollTop = 0
+    }
+
+    measure()
+    window.addEventListener('resize', measure)
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => window.removeEventListener('resize', measure)
+    }
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(frame)
+    observer.observe(storyMeasure)
+
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [active, clearGestureOwnership])
+
+  useEffect(() => {
+    return () => clearGestureOwnership()
+  }, [clearGestureOwnership])
+
+  useEffect(() => {
+    if (!active) return undefined
+
+    const overlay = overlayRef.current
+    const frame = overlay?.closest('.result-preview')
+    if (!overlay || !frame) return undefined
+
+    const isControlTarget = (target) => (
+      target instanceof Element
+      && Boolean(target.closest('button, a, input, select, textarea'))
+    )
+
+    const getScrollMetrics = () => {
+      const scroll = scrollRef.current
+      return {
+        scroll,
+        scrollTop: scroll?.scrollTop ?? 0,
+        scrollMax: scroll
+          ? Math.max(0, scroll.scrollHeight - scroll.clientHeight)
+          : 0,
+      }
+    }
+
+    const canConsume = (direction) => {
+      if (!geometryRef.current.hasOverflow) return false
+      const { scrollTop, scrollMax } = getScrollMetrics()
+      return direction > 0 ? scrollTop < scrollMax - 1 : scrollTop > 1
+    }
+
+    const applyDelta = (deltaY) => {
+      const { scroll, scrollTop, scrollMax } = getScrollMetrics()
+      if (!scroll) return
+      scroll.scrollTop = deltaY > 0
+        ? Math.min(scrollMax, scrollTop + deltaY)
+        : Math.max(0, scrollTop + deltaY)
+    }
+
+    const syncScrollLock = () => {
+      const wheelLocked = (
+        wheelSessionRef.current.active
+        && wheelSessionRef.current.owner !== 'page'
+      )
+      const touchLocked = (
+        touchSessionRef.current.active
+        && touchSessionRef.current.owner !== 'page'
+      )
+      setScrollLocked(wheelLocked || touchLocked)
+    }
+
+    const claimSession = (sessionRef, direction) => {
+      const owner = !geometryRef.current.hasOverflow
+        ? 'page'
+        : canConsume(direction)
+          ? 'story'
+          : isModal
+            ? 'modal'
+            : 'page'
+      sessionRef.current = { active: true, direction, owner }
+      syncScrollLock()
+      return owner
+    }
+
+    const resolveSessionOwner = (sessionRef, direction) => {
+      const session = sessionRef.current
+      if (!session.active || session.direction !== direction) {
+        return claimSession(sessionRef, direction)
+      }
+      return session.owner
+    }
+
+    const scheduleWheelRelease = () => {
+      if (releaseTimerRef.current) window.clearTimeout(releaseTimerRef.current)
+      releaseTimerRef.current = window.setTimeout(() => {
+        releaseTimerRef.current = null
+        wheelSessionRef.current = { active: false, direction: 0, owner: 'page' }
+        syncScrollLock()
+      }, OVERLAY_SETTLE_DELAY_MS)
+    }
+
+    const handleWheel = (event) => {
+      if (isControlTarget(event.target)) return
+      const currentGeometry = geometryRef.current
+      const multiplier = event.deltaMode === 1
+        ? 16
+        : event.deltaMode === 2
+          ? currentGeometry.frameHeight
+          : 1
+      const deltaY = event.deltaY * multiplier
+      if (Math.abs(deltaY) < OVERLAY_GESTURE_THRESHOLD) return
+
+      const owner = resolveSessionOwner(wheelSessionRef, Math.sign(deltaY))
+      if (owner === 'story') applyDelta(deltaY)
+      if (owner !== 'page') event.preventDefault()
+      scheduleWheelRelease()
+    }
+
+    const handleTouchStart = (event) => {
+      if (isControlTarget(event.target)) return
+      touchYRef.current = event.touches[0]?.clientY ?? null
+      touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
+      syncScrollLock()
+    }
+
+    const handleTouchMove = (event) => {
+      if (touchYRef.current === null || isControlTarget(event.target)) return
+      const currentY = event.touches[0]?.clientY
+      if (currentY === undefined) return
+      const deltaY = touchYRef.current - currentY
+      touchYRef.current = currentY
+      if (Math.abs(deltaY) < OVERLAY_GESTURE_THRESHOLD) return
+
+      const owner = resolveSessionOwner(touchSessionRef, Math.sign(deltaY))
+      if (owner === 'story') applyDelta(deltaY)
+      if (owner !== 'page') event.preventDefault()
+    }
+
+    const handleTouchEnd = () => {
+      touchYRef.current = null
+      touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
+      syncScrollLock()
+    }
+
+    frame.addEventListener('wheel', handleWheel, { passive: false })
+    frame.addEventListener('touchstart', handleTouchStart, { passive: true })
+    frame.addEventListener('touchmove', handleTouchMove, { passive: false })
+    frame.addEventListener('touchend', handleTouchEnd)
+    frame.addEventListener('touchcancel', handleTouchEnd)
+
+    return () => {
+      frame.removeEventListener('wheel', handleWheel)
+      frame.removeEventListener('touchstart', handleTouchStart)
+      frame.removeEventListener('touchmove', handleTouchMove)
+      frame.removeEventListener('touchend', handleTouchEnd)
+      frame.removeEventListener('touchcancel', handleTouchEnd)
+    }
+  }, [active, isModal])
+
+  const handleKeyDown = useCallback((event) => {
+    if (event.target !== event.currentTarget || !geometryRef.current.hasOverflow) return
+
+    const scroll = scrollRef.current
+    if (!scroll) return
+    const scrollMax = Math.max(0, scroll.scrollHeight - scroll.clientHeight)
+    const atTop = scroll.scrollTop <= 1
+    const atBottom = scroll.scrollTop >= scrollMax - 1
+    const isDownward = (
+      event.key === 'ArrowDown'
+      || event.key === 'PageDown'
+      || (event.key === ' ' && !event.shiftKey)
+    )
+    const isUpward = (
+      event.key === 'ArrowUp'
+      || event.key === 'PageUp'
+      || (event.key === ' ' && event.shiftKey)
+    )
+
+    if (isDownward && !atBottom) {
+      event.preventDefault()
+      const step = event.key === 'ArrowDown' ? 48 : scroll.clientHeight * 0.8
+      scroll.scrollTop = Math.min(scrollMax, scroll.scrollTop + step)
+      return
+    }
+
+    if (isUpward && !atTop) {
+      event.preventDefault()
+      const step = event.key === 'ArrowUp' ? 48 : scroll.clientHeight * 0.8
+      scroll.scrollTop = Math.max(0, scroll.scrollTop - step)
+      return
+    }
+
+    if (event.key === 'Home' && !atTop) {
+      event.preventDefault()
+      scroll.scrollTop = 0
+      return
+    }
+
+    if (isModal && (isDownward || isUpward || event.key === 'Home')) {
+      event.preventDefault()
+    }
+  }, [isModal])
+
+  return {
+    height: geometry.frameHeight > 0 ? geometry.displayHeight : '55%',
+    scrollMode: geometry.hasOverflow ? 'overflow' : 'fit',
+    scrollLocked,
+    overlayRef,
+    scrollRef,
+    storyMeasureRef,
+    reset,
+    handleKeyDown,
   }
-  if (/check|support|accountab/.test(key)) {
-    return <CheckCircleIcon />
-  }
-  if (/confiden|presence|execution|movement|feedback|habit|rhythm|consist|pulse/.test(key)) {
-    return <PulseIcon />
-  }
-  if (/focus|standard|detail|angle|line|routine|target|readiness|priorit/.test(key)) {
-    return <TargetIcon />
-  }
-  return <CheckCircleIcon />
 }
 
 function WatchGridItem({
@@ -320,77 +491,31 @@ function WatchGridItem({
   )
 }
 
-function ResultOverlayBody({ item, titleId }) {
-  const title = displayTitle(item)
-
-  return (
-    <div className="result-overlay-body">
-      <h3 id={titleId} className="result-detail-title">{title}</h3>
-
-      {item.location && (
-        <div className="result-detail-location">
-          <PinIcon />
-          <span>{item.location}</span>
-          {item.duration && <span className="result-detail-meta-sep">{item.duration}</span>}
-        </div>
-      )}
-
-      {item.summary && (
-        <p className="result-detail-summary">{item.summary}</p>
-      )}
-
-      {item.testimonial && (
-        <figure className="result-detail-testimonial" data-category={item.category}>
-          <span className="result-detail-quote-mark" aria-hidden="true">&ldquo;</span>
-          <blockquote>{item.testimonial.quote}</blockquote>
-          <figcaption>
-            <strong>{item.testimonial.author}</strong>
-            {item.testimonial.result && ` · ${item.testimonial.result}`}
-          </figcaption>
-        </figure>
-      )}
-    </div>
-  )
-}
-
-function ResultOverlayFooter({ stats }) {
-  if (!Array.isArray(stats) || stats.length === 0) return null
-
-  return (
-    <div className="result-overlay-footer" aria-label="Result attributes">
-      {stats.map((stat, index) => (
-        <div
-          className="result-footer-stat"
-          key={`${stat.label}-${index}`}
-          data-trend={stat.trend || undefined}
-        >
-          <span className="result-footer-icon">
-            <StatIcon stat={stat} />
-          </span>
-          <span className="result-footer-text">
-            <span className="result-footer-value">{stat.value}</span>
-            <span className="result-footer-label">{stat.label}</span>
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
   const shouldReduce = useReducedMotion()
+  const {
+    height,
+    scrollMode,
+    scrollLocked,
+    overlayRef,
+    scrollRef,
+    storyMeasureRef,
+    reset,
+    handleKeyDown,
+  } = useOverflowResultOverlay({ active: open })
   if (!item) return null
 
   const titleId = `result-preview-title-${item.id}`
 
-  const overlayMotion = shouldReduce
-    ? { initial: false, animate: {}, exit: {} }
-    : {
-        initial: { opacity: 0, y: 18 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: 18 },
-        transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
-      }
+  const closeDetails = () => {
+    reset()
+    onClose()
+  }
+
+  const reopenDetails = () => {
+    reset()
+    onReopen()
+  }
 
   return (
     <section
@@ -437,29 +562,34 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
             className="result-preview-overlay"
             role="group"
             aria-labelledby={titleId}
-            {...overlayMotion}
+            data-scroll-mode={scrollMode}
+            data-scroll-lock={scrollLocked ? 'true' : 'false'}
+            tabIndex={scrollMode === 'overflow' ? 0 : undefined}
+            ref={overlayRef}
+            onKeyDown={handleKeyDown}
+            style={{ height }}
           >
-            <div className="result-overlay-glass" aria-hidden="true" />
+            <div className="result-overlay-backdrop" aria-hidden="true" />
 
-            <div className="result-overlay-header">
-              <span className="result-detail-badge" data-category={item.category}>
-                {CATEGORY_LABELS[item.category] || item.category}
-              </span>
-              <button
-                type="button"
-                className="result-preview-close"
-                aria-label="Dismiss result details"
-                onClick={onClose}
-              >
-                &times;
-              </button>
+            <button
+              type="button"
+              className="result-preview-close result-overlay-control"
+              aria-label="Dismiss result details"
+              onClick={closeDetails}
+            >
+              &times;
+            </button>
+
+            <div className="result-overlay-scroll" ref={scrollRef}>
+              <div className="result-overlay-story-anchor" ref={storyMeasureRef}>
+                <ResultStory
+                  result={item}
+                  titleId={titleId}
+                  headingLevel={3}
+                  className="result-story--overlay"
+                />
+              </div>
             </div>
-
-            <div className="result-overlay-scroll">
-              <ResultOverlayBody item={item} titleId={titleId} />
-            </div>
-
-            <ResultOverlayFooter stats={item.stats} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -470,7 +600,7 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
             key="reopen"
             type="button"
             className="result-preview-reopen"
-            onClick={onReopen}
+            onClick={reopenDetails}
             initial={shouldReduce ? false : { opacity: 0, y: 10 }}
             animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
             exit={shouldReduce ? {} : { opacity: 0, y: 10 }}
@@ -488,6 +618,19 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
 function ResultModal({ item, src, open, onClose }) {
   const shouldReduce = useReducedMotion()
   const [detailsOpen, setDetailsOpen] = useState(true)
+  const {
+    height,
+    scrollMode,
+    scrollLocked,
+    overlayRef,
+    scrollRef,
+    storyMeasureRef,
+    reset,
+    handleKeyDown,
+  } = useOverflowResultOverlay({
+    active: detailsOpen,
+    isModal: true,
+  })
 
   useEffect(() => {
     if (item?.id) setDetailsOpen(true)
@@ -574,33 +717,38 @@ function ResultModal({ item, src, open, onClose }) {
               className="result-preview-overlay"
               role="document"
               aria-labelledby={titleId}
-              initial={shouldReduce ? false : { opacity: 0, y: 18 }}
-              animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
-              exit={shouldReduce ? {} : { opacity: 0, y: 18 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
+              data-scroll-mode={scrollMode}
+              data-scroll-lock={scrollLocked ? 'true' : 'false'}
+              tabIndex={scrollMode === 'overflow' ? 0 : undefined}
+              ref={overlayRef}
+              onKeyDown={handleKeyDown}
+              style={{ height }}
             >
-              <div className="result-overlay-glass" aria-hidden="true" />
+              <div className="result-overlay-backdrop" aria-hidden="true" />
 
-              <div className="result-overlay-header">
-                <span className="result-detail-badge" data-category={item.category}>
-                  {CATEGORY_LABELS[item.category] || item.category}
-                </span>
-                <button
-                  type="button"
-                  className="result-preview-hide"
-                  aria-label="Hide result details"
-                  onClick={() => setDetailsOpen(false)}
-                >
-                  <EyeOffIcon />
-                  <span>Hide</span>
-                </button>
+              <button
+                type="button"
+                className="result-preview-hide result-overlay-control"
+                aria-label="Hide result details"
+                onClick={() => {
+                  reset()
+                  setDetailsOpen(false)
+                }}
+              >
+                <EyeOffIcon />
+                <span>Hide</span>
+              </button>
+
+              <div className="result-overlay-scroll" ref={scrollRef}>
+                <div className="result-overlay-story-anchor" ref={storyMeasureRef}>
+                  <ResultStory
+                    result={item}
+                    titleId={titleId}
+                    headingLevel={3}
+                    className="result-story--overlay"
+                  />
+                </div>
               </div>
-
-              <div className="result-overlay-scroll">
-                <ResultOverlayBody item={item} titleId={titleId} />
-              </div>
-
-              <ResultOverlayFooter stats={item.stats} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -612,7 +760,10 @@ function ResultModal({ item, src, open, onClose }) {
               type="button"
               className="result-preview-reopen result-preview-reopen--modal"
               aria-label="Show result details"
-              onClick={() => setDetailsOpen(true)}
+              onClick={() => {
+                reset()
+                setDetailsOpen(true)
+              }}
               initial={shouldReduce ? false : { opacity: 0, y: 10 }}
               animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
               exit={shouldReduce ? {} : { opacity: 0, y: 10 }}
@@ -651,7 +802,6 @@ export default function AppleWatchGallery() {
   const enrichedItems = useMemo(() => {
     return [...(results || [])]
       .sort((left, right) => left.order - right.order)
-      .map(completeResultItem)
   }, [results])
 
   const categories = useMemo(() => {
@@ -864,7 +1014,7 @@ export default function AppleWatchGallery() {
                 onClick={() => handleFilterChange(category)}
                 aria-pressed={activeFilter === category}
               >
-                {category === 'all' ? 'All Results' : CATEGORY_LABELS[category] || category}
+                {category === 'all' ? 'All Results' : RESULT_CATEGORY_LABELS[category] || category}
               </button>
             ))}
           </div>
@@ -921,6 +1071,7 @@ export default function AppleWatchGallery() {
 
             {selectedItem && !isPhoneResultsLayout && (
               <ResultPreview
+                key={selectedItem.id}
                 item={selectedItem}
                 src={previewSrc}
                 open={overlayOpen}

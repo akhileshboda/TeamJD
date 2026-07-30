@@ -1,12 +1,16 @@
 export const RESULTS_PER_PAGE = 24
 
+export const RESULT_CATEGORY_LABELS = {
+  competition: 'Competition Prep',
+  posing: 'Posing',
+  online: 'Online Coaching',
+  training: 'Personal Training',
+  lifestyle: 'Lifestyle',
+}
+
 export const RESULT_CATEGORIES = [
   { value: 'all', label: 'All' },
-  { value: 'competition', label: 'Competition Prep' },
-  { value: 'posing', label: 'Posing' },
-  { value: 'online', label: 'Online Coaching' },
-  { value: 'training', label: 'Personal Training' },
-  { value: 'lifestyle', label: 'Lifestyle' },
+  ...Object.entries(RESULT_CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
 ]
 
 export const RESULT_TYPES = [
@@ -24,6 +28,25 @@ export const RESULT_SORTS = [
 const categoryValues = new Set(RESULT_CATEGORIES.map(({ value }) => value))
 const typeValues = new Set(RESULT_TYPES.map(({ value }) => value))
 const sortValues = new Set(RESULT_SORTS.map(({ value }) => value))
+
+export function getResultStory(result) {
+  const item = result || {}
+  const categoryLabel = RESULT_CATEGORY_LABELS[item.category] || 'Coaching'
+  const isRepresentative = item.kind === 'representative'
+
+  return {
+    title: item.name || item.caption || `${categoryLabel} result`,
+    categoryLabel,
+    location: item.location || (isRepresentative ? 'Representative imagery' : categoryLabel),
+    duration: item.duration || null,
+    summary: item.summary || (
+      isRepresentative
+        ? `Representative fitness imagery for the ${categoryLabel.toLowerCase()} category. It is not presented as a Team JD client outcome.`
+        : `A genuine Team JD client result from the ${categoryLabel.toLowerCase()} coaching archive.`
+    ),
+    testimonial: item.testimonial || null,
+  }
+}
 
 export function getResultsParams(searchParams) {
   const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10)

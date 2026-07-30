@@ -57,4 +57,58 @@ describe('ResultsViewer', () => {
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('uses the same rich story structure as the homepage preview', () => {
+    const clientResult = {
+      ...result,
+      id: 'client-training-01',
+      kind: 'client',
+      name: 'Stronger movement with direct coaching',
+      location: 'Personal Training',
+      duration: '12 Weeks',
+      summary: 'A structured strength result built around movement quality.',
+      testimonial: {
+        quote: 'Every session had a clear purpose.',
+        author: 'Training Client',
+        result: 'Stronger Technique',
+      },
+    }
+
+    const { rerender } = render(
+      <ResultsViewer
+        result={clientResult}
+        position={1}
+        total={1}
+        previousResult={null}
+        nextResult={null}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: clientResult.name })).toBeInTheDocument()
+    expect(screen.getByText('12 Weeks')).toBeInTheDocument()
+    expect(screen.getByText(clientResult.summary)).toBeInTheDocument()
+    expect(screen.getByText(clientResult.testimonial.quote)).toBeInTheDocument()
+    expect(screen.getByText('Training Client').closest('figcaption')).toHaveTextContent(
+      'Training Client · Stronger Technique',
+    )
+
+    rerender(
+      <ResultsViewer
+        result={result}
+        position={1}
+        total={1}
+        previousResult={null}
+        nextResult={null}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText(/not presented as a Team JD client outcome/)).toBeInTheDocument()
+    expect(document.querySelector('.result-story-testimonial')).not.toBeInTheDocument()
+  })
 })

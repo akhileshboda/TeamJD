@@ -4,6 +4,7 @@ import {
   RESULTS_PER_PAGE,
   filterAndSortResults,
   getPaginationRange,
+  getResultStory,
   getResultsParams,
   paginateResults,
 } from './resultsLibrary'
@@ -42,6 +43,22 @@ describe('Canonical results library data', () => {
       expect(src.toLowerCase()).not.toContain('r2')
     })
     expect(representative.every(({ testimonial }) => testimonial === undefined)).toBe(true)
+  })
+
+  it('normalizes client and representative stories without inventing testimonials', () => {
+    expect(getResultStory(results[0])).toMatchObject({
+      title: results[0].name,
+      categoryLabel: 'Competition Prep',
+      location: results[0].location,
+      duration: results[0].duration,
+      summary: results[0].summary,
+      testimonial: results[0].testimonial,
+    })
+
+    const representative = getResultStory(results.find(({ kind }) => kind === 'representative'))
+    expect(representative.location).toBe('Representative imagery')
+    expect(representative.summary).toMatch(/not presented as a Team JD client outcome/)
+    expect(representative.testimonial).toBeNull()
   })
 })
 

@@ -1,0 +1,125 @@
+.result-story {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.result-story--overlay {
+  width: 100%;
+  padding: 3.25rem clamp(var(--space-5), 2.6vw, var(--space-8)) var(--space-4);
+}
+
+.result-story-badge {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  padding: 0.34rem 0.9rem;
+  border: 1px solid rgba(22, 201, 221, 0.72);
+  border-radius: 999px;
+  background: var(--color-accent-glow);
+  color: var(--color-accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.result-story-badge[data-category="competition"] {
+  border-color: rgba(255, 125, 110, 0.72);
+  background: var(--color-hover-accent-glow);
+  color: var(--color-hover-accent);
+}
+
+.result-story-title {
+  margin-bottom: 0.55rem;
+  color: var(--color-white);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  line-height: 1.08;
+}
+
+.result-story-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}
+
+.result-story-location svg {
+  width: 14px;
+  height: 14px;
+  color: var(--color-accent);
+}
+
+.result-story-meta-sep::before {
+  content: '·';
+  margin-right: 0.4rem;
+  color: var(--color-text-subtle);
+}
+
+.result-story-summary {
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.result-story-testimonial {
+  position: relative;
+  width: 100%;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  padding-left: var(--space-5);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.result-story-testimonial[data-category="competition"] {
+  border-left-color: var(--color-hover-accent);
+}
+
+.result-story-quote-mark {
+  position: absolute;
+  top: -0.55rem;
+  left: 0.3rem;
+  color: var(--color-accent);
+  font-family: serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.3;
+}
+
+.result-story-testimonial blockquote {
+  margin: 0 0 0.85rem;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-style: italic;
+  line-height: 1.62;
+}
+
+.result-story-testimonial figcaption {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.result-story-testimonial strong {
+  color: var(--color-hover-accent);
+}
+
+@media (max-width: 480px) {
+  .result-story--overlay {
+    padding: 3rem var(--space-4) var(--space-3);
+  }
+
+  .result-story-title {
+    font-size: 1.5rem;
+  }
+
+  .result-story-testimonial {
+    padding: var(--space-4);
+    padding-left: var(--space-5);
+  }
+}
