@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
@@ -10,6 +10,7 @@ import AppleWatchGallery, {
 } from './AppleWatchGallery'
 
 const motionPreference = vi.hoisted(() => ({ reduced: false }))
+const originalMatchMedia = window.matchMedia
 
 vi.mock('motion/react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -32,8 +33,23 @@ vi.mock('./SectionReveal', () => ({
   default: ({ children }) => <div>{children}</div>,
 }))
 
+function mockViewport({ desktop = true, phone = false } = {}) {
+  window.matchMedia = vi.fn().mockImplementation((query) => ({
+    matches: (
+      (query === '(min-width: 1025px)' && desktop)
+      || (query === '(max-width: 768px)' && phone)
+    ),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }))
+}
+
+beforeEach(() => mockViewport())
+
 afterEach(() => {
   motionPreference.reduced = false
+  window.matchMedia = originalMatchMedia
   cleanup()
 })
 
@@ -41,7 +57,7 @@ function mockStorySheetGeometry(sheet, {
   frameHeight = 600,
   storyHeight = 720,
 } = {}) {
-  const frame = sheet.closest('.result-preview')
+  const frame = sheet.closest('.result-presentation')
   const story = sheet.querySelector('.result-overlay-story-anchor')
   const scroll = sheet.querySelector('.result-overlay-scroll')
 
@@ -102,28 +118,18 @@ describe('AppleWatchGallery canonical library', () => {
   })
 
   it('omits result attributes from the phone modal', () => {
-    const originalMatchMedia = window.matchMedia
-    window.matchMedia = vi.fn().mockImplementation((query) => ({
-      matches: query === '(max-width: 768px)',
-      media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }))
+    mockViewport({ desktop: false, phone: true })
 
-    try {
-      render(
-        <MemoryRouter>
-          <AppleWatchGallery />
-        </MemoryRouter>,
-      )
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
 
-      fireEvent.click(screen.getAllByRole('button', { name: /^Open result:/ })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: /^Open result:/ })[0])
 
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.queryByLabelText('Result attributes')).not.toBeInTheDocument()
-    } finally {
-      window.matchMedia = originalMatchMedia
-    }
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Result attributes')).not.toBeInTheDocument()
   })
 
   it('renders every result at the same desktop size', () => {
@@ -235,7 +241,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     mockStorySheetGeometry(sheet, { storyHeight: 480 })
     expect(sheet).toHaveStyle({ height: '480px' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss result details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hide result story' }))
     fireEvent.click(screen.getByRole('button', { name: 'Show Story' }))
 
     sheet = screen.getByRole('group', {
@@ -309,47 +315,40 @@ describe('AppleWatchGallery full-story overlays', () => {
     }
   })
 
-  it('contains overflow touch scrolling in the phone modal until release', () => {
-    const originalMatchMedia = window.matchMedia
-    window.matchMedia = vi.fn().mockImplementation((query) => ({
-      matches: query === '(max-width: 768px)',
-      media: query,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }))
+  it('docks the complete story in the phone modal without capturing gestures', () => {
+    mockViewport({ desktop: false, phone: true })
 
-    try {
-      render(
-        <MemoryRouter>
-          <AppleWatchGallery />
-        </MemoryRouter>,
-      )
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
 
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: 'Open result: ANB champion with stage-ready control',
-        }),
-      )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Open result: ANB champion with stage-ready control',
+      }),
+    )
 
-      const sheet = screen.getByRole('document', {
-        name: 'ANB champion with stage-ready control',
-      })
-      const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
+    const sheet = screen.getByRole('document', {
+      name: 'ANB champion with stage-ready control',
+    })
 
-      fireEvent.touchStart(sheet, { touches: [{ clientY: 320 }] })
-      fireEvent.touchMove(sheet, { touches: [{ clientY: 120 }] })
-      expect(scroll.scrollTop).toBe(200)
-      expect(sheet).toHaveAttribute('data-scroll-lock', 'true')
+    expect(sheet).toHaveAttribute('data-scroll-mode', 'docked')
+    expect(sheet).not.toHaveAttribute('tabindex')
+    expect(screen.queryByRole('button', { name: 'Hide result story' })).not.toBeInTheDocument()
+    const closeButton = screen.getByRole('button', { name: 'Close result details' })
+    expect(closeButton).toHaveFocus()
+    fireEvent.keyDown(window, { key: 'Tab' })
+    expect(closeButton).toHaveFocus()
 
-      fireEvent.touchMove(sheet, { touches: [{ clientY: 80 }] })
-      expect(scroll.scrollTop).toBe(200)
-      expect(sheet).toHaveAttribute('data-scroll-lock', 'true')
-
-      fireEvent.touchEnd(sheet)
-      expect(sheet).toHaveAttribute('data-scroll-lock', 'false')
-    } finally {
-      window.matchMedia = originalMatchMedia
-    }
+    const touchMove = new TouchEvent('touchmove', {
+      bubbles: true,
+      cancelable: true,
+      touches: [{ clientY: 120 }],
+    })
+    fireEvent(sheet, touchMove)
+    expect(touchMove.defaultPrevented).toBe(false)
   })
 
   it('uses keyboard scrolling only for overflow stories', () => {

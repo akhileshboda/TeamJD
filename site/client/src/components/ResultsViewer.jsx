@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
-import ResultStory from './ResultStory'
+import ResultPresentation from './ResultPresentation'
 
 const FOCUSABLE = [
   'a[href]',
@@ -25,11 +25,11 @@ export default function ResultsViewer({
   const swipeRef = useRef(null)
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
-  const [imageFailed, setImageFailed] = useState(false)
+  const [storyOpen, setStoryOpen] = useState(true)
   const imageSrc = result ? resolveAsset(result.src) : ''
 
   useEffect(() => {
-    setImageFailed(false)
+    setStoryOpen(true)
   }, [result?.id])
 
   useEffect(() => {
@@ -171,48 +171,33 @@ export default function ResultsViewer({
             </header>
 
             <div className="results-viewer-body">
-              <div className="results-viewer-media">
-                {imageFailed ? (
-                  <div className="results-viewer-image-fallback" role="img" aria-label="Image unavailable">
-                    <span aria-hidden="true">JD</span>
-                    This image is temporarily unavailable.
-                  </div>
-                ) : (
-                  <motion.img
-                    key={result.id}
-                    src={imageSrc}
-                    alt={result.alt}
-                    width="900"
-                    height="1200"
-                    decoding="async"
-                    onError={() => setImageFailed(true)}
-                    initial={shouldReduce ? false : { opacity: 0.35 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-              </div>
-
-              <aside className="results-viewer-details">
-                <ResultStory
-                  result={result}
-                  titleId="results-viewer-title"
-                  descriptionId="results-viewer-description"
-                  headingLevel={2}
-                  className="result-story--viewer"
-                />
-
-                <div className="results-viewer-navigation">
-                  <button type="button" onClick={onPrevious} disabled={!previousResult}>
-                    <span aria-hidden="true">←</span> Previous
-                  </button>
-                  <button type="button" onClick={onNext} disabled={!nextResult}>
-                    Next <span aria-hidden="true">→</span>
-                  </button>
-                </div>
-                <p className="results-viewer-hint">Use arrow keys or swipe to browse.</p>
-              </aside>
+              <ResultPresentation
+                result={result}
+                src={imageSrc}
+                titleId="results-viewer-title"
+                descriptionId="results-viewer-description"
+                headingLevel={2}
+                storyOpen={storyOpen}
+                onStoryOpenChange={setStoryOpen}
+                allowStoryToggle
+                useLabeledHideControl
+                isModal
+                role="document"
+                className="results-viewer-presentation"
+              />
             </div>
+
+            <footer className="results-viewer-footer">
+              <div className="results-viewer-navigation">
+                <button type="button" onClick={onPrevious} disabled={!previousResult}>
+                  <span aria-hidden="true">←</span> Previous
+                </button>
+                <button type="button" onClick={onNext} disabled={!nextResult}>
+                  Next <span aria-hidden="true">→</span>
+                </button>
+              </div>
+              <p className="results-viewer-hint">Use arrow keys or swipe to browse.</p>
+            </footer>
           </motion.section>
         </motion.div>
       )}

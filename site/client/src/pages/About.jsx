@@ -5,7 +5,7 @@ import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ClientResultsCarousel from '../components/ClientResultsCarousel'
 import AboutProcessCarousel from '../components/AboutProcessCarousel'
-import Lightbox from '../components/Lightbox'
+import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
@@ -204,7 +204,32 @@ export default function About() {
   const results = (resultsLibrary || [])
     .filter((result) => result.kind === 'client' && result.featured)
     .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id))
-  const [lightboxImage, setLightboxImage] = useState(null)
+  const resultViewerOriginRef = useRef(null)
+  const [selectedResultId, setSelectedResultId] = useState(null)
+  const selectedResultIndex = selectedResultId === null
+    ? -1
+    : results.findIndex((result) => String(result.id) === String(selectedResultId))
+  const selectedResult = selectedResultIndex >= 0 ? results[selectedResultIndex] : null
+  const previousResult = selectedResultIndex > 0 ? results[selectedResultIndex - 1] : null
+  const nextResult = (
+    selectedResultIndex >= 0 && selectedResultIndex < results.length - 1
+      ? results[selectedResultIndex + 1]
+      : null
+  )
+
+  const openResult = (result, trigger) => {
+    resultViewerOriginRef.current = trigger
+    setSelectedResultId(result.id)
+  }
+
+  const closeResult = () => {
+    setSelectedResultId(null)
+    window.requestAnimationFrame(() => {
+      if (resultViewerOriginRef.current?.isConnected) {
+        resultViewerOriginRef.current.focus()
+      }
+    })
+  }
 
   return (
     <>
@@ -431,7 +456,7 @@ export default function About() {
             <SectionReveal>
               <ClientResultsCarousel
                 results={results || []}
-                onOpen={setLightboxImage}
+                onOpen={openResult}
                 eyebrow="Client Results"
                 title="The work shows."
                 headingId="about-results-heading"
@@ -450,7 +475,16 @@ export default function About() {
         />
       </div>
 
-      <Lightbox image={lightboxImage} onClose={() => setLightboxImage(null)} />
+      <ResultsViewer
+        result={selectedResult}
+        position={selectedResultIndex + 1}
+        total={results.length}
+        previousResult={previousResult}
+        nextResult={nextResult}
+        onPrevious={() => previousResult && setSelectedResultId(previousResult.id)}
+        onNext={() => nextResult && setSelectedResultId(nextResult.id)}
+        onClose={closeResult}
+      />
     </>
   )
 }

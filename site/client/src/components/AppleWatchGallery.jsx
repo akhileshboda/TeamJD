@@ -2,9 +2,10 @@ import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { getResultStory, RESULT_CATEGORY_LABELS } from '../utils/resultsLibrary'
-import ResultStory from './ResultStory'
+import ResultPresentation from './ResultPresentation'
 import SectionReveal from './SectionReveal'
 import '../styles/AppleWatchGallery.css'
 
@@ -17,6 +18,11 @@ const OVERLAY_SETTLE_DELAY_MS = 120
 const OVERLAY_RESTING_RATIO = 0.55
 const DESKTOP_MAGNIFICATION = { peak: 1.45, edge: 0.72 }
 const MOBILE_MAGNIFICATION = { peak: 1.3, edge: 0.8 }
+const RESULT_MODAL_FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 export function getGalleryIconSize(viewportWidth) {
   return viewportWidth > 0 && viewportWidth <= 480
@@ -110,37 +116,6 @@ function resolveItemSrc(item, resolveAsset) {
 
 function displayTitle(item) {
   return getResultStory(item).title
-}
-
-function StoryIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
-      <path d="M14 3v5h5" />
-      <path d="M9 12h6" />
-      <path d="M9 16h4" />
-    </svg>
-  )
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )
-}
-
-function EyeOffIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9.9 5.75A9.7 9.7 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17.4 17.4 0 0 1-2.4 3.1" />
-      <path d="M14.1 14.1A3 3 0 0 1 9.9 9.9" />
-      <path d="M6.6 6.6C4.1 8.35 2.5 12 2.5 12s3.5 6.5 9.5 6.5a9.8 9.8 0 0 0 4.8-1.3" />
-      <path d="m3 3 18 18" />
-    </svg>
-  )
 }
 
 export function getStoryOverlayGeometry(frameHeight, storyHeight) {
@@ -492,30 +467,9 @@ function WatchGridItem({
 }
 
 function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
-  const shouldReduce = useReducedMotion()
-  const {
-    height,
-    scrollMode,
-    scrollLocked,
-    overlayRef,
-    scrollRef,
-    storyMeasureRef,
-    reset,
-    handleKeyDown,
-  } = useOverflowResultOverlay({ active: open })
   if (!item) return null
 
   const titleId = `result-preview-title-${item.id}`
-
-  const closeDetails = () => {
-    reset()
-    onClose()
-  }
-
-  const reopenDetails = () => {
-    reset()
-    onReopen()
-  }
 
   return (
     <section
@@ -523,118 +477,53 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
       aria-label={`Selected result: ${displayTitle(item)}`}
       ref={previewRef}
     >
-      <div className="result-preview-media">
-        <AnimatePresence initial={false}>
-          <motion.img
-            key={item.id}
-            className="result-preview-img"
-            src={src}
-            alt={item.alt}
-            loading="eager"
-            decoding="async"
-            draggable={false}
-            initial={shouldReduce ? false : { opacity: 0, scale: 1.05 }}
-            animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
-            exit={shouldReduce ? {} : { opacity: 0 }}
-            transition={{ duration: 0.55, ease: 'easeOut' }}
-          />
-        </AnimatePresence>
-      </div>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="scrim"
-            className="result-preview-scrim"
-            aria-hidden="true"
-            initial={shouldReduce ? false : { opacity: 0 }}
-            animate={shouldReduce ? {} : { opacity: 1 }}
-            exit={shouldReduce ? {} : { opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="overlay"
-            className="result-preview-overlay"
-            role="group"
-            aria-labelledby={titleId}
-            data-scroll-mode={scrollMode}
-            data-scroll-lock={scrollLocked ? 'true' : 'false'}
-            tabIndex={scrollMode === 'overflow' ? 0 : undefined}
-            ref={overlayRef}
-            onKeyDown={handleKeyDown}
-            style={{ height }}
-          >
-            <div className="result-overlay-backdrop" aria-hidden="true" />
-
-            <button
-              type="button"
-              className="result-preview-close result-overlay-control"
-              aria-label="Dismiss result details"
-              onClick={closeDetails}
-            >
-              &times;
-            </button>
-
-            <div className="result-overlay-scroll" ref={scrollRef}>
-              <div className="result-overlay-story-anchor" ref={storyMeasureRef}>
-                <ResultStory
-                  result={item}
-                  titleId={titleId}
-                  headingLevel={3}
-                  className="result-story--overlay"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {!open && (
-          <motion.button
-            key="reopen"
-            type="button"
-            className="result-preview-reopen"
-            onClick={reopenDetails}
-            initial={shouldReduce ? false : { opacity: 0, y: 10 }}
-            animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
-            exit={shouldReduce ? {} : { opacity: 0, y: 10 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
-          >
-            <StoryIcon />
-            Show Story
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <ResultPresentation
+        result={item}
+        src={src}
+        titleId={titleId}
+        storyOpen={open}
+        onStoryOpenChange={(nextOpen) => {
+          if (nextOpen) onReopen()
+          else onClose()
+        }}
+        allowStoryToggle
+      />
     </section>
   )
 }
 
 function ResultModal({ item, src, open, onClose }) {
   const shouldReduce = useReducedMotion()
-  const [detailsOpen, setDetailsOpen] = useState(true)
-  const {
-    height,
-    scrollMode,
-    scrollLocked,
-    overlayRef,
-    scrollRef,
-    storyMeasureRef,
-    reset,
-    handleKeyDown,
-  } = useOverflowResultOverlay({
-    active: detailsOpen,
-    isModal: true,
-  })
+  const dialogRef = useRef(null)
 
   useEffect(() => {
-    if (item?.id) setDetailsOpen(true)
-  }, [item?.id])
+    if (!open) return undefined
+
+    const handleTabKey = (event) => {
+      if (event.key !== 'Tab') return
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll(RESULT_MODAL_FOCUSABLE) || [],
+      )
+      if (focusable.length === 0) {
+        event.preventDefault()
+        dialogRef.current?.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleTabKey)
+    return () => window.removeEventListener('keydown', handleTabKey)
+  }, [open])
 
   if (!open || !item) return null
 
@@ -658,13 +547,14 @@ function ResultModal({ item, src, open, onClose }) {
         transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
       }
 
-  return (
+  return createPortal(
     <motion.div
       className="result-modal-backdrop"
       onClick={onClose}
       {...backdropMotion}
     >
       <motion.section
+        ref={dialogRef}
         className="result-modal-dialog result-preview result-preview--modal"
         role="dialog"
         aria-modal="true"
@@ -672,110 +562,26 @@ function ResultModal({ item, src, open, onClose }) {
         onClick={(event) => event.stopPropagation()}
         {...dialogMotion}
       >
-        <div className="result-preview-media">
-          <motion.img
-            key={item.id}
-            className="result-preview-img"
-            src={src}
-            alt={item.alt}
-            loading="eager"
-            decoding="async"
-            draggable={false}
-            initial={shouldReduce ? false : { opacity: 0, scale: 1.04 }}
-            animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-          />
-        </div>
-
-        <AnimatePresence>
-          {detailsOpen && (
-            <motion.div
-              key="modal-scrim"
-              className="result-preview-scrim"
-              aria-hidden="true"
-              initial={shouldReduce ? false : { opacity: 0 }}
-              animate={shouldReduce ? {} : { opacity: 1 }}
-              exit={shouldReduce ? {} : { opacity: 0 }}
-              transition={{ duration: 0.24, ease: 'easeOut' }}
-            />
-          )}
-        </AnimatePresence>
-
-        <button
-          type="button"
-          className="result-preview-close"
-          aria-label="Close result details"
-          onClick={onClose}
+        <ResultPresentation
+          result={item}
+          src={src}
+          titleId={titleId}
+          role="document"
+          isModal
         >
-          &times;
-        </button>
-
-        <AnimatePresence>
-          {detailsOpen && (
-            <motion.div
-              key="modal-overlay"
-              className="result-preview-overlay"
-              role="document"
-              aria-labelledby={titleId}
-              data-scroll-mode={scrollMode}
-              data-scroll-lock={scrollLocked ? 'true' : 'false'}
-              tabIndex={scrollMode === 'overflow' ? 0 : undefined}
-              ref={overlayRef}
-              onKeyDown={handleKeyDown}
-              style={{ height }}
-            >
-              <div className="result-overlay-backdrop" aria-hidden="true" />
-
-              <button
-                type="button"
-                className="result-preview-hide result-overlay-control"
-                aria-label="Hide result details"
-                onClick={() => {
-                  reset()
-                  setDetailsOpen(false)
-                }}
-              >
-                <EyeOffIcon />
-                <span>Hide</span>
-              </button>
-
-              <div className="result-overlay-scroll" ref={scrollRef}>
-                <div className="result-overlay-story-anchor" ref={storyMeasureRef}>
-                  <ResultStory
-                    result={item}
-                    titleId={titleId}
-                    headingLevel={3}
-                    className="result-story--overlay"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {!detailsOpen && (
-            <motion.button
-              key="modal-reopen"
-              type="button"
-              className="result-preview-reopen result-preview-reopen--modal"
-              aria-label="Show result details"
-              onClick={() => {
-                reset()
-                setDetailsOpen(true)
-              }}
-              initial={shouldReduce ? false : { opacity: 0, y: 10 }}
-              animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
-              exit={shouldReduce ? {} : { opacity: 0, y: 10 }}
-              transition={{ duration: 0.24, ease: 'easeOut' }}
-            >
-              <EyeIcon />
-              Show
-            </motion.button>
-          )}
-        </AnimatePresence>
+          <button
+            type="button"
+            className="result-modal-close result-preview-close"
+            aria-label="Close result details"
+            onClick={onClose}
+            autoFocus
+          >
+            &times;
+          </button>
+        </ResultPresentation>
       </motion.section>
-    </motion.div>
+    </motion.div>,
+    document.body,
   )
 }
 

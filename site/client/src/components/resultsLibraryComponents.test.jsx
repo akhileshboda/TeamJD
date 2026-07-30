@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import ResultCard from './ResultCard'
+import ResultMedia from './ResultMedia'
 import ResultsViewer from './ResultsViewer'
 
 vi.mock('../hooks/useAssets', () => ({
@@ -29,6 +30,47 @@ describe('ResultCard', () => {
 
     fireEvent.click(card)
     expect(onOpen).toHaveBeenCalledWith(result, card)
+  })
+})
+
+describe('ResultMedia', () => {
+  it('keeps an uncurated subject complete inside a square ambient frame', () => {
+    render(<ResultMedia result={result} src={result.src} />)
+
+    const media = document.querySelector('.result-media')
+    const foreground = screen.getByRole('img', { name: result.alt })
+
+    expect(media).toHaveAttribute('data-fit', 'contain')
+    expect(media).toHaveStyle({
+      '--result-focus-x': '50%',
+      '--result-focus-y': '50%',
+    })
+    expect(document.querySelector('.result-media-ambient')).toHaveAttribute('aria-hidden', 'true')
+    expect(foreground).toHaveClass('result-media-foreground')
+
+    fireEvent.load(foreground)
+    expect(media).toHaveAttribute('data-loaded', 'true')
+  })
+
+  it('applies curated cover focal points without duplicating meaningful alt text', () => {
+    const coverResult = {
+      ...result,
+      presentation: {
+        fit: 'cover',
+        focus: { x: 28, y: 36 },
+      },
+    }
+
+    render(<ResultMedia result={coverResult} src={coverResult.src} />)
+
+    const media = document.querySelector('.result-media')
+    expect(media).toHaveAttribute('data-fit', 'cover')
+    expect(media).toHaveStyle({
+      '--result-focus-x': '28%',
+      '--result-focus-y': '36%',
+    })
+    expect(document.querySelector('.result-media-ambient')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('img')).toHaveLength(1)
   })
 })
 

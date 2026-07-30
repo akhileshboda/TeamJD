@@ -125,12 +125,7 @@ export default function ClientResultsCarousel({
   }, [isInView, results.length, shouldReduceMotion])
 
   const openResult = (result, trigger) => {
-    onOpen({
-      src: resolveAsset(result.src),
-      alt: result.alt,
-      caption: result.caption,
-      trigger,
-    })
+    onOpen(result, trigger)
   }
 
   const handlePointerDown = (event) => {

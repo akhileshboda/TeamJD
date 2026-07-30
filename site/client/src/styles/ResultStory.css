@@ -5,7 +5,7 @@
   align-items: flex-start;
 }
 
-.result-story--overlay {
+.result-story--presentation {
   width: 100%;
   padding: 3.25rem clamp(var(--space-5), 2.6vw, var(--space-8)) var(--space-4);
 }
@@ -110,7 +110,7 @@
 }
 
 @media (max-width: 480px) {
-  .result-story--overlay {
+  .result-story--presentation {
     padding: 3rem var(--space-4) var(--space-3);
   }
 
@@ -121,5 +121,11 @@
   .result-story-testimonial {
     padding: var(--space-4);
     padding-left: var(--space-5);
+  }
+}
+
+@media (max-width: 1024px) {
+  .result-story--presentation {
+    padding: clamp(var(--space-5), 5vw, var(--space-8));
   }
 }

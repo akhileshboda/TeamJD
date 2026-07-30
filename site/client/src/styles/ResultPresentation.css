@@ -1,0 +1,296 @@
+.result-presentation {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  background: #0d0d0d;
+}
+
+.result-preview-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(0deg, rgba(8, 8, 8, 0.36) 0%, transparent 48%);
+}
+
+.result-preview-overlay {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  height: 55%;
+  flex-direction: column;
+  overflow: hidden;
+  outline: none;
+}
+
+.result-preview-overlay:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(22, 201, 221, 0.75);
+}
+
+.result-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(8, 8, 8, 0.96) 0%,
+    rgba(9, 9, 9, 0.9) 34%,
+    rgba(10, 10, 10, 0.72) 66%,
+    rgba(12, 12, 12, 0.18) 88%,
+    transparent 100%
+  );
+}
+
+.result-overlay-control {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 3;
+}
+
+.result-overlay-scroll {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-y: hidden;
+  overscroll-behavior-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.result-preview-overlay[data-scroll-mode="overflow"] .result-overlay-scroll {
+  overflow-y: auto;
+}
+
+.result-preview-overlay[data-scroll-lock="true"] .result-overlay-scroll {
+  overscroll-behavior-y: contain;
+}
+
+.result-overlay-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.result-overlay-story-anchor {
+  width: 100%;
+  margin-top: auto;
+}
+
+.result-preview-close {
+  display: inline-flex;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(250, 128, 114, 0.48);
+  border-radius: 50%;
+  background: rgba(13, 13, 13, 0.58);
+  color: var(--color-hover-accent);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.result-preview-close:hover {
+  border-color: var(--color-hover-accent);
+  background: var(--color-hover-accent);
+  color: var(--color-bg);
+}
+
+.result-preview-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.result-preview-hide-label {
+  width: auto;
+  min-width: 0;
+  padding-inline: 0.85rem;
+  border-color: rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  color: var(--color-white);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.result-preview-reopen {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.6rem 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(13, 13, 13, 0.64);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.result-preview-reopen:hover {
+  border-color: var(--color-accent);
+  background: rgba(13, 13, 13, 0.82);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.result-preview-reopen:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.result-preview-reopen svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (min-width: 1025px) {
+  .result-presentation {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+
+  .result-presentation > .result-media {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+@media (max-width: 1024px) {
+  .result-presentation {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .result-preview-scrim {
+    display: none;
+  }
+
+  .result-preview-overlay {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    height: auto !important;
+    overflow: visible;
+    background:
+      radial-gradient(circle at 82% 0%, rgba(22, 201, 221, 0.08), transparent 20rem),
+      #111416;
+  }
+
+  .result-overlay-backdrop,
+  .result-overlay-control,
+  .result-preview-reopen {
+    display: none;
+  }
+
+  .result-overlay-scroll {
+    display: block;
+    overflow: visible;
+  }
+
+  .result-overlay-story-anchor {
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-preview-reopen {
+    transition: none;
+  }
+}
+
+/* AppleWatchGallery historically owned these class names. Prefixing the
+   shared presentation rules keeps the reusable shell authoritative while the
+   legacy stylesheet is narrowed to gallery layout and modal chrome. */
+.result-presentation .result-preview-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.result-presentation .result-preview-overlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  height: 55%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.result-presentation .result-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.result-presentation .result-overlay-scroll {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+
+.result-presentation .result-overlay-story-anchor {
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 1024px) {
+  .result-presentation .result-preview-scrim {
+    display: none;
+  }
+
+  .result-presentation .result-preview-overlay {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    height: auto !important;
+    overflow: visible;
+  }
+
+  .result-presentation .result-overlay-backdrop,
+  .result-presentation .result-overlay-control,
+  .result-presentation .result-preview-reopen {
+    display: none;
+  }
+
+  .result-presentation .result-overlay-scroll {
+    display: block;
+    overflow: visible;
+  }
+
+  .result-presentation .result-overlay-story-anchor {
+    margin-top: 0;
+  }
+}

@@ -4,6 +4,7 @@ import {
   RESULTS_PER_PAGE,
   filterAndSortResults,
   getPaginationRange,
+  getResultPresentation,
   getResultStory,
   getResultsParams,
   paginateResults,
@@ -28,8 +29,48 @@ describe('Canonical results library data', () => {
         name: expect.any(String),
         summary: expect.any(String),
         testimonial: expect.any(Object),
+        presentation: {
+          fit: expect.stringMatching(/^(cover|contain)$/),
+          focus: {
+            x: expect.any(Number),
+            y: expect.any(Number),
+          },
+        },
         stats: expect.any(Array),
       })
+    })
+  })
+
+  it('normalizes subject-safe image presentation metadata', () => {
+    expect(getResultPresentation(results[0])).toEqual({
+      fit: 'contain',
+      focusX: 50,
+      focusY: 50,
+      objectPosition: '50% 50%',
+    })
+
+    expect(getResultPresentation({
+      presentation: {
+        fit: 'cover',
+        focus: { x: -12, y: 145 },
+      },
+    })).toEqual({
+      fit: 'cover',
+      focusX: 0,
+      focusY: 100,
+      objectPosition: '0% 100%',
+    })
+
+    expect(getResultPresentation({
+      presentation: {
+        fit: 'unsupported',
+        focus: { x: 'unknown', y: null },
+      },
+    })).toEqual({
+      fit: 'contain',
+      focusX: 50,
+      focusY: 50,
+      objectPosition: '50% 50%',
     })
   })
 

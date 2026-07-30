@@ -7,6 +7,13 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 50
+      }
+    },
     "name": "ANB champion with stage-ready control",
     "location": "Competition Preparation",
     "duration": "16 Weeks",
@@ -38,6 +45,13 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 48
+      }
+    },
     "name": "Stage ready in the bodybuilding division",
     "location": "Contest Prep",
     "duration": "20 Weeks",
@@ -69,6 +83,13 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 50
+      }
+    },
     "name": "Peak conditioning with sharper stage presence",
     "location": "Competition Preparation",
     "duration": "18 Weeks",
@@ -100,6 +121,13 @@
     "category": "posing",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 52
+      }
+    },
     "name": "Presentation that translated under lights",
     "location": "Posing Coaching",
     "duration": "8 Weeks",
@@ -131,6 +159,13 @@
     "category": "competition",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 48
+      }
+    },
     "name": "Best shape brought into show condition",
     "location": "Competition Preparation",
     "duration": "20 Weeks",
@@ -162,6 +197,13 @@
     "category": "posing",
     "kind": "client",
     "featured": true,
+    "presentation": {
+      "fit": "contain",
+      "focus": {
+        "x": 50,
+        "y": 50
+      }
+    },
     "name": "Mandatory posing with better control",
     "location": "Posing Coaching",
     "duration": "6 Weeks",

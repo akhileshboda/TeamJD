@@ -48,6 +48,29 @@ export function getResultStory(result) {
   }
 }
 
+function clampFocus(value) {
+  if (value === null || value === undefined || value === '' || typeof value === 'boolean') {
+    return 50
+  }
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue)) return 50
+  return Math.min(100, Math.max(0, numericValue))
+}
+
+export function getResultPresentation(result) {
+  const presentation = result?.presentation || {}
+  const fit = presentation.fit === 'cover' ? 'cover' : 'contain'
+  const focusX = clampFocus(presentation.focus?.x)
+  const focusY = clampFocus(presentation.focus?.y)
+
+  return {
+    fit,
+    focusX,
+    focusY,
+    objectPosition: `${focusX}% ${focusY}%`,
+  }
+}
+
 export function getResultsParams(searchParams) {
   const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10)
   const category = searchParams.get('category') || 'all'
