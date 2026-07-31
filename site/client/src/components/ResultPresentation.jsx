@@ -7,13 +7,16 @@ import {
   useState,
 } from 'react'
 import ResultMedia from './ResultMedia'
-import ResultStory from './ResultStory'
+import ResultStory, { ResultStoryBadge } from './ResultStory'
 import '../styles/ResultPresentation.css'
 
 const DESKTOP_PRESENTATION_QUERY = '(min-width: 1025px)'
 const GESTURE_THRESHOLD = 2
 const WHEEL_SETTLE_DELAY_MS = 120
 const RESTING_RATIO = 0.55
+const BOUNDED_STORY_RATIO = 0.64
+const BOUNDED_STORY_MIN_PX = 19 * 16
+const BOUNDED_STORY_MAX_PX = 27 * 16
 
 function StoryIcon() {
   return (
@@ -65,10 +68,24 @@ export function getStoryOverlayGeometry(frameHeight, storyHeight) {
   }
 }
 
+export function getBoundedStoryOverlayHeight(frameHeight) {
+  const safeFrameHeight = Math.max(0, frameHeight)
+  return Math.min(
+    safeFrameHeight,
+    Math.max(
+      BOUNDED_STORY_MIN_PX,
+      Math.min(BOUNDED_STORY_MAX_PX, safeFrameHeight * BOUNDED_STORY_RATIO),
+    ),
+  )
+}
+
 function useOverflowResultOverlay({
   active,
+  gesturesActive,
   frameRef,
   isModal,
+  bounded,
+  boundedDesktop,
 }) {
   const [geometry, setGeometry] = useState(() => getStoryOverlayGeometry(0, 0))
   const [scrollLocked, setScrollLocked] = useState(false)
@@ -105,7 +122,9 @@ function useOverflowResultOverlay({
 
     const frame = frameRef.current
     const storyMeasure = storyMeasureRef.current
-    if (!frame || !storyMeasure) return undefined
+    const overlay = overlayRef.current
+    const scroll = scrollRef.current
+    if (!frame || !storyMeasure || !overlay || !scroll) return undefined
 
     const measure = () => {
       const frameHeight = frame.clientHeight || frame.getBoundingClientRect().height
@@ -115,9 +134,35 @@ function useOverflowResultOverlay({
       )
       if (frameHeight <= 0) return
 
-      const nextGeometry = getStoryOverlayGeometry(frameHeight, storyHeight)
+      let nextGeometry
+      if (bounded) {
+        const displayHeight = boundedDesktop
+          ? getBoundedStoryOverlayHeight(frameHeight)
+          : overlay.clientHeight || overlay.getBoundingClientRect().height
+        const availableStoryHeight = scroll.clientHeight || displayHeight
+        const scrollHeight = scroll.scrollHeight || storyHeight
+
+        nextGeometry = {
+          frameHeight,
+          storyHeight: scrollHeight,
+          minimumHeight: displayHeight,
+          displayHeight,
+          hasOverflow: scrollHeight > availableStoryHeight + 1,
+        }
+      } else {
+        nextGeometry = getStoryOverlayGeometry(frameHeight, storyHeight)
+      }
+
       geometryRef.current = nextGeometry
-      setGeometry(nextGeometry)
+      setGeometry((current) => (
+        current.frameHeight === nextGeometry.frameHeight
+        && current.storyHeight === nextGeometry.storyHeight
+        && current.minimumHeight === nextGeometry.minimumHeight
+        && current.displayHeight === nextGeometry.displayHeight
+        && current.hasOverflow === nextGeometry.hasOverflow
+          ? current
+          : nextGeometry
+      ))
       clearGestureOwnership()
       if (scrollRef.current) scrollRef.current.scrollTop = 0
     }
@@ -131,18 +176,20 @@ function useOverflowResultOverlay({
 
     const observer = new ResizeObserver(measure)
     observer.observe(frame)
+    observer.observe(overlay)
+    observer.observe(scroll)
     observer.observe(storyMeasure)
 
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', measure)
     }
-  }, [active, clearGestureOwnership, frameRef])
+  }, [active, bounded, boundedDesktop, clearGestureOwnership, frameRef])
 
   useEffect(() => () => clearGestureOwnership(), [clearGestureOwnership])
 
   useEffect(() => {
-    if (!active) return undefined
+    if (!gesturesActive) return undefined
 
     const frame = frameRef.current
     if (!frame) return undefined
@@ -274,7 +321,7 @@ function useOverflowResultOverlay({
       frame.removeEventListener('touchend', handleTouchEnd)
       frame.removeEventListener('touchcancel', handleTouchEnd)
     }
-  }, [active, frameRef, isModal])
+  }, [frameRef, gesturesActive, isModal])
 
   const handleKeyDown = useCallback((event) => {
     if (event.target !== event.currentTarget || !geometryRef.current.hasOverflow) return
@@ -321,7 +368,13 @@ function useOverflowResultOverlay({
   }, [isModal])
 
   return {
-    height: geometry.frameHeight > 0 ? geometry.displayHeight : '55%',
+    height: boundedDesktop
+      ? geometry.frameHeight > 0
+        ? geometry.displayHeight
+        : 'min(100%, clamp(19rem, 64%, 27rem))'
+      : geometry.frameHeight > 0
+        ? geometry.displayHeight
+        : '55%',
     scrollMode: geometry.hasOverflow ? 'overflow' : 'fit',
     scrollLocked,
     overlayRef,
@@ -343,6 +396,8 @@ export default function ResultPresentation({
   allowStoryToggle = false,
   useLabeledHideControl = false,
   isModal = false,
+  storyLayout = 'adaptive',
+  storyAction = null,
   role = 'group',
   className = '',
   children,
@@ -350,6 +405,7 @@ export default function ResultPresentation({
   const shouldReduceMotion = useReducedMotion()
   const isDesktop = useDesktopPresentation()
   const frameRef = useRef(null)
+  const usesBoundedStory = storyLayout === 'bounded'
   const effectiveStoryOpen = isDesktop ? storyOpen : true
   const canToggleStory = allowStoryToggle && isDesktop
   const {
@@ -362,9 +418,12 @@ export default function ResultPresentation({
     reset,
     handleKeyDown,
   } = useOverflowResultOverlay({
-    active: effectiveStoryOpen && isDesktop,
+    active: effectiveStoryOpen && (isDesktop || usesBoundedStory),
+    gesturesActive: effectiveStoryOpen && isDesktop,
     frameRef,
     isModal,
+    bounded: usesBoundedStory,
+    boundedDesktop: usesBoundedStory && isDesktop,
   })
 
   useEffect(() => {
@@ -385,8 +444,9 @@ export default function ResultPresentation({
 
   return (
     <div
-      className={`result-presentation${className ? ` ${className}` : ''}`}
+      className={`result-presentation${usesBoundedStory ? ' result-presentation--bounded-story' : ''}${className ? ` ${className}` : ''}`}
       data-story-layout={isDesktop ? 'overlay' : 'docked'}
+      data-story-frame={usesBoundedStory ? 'bounded' : 'adaptive'}
       ref={frameRef}
     >
       <ResultMedia result={result} src={src} />
@@ -411,7 +471,7 @@ export default function ResultPresentation({
           role={role}
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
-          data-scroll-mode={isDesktop ? scrollMode : 'docked'}
+          data-scroll-mode={isDesktop || usesBoundedStory ? scrollMode : 'docked'}
           data-scroll-lock={scrollLocked ? 'true' : 'false'}
           tabIndex={isDesktop && scrollMode === 'overflow' ? 0 : undefined}
           ref={overlayRef}
@@ -423,7 +483,26 @@ export default function ResultPresentation({
         >
           <div className="result-overlay-backdrop" aria-hidden="true" />
 
-          {canToggleStory && (
+          {usesBoundedStory && (
+            <div className="result-overlay-header">
+              <ResultStoryBadge result={result} />
+              <div className="result-overlay-header-action">
+                {canToggleStory && (
+                  <button
+                    type="button"
+                    className={`result-preview-close${useLabeledHideControl ? ' result-preview-hide-label' : ''}`}
+                    aria-label="Hide result story"
+                    onClick={() => setStoryOpen(false)}
+                  >
+                    {useLabeledHideControl ? 'Hide Story' : <span aria-hidden="true">&times;</span>}
+                  </button>
+                )}
+                {!canToggleStory && storyAction}
+              </div>
+            </div>
+          )}
+
+          {!usesBoundedStory && canToggleStory && (
             <button
               type="button"
               className={`result-preview-close result-overlay-control${useLabeledHideControl ? ' result-preview-hide-label' : ''}`}
@@ -442,6 +521,7 @@ export default function ResultPresentation({
                 descriptionId={descriptionId}
                 headingLevel={headingLevel}
                 className="result-story--presentation"
+                showBadge={!usesBoundedStory}
               />
             </div>
           </div>

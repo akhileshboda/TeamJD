@@ -284,6 +284,7 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
         result={item}
         src={src}
         titleId={titleId}
+        storyLayout="bounded"
         storyOpen={open}
         onStoryOpenChange={(nextOpen) => {
           if (nextOpen) onReopen()
@@ -377,17 +378,19 @@ function ResultModal({ item, src, open, onClose }) {
           titleId={titleId}
           role="document"
           isModal
-        >
-          <button
-            type="button"
-            className="result-modal-close result-preview-close"
-            aria-label="Close result details"
-            onClick={onClose}
-            autoFocus
-          >
-            &times;
-          </button>
-        </ResultPresentation>
+          storyLayout="bounded"
+          storyAction={(
+            <button
+              type="button"
+              className="result-modal-close result-preview-close"
+              aria-label="Close result details"
+              onClick={onClose}
+              autoFocus
+            >
+              &times;
+            </button>
+          )}
+        />
       </motion.section>
     </motion.div>,
     document.body,

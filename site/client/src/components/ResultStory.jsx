@@ -10,21 +10,30 @@ function PinIcon() {
   )
 }
 
+export function ResultStoryBadge({ result }) {
+  const story = getResultStory(result)
+
+  return (
+    <span className="result-story-badge" data-category={result?.category}>
+      {story.categoryLabel}
+    </span>
+  )
+}
+
 export default function ResultStory({
   result,
   titleId,
   descriptionId,
   headingLevel = 3,
   className = '',
+  showBadge = true,
 }) {
   const story = getResultStory(result)
   const Heading = `h${headingLevel}`
 
   return (
     <div className={`result-story${className ? ` ${className}` : ''}`}>
-      <span className="result-story-badge" data-category={result?.category}>
-        {story.categoryLabel}
-      </span>
+      {showBadge && <ResultStoryBadge result={result} />}
 
       <Heading id={titleId} className="result-story-title">{story.title}</Heading>
 

@@ -153,4 +153,66 @@ describe('ResultsViewer', () => {
     expect(screen.getByText(/not presented as a Team JD client outcome/)).toBeInTheDocument()
     expect(document.querySelector('.result-story-testimonial')).not.toBeInTheDocument()
   })
+
+  it('retains adaptive story geometry outside the homepage gallery', () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(min-width: 1025px)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    }))
+
+    try {
+      render(
+        <ResultsViewer
+          result={result}
+          position={1}
+          total={1}
+          previousResult={null}
+          nextResult={null}
+          onPrevious={vi.fn()}
+          onNext={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      )
+
+      const presentation = document.querySelector('.results-viewer-presentation')
+      const sheet = presentation.querySelector('.result-preview-overlay')
+      const story = sheet.querySelector('.result-overlay-story-anchor')
+      const scroll = sheet.querySelector('.result-overlay-scroll')
+
+      Object.defineProperty(presentation, 'clientHeight', {
+        configurable: true,
+        value: 600,
+      })
+      Object.defineProperty(story, 'scrollHeight', {
+        configurable: true,
+        value: 480,
+      })
+      Object.defineProperty(scroll, 'clientHeight', {
+        configurable: true,
+        get: () => Number.parseFloat(sheet.style.height) || 330,
+      })
+      Object.defineProperty(scroll, 'scrollHeight', {
+        configurable: true,
+        value: 480,
+      })
+
+      fireEvent(window, new Event('resize'))
+
+      expect(presentation).toHaveAttribute('data-story-frame', 'adaptive')
+      expect(sheet).toHaveAttribute('data-scroll-mode', 'fit')
+      expect(sheet).toHaveStyle({ height: '480px' })
+      expect(sheet.querySelector('.result-overlay-header')).not.toBeInTheDocument()
+      expect(scroll).toContainElement(sheet.querySelector('.result-story-badge'))
+      expect(screen.getByRole('button', { name: 'Hide result story' })).toHaveTextContent(
+        'Hide Story',
+      )
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
+  })
 })

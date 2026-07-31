@@ -407,9 +407,8 @@
   background: linear-gradient(0deg, rgba(8, 8, 8, 0.32) 0%, transparent 46%);
 }
 
-/* Full-story sheet: the measured content height is shown immediately, with
-   55% retained as a visual minimum. Only stories taller than the frame switch
-   to full-frame internal scrolling. */
+/* The shared presentation keeps adaptive sizing for the Results lightbox.
+   Homepage gallery previews opt into a bounded header/body frame below. */
 .result-preview-overlay {
   position: absolute;
   z-index: 2;
@@ -619,17 +618,27 @@
   overflow: hidden;
 }
 
+.result-preview.result-preview--modal
+.result-presentation.result-presentation--bounded-story
+.result-preview-overlay {
+  height: auto !important;
+  min-height: clamp(12rem, 40%, 18rem);
+  flex: 1 1 40%;
+}
+
 .result-preview.result-preview--modal .result-presentation .result-overlay-scroll {
   display: block;
-  height: 100%;
+  height: auto;
   min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
 }
 
 .result-preview.result-preview--modal .result-presentation .result-overlay-story-anchor {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .result-preview--modal .result-preview-hide {
@@ -692,6 +701,15 @@
   border-color: rgba(255, 255, 255, 0.42);
   background: rgba(13, 13, 13, 0.46);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+
+.result-preview--modal
+.result-presentation--bounded-story
+.result-overlay-header
+.result-preview-close {
+  position: static;
+  top: auto;
+  right: auto;
 }
 
 .result-preview-reopen--modal {
