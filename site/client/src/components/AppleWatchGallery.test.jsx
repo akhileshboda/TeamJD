@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
 import AppleWatchGallery, {
@@ -13,6 +13,8 @@ import { getStoryOverlayGeometry } from './ResultPresentation'
 const motionPreference = vi.hoisted(() => ({ reduced: false }))
 const originalMatchMedia = window.matchMedia
 const originalIntersectionObserver = window.IntersectionObserver
+const originalResizeObserver = globalThis.ResizeObserver
+const originalScrollBy = window.scrollBy
 
 vi.mock('motion/react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -47,14 +49,38 @@ function mockViewport({ desktop = true, phone = false } = {}) {
   }))
 }
 
-beforeEach(() => mockViewport())
+beforeEach(() => {
+  mockViewport()
+  window.scrollBy = vi.fn()
+})
 
 afterEach(() => {
   motionPreference.reduced = false
   window.matchMedia = originalMatchMedia
   window.IntersectionObserver = originalIntersectionObserver
+  window.scrollBy = originalScrollBy
+  globalThis.ResizeObserver = originalResizeObserver
   cleanup()
 })
+
+function mockGalleryFrame({ width = 620, height = 620 } = {}) {
+  globalThis.ResizeObserver = class ResizeObserver {
+    constructor(callback) {
+      this.callback = callback
+    }
+
+    observe(element) {
+      if (!element.classList.contains('watch-grid-viewport')) return
+      Object.defineProperties(element, {
+        clientWidth: { configurable: true, value: width },
+        clientHeight: { configurable: true, value: height },
+      })
+      this.callback([{ target: element }])
+    }
+
+    disconnect() {}
+  }
+}
 
 function mockStorySheetGeometry(sheet, {
   frameHeight = 600,
@@ -272,6 +298,118 @@ describe('AppleWatchGallery canonical library', () => {
 
     expect(shells[0]).toHaveClass('is-mobile-focus')
     expect(shells[1]).not.toHaveClass('is-mobile-focus')
+  })
+
+  it('shows a non-blocking drag affordance only after desktop overflow is measured', async () => {
+    mockGalleryFrame()
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const viewport = document.querySelector('.watch-grid-viewport')
+    const hint = await screen.findByRole('note')
+
+    expect(viewport).toHaveClass('watch-grid-viewport--pannable')
+    expect(viewport).toHaveAttribute('aria-describedby', 'watch-grid-interaction-hint')
+    expect(hint).toHaveTextContent('Drag to explore')
+  })
+
+  it('does not render the desktop affordance at tablet or mobile breakpoints', () => {
+    mockGalleryFrame()
+    mockViewport({ desktop: false, phone: false })
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    unmount()
+
+    mockViewport({ desktop: false, phone: true })
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  it('uses native-scroll copy for reduced-motion desktop users', async () => {
+    motionPreference.reduced = true
+    mockGalleryFrame()
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('note')).toHaveTextContent('Scroll to explore')
+    expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
+  })
+
+  it.each([
+    ['pointer input', (viewport) => fireEvent.pointerDown(viewport)],
+    ['wheel input', (viewport) => fireEvent.wheel(viewport, { deltaY: 80 })],
+    ['keyboard input', (viewport) => fireEvent.keyDown(viewport, { key: 'ArrowRight' })],
+    ['thumbnail focus', () => fireEvent.focus(screen.getAllByRole('button', { name: /^Open result:/ })[0])],
+  ])('dismisses the desktop affordance after %s', async (_label, interact) => {
+    mockGalleryFrame()
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('note')
+    interact(document.querySelector('.watch-grid-viewport'))
+
+    await waitFor(() => expect(screen.queryByRole('note')).not.toBeInTheDocument())
+  })
+
+  it('keeps the affordance dismissed through filtering', async () => {
+    mockGalleryFrame()
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('note')
+    fireEvent.pointerDown(document.querySelector('.watch-grid-viewport'))
+    await waitFor(() => expect(screen.queryByRole('note')).not.toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Posing' }))
+    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  })
+
+  it('preserves thumbnail selection and desktop panning when the hint dismisses', async () => {
+    mockGalleryFrame()
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('note')
+    const viewport = document.querySelector('.watch-grid-viewport')
+    const resultButtons = screen.getAllByRole('button', { name: /^Open result:/ })
+
+    fireEvent.pointerDown(resultButtons[1])
+    fireEvent.click(resultButtons[1])
+
+    expect(resultButtons[1]).toHaveAttribute('aria-pressed', 'true')
+    expect(viewport).toHaveClass('watch-grid-viewport--pannable')
+    await waitFor(() => expect(screen.queryByRole('note')).not.toBeInTheDocument())
   })
 })
 

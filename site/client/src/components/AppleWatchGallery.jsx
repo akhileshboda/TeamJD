@@ -323,9 +323,15 @@ export default function AppleWatchGallery() {
   const [selectedItem, setSelectedItem] = useState(null)
   const [overlayOpen, setOverlayOpen] = useState(true)
   const [mobileModalOpen, setMobileModalOpen] = useState(false)
+  const [galleryHintDismissed, setGalleryHintDismissed] = useState(false)
   const [isPhoneResultsLayout, setIsPhoneResultsLayout] = useState(() => (
     typeof window !== 'undefined'
       ? window.matchMedia('(max-width: 768px)').matches
+      : false
+  ))
+  const [isDesktopResultsLayout, setIsDesktopResultsLayout] = useState(() => (
+    typeof window !== 'undefined'
+      ? window.matchMedia('(min-width: 1025px)').matches
       : false
   ))
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 })
@@ -406,6 +412,22 @@ export default function AppleWatchGallery() {
 
     const query = window.matchMedia('(max-width: 768px)')
     const update = () => setIsPhoneResultsLayout(query.matches)
+    update()
+
+    if (typeof query.addEventListener === 'function') {
+      query.addEventListener('change', update)
+      return () => query.removeEventListener('change', update)
+    }
+
+    query.addListener(update)
+    return () => query.removeListener(update)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const query = window.matchMedia('(min-width: 1025px)')
+    const update = () => setIsDesktopResultsLayout(query.matches)
     update()
 
     if (typeof query.addEventListener === 'function') {
@@ -530,6 +552,11 @@ export default function AppleWatchGallery() {
     { width: viewportSize.w, height: viewportSize.h },
   )
   const canPan = !useNativeGalleryScroll && panGeometry.canPan
+  const showGalleryHint = (
+    isDesktopResultsLayout
+    && panGeometry.canPan
+    && !galleryHintDismissed
+  )
 
   useEffect(() => {
     if (useNativeGalleryScroll) return
@@ -561,6 +588,10 @@ export default function AppleWatchGallery() {
 
   const handleFilterChange = useCallback((filter) => {
     setActiveFilter(filter)
+  }, [])
+
+  const dismissGalleryHint = useCallback(() => {
+    setGalleryHintDismissed(true)
   }, [])
 
   const handleOpen = useCallback((item) => {
@@ -620,6 +651,13 @@ export default function AppleWatchGallery() {
               <div
                 className={`watch-grid-viewport ${useNativeGalleryScroll ? 'watch-grid-viewport--scroll' : ''} ${canPan ? 'watch-grid-viewport--pannable' : ''}`}
                 ref={viewportRef}
+                role="region"
+                aria-label="Client results gallery"
+                aria-describedby={showGalleryHint ? 'watch-grid-interaction-hint' : undefined}
+                onPointerDown={dismissGalleryHint}
+                onWheel={dismissGalleryHint}
+                onKeyDown={dismissGalleryHint}
+                onFocusCapture={dismissGalleryHint}
               >
                 {filteredItems.length > 0 ? (
                   <motion.div
@@ -666,6 +704,28 @@ export default function AppleWatchGallery() {
               </div>
               {useNativeGalleryScroll && (
                 <div className="watch-grid-edge-overlay" aria-hidden="true" />
+              )}
+              {isDesktopResultsLayout && (
+                <div className="watch-grid-affordance-positioner">
+                  <AnimatePresence>
+                    {showGalleryHint && (
+                      <motion.div
+                        id="watch-grid-interaction-hint"
+                        className="watch-grid-affordance"
+                        role="note"
+                        initial={shouldReduce ? false : { opacity: 0, y: 8 }}
+                        animate={shouldReduce ? {} : { opacity: 1, y: 0 }}
+                        exit={shouldReduce ? {} : { opacity: 0, y: 6 }}
+                        transition={{ duration: shouldReduce ? 0 : 0.18, ease: 'easeOut' }}
+                      >
+                        <span className="watch-grid-affordance-icon" aria-hidden="true">
+                          &harr;
+                        </span>
+                        <span>{shouldReduce ? 'Scroll to explore' : 'Drag to explore'}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
             </div>
 
