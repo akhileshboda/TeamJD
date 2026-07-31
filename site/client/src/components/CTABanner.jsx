@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router-dom'
 import SectionReveal from './SectionReveal'
+import FindYourFitLink from './FindYourFitLink'
 
 const DEFAULT_ACTIONS = [
   {
@@ -11,7 +12,7 @@ const DEFAULT_ACTIONS = [
   },
   {
     label: 'Find Your Fit',
-    to: '/services#find-your-fit',
+    type: 'finder',
     variant: 'secondary',
     analyticsId: 'find_your_fit',
   },
@@ -23,6 +24,14 @@ function CTAAction({ action, location }) {
     'data-analytics-event': 'final_cta_click',
     'data-analytics-location': location,
     'data-analytics-id': action.analyticsId,
+  }
+
+  if (action.type === 'finder') {
+    return (
+      <FindYourFitLink className={className} {...analyticsProps}>
+        {action.label}
+      </FindYourFitLink>
+    )
   }
 
   if (action.type === 'button' || action.asButton) {

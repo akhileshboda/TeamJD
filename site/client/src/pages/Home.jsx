@@ -5,6 +5,7 @@ import CredibilityStrip from '../components/CredibilityStrip'
 import AppleWatchGallery from '../components/AppleWatchGallery'
 import FAQItem from '../components/FAQItem'
 import CTABanner from '../components/CTABanner'
+import FindYourFitLink from '../components/FindYourFitLink'
 
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
@@ -146,9 +147,9 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="home-services-consult-actions">
-                  <Link to="/services#find-your-fit" className="btn btn-primary">
+                  <FindYourFitLink className="btn btn-primary">
                     Find Your Fit
-                  </Link>
+                  </FindYourFitLink>
                   <Link to="/services" className="btn btn-secondary">
                     View All Services &rarr;
                   </Link>

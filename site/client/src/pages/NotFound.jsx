@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import FindYourFitLink from '../components/FindYourFitLink'
 
 export default function NotFound() {
   return (
@@ -35,7 +36,7 @@ export default function NotFound() {
               <Link to="/contact">Book or send Jake a message</Link>
             </li>
             <li>
-              <Link to="/services#find-your-fit">Find the right coaching path</Link>
+              <FindYourFitLink>Find the right coaching path</FindYourFitLink>
             </li>
             <li>
               <a

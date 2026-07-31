@@ -1,13 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { FIND_YOUR_FIT_HASH } from './FindYourFitLink'
 
 // SPA navigation preserves scroll position by default. Reset to top on every
 // pathname change so moving between pages (e.g. into a service detail page)
 // always starts at the top, like a real multi-page site.
 export default function ScrollToTop() {
   const { pathname, hash } = useLocation()
+  const previousLocationRef = useRef({ pathname, hash })
 
   useEffect(() => {
+    const previousLocation = previousLocationRef.current
+    previousLocationRef.current = { pathname, hash }
+
+    if (hash === FIND_YOUR_FIT_HASH) return undefined
+    if (
+      previousLocation.pathname === pathname &&
+      previousLocation.hash === FIND_YOUR_FIT_HASH
+    ) {
+      return undefined
+    }
+
     if (!hash) {
       window.scrollTo(0, 0)
       return undefined

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import ContactMediaReel from '../components/ContactMediaReel'
 import ContactSocialCarousel from '../components/ContactSocialCarousel'
+import FindYourFitLink from '../components/FindYourFitLink'
 import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
 import { useAssets } from '../hooks/useAssets'
@@ -211,10 +212,10 @@ export default function Contact() {
 
             <SectionReveal className="contact-services-finder">
               <span>Not sure which path fits?</span>
-              <Link to="/services#find-your-fit">
+              <FindYourFitLink>
                 Find Your Fit
                 <JourneyIcon name="arrowRight" size={17} />
-              </Link>
+              </FindYourFitLink>
             </SectionReveal>
           </div>
         </div>
@@ -328,7 +329,7 @@ export default function Contact() {
                 </button>
                 <p>
                   Looking for coaching?{' '}
-                  <Link to="/services#find-your-fit">Start with Find Your Fit.</Link>
+                  <FindYourFitLink>Start with Find Your Fit.</FindYourFitLink>
                 </p>
               </div>
 

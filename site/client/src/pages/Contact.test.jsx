@@ -28,7 +28,7 @@ afterEach(() => cleanup())
 
 function renderContact() {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/contact']}>
       <Contact />
     </MemoryRouter>,
   )
@@ -67,7 +67,7 @@ describe('Contact page route chooser', () => {
     })
 
     screen.getAllByRole('link', { name: /Find Your Fit/i }).forEach((link) => {
-      expect(link).toHaveAttribute('href', '/services#find-your-fit')
+      expect(link).toHaveAttribute('href', '/contact#find-your-fit')
     })
   })
 

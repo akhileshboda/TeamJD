@@ -376,7 +376,7 @@ export default function Results() {
           },
           {
             label: 'Find Your Fit',
-            to: '/services#find-your-fit',
+            type: 'finder',
             variant: 'secondary',
             analyticsId: 'find_your_fit',
           },

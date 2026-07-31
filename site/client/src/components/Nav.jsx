@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
+import FindYourFitLink from './FindYourFitLink'
 /* R2 logo-hover reframed to the same canvas/content box as R2 logo (no size jump on swap) */
 import logoHoverNav from '../assets/logo-hover-nav.webp'
 
@@ -179,13 +180,17 @@ export default function Nav() {
         </ul>
 
         <div className="nav-cta">
-          <Link to="/services#find-your-fit" className="btn btn-primary btn-sm">
+          <FindYourFitLink
+            className="btn btn-primary btn-sm"
+            data-find-your-fit-focus-fallback
+          >
             Find Your Fit
-          </Link>
+          </FindYourFitLink>
         </div>
 
         <button
           className={`nav-hamburger${isOpen ? ' open' : ''}`}
+          data-find-your-fit-focus-fallback
           aria-expanded={isOpen}
           aria-label={isOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setIsOpen((prev) => !prev)}
@@ -264,14 +269,13 @@ export default function Nav() {
               )
             })}
             <div className="mobile-cta">
-              <Link
-                to="/services#find-your-fit"
+              <FindYourFitLink
                 className="btn btn-primary"
                 style={{ width: '100%', justifyContent: 'center' }}
                 onClick={closeMobile}
               >
                 Find Your Fit
-              </Link>
+              </FindYourFitLink>
             </div>
           </motion.div>
         )}

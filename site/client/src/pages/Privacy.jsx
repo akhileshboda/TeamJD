@@ -1,5 +1,6 @@
 import PageHero from '../components/PageHero'
 import SectionReveal from '../components/SectionReveal'
+import FindYourFitLink from '../components/FindYourFitLink'
 import { Link } from 'react-router-dom'
 
 export default function Privacy() {
@@ -154,9 +155,9 @@ export default function Privacy() {
                     jake@team-jd.com.au
                   </a>{' '}
                   or start with the{' '}
-                  <Link to="/services#find-your-fit" style={{ color: 'var(--color-accent)' }}>
+                  <FindYourFitLink style={{ color: 'var(--color-accent)' }}>
                     service finder
-                  </Link>
+                  </FindYourFitLink>
                   .
                 </p>
               </div>

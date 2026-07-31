@@ -1,9 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import services from '../../../public/content/services.json'
+import FindYourFitLink from './FindYourFitLink'
 import ServiceFinder from './ServiceFinder'
+import ServiceFinderBanner from './ServiceFinderBanner'
 import ServiceQualification from './ServiceQualification'
+import ScrollToTop from './ScrollToTop'
 import StickyBookBar from './StickyBookBar'
 import { getQualificationStorageKey } from '../utils/qualification'
 
@@ -14,6 +17,27 @@ afterEach(() => {
 
 function getService(slug) {
   return services.find((service) => service.slug === slug)
+}
+
+function LocationProbe() {
+  const location = useLocation()
+  return (
+    <output data-testid="location">
+      {location.pathname}
+      {location.search}
+      {location.hash}
+    </output>
+  )
+}
+
+function BrowserBackButton() {
+  const navigate = useNavigate()
+  return <button onClick={() => navigate(-1)}>Browser Back</button>
+}
+
+function NavigateButton({ to }) {
+  const navigate = useNavigate()
+  return <button onClick={() => navigate(to)}>Navigate</button>
 }
 
 function renderQualification(slug, props = {}) {
@@ -157,12 +181,13 @@ describe('StickyBookBar', () => {
 describe('ServiceFinder', () => {
   it('recommends a detail page without exposing Calendly', async () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/services']}>
+        <ServiceFinderBanner />
         <ServiceFinder services={services} />
       </MemoryRouter>
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /Find My Best Match/ }))
+    fireEvent.click(screen.getByRole('link', { name: /Find My Best Match/ }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('Question 1 of 2')).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
@@ -180,10 +205,11 @@ describe('ServiceFinder', () => {
     expect(document.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
   })
 
-  it('opens from the shared hash route and closes with Escape', async () => {
+  it('opens from a direct hash route and removes the hash with Escape', async () => {
     render(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
+        <LocationProbe />
       </MemoryRouter>
     )
 
@@ -191,6 +217,164 @@ describe('ServiceFinder', () => {
     fireEvent.keyDown(window, { key: 'Escape' })
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent('/services')
     })
+  })
+
+  it('opens over the current page and restores its exact URL and focus on close', async () => {
+    render(
+      <MemoryRouter initialEntries={['/contact?source=footer#contact-services']}>
+        <h1>Contact page stays mounted</h1>
+        <FindYourFitLink>Find Your Fit</FindYourFitLink>
+        <ServiceFinder services={services} />
+        <LocationProbe />
+      </MemoryRouter>
+    )
+
+    const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
+    expect(trigger).toHaveAttribute('href', '/contact?source=footer#find-your-fit')
+
+    fireEvent.click(trigger)
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Contact page stays mounted' })).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/contact?source=footer#find-your-fit',
+    )
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/contact?source=footer#contact-services',
+      )
+      expect(trigger).toHaveFocus()
+    })
+  })
+
+  it('closes on browser Back and when the overlay is clicked', async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/results']}>
+        <FindYourFitLink>Find Your Fit</FindYourFitLink>
+        <BrowserBackButton />
+        <ServiceFinder services={services} />
+        <LocationProbe />
+      </MemoryRouter>
+    )
+
+    const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
+    fireEvent.click(trigger)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Browser Back' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent('/results')
+    })
+
+    fireEvent.click(trigger)
+    const overlay = container.ownerDocument.querySelector('.service-finder-modal-overlay')
+    fireEvent.mouseDown(overlay)
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByTestId('location')).toHaveTextContent('/results')
+    })
+  })
+
+  it('preserves answers when reopened on the same page', async () => {
+    render(
+      <MemoryRouter initialEntries={['/about']}>
+        <FindYourFitLink>Find Your Fit</FindYourFitLink>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
+    fireEvent.click(trigger)
+    const selectedAnswer = screen.getByLabelText('Train with Jake in person', { exact: true })
+    fireEvent.click(selectedAnswer)
+    expect(selectedAnswer).toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close Find Your Fit' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    fireEvent.click(trigger)
+    expect(screen.getByLabelText('Train with Jake in person', { exact: true })).toBeChecked()
+  })
+
+  it('resets answers after the underlying pathname changes', async () => {
+    render(
+      <MemoryRouter initialEntries={['/about']}>
+        <FindYourFitLink>Find Your Fit</FindYourFitLink>
+        <NavigateButton to="/contact" />
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Close Find Your Fit' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Navigate' }))
+    fireEvent.click(trigger)
+
+    expect(screen.getByLabelText('Train with Jake in person', { exact: true })).not.toBeChecked()
+  })
+
+  it('offers a Services recovery route when recommendation data fails to load', async () => {
+    render(
+      <MemoryRouter initialEntries={['/#find-your-fit']}>
+        <ServiceFinder services={[]} error={new Error('Service data unavailable')} />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    fireEvent.click(screen.getByLabelText('I can train in Adelaide', { exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Show My Best Match' }))
+
+    expect(await screen.findByRole('link', { name: /View All Services/ })).toHaveAttribute(
+      'href',
+      '/services',
+    )
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'We could not load the service details.',
+    )
+  })
+
+  it('does not scroll the underlying page when the finder opens or closes', async () => {
+    const scrollIntoView = vi.fn()
+    const originalScrollIntoView = Element.prototype.scrollIntoView
+    const originalScrollTo = window.scrollTo
+    Element.prototype.scrollIntoView = scrollIntoView
+    window.scrollTo = vi.fn()
+
+    try {
+      render(
+        <MemoryRouter initialEntries={['/contact']}>
+          <FindYourFitLink>Find Your Fit</FindYourFitLink>
+          <ServiceFinder services={services} />
+          <ScrollToTop />
+        </MemoryRouter>
+      )
+
+      window.scrollTo.mockClear()
+      const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
+      fireEvent.click(trigger)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Close Find Your Fit' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+      expect(window.scrollTo).not.toHaveBeenCalled()
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    } finally {
+      Element.prototype.scrollIntoView = originalScrollIntoView
+      window.scrollTo = originalScrollTo
+    }
   })
 })

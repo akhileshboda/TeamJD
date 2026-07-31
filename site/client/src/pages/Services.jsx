@@ -1,6 +1,6 @@
 import PageHero from '../components/PageHero'
 import ServiceGlassCard from '../components/ServiceGlassCard'
-import ServiceFinder from '../components/ServiceFinder'
+import ServiceFinderBanner from '../components/ServiceFinderBanner'
 import { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
 
@@ -17,7 +17,7 @@ export default function Services() {
 
       <section className="services-hub" aria-label="Coaching services">
         <div className="container services-hub-inner">
-          {services && <ServiceFinder services={services} />}
+          <ServiceFinderBanner />
 
           {services ? (
             <StaggerContainer className="services-glass-grid" inView={false}>

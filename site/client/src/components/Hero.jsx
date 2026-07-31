@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fallbackHeroPosterUrl, fallbackHeroVideoUrl } from '../config/heroMedia'
+import FindYourFitLink from './FindYourFitLink'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -179,9 +180,9 @@ export default function Hero() {
 
           <Item variants={itemVariants}>
             <div className="hero-actions">
-              <Link to="/services#find-your-fit" className="btn btn-primary btn-lg">
+              <FindYourFitLink className="btn btn-primary btn-lg">
                 Find Your Fit
-              </Link>
+              </FindYourFitLink>
               <Link to="/services" className="btn btn-secondary btn-lg">
                 View Services
               </Link>

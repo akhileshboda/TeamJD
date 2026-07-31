@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAssets } from '../hooks/useAssets'
+import FindYourFitLink from './FindYourFitLink'
 
 const LOGO_FALLBACK = '/assets/branding/team-jd-logo.png'
 
@@ -72,7 +73,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <Link to="/services#find-your-fit">Find Your Fit</Link>
+                <FindYourFitLink>Find Your Fit</FindYourFitLink>
               </li>
             </ul>
           </div>
