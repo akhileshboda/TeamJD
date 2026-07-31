@@ -3,14 +3,16 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
 import AppleWatchGallery, {
+  centerGalleryViewport,
   getGalleryIconSize,
   getGalleryMagnificationScale,
   getPanGeometry,
-  getStoryOverlayGeometry,
 } from './AppleWatchGallery'
+import { getStoryOverlayGeometry } from './ResultPresentation'
 
 const motionPreference = vi.hoisted(() => ({ reduced: false }))
 const originalMatchMedia = window.matchMedia
+const originalIntersectionObserver = window.IntersectionObserver
 
 vi.mock('motion/react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -50,6 +52,7 @@ beforeEach(() => mockViewport())
 afterEach(() => {
   motionPreference.reduced = false
   window.matchMedia = originalMatchMedia
+  window.IntersectionObserver = originalIntersectionObserver
   cleanup()
 })
 
@@ -128,8 +131,11 @@ describe('AppleWatchGallery canonical library', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Open result:/ })[0])
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeInTheDocument()
     expect(screen.queryByLabelText('Result attributes')).not.toBeInTheDocument()
+    expect(dialog.querySelector('.result-media-foreground')).toBeInTheDocument()
+    expect(dialog.querySelector('.result-media-ambient')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('renders every result at the same desktop size', () => {
@@ -144,6 +150,7 @@ describe('AppleWatchGallery canonical library', () => {
     shells.forEach((shell) => {
       expect(shell).toHaveStyle({ width: '70px', height: '70px' })
     })
+    expect(document.querySelector('.watch-grid-edge-overlay')).not.toBeInTheDocument()
   })
 
   it('uses the selected uniform diameter at desktop and mobile widths', () => {
@@ -164,6 +171,107 @@ describe('AppleWatchGallery canonical library', () => {
 
     expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
     expect(document.querySelector('.watch-grid-viewport')).not.toHaveClass('watch-grid-viewport--pannable')
+    expect(document.querySelector('.watch-grid-edge-overlay')).toBeInTheDocument()
+  })
+
+  it('uses native scrolling and keeps the edge fade outside the scroll viewport on phones', () => {
+    mockViewport({ desktop: false, phone: true })
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const viewport = document.querySelector('.watch-grid-viewport')
+    const edgeOverlay = document.querySelector('.watch-grid-edge-overlay')
+
+    expect(viewport).toHaveClass('watch-grid-viewport--scroll')
+    expect(viewport).not.toHaveClass('watch-grid-viewport--pannable')
+    expect(edgeOverlay).toBeInTheDocument()
+    expect(viewport).not.toContainElement(edgeOverlay)
+    expect(edgeOverlay.parentElement).toHaveClass('results-browser')
+  })
+
+  it('recenters the native gallery after a filter change', () => {
+    mockViewport({ desktop: false, phone: true })
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const viewport = document.querySelector('.watch-grid-viewport')
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 300 },
+      clientHeight: { configurable: true, value: 240 },
+      scrollWidth: { configurable: true, value: 700 },
+      scrollHeight: { configurable: true, value: 520 },
+    })
+    viewport.scrollLeft = 0
+    viewport.scrollTop = 0
+
+    fireEvent.click(screen.getByRole('button', { name: 'Posing' }))
+
+    expect(viewport.scrollLeft).toBe(200)
+    expect(viewport.scrollTop).toBe(140)
+  })
+
+  it('keeps only the closest center-zone result highlighted on phones', () => {
+    mockViewport({ desktop: false, phone: true })
+    let intersectionCallback
+
+    window.IntersectionObserver = class IntersectionObserver {
+      constructor(callback) {
+        intersectionCallback = callback
+      }
+
+      observe() {}
+
+      disconnect() {}
+    }
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const shells = document.querySelectorAll('.watch-grid-item-shell')
+    const rootBounds = { left: 0, top: 0, width: 100, height: 100 }
+
+    act(() => {
+      intersectionCallback([
+        {
+          target: shells[0],
+          isIntersecting: true,
+          boundingClientRect: { left: 0, top: 0, width: 10, height: 10 },
+          rootBounds,
+        },
+        {
+          target: shells[1],
+          isIntersecting: true,
+          boundingClientRect: { left: 45, top: 45, width: 10, height: 10 },
+          rootBounds,
+        },
+      ])
+    })
+
+    expect(shells[1]).toHaveClass('is-mobile-focus')
+    expect(shells[0]).not.toHaveClass('is-mobile-focus')
+
+    act(() => {
+      intersectionCallback([{
+        target: shells[1],
+        isIntersecting: false,
+        boundingClientRect: { left: 45, top: 45, width: 10, height: 10 },
+        rootBounds,
+      }])
+    })
+
+    expect(shells[0]).toHaveClass('is-mobile-focus')
+    expect(shells[1]).not.toHaveClass('is-mobile-focus')
   })
 })
 
@@ -351,6 +459,39 @@ describe('AppleWatchGallery full-story overlays', () => {
     expect(touchMove.defaultPrevented).toBe(false)
   })
 
+  it('uses the same fixed modal frame and resets story scrolling between results', () => {
+    mockViewport({ desktop: false, phone: true })
+    const representative = results.find((result) => result.kind === 'representative')
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', {
+      name: `Open result: ${results[0].name}`,
+    }))
+
+    let dialog = screen.getByRole('dialog')
+    let storyScroller = dialog.querySelector('.result-overlay-scroll')
+    expect(dialog).toHaveClass('result-modal-dialog', 'result-preview--modal')
+    expect(storyScroller).toBeInTheDocument()
+    storyScroller.scrollTop = 180
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close result details' }))
+    fireEvent.click(screen.getAllByRole('button', {
+      name: `Open result: ${representative.caption}`,
+    })[0])
+
+    dialog = screen.getAllByRole('dialog').at(-1)
+    storyScroller = dialog.querySelector('.result-overlay-scroll')
+    expect(dialog).toHaveClass('result-modal-dialog', 'result-preview--modal')
+    expect(storyScroller.scrollTop).toBe(0)
+    expect(screen.getByText(/not presented as a Team JD client outcome/)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Close result details' }).at(-1)).toHaveFocus()
+  })
+
   it('uses keyboard scrolling only for overflow stories', () => {
     render(
       <MemoryRouter>
@@ -447,6 +588,33 @@ describe('AppleWatchGallery magnification', () => {
 })
 
 describe('AppleWatchGallery pan geometry', () => {
+  it('centers native overflow without producing negative scroll offsets', () => {
+    const viewport = {
+      clientWidth: 300,
+      clientHeight: 240,
+      scrollWidth: 700,
+      scrollHeight: 520,
+      scrollLeft: 0,
+      scrollTop: 0,
+    }
+
+    centerGalleryViewport(viewport)
+    expect(viewport.scrollLeft).toBe(200)
+    expect(viewport.scrollTop).toBe(140)
+
+    const fittingViewport = {
+      clientWidth: 900,
+      clientHeight: 700,
+      scrollWidth: 700,
+      scrollHeight: 520,
+      scrollLeft: 10,
+      scrollTop: 10,
+    }
+    centerGalleryViewport(fittingViewport)
+    expect(fittingViewport.scrollLeft).toBe(0)
+    expect(fittingViewport.scrollTop).toBe(0)
+  })
+
   it('exposes the full canvas overflow and starts from the midpoint', () => {
     expect(
       getPanGeometry(

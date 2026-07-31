@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { getResultStory, RESULT_CATEGORY_LABELS } from '../utils/resultsLibrary'
@@ -13,9 +13,6 @@ const CATEGORY_ORDER = ['all', 'competition', 'online', 'posing', 'lifestyle', '
 const DESKTOP_ICON_SIZE_PX = 70
 const MOBILE_ICON_SIZE_PX = 62
 const FOCUS_REGION_RATIO = 0.75
-const OVERLAY_GESTURE_THRESHOLD = 2
-const OVERLAY_SETTLE_DELAY_MS = 120
-const OVERLAY_RESTING_RATIO = 0.55
 const DESKTOP_MAGNIFICATION = { peak: 1.45, edge: 0.72 }
 const MOBILE_MAGNIFICATION = { peak: 1.3, edge: 0.8 }
 const RESULT_MODAL_FOCUSABLE = [
@@ -83,6 +80,12 @@ export function getPanGeometry(canvasSize, viewportSize) {
   }
 }
 
+export function centerGalleryViewport(viewport) {
+  if (!viewport) return
+  viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2)
+  viewport.scrollTop = Math.max(0, (viewport.scrollHeight - viewport.clientHeight) / 2)
+}
+
 function honeycombLayout(count, spacing = 96) {
   if (count <= 0) return []
 
@@ -118,291 +121,6 @@ function displayTitle(item) {
   return getResultStory(item).title
 }
 
-export function getStoryOverlayGeometry(frameHeight, storyHeight) {
-  const safeFrameHeight = Math.max(0, frameHeight)
-  const safeStoryHeight = Math.max(0, storyHeight)
-  const minimumHeight = safeFrameHeight * OVERLAY_RESTING_RATIO
-  const hasOverflow = safeStoryHeight > safeFrameHeight + 1
-
-  return {
-    frameHeight: safeFrameHeight,
-    storyHeight: safeStoryHeight,
-    minimumHeight,
-    displayHeight: hasOverflow
-      ? safeFrameHeight
-      : Math.min(safeFrameHeight, Math.max(minimumHeight, safeStoryHeight)),
-    hasOverflow,
-  }
-}
-
-function useOverflowResultOverlay({ active = true, isModal = false } = {}) {
-  const [geometry, setGeometry] = useState(() => getStoryOverlayGeometry(0, 0))
-  const [scrollLocked, setScrollLocked] = useState(false)
-  const overlayRef = useRef(null)
-  const scrollRef = useRef(null)
-  const storyMeasureRef = useRef(null)
-  const geometryRef = useRef(geometry)
-  const releaseTimerRef = useRef(null)
-  const touchYRef = useRef(null)
-  const wheelSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
-  const touchSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
-
-  const clearGestureOwnership = useCallback(() => {
-    if (releaseTimerRef.current) {
-      window.clearTimeout(releaseTimerRef.current)
-      releaseTimerRef.current = null
-    }
-    wheelSessionRef.current = { active: false, direction: 0, owner: 'page' }
-    touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
-    touchYRef.current = null
-    setScrollLocked(false)
-  }, [])
-
-  const reset = useCallback(() => {
-    clearGestureOwnership()
-    if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [clearGestureOwnership])
-
-  useLayoutEffect(() => {
-    if (!active) {
-      clearGestureOwnership()
-      return undefined
-    }
-
-    const overlay = overlayRef.current
-    const storyMeasure = storyMeasureRef.current
-    const frame = overlay?.closest('.result-preview')
-    if (!overlay || !storyMeasure || !frame) return undefined
-
-    const measure = () => {
-      const frameHeight = frame.clientHeight || frame.getBoundingClientRect().height
-      const storyHeight = (
-        storyMeasure.scrollHeight
-        || storyMeasure.getBoundingClientRect().height
-      )
-      if (frameHeight <= 0) return
-
-      const nextGeometry = getStoryOverlayGeometry(frameHeight, storyHeight)
-      geometryRef.current = nextGeometry
-      setGeometry(nextGeometry)
-      clearGestureOwnership()
-      if (scrollRef.current) scrollRef.current.scrollTop = 0
-    }
-
-    measure()
-    window.addEventListener('resize', measure)
-
-    if (typeof ResizeObserver === 'undefined') {
-      return () => window.removeEventListener('resize', measure)
-    }
-
-    const observer = new ResizeObserver(measure)
-    observer.observe(frame)
-    observer.observe(storyMeasure)
-
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', measure)
-    }
-  }, [active, clearGestureOwnership])
-
-  useEffect(() => {
-    return () => clearGestureOwnership()
-  }, [clearGestureOwnership])
-
-  useEffect(() => {
-    if (!active) return undefined
-
-    const overlay = overlayRef.current
-    const frame = overlay?.closest('.result-preview')
-    if (!overlay || !frame) return undefined
-
-    const isControlTarget = (target) => (
-      target instanceof Element
-      && Boolean(target.closest('button, a, input, select, textarea'))
-    )
-
-    const getScrollMetrics = () => {
-      const scroll = scrollRef.current
-      return {
-        scroll,
-        scrollTop: scroll?.scrollTop ?? 0,
-        scrollMax: scroll
-          ? Math.max(0, scroll.scrollHeight - scroll.clientHeight)
-          : 0,
-      }
-    }
-
-    const canConsume = (direction) => {
-      if (!geometryRef.current.hasOverflow) return false
-      const { scrollTop, scrollMax } = getScrollMetrics()
-      return direction > 0 ? scrollTop < scrollMax - 1 : scrollTop > 1
-    }
-
-    const applyDelta = (deltaY) => {
-      const { scroll, scrollTop, scrollMax } = getScrollMetrics()
-      if (!scroll) return
-      scroll.scrollTop = deltaY > 0
-        ? Math.min(scrollMax, scrollTop + deltaY)
-        : Math.max(0, scrollTop + deltaY)
-    }
-
-    const syncScrollLock = () => {
-      const wheelLocked = (
-        wheelSessionRef.current.active
-        && wheelSessionRef.current.owner !== 'page'
-      )
-      const touchLocked = (
-        touchSessionRef.current.active
-        && touchSessionRef.current.owner !== 'page'
-      )
-      setScrollLocked(wheelLocked || touchLocked)
-    }
-
-    const claimSession = (sessionRef, direction) => {
-      const owner = !geometryRef.current.hasOverflow
-        ? 'page'
-        : canConsume(direction)
-          ? 'story'
-          : isModal
-            ? 'modal'
-            : 'page'
-      sessionRef.current = { active: true, direction, owner }
-      syncScrollLock()
-      return owner
-    }
-
-    const resolveSessionOwner = (sessionRef, direction) => {
-      const session = sessionRef.current
-      if (!session.active || session.direction !== direction) {
-        return claimSession(sessionRef, direction)
-      }
-      return session.owner
-    }
-
-    const scheduleWheelRelease = () => {
-      if (releaseTimerRef.current) window.clearTimeout(releaseTimerRef.current)
-      releaseTimerRef.current = window.setTimeout(() => {
-        releaseTimerRef.current = null
-        wheelSessionRef.current = { active: false, direction: 0, owner: 'page' }
-        syncScrollLock()
-      }, OVERLAY_SETTLE_DELAY_MS)
-    }
-
-    const handleWheel = (event) => {
-      if (isControlTarget(event.target)) return
-      const currentGeometry = geometryRef.current
-      const multiplier = event.deltaMode === 1
-        ? 16
-        : event.deltaMode === 2
-          ? currentGeometry.frameHeight
-          : 1
-      const deltaY = event.deltaY * multiplier
-      if (Math.abs(deltaY) < OVERLAY_GESTURE_THRESHOLD) return
-
-      const owner = resolveSessionOwner(wheelSessionRef, Math.sign(deltaY))
-      if (owner === 'story') applyDelta(deltaY)
-      if (owner !== 'page') event.preventDefault()
-      scheduleWheelRelease()
-    }
-
-    const handleTouchStart = (event) => {
-      if (isControlTarget(event.target)) return
-      touchYRef.current = event.touches[0]?.clientY ?? null
-      touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
-      syncScrollLock()
-    }
-
-    const handleTouchMove = (event) => {
-      if (touchYRef.current === null || isControlTarget(event.target)) return
-      const currentY = event.touches[0]?.clientY
-      if (currentY === undefined) return
-      const deltaY = touchYRef.current - currentY
-      touchYRef.current = currentY
-      if (Math.abs(deltaY) < OVERLAY_GESTURE_THRESHOLD) return
-
-      const owner = resolveSessionOwner(touchSessionRef, Math.sign(deltaY))
-      if (owner === 'story') applyDelta(deltaY)
-      if (owner !== 'page') event.preventDefault()
-    }
-
-    const handleTouchEnd = () => {
-      touchYRef.current = null
-      touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
-      syncScrollLock()
-    }
-
-    frame.addEventListener('wheel', handleWheel, { passive: false })
-    frame.addEventListener('touchstart', handleTouchStart, { passive: true })
-    frame.addEventListener('touchmove', handleTouchMove, { passive: false })
-    frame.addEventListener('touchend', handleTouchEnd)
-    frame.addEventListener('touchcancel', handleTouchEnd)
-
-    return () => {
-      frame.removeEventListener('wheel', handleWheel)
-      frame.removeEventListener('touchstart', handleTouchStart)
-      frame.removeEventListener('touchmove', handleTouchMove)
-      frame.removeEventListener('touchend', handleTouchEnd)
-      frame.removeEventListener('touchcancel', handleTouchEnd)
-    }
-  }, [active, isModal])
-
-  const handleKeyDown = useCallback((event) => {
-    if (event.target !== event.currentTarget || !geometryRef.current.hasOverflow) return
-
-    const scroll = scrollRef.current
-    if (!scroll) return
-    const scrollMax = Math.max(0, scroll.scrollHeight - scroll.clientHeight)
-    const atTop = scroll.scrollTop <= 1
-    const atBottom = scroll.scrollTop >= scrollMax - 1
-    const isDownward = (
-      event.key === 'ArrowDown'
-      || event.key === 'PageDown'
-      || (event.key === ' ' && !event.shiftKey)
-    )
-    const isUpward = (
-      event.key === 'ArrowUp'
-      || event.key === 'PageUp'
-      || (event.key === ' ' && event.shiftKey)
-    )
-
-    if (isDownward && !atBottom) {
-      event.preventDefault()
-      const step = event.key === 'ArrowDown' ? 48 : scroll.clientHeight * 0.8
-      scroll.scrollTop = Math.min(scrollMax, scroll.scrollTop + step)
-      return
-    }
-
-    if (isUpward && !atTop) {
-      event.preventDefault()
-      const step = event.key === 'ArrowUp' ? 48 : scroll.clientHeight * 0.8
-      scroll.scrollTop = Math.max(0, scroll.scrollTop - step)
-      return
-    }
-
-    if (event.key === 'Home' && !atTop) {
-      event.preventDefault()
-      scroll.scrollTop = 0
-      return
-    }
-
-    if (isModal && (isDownward || isUpward || event.key === 'Home')) {
-      event.preventDefault()
-    }
-  }, [isModal])
-
-  return {
-    height: geometry.frameHeight > 0 ? geometry.displayHeight : '55%',
-    scrollMode: geometry.hasOverflow ? 'overflow' : 'fit',
-    scrollLocked,
-    overlayRef,
-    scrollRef,
-    storyMeasureRef,
-    reset,
-    handleKeyDown,
-  }
-}
-
 function WatchGridItem({
   item,
   src,
@@ -411,6 +129,7 @@ function WatchGridItem({
   sizePx,
   isActive,
   isMobile,
+  magnificationEnabled,
   shouldReduce,
   canvasX,
   canvasY,
@@ -426,7 +145,7 @@ function WatchGridItem({
       viewportWidth: viewportSize.w,
       viewportHeight: viewportSize.h,
       isMobile,
-      reducedMotion: shouldReduce,
+      reducedMotion: shouldReduce || !magnificationEnabled,
     }),
   )
   const magnificationZIndex = useTransform(
@@ -442,8 +161,8 @@ function WatchGridItem({
         top: `${top - sizePx / 2}px`,
         width: sizePx,
         height: sizePx,
-        scale: magnificationScale,
-        zIndex: magnificationZIndex,
+        scale: magnificationEnabled ? magnificationScale : 1,
+        zIndex: magnificationEnabled ? magnificationZIndex : undefined,
       }}
     >
       <motion.button
@@ -453,12 +172,12 @@ function WatchGridItem({
         onClick={() => onClick(item)}
         aria-label={`Open result: ${displayTitle(item)}`}
         aria-pressed={isActive}
-        initial={shouldReduce ? false : { opacity: 0, scale: 0.48 }}
-        animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
-        exit={shouldReduce ? {} : { opacity: 0, scale: 0.58 }}
+        initial={shouldReduce || isMobile ? false : { opacity: 0, scale: 0.48 }}
+        animate={shouldReduce || isMobile ? {} : { opacity: 1, scale: 1 }}
+        exit={shouldReduce || isMobile ? {} : { opacity: 0, scale: 0.58 }}
         transition={{ duration: 0.34, ease: 'easeOut', delay: Math.min(index * 0.025, 0.25) }}
-        whileHover={shouldReduce ? {} : { scale: 1.1 }}
-        whileTap={shouldReduce ? {} : { scale: 0.96 }}
+        whileHover={shouldReduce || isMobile ? {} : { scale: 1.1 }}
+        whileTap={shouldReduce || isMobile ? {} : { scale: 0.96 }}
       >
         <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
       </motion.button>
@@ -495,6 +214,12 @@ function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
 function ResultModal({ item, src, open, onClose }) {
   const shouldReduce = useReducedMotion()
   const dialogRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const storyScroller = dialogRef.current?.querySelector('.result-overlay-scroll')
+    if (storyScroller) storyScroller.scrollTop = 0
+  }, [item?.id, open])
 
   useEffect(() => {
     if (!open) return undefined
@@ -604,6 +329,7 @@ export default function AppleWatchGallery() {
       : false
   ))
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 })
+  const useNativeGalleryScroll = isPhoneResultsLayout || shouldReduce
 
   const enrichedItems = useMemo(() => {
     return [...(results || [])]
@@ -692,6 +418,68 @@ export default function AppleWatchGallery() {
   }, [])
 
   useEffect(() => {
+    const viewport = viewportRef.current
+    if (
+      !viewport
+      || !isPhoneResultsLayout
+      || typeof IntersectionObserver === 'undefined'
+    ) return undefined
+
+    const candidates = new Map()
+    let focusedShell = null
+
+    const updateFocusedShell = (rootBounds) => {
+      const centerX = rootBounds
+        ? rootBounds.left + rootBounds.width / 2
+        : viewport.getBoundingClientRect().left + viewport.clientWidth / 2
+      const centerY = rootBounds
+        ? rootBounds.top + rootBounds.height / 2
+        : viewport.getBoundingClientRect().top + viewport.clientHeight / 2
+
+      let nextFocusedShell = null
+      let closestDistance = Number.POSITIVE_INFINITY
+
+      candidates.forEach((entry, shell) => {
+        const rect = entry.boundingClientRect
+        const distance = Math.hypot(
+          rect.left + rect.width / 2 - centerX,
+          rect.top + rect.height / 2 - centerY,
+        )
+        if (distance < closestDistance) {
+          closestDistance = distance
+          nextFocusedShell = shell
+        }
+      })
+
+      if (focusedShell === nextFocusedShell) return
+      focusedShell?.classList.remove('is-mobile-focus')
+      nextFocusedShell?.classList.add('is-mobile-focus')
+      focusedShell = nextFocusedShell
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) candidates.set(entry.target, entry)
+        else candidates.delete(entry.target)
+      })
+      updateFocusedShell(entries[0]?.rootBounds)
+    }, {
+      root: viewport,
+      rootMargin: '-34% -34% -34% -34%',
+      threshold: [0, 0.25, 0.5, 0.75, 1],
+    })
+
+    const shells = viewport.querySelectorAll('.watch-grid-item-shell')
+    shells.forEach((shell) => observer.observe(shell))
+
+    return () => {
+      observer.disconnect()
+      focusedShell?.classList.remove('is-mobile-focus')
+      candidates.clear()
+    }
+  }, [activeFilter, filteredItems.length, isPhoneResultsLayout])
+
+  useEffect(() => {
     if (filteredItems.length === 0) {
       setSelectedItem(null)
       return
@@ -729,20 +517,22 @@ export default function AppleWatchGallery() {
   }, [isPhoneResultsLayout, mobileModalOpen])
 
   useEffect(() => {
-    const el = viewportRef.current
-    if (!el || !shouldReduce) return
-    el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2)
-    el.scrollTop = Math.max(0, (el.scrollHeight - el.clientHeight) / 2)
-  }, [activeFilter, canvas.height, canvas.width, shouldReduce])
+    const viewport = viewportRef.current
+    if (!viewport || !useNativeGalleryScroll) return undefined
+
+    centerGalleryViewport(viewport)
+    const frameId = window.requestAnimationFrame(() => centerGalleryViewport(viewport))
+    return () => window.cancelAnimationFrame(frameId)
+  }, [activeFilter, canvas.height, canvas.width, useNativeGalleryScroll])
 
   const panGeometry = getPanGeometry(
     { width: canvas.width, height: canvas.height },
     { width: viewportSize.w, height: viewportSize.h },
   )
-  const canPan = !shouldReduce && panGeometry.canPan
+  const canPan = !useNativeGalleryScroll && panGeometry.canPan
 
   useEffect(() => {
-    if (shouldReduce) return
+    if (useNativeGalleryScroll) return
     canvasX.set(panGeometry.initial.x)
     canvasY.set(panGeometry.initial.y)
   }, [
@@ -753,7 +543,7 @@ export default function AppleWatchGallery() {
     canvasY,
     panGeometry.initial.x,
     panGeometry.initial.y,
-    shouldReduce,
+    useNativeGalleryScroll,
   ])
 
   // The draggable canvas sets `touch-action: none`, which makes trackpad/wheel
@@ -828,20 +618,20 @@ export default function AppleWatchGallery() {
           <div className="results-gallery-grid">
             <div className="results-browser">
               <div
-                className={`watch-grid-viewport ${shouldReduce ? 'watch-grid-viewport--scroll' : ''} ${canPan ? 'watch-grid-viewport--pannable' : ''}`}
+                className={`watch-grid-viewport ${useNativeGalleryScroll ? 'watch-grid-viewport--scroll' : ''} ${canPan ? 'watch-grid-viewport--pannable' : ''}`}
                 ref={viewportRef}
               >
                 {filteredItems.length > 0 ? (
                   <motion.div
                     key={activeFilter}
                     className="watch-grid-canvas"
-                    style={shouldReduce ? { width: canvas.width, height: canvas.height } : { width: canvas.width, height: canvas.height, x: canvasX, y: canvasY }}
+                    style={useNativeGalleryScroll ? { width: canvas.width, height: canvas.height } : { width: canvas.width, height: canvas.height, x: canvasX, y: canvasY }}
                     drag={canPan}
                     dragConstraints={panGeometry.constraints}
                     dragElastic={0.08}
                     dragMomentum={false}
-                    initial={shouldReduce ? false : { opacity: 0, scale: 0.98 }}
-                    animate={shouldReduce ? {} : { opacity: 1, scale: 1 }}
+                    initial={useNativeGalleryScroll ? false : { opacity: 0, scale: 0.98 }}
+                    animate={useNativeGalleryScroll ? {} : { opacity: 1, scale: 1 }}
                     transition={{ duration: 0.24, ease: 'easeOut' }}
                   >
                     <AnimatePresence>
@@ -858,6 +648,7 @@ export default function AppleWatchGallery() {
                             sizePx={iconSizePx}
                             isActive={selectedItem?.id === item.id}
                             isMobile={isPhoneResultsLayout}
+                            magnificationEnabled={!isPhoneResultsLayout && !shouldReduce}
                             shouldReduce={shouldReduce}
                             canvasX={canvasX}
                             canvasY={canvasY}
@@ -873,6 +664,9 @@ export default function AppleWatchGallery() {
                   <p className="watch-grid-empty">No results in this category yet.</p>
                 )}
               </div>
+              {useNativeGalleryScroll && (
+                <div className="watch-grid-edge-overlay" aria-hidden="true" />
+              )}
             </div>
 
             {selectedItem && !isPhoneResultsLayout && (
