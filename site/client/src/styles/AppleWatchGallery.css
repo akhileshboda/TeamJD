@@ -269,11 +269,11 @@
   z-index: 290 !important;
 }
 
-.watch-grid-item-shell.is-mobile-focus {
+.watch-grid-item-shell.is-native-focus {
   z-index: 285 !important;
 }
 
-.watch-grid-item-shell.is-mobile-focus .watch-grid-item {
+.watch-grid-item-shell.is-native-focus .watch-grid-item {
   transform: scale(1.08) !important;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 1px rgba(22, 201, 221, 0.46), var(--shadow-glow);

@@ -15,11 +15,58 @@ const MOBILE_ICON_SIZE_PX = 62
 const FOCUS_REGION_RATIO = 0.75
 const DESKTOP_MAGNIFICATION = { peak: 1.45, edge: 0.72 }
 const MOBILE_MAGNIFICATION = { peak: 1.3, edge: 0.8 }
+const FINE_POINTER_QUERY = '(pointer: fine)'
+const HOVER_QUERY = '(hover: hover)'
+const COARSE_POINTER_QUERY = '(any-pointer: coarse)'
 const RESULT_MODAL_FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
+
+export function canUseEnhancedGalleryDrag({
+  brands = [],
+  finePointer = false,
+  hover = false,
+  coarsePointer = false,
+  pointerEvents = false,
+  resizeObserver = false,
+} = {}) {
+  const isChromium = brands.some((entry) => {
+    const brand = typeof entry === 'string' ? entry : entry?.brand
+    return typeof brand === 'string' && brand.toLowerCase() === 'chromium'
+  })
+
+  return (
+    isChromium
+    && finePointer
+    && hover
+    && !coarsePointer
+    && pointerEvents
+    && resizeObserver
+  )
+}
+
+function readEnhancedGallerySupport({
+  finePointerQuery,
+  hoverQuery,
+  coarsePointerQuery,
+} = {}) {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+
+  const fine = finePointerQuery || window.matchMedia(FINE_POINTER_QUERY)
+  const canHover = hoverQuery || window.matchMedia(HOVER_QUERY)
+  const coarse = coarsePointerQuery || window.matchMedia(COARSE_POINTER_QUERY)
+
+  return canUseEnhancedGalleryDrag({
+    brands: navigator.userAgentData?.brands,
+    finePointer: fine.matches,
+    hover: canHover.matches,
+    coarsePointer: coarse.matches,
+    pointerEvents: typeof window.PointerEvent === 'function',
+    resizeObserver: typeof ResizeObserver !== 'undefined',
+  })
+}
 
 export function getGalleryIconSize(viewportWidth) {
   return viewportWidth > 0 && viewportWidth <= 480
@@ -121,16 +168,47 @@ function displayTitle(item) {
   return getResultStory(item).title
 }
 
-function WatchGridItem({
+function StaticWatchGridItem({
   item,
   src,
   left,
   top,
   sizePx,
   isActive,
-  isMobile,
-  magnificationEnabled,
-  shouldReduce,
+  onClick,
+}) {
+  return (
+    <div
+      className={`watch-grid-item-shell ${isActive ? 'is-active' : ''}`}
+      data-gallery-renderer="native"
+      style={{
+        left: `${left - sizePx / 2}px`,
+        top: `${top - sizePx / 2}px`,
+        width: sizePx,
+        height: sizePx,
+      }}
+    >
+      <button
+        type="button"
+        className={`watch-grid-item ${isActive ? 'active' : ''}`}
+        data-category={item.category}
+        onClick={() => onClick(item)}
+        aria-label={`Open result: ${displayTitle(item)}`}
+        aria-pressed={isActive}
+      >
+        <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
+      </button>
+    </div>
+  )
+}
+
+function MotionWatchGridItem({
+  item,
+  src,
+  left,
+  top,
+  sizePx,
+  isActive,
   canvasX,
   canvasY,
   viewportSize,
@@ -144,8 +222,7 @@ function WatchGridItem({
       iconY: top + offsetY,
       viewportWidth: viewportSize.w,
       viewportHeight: viewportSize.h,
-      isMobile,
-      reducedMotion: shouldReduce || !magnificationEnabled,
+      reducedMotion: false,
     }),
   )
   const magnificationZIndex = useTransform(
@@ -156,13 +233,14 @@ function WatchGridItem({
   return (
     <motion.div
       className={`watch-grid-item-shell ${isActive ? 'is-active' : ''}`}
+      data-gallery-renderer="enhanced"
       style={{
         left: `${left - sizePx / 2}px`,
         top: `${top - sizePx / 2}px`,
         width: sizePx,
         height: sizePx,
-        scale: magnificationEnabled ? magnificationScale : 1,
-        zIndex: magnificationEnabled ? magnificationZIndex : undefined,
+        scale: magnificationScale,
+        zIndex: magnificationZIndex,
       }}
     >
       <motion.button
@@ -172,17 +250,23 @@ function WatchGridItem({
         onClick={() => onClick(item)}
         aria-label={`Open result: ${displayTitle(item)}`}
         aria-pressed={isActive}
-        initial={shouldReduce || isMobile ? false : { opacity: 0, scale: 0.48 }}
-        animate={shouldReduce || isMobile ? {} : { opacity: 1, scale: 1 }}
-        exit={shouldReduce || isMobile ? {} : { opacity: 0, scale: 0.58 }}
+        initial={{ opacity: 0, scale: 0.48 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.58 }}
         transition={{ duration: 0.34, ease: 'easeOut', delay: Math.min(index * 0.025, 0.25) }}
-        whileHover={shouldReduce || isMobile ? {} : { scale: 1.1 }}
-        whileTap={shouldReduce || isMobile ? {} : { scale: 0.96 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.96 }}
       >
         <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />
       </motion.button>
     </motion.div>
   )
+}
+
+function WatchGridItem({ enhanced, ...props }) {
+  return enhanced
+    ? <MotionWatchGridItem {...props} />
+    : <StaticWatchGridItem {...props} />
 }
 
 function ResultPreview({ item, src, open, onClose, onReopen, previewRef }) {
@@ -334,8 +418,15 @@ export default function AppleWatchGallery() {
       ? window.matchMedia('(min-width: 1025px)').matches
       : false
   ))
+  const [enhancedGalleryDrag, setEnhancedGalleryDrag] = useState(
+    () => readEnhancedGallerySupport(),
+  )
   const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 })
-  const useNativeGalleryScroll = isPhoneResultsLayout || shouldReduce
+  const useNativeGalleryScroll = (
+    isPhoneResultsLayout
+    || shouldReduce
+    || !enhancedGalleryDrag
+  )
 
   const enrichedItems = useMemo(() => {
     return [...(results || [])]
@@ -440,10 +531,48 @@ export default function AppleWatchGallery() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      setEnhancedGalleryDrag(false)
+      return undefined
+    }
+
+    const finePointerQuery = window.matchMedia(FINE_POINTER_QUERY)
+    const hoverQuery = window.matchMedia(HOVER_QUERY)
+    const coarsePointerQuery = window.matchMedia(COARSE_POINTER_QUERY)
+    const queries = [finePointerQuery, hoverQuery, coarsePointerQuery]
+    const update = () => {
+      setEnhancedGalleryDrag(readEnhancedGallerySupport({
+        finePointerQuery,
+        hoverQuery,
+        coarsePointerQuery,
+      }))
+    }
+
+    update()
+    queries.forEach((query) => {
+      if (typeof query.addEventListener === 'function') {
+        query.addEventListener('change', update)
+      } else {
+        query.addListener(update)
+      }
+    })
+
+    return () => {
+      queries.forEach((query) => {
+        if (typeof query.removeEventListener === 'function') {
+          query.removeEventListener('change', update)
+        } else {
+          query.removeListener(update)
+        }
+      })
+    }
+  }, [])
+
+  useEffect(() => {
     const viewport = viewportRef.current
     if (
       !viewport
-      || !isPhoneResultsLayout
+      || !useNativeGalleryScroll
       || typeof IntersectionObserver === 'undefined'
     ) return undefined
 
@@ -474,8 +603,8 @@ export default function AppleWatchGallery() {
       })
 
       if (focusedShell === nextFocusedShell) return
-      focusedShell?.classList.remove('is-mobile-focus')
-      nextFocusedShell?.classList.add('is-mobile-focus')
+      focusedShell?.classList.remove('is-native-focus')
+      nextFocusedShell?.classList.add('is-native-focus')
       focusedShell = nextFocusedShell
     }
 
@@ -496,10 +625,10 @@ export default function AppleWatchGallery() {
 
     return () => {
       observer.disconnect()
-      focusedShell?.classList.remove('is-mobile-focus')
+      focusedShell?.classList.remove('is-native-focus')
       candidates.clear()
     }
-  }, [activeFilter, filteredItems.length, isPhoneResultsLayout])
+  }, [activeFilter, filteredItems.length, useNativeGalleryScroll])
 
   useEffect(() => {
     if (filteredItems.length === 0) {
@@ -611,6 +740,27 @@ export default function AppleWatchGallery() {
   }, [isPhoneResultsLayout, shouldReduce])
 
   const previewSrc = selectedItem ? resolveItemSrc(selectedItem, resolveAsset) : ''
+  const galleryItems = filteredItems.map((item, index) => {
+    const position = canvas.positions[index]
+
+    return (
+      <WatchGridItem
+        key={item.id}
+        enhanced={!useNativeGalleryScroll}
+        item={item}
+        src={resolveItemSrc(item, resolveAsset)}
+        left={position.x}
+        top={position.y}
+        sizePx={iconSizePx}
+        isActive={selectedItem?.id === item.id}
+        canvasX={canvasX}
+        canvasY={canvasY}
+        viewportSize={viewportSize}
+        index={index}
+        onClick={handleOpen}
+      />
+    )
+  })
 
   return (
     <>
@@ -660,44 +810,32 @@ export default function AppleWatchGallery() {
                 onFocusCapture={dismissGalleryHint}
               >
                 {filteredItems.length > 0 ? (
-                  <motion.div
-                    key={activeFilter}
-                    className="watch-grid-canvas"
-                    style={useNativeGalleryScroll ? { width: canvas.width, height: canvas.height } : { width: canvas.width, height: canvas.height, x: canvasX, y: canvasY }}
-                    drag={canPan}
-                    dragConstraints={panGeometry.constraints}
-                    dragElastic={0.08}
-                    dragMomentum={false}
-                    initial={useNativeGalleryScroll ? false : { opacity: 0, scale: 0.98 }}
-                    animate={useNativeGalleryScroll ? {} : { opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.24, ease: 'easeOut' }}
-                  >
-                    <AnimatePresence>
-                      {filteredItems.map((item, index) => {
-                        const position = canvas.positions[index]
-
-                        return (
-                          <WatchGridItem
-                            key={item.id}
-                            item={item}
-                            src={resolveItemSrc(item, resolveAsset)}
-                            left={position.x}
-                            top={position.y}
-                            sizePx={iconSizePx}
-                            isActive={selectedItem?.id === item.id}
-                            isMobile={isPhoneResultsLayout}
-                            magnificationEnabled={!isPhoneResultsLayout && !shouldReduce}
-                            shouldReduce={shouldReduce}
-                            canvasX={canvasX}
-                            canvasY={canvasY}
-                            viewportSize={viewportSize}
-                            index={index}
-                            onClick={handleOpen}
-                          />
-                        )
-                      })}
-                    </AnimatePresence>
-                  </motion.div>
+                  useNativeGalleryScroll ? (
+                    <div
+                      key={activeFilter}
+                      className="watch-grid-canvas"
+                      data-gallery-renderer="native"
+                      style={{ width: canvas.width, height: canvas.height }}
+                    >
+                      {galleryItems}
+                    </div>
+                  ) : (
+                    <motion.div
+                      key={activeFilter}
+                      className="watch-grid-canvas"
+                      data-gallery-renderer="enhanced"
+                      style={{ width: canvas.width, height: canvas.height, x: canvasX, y: canvasY }}
+                      drag={canPan}
+                      dragConstraints={panGeometry.constraints}
+                      dragElastic={0.08}
+                      dragMomentum={false}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.24, ease: 'easeOut' }}
+                    >
+                      <AnimatePresence>{galleryItems}</AnimatePresence>
+                    </motion.div>
+                  )
                 ) : (
                   <p className="watch-grid-empty">No results in this category yet.</p>
                 )}
@@ -721,7 +859,7 @@ export default function AppleWatchGallery() {
                         <span className="watch-grid-affordance-icon" aria-hidden="true">
                           &harr;
                         </span>
-                        <span>{shouldReduce ? 'Scroll to explore' : 'Drag to explore'}</span>
+                        <span>{useNativeGalleryScroll ? 'Scroll to explore' : 'Drag to explore'}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>

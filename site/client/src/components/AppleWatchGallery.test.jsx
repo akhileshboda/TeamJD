@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter } from 'react-router-dom'
 import results from '../../../public/content/results-library.json'
 import AppleWatchGallery, {
+  canUseEnhancedGalleryDrag,
   centerGalleryViewport,
   getGalleryIconSize,
   getGalleryMagnificationScale,
@@ -15,6 +16,9 @@ const originalMatchMedia = window.matchMedia
 const originalIntersectionObserver = window.IntersectionObserver
 const originalResizeObserver = globalThis.ResizeObserver
 const originalScrollBy = window.scrollBy
+const originalPointerEvent = window.PointerEvent
+const originalUserAgentData = navigator.userAgentData
+const hadOwnUserAgentData = Object.prototype.hasOwnProperty.call(navigator, 'userAgentData')
 
 vi.mock('motion/react', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -37,20 +41,40 @@ vi.mock('./SectionReveal', () => ({
   default: ({ children }) => <div>{children}</div>,
 }))
 
-function mockViewport({ desktop = true, phone = false } = {}) {
+function mockViewport({
+  desktop = true,
+  phone = false,
+  finePointer = true,
+  hover = true,
+  coarsePointer = false,
+} = {}) {
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches: (
       (query === '(min-width: 1025px)' && desktop)
       || (query === '(max-width: 768px)' && phone)
+      || (query === '(pointer: fine)' && finePointer)
+      || (query === '(hover: hover)' && hover)
+      || (query === '(any-pointer: coarse)' && coarsePointer)
     ),
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
   }))
+}
+
+function mockUserAgentData(brands) {
+  Object.defineProperty(navigator, 'userAgentData', {
+    configurable: true,
+    value: brands === undefined ? undefined : { brands },
+  })
 }
 
 beforeEach(() => {
   mockViewport()
+  mockUserAgentData([{ brand: 'Chromium', version: '140' }])
+  window.PointerEvent = class PointerEvent extends Event {}
   window.scrollBy = vi.fn()
 })
 
@@ -59,7 +83,16 @@ afterEach(() => {
   window.matchMedia = originalMatchMedia
   window.IntersectionObserver = originalIntersectionObserver
   window.scrollBy = originalScrollBy
+  window.PointerEvent = originalPointerEvent
   globalThis.ResizeObserver = originalResizeObserver
+  if (hadOwnUserAgentData) {
+    Object.defineProperty(navigator, 'userAgentData', {
+      configurable: true,
+      value: originalUserAgentData,
+    })
+  } else {
+    delete navigator.userAgentData
+  }
   cleanup()
 })
 
@@ -121,6 +154,73 @@ function fireCancelableWheel(target, deltaY) {
   return event
 }
 
+describe('AppleWatchGallery capability policy', () => {
+  const capableChromium = {
+    brands: [{ brand: 'Chromium', version: '140' }],
+    finePointer: true,
+    hover: true,
+    coarsePointer: false,
+    pointerEvents: true,
+    resizeObserver: true,
+  }
+
+  it('allows enhanced drag only for fully capable Chromium environments', () => {
+    expect(canUseEnhancedGalleryDrag(capableChromium)).toBe(true)
+  })
+
+  it.each([
+    ['iPad or touch-enabled Chromium', { coarsePointer: true }],
+    ['touch-only Chromium', { finePointer: false, hover: false, coarsePointer: true }],
+    ['Safari or Firefox', { brands: [] }],
+    ['missing Client Hints', { brands: undefined }],
+    ['missing Pointer Events', { pointerEvents: false }],
+    ['missing ResizeObserver', { resizeObserver: false }],
+  ])('defaults %s to native scrolling', (_label, override) => {
+    expect(canUseEnhancedGalleryDrag({
+      ...capableChromium,
+      ...override,
+    })).toBe(false)
+  })
+
+  it('switches from enhanced drag to native scrolling when coarse input appears', () => {
+    mockGalleryFrame()
+    let coarsePointer = false
+    const capabilityListeners = new Set()
+
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      get matches() {
+        if (query === '(min-width: 1025px)') return true
+        if (query === '(max-width: 768px)') return false
+        if (query === '(pointer: fine)') return true
+        if (query === '(hover: hover)') return true
+        if (query === '(any-pointer: coarse)') return coarsePointer
+        return false
+      },
+      media: query,
+      addEventListener: (_event, callback) => capabilityListeners.add(callback),
+      removeEventListener: (_event, callback) => capabilityListeners.delete(callback),
+      addListener: (callback) => capabilityListeners.add(callback),
+      removeListener: (callback) => capabilityListeners.delete(callback),
+    }))
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    expect(document.querySelector('.watch-grid-canvas')).toHaveAttribute('data-gallery-renderer', 'enhanced')
+
+    act(() => {
+      coarsePointer = true
+      capabilityListeners.forEach((listener) => listener())
+    })
+
+    expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
+    expect(document.querySelector('.watch-grid-canvas')).toHaveAttribute('data-gallery-renderer', 'native')
+  })
+})
+
 describe('AppleWatchGallery canonical library', () => {
   it('renders the complete shared library and labels representative imagery honestly', async () => {
     render(
@@ -165,6 +265,8 @@ describe('AppleWatchGallery canonical library', () => {
   })
 
   it('renders every result at the same desktop size', () => {
+    mockGalleryFrame()
+
     render(
       <MemoryRouter>
         <AppleWatchGallery />
@@ -188,6 +290,7 @@ describe('AppleWatchGallery canonical library', () => {
 
   it('uses native scrolling when reduced motion is requested', () => {
     motionPreference.reduced = true
+    mockGalleryFrame()
 
     render(
       <MemoryRouter>
@@ -244,8 +347,14 @@ describe('AppleWatchGallery canonical library', () => {
     expect(viewport.scrollTop).toBe(140)
   })
 
-  it('keeps only the closest center-zone result highlighted on phones', () => {
-    mockViewport({ desktop: false, phone: true })
+  it('keeps only the closest center-zone result highlighted in native mode', () => {
+    mockViewport({
+      desktop: false,
+      phone: false,
+      finePointer: false,
+      hover: false,
+      coarsePointer: true,
+    })
     let intersectionCallback
 
     window.IntersectionObserver = class IntersectionObserver {
@@ -284,8 +393,8 @@ describe('AppleWatchGallery canonical library', () => {
       ])
     })
 
-    expect(shells[1]).toHaveClass('is-mobile-focus')
-    expect(shells[0]).not.toHaveClass('is-mobile-focus')
+    expect(shells[1]).toHaveClass('is-native-focus')
+    expect(shells[0]).not.toHaveClass('is-native-focus')
 
     act(() => {
       intersectionCallback([{
@@ -296,8 +405,53 @@ describe('AppleWatchGallery canonical library', () => {
       }])
     })
 
-    expect(shells[0]).toHaveClass('is-mobile-focus')
-    expect(shells[1]).not.toHaveClass('is-mobile-focus')
+    expect(shells[0]).toHaveClass('is-native-focus')
+    expect(shells[1]).not.toHaveClass('is-native-focus')
+  })
+
+  it('uses the static native renderer for non-Chromium desktop browsers', async () => {
+    mockGalleryFrame()
+    mockUserAgentData(undefined)
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    const viewport = document.querySelector('.watch-grid-viewport')
+    const canvas = document.querySelector('.watch-grid-canvas')
+    const shells = document.querySelectorAll('.watch-grid-item-shell')
+
+    expect(viewport).toHaveClass('watch-grid-viewport--scroll')
+    expect(viewport).not.toHaveClass('watch-grid-viewport--pannable')
+    expect(canvas).toHaveAttribute('data-gallery-renderer', 'native')
+    shells.forEach((shell) => {
+      expect(shell).toHaveAttribute('data-gallery-renderer', 'native')
+    })
+    expect(document.querySelector('.watch-grid-edge-overlay')).toBeInTheDocument()
+    expect(await screen.findByRole('note')).toHaveTextContent('Scroll to explore')
+  })
+
+  it('uses native rendering when a Chromium environment exposes a coarse pointer', () => {
+    mockGalleryFrame()
+    mockViewport({
+      desktop: false,
+      phone: false,
+      finePointer: true,
+      hover: true,
+      coarsePointer: true,
+    })
+
+    render(
+      <MemoryRouter>
+        <AppleWatchGallery />
+      </MemoryRouter>,
+    )
+
+    expect(document.querySelector('.watch-grid-viewport')).toHaveClass('watch-grid-viewport--scroll')
+    expect(document.querySelector('.watch-grid-canvas')).toHaveAttribute('data-gallery-renderer', 'native')
+    expect(document.querySelector('.watch-grid-item-shell')).toHaveAttribute('data-gallery-renderer', 'native')
   })
 
   it('shows a non-blocking drag affordance only after desktop overflow is measured', async () => {
@@ -313,6 +467,8 @@ describe('AppleWatchGallery canonical library', () => {
     const hint = await screen.findByRole('note')
 
     expect(viewport).toHaveClass('watch-grid-viewport--pannable')
+    expect(document.querySelector('.watch-grid-canvas')).toHaveAttribute('data-gallery-renderer', 'enhanced')
+    expect(document.querySelector('.watch-grid-item-shell')).toHaveAttribute('data-gallery-renderer', 'enhanced')
     expect(viewport).toHaveAttribute('aria-describedby', 'watch-grid-interaction-hint')
     expect(hint).toHaveTextContent('Drag to explore')
   })
