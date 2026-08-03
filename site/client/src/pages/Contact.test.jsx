@@ -26,9 +26,9 @@ vi.mock('../hooks/useAssets', () => ({
 
 afterEach(() => cleanup())
 
-function renderContact() {
+function renderContact(initialEntry = '/contact') {
   return render(
-    <MemoryRouter initialEntries={['/contact']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Contact />
     </MemoryRouter>,
   )
@@ -88,6 +88,16 @@ describe('Contact page route chooser', () => {
     expect(within(serviceSelect).getByRole('option', { name: 'Competition Preparation' })).toBeInTheDocument()
     expect(within(serviceSelect).getByRole('option', { name: 'General Question' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Send enquiry/i })).toHaveAttribute('type', 'submit')
+  })
+
+  it('preselects the unsure enquiry from a valid finder handoff and rejects unknown values', () => {
+    const { unmount } = renderContact('/contact?service=unsure#contact-enquiry')
+
+    expect(screen.getByLabelText('Interested In')).toHaveValue('unsure')
+
+    unmount()
+    renderContact('/contact?service=not-a-service')
+    expect(screen.getByLabelText('Interested In')).toHaveValue('')
   })
 
   it('keeps both contact social links external and secure', () => {

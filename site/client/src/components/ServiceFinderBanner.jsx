@@ -13,8 +13,11 @@ export default function ServiceFinderBanner() {
       </div>
       <div className="service-finder-banner-copy">
         <span className="eyebrow">Find Your Fit</span>
-        <h2 id="service-finder-banner-title">Start in the right room.</h2>
-        <p>Two quick questions will point you towards the coaching path that best matches your goal.</p>
+        <h2 id="service-finder-banner-title">Start with what you actually need.</h2>
+        <p>
+          Answer four to six focused questions about your goal, support, and readiness. We will
+          guide you to the service that makes sense now.
+        </p>
       </div>
       <FindYourFitLink className="btn btn-primary btn-lg">
         Find My Best Match

@@ -872,7 +872,7 @@ export default function AppleWatchGallery() {
 
             {selectedItem && !isPhoneResultsLayout && (
               <ResultPreview
-                key={selectedItem.id}
+                key={`${activeFilter}-${selectedItem.id}`}
                 item={selectedItem}
                 src={previewSrc}
                 open={overlayOpen}

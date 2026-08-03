@@ -609,12 +609,12 @@
 
 .result-preview.result-preview--modal .result-presentation > .result-media {
   min-height: 0;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
 }
 
 .result-preview.result-preview--modal .result-presentation .result-preview-overlay {
-  min-height: clamp(9rem, 33%, 17rem);
-  flex: 1 1 0;
+  min-height: 0;
+  flex: 0 1 auto;
   overflow: hidden;
 }
 
@@ -622,8 +622,9 @@
 .result-presentation.result-presentation--bounded-story
 .result-preview-overlay {
   height: auto !important;
-  min-height: clamp(12rem, 40%, 18rem);
-  flex: 1 1 40%;
+  min-height: 0;
+  max-height: 50%;
+  flex: 0 0 auto;
 }
 
 .result-preview.result-preview--modal .result-presentation .result-overlay-scroll {
@@ -637,8 +638,9 @@
 }
 
 .result-preview.result-preview--modal .result-presentation .result-overlay-story-anchor {
-  height: 100%;
+  height: auto;
   min-height: 0;
+  flex: 0 0 auto;
 }
 
 .result-preview--modal .result-preview-hide {

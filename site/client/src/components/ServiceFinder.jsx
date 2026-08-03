@@ -9,7 +9,13 @@ import {
   FIND_YOUR_FIT_HISTORY_KEY,
   getLastFindYourFitTrigger,
 } from './FindYourFitLink'
-import { evaluateFinder, FINDER_QUESTIONS } from '../utils/qualification'
+import {
+  clearServiceQualification,
+  evaluateFinder,
+  getFinderQuestions,
+  markServiceQualified,
+  pruneFinderAnswers,
+} from '../utils/qualification'
 
 const FOCUSABLE = [
   'a[href]',
@@ -24,8 +30,10 @@ export default function ServiceFinder({ services = [], loading = false, error = 
   const [result, setResult] = useState({ status: 'locked' })
   const dialogRef = useRef(null)
   const resultRef = useRef(null)
+  const questionRef = useRef(null)
   const openerRef = useRef(null)
   const previousPathnameRef = useRef(null)
+  const finderQualifiedSlugRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
@@ -34,8 +42,9 @@ export default function ServiceFinder({ services = [], loading = false, error = 
   const recommendation = result.recommendationSlug
     ? services.find((service) => service.slug === result.recommendationSlug)
     : null
-  const currentQuestion = FINDER_QUESTIONS[step]
-  const progress = ((step + 1) / FINDER_QUESTIONS.length) * 100
+  const questions = getFinderQuestions(answers)
+  const currentQuestion = questions[step]
+  const progress = ((step + 1) / questions.length) * 100
 
   const restart = useCallback(() => {
     setAnswers({})
@@ -135,24 +144,50 @@ export default function ServiceFinder({ services = [], loading = false, error = 
   }, [closeFinder, isOpen])
 
   useEffect(() => {
-    if (result.status === 'recommended') resultRef.current?.focus()
+    if (result.status === 'recommended' || result.status === 'consult') {
+      resultRef.current?.focus()
+    }
   }, [result.status])
+
+  useEffect(() => {
+    if (!isOpen || result.status !== 'locked') return undefined
+
+    const frame = requestAnimationFrame(() => questionRef.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [isOpen, result.status, step])
+
+  const chooseAnswer = (questionId, value) => {
+    setAnswers((current) => pruneFinderAnswers({ ...current, [questionId]: value }))
+  }
 
   const submitStep = (event) => {
     event.preventDefault()
     if (!answers[currentQuestion.id]) return
 
-    if (step < FINDER_QUESTIONS.length - 1) {
+    if (step < questions.length - 1) {
       setStep((current) => current + 1)
       return
     }
 
-    setResult(evaluateFinder(answers))
+    const nextResult = evaluateFinder(answers)
+    const previouslyQualifiedSlug = finderQualifiedSlugRef.current
+
+    if (previouslyQualifiedSlug && previouslyQualifiedSlug !== nextResult.qualifiesSlug) {
+      clearServiceQualification(previouslyQualifiedSlug)
+      finderQualifiedSlugRef.current = null
+    }
+
+    if (nextResult.qualifiesSlug) {
+      markServiceQualified(nextResult.qualifiesSlug)
+      finderQualifiedSlugRef.current = nextResult.qualifiesSlug
+    }
+
+    setResult(nextResult)
   }
 
   const editAnswers = () => {
     setResult({ status: 'locked' })
-    setStep(FINDER_QUESTIONS.length - 1)
+    setStep(questions.length - 1)
   }
 
   const dialogMotion = shouldReduceMotion
@@ -193,7 +228,11 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                   <div>
                     <span className="eyebrow">Find Your Fit</span>
                     <h2 id="service-finder-modal-title">
-                      {result.status === 'recommended' ? 'Your best starting point.' : 'Start in the right room.'}
+                      {result.status === 'recommended'
+                        ? 'Your best starting point.'
+                        : result.status === 'consult'
+                          ? 'A conversation is the right next step.'
+                          : 'Start with what you actually need.'}
                     </h2>
                   </div>
                   <button
@@ -211,7 +250,7 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                     <form className="service-finder-step" onSubmit={submitStep}>
                       <div className="service-finder-progress">
                         <div className="service-finder-progress-meta">
-                          <span>Question {step + 1} of {FINDER_QUESTIONS.length}</span>
+                          <span>Question {step + 1} of {questions.length}</span>
                           <span>{Math.round(progress)}%</span>
                         </div>
                         <div className="service-finder-progress-track" aria-hidden="true">
@@ -219,7 +258,11 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                         </div>
                       </div>
 
-                      <fieldset className="service-finder-question">
+                      <fieldset
+                        ref={questionRef}
+                        className="service-finder-question"
+                        tabIndex={-1}
+                      >
                         <legend>{currentQuestion.prompt}</legend>
                         <div className="service-finder-options">
                           {currentQuestion.options.map((option) => {
@@ -232,12 +275,7 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                                   name={`finder-${currentQuestion.id}`}
                                   value={option.value}
                                   checked={answers[currentQuestion.id] === option.value}
-                                  onChange={() => {
-                                    setAnswers((current) => ({
-                                      ...current,
-                                      [currentQuestion.id]: option.value,
-                                    }))
-                                  }}
+                                  onChange={() => chooseAnswer(currentQuestion.id, option.value)}
                                 />
                                 <span className="service-finder-option-mark" aria-hidden="true" />
                                 <span>{option.label}</span>
@@ -263,7 +301,7 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                           className="btn btn-primary btn-lg"
                           disabled={!answers[currentQuestion.id]}
                         >
-                          {step === FINDER_QUESTIONS.length - 1 ? 'Show My Best Match' : 'Continue'}
+                          {step === questions.length - 1 ? 'Show My Best Match' : 'Continue'}
                           <JourneyIcon name="arrowRight" size={18} />
                         </button>
                       </div>
@@ -271,16 +309,33 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                   ) : (
                     <div
                       ref={resultRef}
-                      className="service-finder-result"
+                      className={`service-finder-result service-finder-result--${result.status}`}
                       tabIndex={-1}
                       aria-live="polite"
                     >
-                      <span className="service-finder-result-label">Your recommended path</span>
+                      <span className="service-finder-result-label">
+                        {result.status === 'consult' ? 'Your next step' : 'Your recommended path'}
+                      </span>
                       <h3>
-                        {recommendation?.name ||
-                          (loading ? 'Loading your match…' : 'Your match is ready.')}
+                        {result.status === 'consult'
+                          ? 'Talk it through with Jake'
+                          : recommendation?.name ||
+                            (loading ? 'Loading your match…' : 'Your match is ready.')}
                       </h3>
                       <p>{result.reason}</p>
+                      {result.evidence?.length > 0 && (
+                        <ul
+                          className="service-finder-result-reasons"
+                          aria-label="Why this is your next step"
+                        >
+                          {result.evidence.map((reason) => (
+                            <li key={reason}>
+                              <JourneyIcon name="check" size={16} />
+                              <span>{reason}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                       {recommendation && (
                         <p className="service-finder-result-detail">{recommendation.tagline}</p>
                       )}
@@ -294,13 +349,26 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                             <JourneyIcon name="arrowRight" size={18} />
                           </Link>
                         )}
-                        {!recommendation && !loading && (
+                        {result.status === 'consult' && (
+                          <Link
+                            className="btn btn-primary btn-lg"
+                            to={{
+                              pathname: '/contact',
+                              search: '?service=unsure',
+                              hash: '#contact-enquiry',
+                            }}
+                          >
+                            Ask Jake Directly
+                            <JourneyIcon name="message" size={18} />
+                          </Link>
+                        )}
+                        {result.status === 'recommended' && !recommendation && !loading && (
                           <Link className="btn btn-primary btn-lg" to="/services">
                             View All Services
                             <JourneyIcon name="arrowRight" size={18} />
                           </Link>
                         )}
-                        {error && (
+                        {result.status === 'recommended' && error && (
                           <p className="service-finder-result-detail" role="status">
                             We could not load the service details. You can still compare every
                             coaching option on the Services page.
@@ -308,7 +376,7 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                         )}
                         <button type="button" className="qualification-edit" onClick={editAnswers}>
                           <JourneyIcon name="arrowLeft" size={17} />
-                          Change last answer
+                          Change answers
                         </button>
                         <button type="button" className="qualification-edit" onClick={restart}>
                           <JourneyIcon name="refresh" size={17} />

@@ -4711,11 +4711,14 @@ p  { line-height: 1.7; color: var(--color-text); }
   outline: none;
 }
 
-.qualification-question:focus,
-.service-finder-question:focus {
+.qualification-question:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: 6px;
   border-radius: var(--radius-sm);
+}
+
+.service-finder-question:focus {
+  outline: none;
 }
 
 .qualification-question legend,
@@ -5150,6 +5153,40 @@ p  { line-height: 1.7; color: var(--color-text); }
   max-width: 42rem;
   color: #aaa;
   line-height: 1.7;
+}
+
+.service-finder-result--consult {
+  border-color: rgba(250, 128, 114, 0.34);
+  background:
+    linear-gradient(145deg, rgba(250, 128, 114, 0.1), rgba(255, 255, 255, 0.025)),
+    rgba(6, 8, 9, 0.3);
+}
+
+.service-finder-result-reasons {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+  margin-top: var(--space-6);
+}
+
+.service-finder-result-reasons li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  color: #d0d4d5;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.service-finder-result-reasons svg {
+  margin-top: 0.18rem;
+  color: var(--svc-accent);
+}
+
+.service-finder-result--consult .service-finder-result-label,
+.service-finder-result--consult .service-finder-result-reasons svg {
+  color: var(--color-hover-accent);
 }
 
 .service-finder-result-detail {

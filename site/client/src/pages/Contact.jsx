@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import ContactMediaReel from '../components/ContactMediaReel'
 import ContactSocialCarousel from '../components/ContactSocialCarousel'
 import FindYourFitLink from '../components/FindYourFitLink'
@@ -32,6 +32,15 @@ const SERVICES = [
     description: 'Focused presentation, transitions, and stage presence.',
   },
 ]
+
+const CONTACT_SERVICE_VALUES = new Set([
+  'competition-prep',
+  'online-coaching',
+  'personal-training',
+  'posing-only',
+  'unsure',
+  'general',
+])
 
 const SOCIAL_POSTS = [
   {
@@ -87,6 +96,9 @@ const SOCIAL_POSTS = [
 
 export default function Contact() {
   const resolveAsset = useAssets()
+  const [searchParams] = useSearchParams()
+  const requestedService = searchParams.get('service')
+  const initialService = CONTACT_SERVICE_VALUES.has(requestedService) ? requestedService : ''
 
   return (
     <div className="contact-page">
@@ -298,7 +310,13 @@ export default function Contact() {
                 <label className="form-label" htmlFor="contact-service">
                   Interested In
                 </label>
-                <select className="form-input form-select" id="contact-service" name="service">
+                <select
+                  key={initialService || 'empty'}
+                  className="form-input form-select"
+                  id="contact-service"
+                  name="service"
+                  defaultValue={initialService}
+                >
                   <option value="">Select a service&hellip;</option>
                   <option value="competition-prep">Competition Preparation</option>
                   <option value="online-coaching">Online Coaching</option>

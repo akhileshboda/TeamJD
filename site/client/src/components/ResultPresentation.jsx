@@ -1,4 +1,10 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+} from 'motion/react'
 import {
   useCallback,
   useEffect,
@@ -14,9 +20,17 @@ const DESKTOP_PRESENTATION_QUERY = '(min-width: 1025px)'
 const GESTURE_THRESHOLD = 2
 const WHEEL_SETTLE_DELAY_MS = 120
 const RESTING_RATIO = 0.55
-const BOUNDED_STORY_RATIO = 0.64
-const BOUNDED_STORY_MIN_PX = 19 * 16
-const BOUNDED_STORY_MAX_PX = 27 * 16
+const BOUNDED_STORY_RATIO = 0.512
+const BOUNDED_STORY_MIN_PX = 15.2 * 16
+const BOUNDED_STORY_MAX_PX = 21.6 * 16
+const STORY_SPRING = {
+  type: 'spring',
+  stiffness: 500,
+  damping: 50,
+  mass: 0.7,
+  restDelta: 0.5,
+  restSpeed: 10,
+}
 
 function StoryIcon() {
   return (
@@ -79,6 +93,44 @@ export function getBoundedStoryOverlayHeight(frameHeight) {
   )
 }
 
+export function getProgressiveStoryOverlayGeometry({
+  frameHeight,
+  storyHeight,
+  headerHeight,
+  currentHeight,
+}) {
+  const roundHeight = (value) => Math.round(value * 100) / 100
+  const safeFrameHeight = Math.max(0, frameHeight)
+  const safeStoryHeight = Math.max(0, storyHeight)
+  const safeHeaderHeight = Math.max(0, headerHeight)
+  const restingHeight = roundHeight(getBoundedStoryOverlayHeight(safeFrameHeight))
+  const maximumHeight = roundHeight(Math.min(
+    safeFrameHeight,
+    Math.max(restingHeight, safeHeaderHeight + safeStoryHeight),
+  ))
+  const requestedHeight = currentHeight ?? restingHeight
+  const displayHeight = roundHeight(Math.min(
+    maximumHeight,
+    Math.max(restingHeight, requestedHeight),
+  ))
+  const availableStoryHeight = Math.max(0, displayHeight - safeHeaderHeight)
+  const canExpand = displayHeight < maximumHeight - 1
+  const hasOverflow = !canExpand && safeStoryHeight > availableStoryHeight + 1
+
+  return {
+    frameHeight: safeFrameHeight,
+    storyHeight: safeStoryHeight,
+    headerHeight: safeHeaderHeight,
+    restingHeight,
+    maximumHeight,
+    minimumHeight: restingHeight,
+    displayHeight,
+    canExpand,
+    hasOverflow,
+    progressive: true,
+  }
+}
+
 function useOverflowResultOverlay({
   active,
   gesturesActive,
@@ -86,17 +138,171 @@ function useOverflowResultOverlay({
   isModal,
   bounded,
   boundedDesktop,
+  shouldReduceMotion,
 }) {
   const [geometry, setGeometry] = useState(() => getStoryOverlayGeometry(0, 0))
   const [scrollLocked, setScrollLocked] = useState(false)
+  const [revealSettled, setRevealSettled] = useState(true)
   const overlayRef = useRef(null)
+  const headerRef = useRef(null)
   const scrollRef = useRef(null)
   const storyMeasureRef = useRef(null)
   const geometryRef = useRef(geometry)
+  const visualHeight = useMotionValue(0)
+  const smoothScrollPosition = useMotionValue(0)
+  const heightAnimationRef = useRef(null)
+  const scrollAnimationRef = useRef(null)
+  const heightAnimationIdRef = useRef(0)
+  const scrollAnimationIdRef = useRef(0)
+  const revealSettledRef = useRef(true)
+  const scrollSettledRef = useRef(true)
+  const scrollTargetRef = useRef(0)
+  const pendingScrollDeltaRef = useRef(0)
+  const flushPendingScrollRef = useRef(() => {})
   const releaseTimerRef = useRef(null)
   const touchYRef = useRef(null)
   const wheelSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
   const touchSessionRef = useRef({ active: false, direction: 0, owner: 'page' })
+
+  const setRevealSettlement = useCallback((settled) => {
+    revealSettledRef.current = settled
+    setRevealSettled(settled)
+  }, [])
+
+  const getScrollMax = useCallback(() => {
+    const current = geometryRef.current
+    if (current.progressive) {
+      return Math.max(
+        0,
+        current.storyHeight - Math.max(0, current.maximumHeight - current.headerHeight),
+      )
+    }
+    const scroll = scrollRef.current
+    return scroll ? Math.max(0, scroll.scrollHeight - scroll.clientHeight) : 0
+  }, [])
+
+  const stopHeightAnimation = useCallback(() => {
+    heightAnimationIdRef.current += 1
+    heightAnimationRef.current?.stop()
+    heightAnimationRef.current = null
+  }, [])
+
+  const stopScrollAnimation = useCallback(() => {
+    scrollAnimationIdRef.current += 1
+    scrollAnimationRef.current?.stop()
+    scrollAnimationRef.current = null
+  }, [])
+
+  const setVisualHeight = useCallback((value) => {
+    visualHeight.set(value)
+    if (boundedDesktop && overlayRef.current) {
+      overlayRef.current.style.height = `${value}px`
+    }
+  }, [boundedDesktop, visualHeight])
+
+  const syncScrollPosition = useCallback((value = 0) => {
+    stopScrollAnimation()
+    const nextValue = Math.min(getScrollMax(), Math.max(0, value))
+    scrollTargetRef.current = nextValue
+    scrollSettledRef.current = true
+    smoothScrollPosition.set(nextValue)
+    if (scrollRef.current) scrollRef.current.scrollTop = nextValue
+  }, [getScrollMax, smoothScrollPosition, stopScrollAnimation])
+
+  const animateScrollTo = useCallback((target, { immediate = false } = {}) => {
+    const scroll = scrollRef.current
+    if (!scroll) return 0
+
+    const nextTarget = Math.min(getScrollMax(), Math.max(0, target))
+    scrollTargetRef.current = nextTarget
+    stopScrollAnimation()
+
+    if (immediate || shouldReduceMotion) {
+      scrollSettledRef.current = true
+      smoothScrollPosition.set(nextTarget)
+      scroll.scrollTop = nextTarget
+      return nextTarget
+    }
+
+    const currentPosition = scrollSettledRef.current
+      ? scroll.scrollTop
+      : smoothScrollPosition.get()
+    if (scrollSettledRef.current && Math.abs(smoothScrollPosition.get() - currentPosition) > 1) {
+      smoothScrollPosition.set(currentPosition)
+    }
+    if (Math.abs(nextTarget - currentPosition) <= 1) {
+      scrollSettledRef.current = true
+      scroll.scrollTop = nextTarget
+      return nextTarget
+    }
+
+    scrollSettledRef.current = false
+    const animationId = ++scrollAnimationIdRef.current
+    let completedSynchronously = false
+    const scrollAnimation = animate(smoothScrollPosition, nextTarget, {
+      ...STORY_SPRING,
+      onComplete: () => {
+        if (scrollAnimationIdRef.current !== animationId) return
+        completedSynchronously = true
+        scrollAnimationRef.current = null
+        scrollSettledRef.current = true
+        smoothScrollPosition.set(nextTarget)
+        if (scrollRef.current) scrollRef.current.scrollTop = nextTarget
+      },
+    })
+    scrollAnimationRef.current = completedSynchronously ? null : scrollAnimation
+    return nextTarget
+  }, [getScrollMax, shouldReduceMotion, smoothScrollPosition, stopScrollAnimation])
+
+  const applySmoothScrollDelta = useCallback((delta) => {
+    const currentTarget = scrollSettledRef.current
+      ? scrollRef.current?.scrollTop ?? scrollTargetRef.current
+      : scrollTargetRef.current
+    return animateScrollTo(currentTarget + delta)
+  }, [animateScrollTo])
+
+  const finishReveal = useCallback((targetHeight) => {
+    stopHeightAnimation()
+    setVisualHeight(targetHeight)
+    setRevealSettlement(true)
+    flushPendingScrollRef.current()
+  }, [setRevealSettlement, setVisualHeight, stopHeightAnimation])
+
+  const animateHeightTo = useCallback((targetHeight, { immediate = false } = {}) => {
+    stopHeightAnimation()
+    if (immediate || shouldReduceMotion) {
+      finishReveal(targetHeight)
+      return
+    }
+
+    if (Math.abs(targetHeight - visualHeight.get()) <= 1) {
+      finishReveal(targetHeight)
+      return
+    }
+
+    setRevealSettlement(false)
+    const animationId = ++heightAnimationIdRef.current
+    let completedSynchronously = false
+    const heightAnimation = animate(visualHeight, targetHeight, {
+      ...STORY_SPRING,
+      onComplete: () => {
+        if (heightAnimationIdRef.current !== animationId) return
+        completedSynchronously = true
+        heightAnimationRef.current = null
+        setVisualHeight(targetHeight)
+        setRevealSettlement(true)
+        flushPendingScrollRef.current()
+      },
+    })
+    heightAnimationRef.current = completedSynchronously ? null : heightAnimation
+  }, [
+    finishReveal,
+    setRevealSettlement,
+    setVisualHeight,
+    shouldReduceMotion,
+    stopHeightAnimation,
+    visualHeight,
+  ])
 
   const clearGestureOwnership = useCallback(() => {
     if (releaseTimerRef.current) {
@@ -111,18 +317,83 @@ function useOverflowResultOverlay({
 
   const reset = useCallback(() => {
     clearGestureOwnership()
-    if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [clearGestureOwnership])
+    pendingScrollDeltaRef.current = 0
+    syncScrollPosition(0)
+
+    const current = geometryRef.current
+    if (current.progressive) {
+      const nextGeometry = getProgressiveStoryOverlayGeometry({
+        frameHeight: current.frameHeight,
+        storyHeight: current.storyHeight,
+        headerHeight: current.headerHeight,
+        currentHeight: current.restingHeight,
+      })
+      geometryRef.current = nextGeometry
+      setGeometry(nextGeometry)
+      animateHeightTo(nextGeometry.restingHeight, { immediate: true })
+    } else {
+      stopHeightAnimation()
+    }
+  }, [animateHeightTo, clearGestureOwnership, stopHeightAnimation, syncScrollPosition])
+
+  const expandBy = useCallback((delta, { smooth = true } = {}) => {
+    const current = geometryRef.current
+    if (!current.progressive || !current.canExpand || delta <= 0) return 0
+
+    const requestedGrowth = Math.min(delta, current.maximumHeight - current.displayHeight)
+    if (requestedGrowth <= 0) return 0
+
+    const nextGeometry = getProgressiveStoryOverlayGeometry({
+      frameHeight: current.frameHeight,
+      storyHeight: current.storyHeight,
+      headerHeight: current.headerHeight,
+      currentHeight: current.displayHeight + requestedGrowth,
+    })
+    const growth = nextGeometry.displayHeight - current.displayHeight
+    geometryRef.current = nextGeometry
+    setGeometry(nextGeometry)
+    animateHeightTo(nextGeometry.displayHeight, { immediate: !smooth })
+    return growth
+  }, [animateHeightTo])
+
+  flushPendingScrollRef.current = () => {
+    const pendingDelta = pendingScrollDeltaRef.current
+    pendingScrollDeltaRef.current = 0
+    if (pendingDelta <= GESTURE_THRESHOLD || !geometryRef.current.hasOverflow) return
+    applySmoothScrollDelta(pendingDelta)
+  }
+
+  useLayoutEffect(() => visualHeight.on('change', (latest) => {
+    if (boundedDesktop && overlayRef.current) {
+      overlayRef.current.style.height = `${latest}px`
+    }
+  }), [boundedDesktop, visualHeight])
+
+  useEffect(() => smoothScrollPosition.on('change', (latest) => {
+    if (scrollRef.current) scrollRef.current.scrollTop = latest
+  }), [smoothScrollPosition])
+
+  useEffect(() => {
+    if (!shouldReduceMotion) return
+    const current = geometryRef.current
+    if (current.progressive) finishReveal(current.displayHeight)
+    syncScrollPosition(scrollTargetRef.current)
+  }, [finishReveal, shouldReduceMotion, syncScrollPosition])
 
   useLayoutEffect(() => {
     if (!active) {
       clearGestureOwnership()
+      pendingScrollDeltaRef.current = 0
+      stopHeightAnimation()
+      stopScrollAnimation()
+      setRevealSettlement(true)
       return undefined
     }
 
     const frame = frameRef.current
     const storyMeasure = storyMeasureRef.current
     const overlay = overlayRef.current
+    const header = headerRef.current
     const scroll = scrollRef.current
     if (!frame || !storyMeasure || !overlay || !scroll) return undefined
 
@@ -135,10 +406,20 @@ function useOverflowResultOverlay({
       if (frameHeight <= 0) return
 
       let nextGeometry
-      if (bounded) {
-        const displayHeight = boundedDesktop
-          ? getBoundedStoryOverlayHeight(frameHeight)
-          : overlay.clientHeight || overlay.getBoundingClientRect().height
+      if (boundedDesktop) {
+        const previous = geometryRef.current
+        const wasResting = (
+          !previous.progressive
+          || previous.displayHeight <= previous.restingHeight + 1
+        )
+        nextGeometry = getProgressiveStoryOverlayGeometry({
+          frameHeight,
+          storyHeight,
+          headerHeight: header?.clientHeight || header?.getBoundingClientRect().height || 0,
+          currentHeight: wasResting ? undefined : previous.displayHeight,
+        })
+      } else if (bounded) {
+        const displayHeight = overlay.clientHeight || overlay.getBoundingClientRect().height
         const availableStoryHeight = scroll.clientHeight || displayHeight
         const scrollHeight = scroll.scrollHeight || storyHeight
 
@@ -147,24 +428,44 @@ function useOverflowResultOverlay({
           storyHeight: scrollHeight,
           minimumHeight: displayHeight,
           displayHeight,
+          canExpand: false,
           hasOverflow: scrollHeight > availableStoryHeight + 1,
+          progressive: false,
         }
       } else {
-        nextGeometry = getStoryOverlayGeometry(frameHeight, storyHeight)
+        nextGeometry = {
+          ...getStoryOverlayGeometry(frameHeight, storyHeight),
+          canExpand: false,
+          progressive: false,
+        }
       }
 
-      geometryRef.current = nextGeometry
-      setGeometry((current) => (
+      const current = geometryRef.current
+      const geometryUnchanged = (
         current.frameHeight === nextGeometry.frameHeight
         && current.storyHeight === nextGeometry.storyHeight
+        && current.headerHeight === nextGeometry.headerHeight
+        && current.restingHeight === nextGeometry.restingHeight
+        && current.maximumHeight === nextGeometry.maximumHeight
         && current.minimumHeight === nextGeometry.minimumHeight
         && current.displayHeight === nextGeometry.displayHeight
+        && current.canExpand === nextGeometry.canExpand
         && current.hasOverflow === nextGeometry.hasOverflow
-          ? current
-          : nextGeometry
-      ))
-      clearGestureOwnership()
-      if (scrollRef.current) scrollRef.current.scrollTop = 0
+      )
+      if (geometryUnchanged) return
+
+      geometryRef.current = nextGeometry
+      setGeometry(nextGeometry)
+      pendingScrollDeltaRef.current = 0
+      if (boundedDesktop) {
+        clearGestureOwnership()
+        animateHeightTo(nextGeometry.displayHeight, { immediate: true })
+        syncScrollPosition(scrollRef.current?.scrollTop ?? 0)
+      } else {
+        clearGestureOwnership()
+        stopHeightAnimation()
+        syncScrollPosition(0)
+      }
     }
 
     measure()
@@ -176,17 +477,36 @@ function useOverflowResultOverlay({
 
     const observer = new ResizeObserver(measure)
     observer.observe(frame)
-    observer.observe(overlay)
-    observer.observe(scroll)
-    observer.observe(storyMeasure)
+    if (header) observer.observe(header)
+    if (!boundedDesktop) {
+      observer.observe(overlay)
+      observer.observe(scroll)
+      observer.observe(storyMeasure)
+    }
 
     return () => {
       observer.disconnect()
       window.removeEventListener('resize', measure)
     }
-  }, [active, bounded, boundedDesktop, clearGestureOwnership, frameRef])
+  }, [
+    active,
+    animateHeightTo,
+    bounded,
+    boundedDesktop,
+    clearGestureOwnership,
+    frameRef,
+    setRevealSettlement,
+    stopHeightAnimation,
+    stopScrollAnimation,
+    syncScrollPosition,
+  ])
 
-  useEffect(() => () => clearGestureOwnership(), [clearGestureOwnership])
+  useEffect(() => () => {
+    clearGestureOwnership()
+    pendingScrollDeltaRef.current = 0
+    stopHeightAnimation()
+    stopScrollAnimation()
+  }, [clearGestureOwnership, stopHeightAnimation, stopScrollAnimation])
 
   useEffect(() => {
     if (!gesturesActive) return undefined
@@ -204,24 +524,31 @@ function useOverflowResultOverlay({
       return {
         scroll,
         scrollTop: scroll?.scrollTop ?? 0,
-        scrollMax: scroll
-          ? Math.max(0, scroll.scrollHeight - scroll.clientHeight)
-          : 0,
+        scrollTarget: scrollSettledRef.current
+          ? scroll?.scrollTop ?? scrollTargetRef.current
+          : scrollTargetRef.current,
+        scrollMax: getScrollMax(),
       }
     }
 
-    const canConsume = (direction) => {
-      if (!geometryRef.current.hasOverflow) return false
-      const { scrollTop, scrollMax } = getScrollMetrics()
-      return direction > 0 ? scrollTop < scrollMax - 1 : scrollTop > 1
+    const canConsume = (direction, smooth) => {
+      if (!geometryRef.current.hasOverflow || !revealSettledRef.current) return false
+      const { scrollTop, scrollTarget, scrollMax } = getScrollMetrics()
+      const position = smooth ? scrollTarget : scrollTop
+      const isMoving = smooth && !scrollSettledRef.current
+      return direction > 0
+        ? position < scrollMax - 1 || isMoving
+        : position > 1 || isMoving
     }
 
-    const applyDelta = (deltaY) => {
-      const { scroll, scrollTop, scrollMax } = getScrollMetrics()
+    const applyDelta = (deltaY, smooth) => {
+      const { scroll, scrollTop } = getScrollMetrics()
       if (!scroll) return
-      scroll.scrollTop = deltaY > 0
-        ? Math.min(scrollMax, scrollTop + deltaY)
-        : Math.max(0, scrollTop + deltaY)
+      if (smooth) {
+        applySmoothScrollDelta(deltaY)
+      } else {
+        animateScrollTo(scrollTop + deltaY, { immediate: true })
+      }
     }
 
     const syncScrollLock = () => {
@@ -236,10 +563,13 @@ function useOverflowResultOverlay({
       setScrollLocked(wheelLocked || touchLocked)
     }
 
-    const claimSession = (sessionRef, direction) => {
-      const owner = !geometryRef.current.hasOverflow
-        ? 'page'
-        : canConsume(direction)
+    const claimSession = (sessionRef, direction, smooth) => {
+      const owner = direction > 0 && (
+        geometryRef.current.canExpand
+        || !revealSettledRef.current
+      )
+        ? 'reveal'
+        : geometryRef.current.hasOverflow && canConsume(direction, smooth)
           ? 'story'
           : isModal
             ? 'modal'
@@ -249,12 +579,55 @@ function useOverflowResultOverlay({
       return owner
     }
 
-    const resolveSessionOwner = (sessionRef, direction) => {
+    const resolveSessionOwner = (sessionRef, direction, smooth) => {
       const session = sessionRef.current
-      if (!session.active || session.direction !== direction) {
-        return claimSession(sessionRef, direction)
+      if (
+        !session.active
+        || session.direction !== direction
+        || (
+          session.owner === 'reveal'
+          && !geometryRef.current.canExpand
+          && revealSettledRef.current
+        )
+        || (session.owner === 'story' && !canConsume(direction, smooth))
+      ) {
+        return claimSession(sessionRef, direction, smooth)
       }
       return session.owner
+    }
+
+    const consumeDelta = (sessionRef, deltaY, { smooth }) => {
+      let owner = resolveSessionOwner(sessionRef, Math.sign(deltaY), smooth)
+      let consumed = false
+
+      if (owner === 'reveal' && deltaY > 0) {
+        const growth = geometryRef.current.canExpand
+          ? expandBy(deltaY, { smooth })
+          : 0
+        consumed = growth > 0
+        const remainder = deltaY - growth
+
+        if (smooth && !revealSettledRef.current) {
+          pendingScrollDeltaRef.current += Math.max(0, remainder)
+          consumed = true
+        } else if (remainder > GESTURE_THRESHOLD && !geometryRef.current.canExpand) {
+          if (geometryRef.current.hasOverflow && canConsume(1, smooth)) {
+            applyDelta(remainder, smooth)
+            owner = 'story'
+          } else {
+            owner = 'page'
+          }
+          sessionRef.current = { active: true, direction: 1, owner }
+          syncScrollLock()
+        }
+      } else if (owner === 'story') {
+        applyDelta(deltaY, smooth)
+        consumed = true
+      } else if (owner === 'modal') {
+        consumed = true
+      }
+
+      return consumed || owner !== 'page'
     }
 
     const scheduleWheelRelease = () => {
@@ -276,14 +649,19 @@ function useOverflowResultOverlay({
       const deltaY = event.deltaY * multiplier
       if (Math.abs(deltaY) < GESTURE_THRESHOLD) return
 
-      const owner = resolveSessionOwner(wheelSessionRef, Math.sign(deltaY))
-      if (owner === 'story') applyDelta(deltaY)
-      if (owner !== 'page') event.preventDefault()
+      if (consumeDelta(wheelSessionRef, deltaY, { smooth: true })) event.preventDefault()
       scheduleWheelRelease()
     }
 
     const handleTouchStart = (event) => {
       if (isControlTarget(event.target)) return
+      pendingScrollDeltaRef.current = 0
+      stopHeightAnimation()
+      if (geometryRef.current.progressive) {
+        setVisualHeight(geometryRef.current.displayHeight)
+        setRevealSettlement(true)
+      }
+      syncScrollPosition(scrollRef.current?.scrollTop ?? 0)
       touchYRef.current = event.touches[0]?.clientY ?? null
       touchSessionRef.current = { active: false, direction: 0, owner: 'page' }
       syncScrollLock()
@@ -297,9 +675,7 @@ function useOverflowResultOverlay({
       touchYRef.current = currentY
       if (Math.abs(deltaY) < GESTURE_THRESHOLD) return
 
-      const owner = resolveSessionOwner(touchSessionRef, Math.sign(deltaY))
-      if (owner === 'story') applyDelta(deltaY)
-      if (owner !== 'page') event.preventDefault()
+      if (consumeDelta(touchSessionRef, deltaY, { smooth: false })) event.preventDefault()
     }
 
     const handleTouchEnd = () => {
@@ -321,16 +697,26 @@ function useOverflowResultOverlay({
       frame.removeEventListener('touchend', handleTouchEnd)
       frame.removeEventListener('touchcancel', handleTouchEnd)
     }
-  }, [frameRef, gesturesActive, isModal])
+  }, [
+    animateScrollTo,
+    applySmoothScrollDelta,
+    expandBy,
+    frameRef,
+    gesturesActive,
+    getScrollMax,
+    isModal,
+    setRevealSettlement,
+    stopHeightAnimation,
+    syncScrollPosition,
+    setVisualHeight,
+    visualHeight,
+  ])
 
   const handleKeyDown = useCallback((event) => {
-    if (event.target !== event.currentTarget || !geometryRef.current.hasOverflow) return
+    if (event.target !== event.currentTarget) return
 
     const scroll = scrollRef.current
     if (!scroll) return
-    const scrollMax = Math.max(0, scroll.scrollHeight - scroll.clientHeight)
-    const atTop = scroll.scrollTop <= 1
-    const atBottom = scroll.scrollTop >= scrollMax - 1
     const isDownward = (
       event.key === 'ArrowDown'
       || event.key === 'PageDown'
@@ -342,42 +728,83 @@ function useOverflowResultOverlay({
       || (event.key === ' ' && event.shiftKey)
     )
 
+    if (isDownward && (
+      geometryRef.current.canExpand
+      || !revealSettledRef.current
+    )) {
+      const step = event.key === 'ArrowDown' ? 48 : scroll.clientHeight * 0.8
+      const growth = geometryRef.current.canExpand
+        ? expandBy(step, { smooth: true })
+        : 0
+      const remainder = step - growth
+      event.preventDefault()
+      if (!revealSettledRef.current) {
+        pendingScrollDeltaRef.current += Math.max(0, remainder)
+      } else if (remainder > GESTURE_THRESHOLD && geometryRef.current.hasOverflow) {
+        applySmoothScrollDelta(remainder)
+      }
+      return
+    }
+
+    if (!geometryRef.current.hasOverflow || !revealSettledRef.current) return
+
+    const scrollMax = getScrollMax()
+    const scrollTarget = scrollSettledRef.current
+      ? scroll.scrollTop
+      : scrollTargetRef.current
+    const atTop = scrollTarget <= 1 && scrollSettledRef.current
+    const atBottom = scrollTarget >= scrollMax - 1 && scrollSettledRef.current
+
     if (isDownward && !atBottom) {
       event.preventDefault()
       const step = event.key === 'ArrowDown' ? 48 : scroll.clientHeight * 0.8
-      scroll.scrollTop = Math.min(scrollMax, scroll.scrollTop + step)
+      applySmoothScrollDelta(step)
       return
     }
 
     if (isUpward && !atTop) {
       event.preventDefault()
       const step = event.key === 'ArrowUp' ? 48 : scroll.clientHeight * 0.8
-      scroll.scrollTop = Math.max(0, scroll.scrollTop - step)
+      applySmoothScrollDelta(-step)
       return
     }
 
     if (event.key === 'Home' && !atTop) {
       event.preventDefault()
-      scroll.scrollTop = 0
+      animateScrollTo(0)
       return
     }
 
     if (isModal && (isDownward || isUpward || event.key === 'Home')) {
       event.preventDefault()
     }
-  }, [isModal])
+  }, [animateScrollTo, applySmoothScrollDelta, expandBy, getScrollMax, isModal])
 
+  const revealInProgress = Boolean(geometry.progressive && !revealSettled)
   return {
     height: boundedDesktop
       ? geometry.frameHeight > 0
-        ? geometry.displayHeight
-        : 'min(100%, clamp(19rem, 64%, 27rem))'
+        ? visualHeight
+        : 'min(100%, clamp(15.2rem, 51.2%, 21.6rem))'
       : geometry.frameHeight > 0
         ? geometry.displayHeight
         : '55%',
-    scrollMode: geometry.hasOverflow ? 'overflow' : 'fit',
+    scrollMode: geometry.canExpand || revealInProgress
+      ? 'reveal'
+      : geometry.hasOverflow
+        ? 'overflow'
+        : 'fit',
     scrollLocked,
+    canExpand: Boolean(geometry.canExpand || revealInProgress),
+    revealState: geometry.progressive
+      ? geometry.canExpand || revealInProgress
+        ? geometry.displayHeight <= geometry.restingHeight + 1
+          ? 'compact'
+          : 'expanding'
+        : 'revealed'
+      : undefined,
     overlayRef,
+    headerRef,
     scrollRef,
     storyMeasureRef,
     reset,
@@ -405,6 +832,7 @@ export default function ResultPresentation({
   const shouldReduceMotion = useReducedMotion()
   const isDesktop = useDesktopPresentation()
   const frameRef = useRef(null)
+  const previousDesktopRef = useRef(isDesktop)
   const usesBoundedStory = storyLayout === 'bounded'
   const effectiveStoryOpen = isDesktop ? storyOpen : true
   const canToggleStory = allowStoryToggle && isDesktop
@@ -412,7 +840,10 @@ export default function ResultPresentation({
     height,
     scrollMode,
     scrollLocked,
+    canExpand,
+    revealState,
     overlayRef,
+    headerRef,
     scrollRef,
     storyMeasureRef,
     reset,
@@ -424,6 +855,7 @@ export default function ResultPresentation({
     isModal,
     bounded: usesBoundedStory,
     boundedDesktop: usesBoundedStory && isDesktop,
+    shouldReduceMotion,
   })
 
   useEffect(() => {
@@ -436,6 +868,12 @@ export default function ResultPresentation({
   useEffect(() => {
     if (!isDesktop && !storyOpen) onStoryOpenChange?.(true)
   }, [isDesktop, onStoryOpenChange, storyOpen])
+
+  useEffect(() => {
+    const enteredDesktop = isDesktop && !previousDesktopRef.current
+    previousDesktopRef.current = isDesktop
+    if (usesBoundedStory && enteredDesktop) reset()
+  }, [isDesktop, reset, usesBoundedStory])
 
   const setStoryOpen = (nextOpen) => {
     reset()
@@ -473,10 +911,11 @@ export default function ResultPresentation({
           aria-describedby={descriptionId}
           data-scroll-mode={isDesktop || usesBoundedStory ? scrollMode : 'docked'}
           data-scroll-lock={scrollLocked ? 'true' : 'false'}
-          tabIndex={isDesktop && scrollMode === 'overflow' ? 0 : undefined}
+          data-reveal-state={isDesktop && usesBoundedStory ? revealState : undefined}
+          tabIndex={isDesktop && (canExpand || scrollMode === 'overflow') ? 0 : undefined}
           ref={overlayRef}
           onKeyDown={handleKeyDown}
-          style={isDesktop ? { height } : undefined}
+          style={isDesktop && !usesBoundedStory ? { height } : undefined}
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={shouldReduceMotion ? {} : { opacity: 1 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -484,7 +923,7 @@ export default function ResultPresentation({
           <div className="result-overlay-backdrop" aria-hidden="true" />
 
           {usesBoundedStory && (
-            <div className="result-overlay-header">
+            <div className="result-overlay-header" ref={headerRef}>
               <ResultStoryBadge result={result} />
               <div className="result-overlay-header-action">
                 {canToggleStory && (

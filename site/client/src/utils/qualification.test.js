@@ -4,9 +4,11 @@ import {
   clearServiceQualification,
   evaluateFinder,
   evaluateQualification,
+  getFinderQuestions,
   getQualificationStorageKey,
   isServiceQualified,
   markServiceQualified,
+  pruneFinderAnswers,
 } from './qualification'
 
 function service(slug) {
@@ -87,24 +89,92 @@ describe('evaluateQualification', () => {
 })
 
 describe('evaluateFinder', () => {
-  it('requires both finder answers', () => {
-    expect(evaluateFinder({ goal: 'competition' })).toMatchObject({
+  const readyAnswers = {
+    intention: 'physique',
+    support: 'full-coaching',
+    delivery: 'either',
+    readiness: 'ready',
+  }
+
+  it('requires every question on the active branch', () => {
+    expect(evaluateFinder({ intention: 'competition' })).toMatchObject({
       status: 'locked',
-      missingQuestionIds: ['delivery'],
+      missingQuestionIds: [
+        'support',
+        'delivery',
+        'readiness',
+        'training_history',
+        'timeline',
+      ],
     })
   })
 
   it.each([
-    ['competition', 'remote', 'competition-preparation'],
-    ['posing', 'adelaide', 'posing-only'],
-    ['coaching', 'either', 'online-coaching'],
-    ['hands-on', 'adelaide', 'personal-training'],
-    ['hands-on', 'remote', 'online-coaching'],
-  ])('maps %s with %s delivery to %s', (goal, delivery, recommendationSlug) => {
-    expect(evaluateFinder({ goal, delivery })).toMatchObject({
+    [{ ...readyAnswers }, 'online-coaching'],
+    [{ ...readyAnswers, intention: 'posing', support: 'guidance' }, 'posing-only'],
+    [{ ...readyAnswers, support: 'posing' }, 'posing-only'],
+    [{ ...readyAnswers, intention: 'hands-on', support: 'hands-on', delivery: 'adelaide' }, 'personal-training'],
+    [{ ...readyAnswers, intention: 'hands-on', support: 'hands-on', delivery: 'remote' }, 'online-coaching'],
+  ])('maps a completed standard path to %s', (answers, recommendationSlug) => {
+    expect(evaluateFinder(answers)).toMatchObject({
       status: 'recommended',
       recommendationSlug,
     })
+  })
+
+  it('qualifies an experienced, timeline-flexible competition athlete', () => {
+    expect(evaluateFinder({
+      ...readyAnswers,
+      intention: 'competition',
+      training_history: 'one-to-two',
+      timeline: 'yes',
+    })).toMatchObject({
+      status: 'recommended',
+      recommendationSlug: 'competition-preparation',
+      qualifiesSlug: 'competition-preparation',
+    })
+  })
+
+  it.each([
+    ['under-one', 'yes'],
+    ['two-plus', 'no'],
+    ['two-plus', 'unsure'],
+  ])('routes prep candidates with history %s and timeline %s to online coaching', (trainingHistory, timeline) => {
+    expect(evaluateFinder({
+      ...readyAnswers,
+      intention: 'competition',
+      training_history: trainingHistory,
+      timeline,
+    })).toMatchObject({
+      status: 'recommended',
+      recommendationSlug: 'online-coaching',
+    })
+  })
+
+  it.each(['unsure', 'not-ready'])('routes %s coaching readiness to a personal consult', (readiness) => {
+    expect(evaluateFinder({ ...readyAnswers, readiness })).toMatchObject({
+      status: 'consult',
+    })
+  })
+
+  it('adds prep questions only while they are relevant and prunes abandoned answers', () => {
+    const prepAnswers = {
+      ...readyAnswers,
+      intention: 'competition',
+      training_history: 'two-plus',
+      timeline: 'yes',
+    }
+
+    expect(getFinderQuestions(prepAnswers)).toHaveLength(6)
+
+    const posingAnswers = pruneFinderAnswers({
+      ...prepAnswers,
+      support: 'posing',
+    })
+
+    expect(getFinderQuestions(posingAnswers)).toHaveLength(4)
+    expect(posingAnswers).not.toHaveProperty('training_history')
+    expect(posingAnswers).not.toHaveProperty('timeline')
   })
 })
 

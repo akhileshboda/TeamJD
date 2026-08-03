@@ -56,6 +56,12 @@ function choosePassingAnswers(slug) {
   })
 }
 
+function answerFinderQuestion(label) {
+  fireEvent.click(screen.getByLabelText(label, { exact: true }))
+  const continueButton = screen.queryByRole('button', { name: 'Continue' })
+  fireEvent.click(continueButton || screen.getByRole('button', { name: 'Show My Best Match' }))
+}
+
 describe('ServiceQualification', () => {
   it('does not render Calendly before the fit check passes', () => {
     const { container } = renderQualification('competition-preparation')
@@ -189,13 +195,12 @@ describe('ServiceFinder', () => {
 
     fireEvent.click(screen.getByRole('link', { name: /Find My Best Match/ }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Question 1 of 2')).toBeInTheDocument()
-    fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.queryByLabelText('Train with Jake in person', { exact: true })).not.toBeInTheDocument()
-    expect(screen.getByText('Question 2 of 2')).toBeInTheDocument()
-    fireEvent.click(screen.getByLabelText('I can train in Adelaide', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: 'Show My Best Match' }))
+    expect(screen.getByText('Question 1 of 4')).toBeInTheDocument()
+    answerFinderQuestion('Improve my training technique in person')
+    expect(screen.getByText('Question 2 of 4')).toBeInTheDocument()
+    answerFinderQuestion('Face-to-face sessions and technique feedback')
+    answerFinderQuestion('I can train in person in Adelaide')
+    answerFinderQuestion('Ready — I can commit to the process')
 
     expect(await screen.findByRole('heading', { name: 'Personal Training' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Review Personal Training/ })).toHaveAttribute(
@@ -203,6 +208,52 @@ describe('ServiceFinder', () => {
       '/services/personal-training'
     )
     expect(document.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
+  })
+
+  it('uses the six-question path to qualify a competition-prep recommendation', async () => {
+    render(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    answerFinderQuestion('Prepare to compete on stage')
+    expect(screen.getByText('Question 2 of 6')).toBeInTheDocument()
+    answerFinderQuestion('An ongoing training and nutrition plan')
+    answerFinderQuestion('I need remote or flexible coaching')
+    answerFinderQuestion('Ready — I can commit to the process')
+    answerFinderQuestion('One to two years')
+    answerFinderQuestion('Yes — readiness comes first')
+
+    expect(
+      await screen.findByRole('heading', { name: 'Competition Preparation' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Why this is your next step')).toHaveTextContent(
+      'at least one year of consistent, structured training',
+    )
+    expect(
+      window.sessionStorage.getItem(getQualificationStorageKey('competition-preparation')),
+    ).toBe('qualified')
+  })
+
+  it('offers a preselected personal enquiry when coaching readiness is uncertain', async () => {
+    render(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    answerFinderQuestion('I need help deciding what support I need')
+    answerFinderQuestion('I want Jake to guide me to the right starting point')
+    answerFinderQuestion('I need remote or flexible coaching')
+    answerFinderQuestion('I need to talk through what coaching would require')
+
+    expect(await screen.findByRole('heading', { name: 'Talk it through with Jake' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ask Jake Directly/ })).toHaveAttribute(
+      'href',
+      '/contact?service=unsure#contact-enquiry',
+    )
+    expect(screen.queryByText('Your recommended path')).not.toBeInTheDocument()
   })
 
   it('opens from a direct hash route and removes the hash with Escape', async () => {
@@ -293,7 +344,7 @@ describe('ServiceFinder', () => {
 
     const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
     fireEvent.click(trigger)
-    const selectedAnswer = screen.getByLabelText('Train with Jake in person', { exact: true })
+    const selectedAnswer = screen.getByLabelText('Improve my training technique in person', { exact: true })
     fireEvent.click(selectedAnswer)
     expect(selectedAnswer).toBeChecked()
 
@@ -301,7 +352,7 @@ describe('ServiceFinder', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 
     fireEvent.click(trigger)
-    expect(screen.getByLabelText('Train with Jake in person', { exact: true })).toBeChecked()
+    expect(screen.getByLabelText('Improve my training technique in person', { exact: true })).toBeChecked()
   })
 
   it('resets answers after the underlying pathname changes', async () => {
@@ -315,14 +366,14 @@ describe('ServiceFinder', () => {
 
     const trigger = screen.getByRole('link', { name: 'Find Your Fit' })
     fireEvent.click(trigger)
-    fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
+    fireEvent.click(screen.getByLabelText('Improve my training technique in person', { exact: true }))
     fireEvent.click(screen.getByRole('button', { name: 'Close Find Your Fit' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
 
     fireEvent.click(screen.getByRole('button', { name: 'Navigate' }))
     fireEvent.click(trigger)
 
-    expect(screen.getByLabelText('Train with Jake in person', { exact: true })).not.toBeChecked()
+    expect(screen.getByLabelText('Improve my training technique in person', { exact: true })).not.toBeChecked()
   })
 
   it('offers a Services recovery route when recommendation data fails to load', async () => {
@@ -332,10 +383,10 @@ describe('ServiceFinder', () => {
       </MemoryRouter>
     )
 
-    fireEvent.click(screen.getByLabelText('Train with Jake in person', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    fireEvent.click(screen.getByLabelText('I can train in Adelaide', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: 'Show My Best Match' }))
+    answerFinderQuestion('Improve my training technique in person')
+    answerFinderQuestion('Face-to-face sessions and technique feedback')
+    answerFinderQuestion('I can train in person in Adelaide')
+    answerFinderQuestion('Ready — I can commit to the process')
 
     expect(await screen.findByRole('link', { name: /View All Services/ })).toHaveAttribute(
       'href',

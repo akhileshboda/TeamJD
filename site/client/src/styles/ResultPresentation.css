@@ -107,6 +107,7 @@
   flex-direction: column;
   overflow-y: hidden;
   overscroll-behavior-y: auto;
+  scroll-behavior: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -269,7 +270,11 @@
   }
 
   .result-presentation.result-presentation--bounded-story .result-preview-overlay {
-    height: clamp(19rem, 40dvh, 26rem) !important;
+    height: auto !important;
+    min-height: 0;
+    max-height: 50vh;
+    max-height: min(50dvh, 30rem);
+    flex: 0 1 auto;
     overflow: hidden;
   }
 
@@ -285,10 +290,14 @@
   }
 
   .result-presentation.result-presentation--bounded-story .result-overlay-story-anchor {
-    height: 100%;
+    height: auto;
     min-height: 0;
-    flex: 0 0 100%;
+    flex: 0 0 auto;
     margin-top: 0;
+  }
+
+  .result-presentation--bounded-story .result-story--presentation {
+    min-height: 0;
   }
 }
 
