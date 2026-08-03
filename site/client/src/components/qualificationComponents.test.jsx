@@ -185,6 +185,92 @@ describe('StickyBookBar', () => {
 })
 
 describe('ServiceFinder', () => {
+  it('keeps navigation outside the dedicated questionnaire scroll region', () => {
+    render(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    const scrollRegion = screen.getByRole('region', { name: 'Question 1 of 4' })
+    const continueButton = screen.getByRole('button', { name: 'Continue' })
+
+    expect(scrollRegion).toHaveClass('service-finder-scroll-region')
+    expect(scrollRegion).not.toContainElement(continueButton)
+    expect(continueButton.closest('.service-finder-step-actions')).toBeInTheDocument()
+    expect(document.body.style.overflow).toBe('hidden')
+  })
+
+  it('updates overflow affordances at the top, middle, and bottom of the question', async () => {
+    render(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    const scrollRegion = screen.getByRole('region', { name: 'Question 1 of 4' })
+    const scrollShell = scrollRegion.closest('.service-finder-scroll-shell')
+    Object.defineProperties(scrollRegion, {
+      clientHeight: { configurable: true, value: 300 },
+      scrollHeight: { configurable: true, value: 600 },
+      scrollTop: { configurable: true, value: 0, writable: true },
+    })
+
+    fireEvent.scroll(scrollRegion)
+    await waitFor(() => {
+      expect(scrollShell).toHaveAttribute('data-overflowing', 'true')
+      expect(scrollShell).toHaveAttribute('data-scrolled-from-start', 'false')
+      expect(scrollShell).toHaveAttribute('data-more-below', 'true')
+    })
+    expect(screen.getByText('More options below')).toBeInTheDocument()
+
+    scrollRegion.scrollTop = 150
+    fireEvent.scroll(scrollRegion)
+    await waitFor(() => {
+      expect(scrollShell).toHaveAttribute('data-scrolled-from-start', 'true')
+      expect(scrollShell).toHaveAttribute('data-more-below', 'true')
+    })
+
+    scrollRegion.scrollTop = 300
+    fireEvent.scroll(scrollRegion)
+    await waitFor(() => {
+      expect(scrollShell).toHaveAttribute('data-scrolled-from-start', 'true')
+      expect(scrollShell).toHaveAttribute('data-more-below', 'false')
+    })
+    expect(screen.queryByText('More options below')).not.toBeInTheDocument()
+  })
+
+  it('resets questionnaire scroll and focuses new steps without moving the shell', async () => {
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus')
+
+    try {
+      render(
+        <MemoryRouter initialEntries={['/services#find-your-fit']}>
+          <ServiceFinder services={services} />
+        </MemoryRouter>
+      )
+
+      const scrollRegion = screen.getByRole('region', { name: 'Question 1 of 4' })
+      Object.defineProperty(scrollRegion, 'scrollTop', {
+        configurable: true,
+        value: 180,
+        writable: true,
+      })
+
+      fireEvent.click(
+        screen.getByLabelText('Improve my training technique in person', { exact: true }),
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+      const nextRegion = await screen.findByRole('region', { name: 'Question 2 of 4' })
+      expect(nextRegion).toBe(scrollRegion)
+      await waitFor(() => expect(nextRegion.scrollTop).toBe(0))
+      expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
+    } finally {
+      focusSpy.mockRestore()
+    }
+  })
+
   it('recommends a detail page without exposing Calendly', async () => {
     render(
       <MemoryRouter initialEntries={['/services']}>

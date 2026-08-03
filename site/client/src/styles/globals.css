@@ -5280,7 +5280,11 @@ p  { line-height: 1.7; color: var(--color-text); }
   inset: 0;
   display: grid;
   place-items: center;
-  padding: var(--space-5);
+  padding:
+    max(var(--space-5), env(safe-area-inset-top))
+    max(var(--space-5), env(safe-area-inset-right))
+    max(var(--space-5), env(safe-area-inset-bottom))
+    max(var(--space-5), env(safe-area-inset-left));
   background: rgba(4, 6, 7, 0.84);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -5289,9 +5293,12 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-finder-modal {
   --svc-accent: var(--color-accent);
   --svc-accent-rgb: 22, 201, 221;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   width: min(46rem, 100%);
+  height: min(52rem, calc(100dvh - 2 * var(--space-5)));
   max-height: calc(100dvh - 2 * var(--space-5));
-  overflow-y: auto;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-2xl);
   outline: none;
@@ -5310,12 +5317,15 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-finder-modal-header {
+  position: relative;
+  z-index: 4;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-6);
-  padding: clamp(1.25rem, 3.5vw, 2rem);
+  padding: clamp(1.15rem, 3vw, 1.75rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(21, 24, 25, 0.82);
 }
 
 .service-finder-modal-header .eyebrow {
@@ -5325,7 +5335,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-finder-modal-header h2 {
   max-width: 18ch;
-  font-size: clamp(1.5rem, 3.6vw, 2.35rem);
+  font-size: clamp(1.5rem, 3.3vw, 2.15rem);
 }
 
 .service-finder-modal-close {
@@ -5353,14 +5363,13 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-finder-step {
-  display: flex;
-  min-height: 27rem;
-  flex-direction: column;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
 }
 
 .service-finder-progress {
-  margin-bottom: clamp(2rem, 6vw, 3.5rem);
+  margin-bottom: clamp(1.5rem, 4vh, 2.25rem);
 }
 
 .service-finder-progress-meta {
@@ -5393,8 +5402,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-finder-modal .service-finder-question legend {
   max-width: 28ch;
-  margin-bottom: var(--space-6);
-  font-size: clamp(1.35rem, 3.2vw, 2rem);
+  margin-bottom: var(--space-5);
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
   letter-spacing: -0.02em;
 }
 
@@ -5407,12 +5416,136 @@ p  { line-height: 1.7; color: var(--color-text); }
   min-height: 3.75rem;
 }
 
-.service-finder-step-actions {
+.service-finder-scroll-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.service-finder-scroll-shell::before,
+.service-finder-scroll-shell::after {
+  position: absolute;
+  z-index: 2;
+  right: 0.8rem;
+  left: 0;
+  height: 1.75rem;
+  pointer-events: none;
+  content: '';
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.service-finder-scroll-shell::before {
+  top: 0;
+  background: linear-gradient(180deg, rgba(21, 24, 25, 0.98), transparent);
+}
+
+.service-finder-scroll-shell::after {
+  bottom: 0;
+  background: linear-gradient(0deg, rgba(21, 24, 25, 0.98), transparent);
+}
+
+.service-finder-scroll-shell[data-scrolled-from-start='true']::before,
+.service-finder-scroll-shell[data-more-below='true']::after {
+  opacity: 1;
+}
+
+.service-finder-scroll-region {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(1.25rem, 3.5vw, 2rem);
+  outline: none;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(22, 201, 221, 0.68) rgba(255, 255, 255, 0.08);
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.service-finder-scroll-region::-webkit-scrollbar {
+  width: 0.72rem;
+}
+
+.service-finder-scroll-region::-webkit-scrollbar-track {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.service-finder-scroll-region::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(22, 201, 221, 0.7);
+  background-clip: padding-box;
+}
+
+.service-finder-scroll-region::-webkit-scrollbar-thumb:hover {
+  background: rgba(250, 128, 114, 0.78);
+  background-clip: padding-box;
+}
+
+.service-finder-scroll-region:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -4px;
+}
+
+.service-finder-scroll-content {
+  min-width: 0;
+}
+
+.service-finder-scroll-cue {
+  position: absolute;
+  z-index: 3;
+  right: 1.55rem;
+  bottom: 0.55rem;
   display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(22, 201, 221, 0.2);
+  border-radius: 999px;
+  color: #b8edf2;
+  background: rgba(21, 24, 25, 0.94);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(0.35rem);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.service-finder-scroll-shell[data-more-below='true'] .service-finder-scroll-cue {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-finder-scroll-cue-arrow {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.1rem) rotate(45deg);
+}
+
+.service-finder-step-actions {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: auto;
-  padding-top: var(--space-8);
+  min-height: 4.75rem;
+  padding: var(--space-4) clamp(1.25rem, 3.5vw, 2rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(17, 20, 21, 0.96);
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.18);
 }
 
 .service-finder-step-actions .btn:disabled {
@@ -5421,8 +5554,47 @@ p  { line-height: 1.7; color: var(--color-text); }
   opacity: 0.42;
 }
 
+.service-finder-result-shell {
+  min-height: 0;
+}
+
 .service-finder-modal .service-finder-result {
-  margin: clamp(1.5rem, 4vw, 2.5rem);
+  margin: 0;
+}
+
+@media (orientation: landscape) and (min-width: 769px) {
+  .service-finder-modal {
+    width: min(64rem, calc(100vw - 2.5rem));
+    height: min(38rem, calc(100dvh - 2.5rem));
+    max-height: calc(100dvh - 2.5rem);
+  }
+
+  .service-finder-modal-header {
+    padding: 1.15rem 1.75rem;
+  }
+
+  .service-finder-modal-header h2 {
+    max-width: none;
+    font-size: clamp(1.55rem, 2.6vw, 2rem);
+  }
+
+  .service-finder-scroll-region {
+    padding: 1.5rem 2rem;
+  }
+
+  .service-finder-modal .service-finder-question legend {
+    max-width: 38ch;
+    margin-bottom: var(--space-5);
+    font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+  }
+
+  .service-finder-modal .service-finder-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-finder-step-actions {
+    padding: var(--space-3) 2rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -5442,11 +5614,62 @@ p  { line-height: 1.7; color: var(--color-text); }
 
   .service-finder-modal {
     width: 100%;
+    height: min(52rem, 94dvh);
     max-height: 94dvh;
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
+  .service-finder-step-actions {
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  .service-finder-modal-header {
+    padding: 0.75rem 1.25rem;
+  }
+
+  .service-finder-modal-header .eyebrow {
+    margin-bottom: var(--space-1);
+  }
+
+  .service-finder-modal-header h2 {
+    font-size: clamp(1.3rem, 2.6vw, 1.65rem);
+  }
+
+  .service-finder-modal-close {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .service-finder-scroll-region {
+    padding: 0.9rem 1.25rem;
+  }
+
+  .service-finder-progress {
+    margin-bottom: var(--space-3);
+  }
+
+  .service-finder-progress-meta {
+    margin-bottom: var(--space-2);
+  }
+
+  .service-finder-modal .service-finder-question legend {
+    margin-bottom: var(--space-3);
+    font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+  }
+
+  .service-finder-modal .service-finder-option {
+    min-height: 3.25rem;
+    padding-block: 0.65rem;
+  }
+
+  .service-finder-step-actions {
+    min-height: 4rem;
+    padding: 0.65rem 1.25rem;
   }
 }
 
