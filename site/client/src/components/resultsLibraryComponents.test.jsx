@@ -215,4 +215,69 @@ describe('ResultsViewer', () => {
       window.matchMedia = originalMatchMedia
     }
   })
+
+  it('keeps wheel input trapped in the modal at an internal scroll boundary', () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(min-width: 1025px)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    }))
+
+    try {
+      render(
+        <ResultsViewer
+          result={result}
+          position={1}
+          total={1}
+          previousResult={null}
+          nextResult={null}
+          onPrevious={vi.fn()}
+          onNext={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      )
+
+      const presentation = document.querySelector('.results-viewer-presentation')
+      const sheet = presentation.querySelector('.result-preview-overlay')
+      const story = sheet.querySelector('.result-overlay-story-anchor')
+      const scroll = sheet.querySelector('.result-overlay-scroll')
+
+      Object.defineProperty(presentation, 'clientHeight', {
+        configurable: true,
+        value: 600,
+      })
+      Object.defineProperty(story, 'scrollHeight', {
+        configurable: true,
+        value: 800,
+      })
+      Object.defineProperty(scroll, 'clientHeight', {
+        configurable: true,
+        value: 600,
+      })
+      Object.defineProperty(scroll, 'scrollHeight', {
+        configurable: true,
+        value: 800,
+      })
+
+      fireEvent(window, new Event('resize'))
+      scroll.scrollTop = 200
+
+      const boundaryWheel = new WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 80,
+      })
+      fireEvent(sheet, boundaryWheel)
+
+      expect(sheet).toHaveAttribute('data-scroll-mode', 'overflow')
+      expect(boundaryWheel.defaultPrevented).toBe(true)
+      expect(scroll.scrollTop).toBe(200)
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
+  })
 })

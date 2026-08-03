@@ -91,6 +91,23 @@
   margin-top: 0;
 }
 
+.result-presentation--bounded-story
+.result-preview-overlay[data-scroll-scope="whole-story"]
+.result-overlay-story-anchor {
+  display: flex;
+  height: auto;
+  min-height: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+}
+
+.result-presentation--bounded-story
+.result-preview-overlay[data-scroll-scope="whole-story"]
+.result-story--presentation {
+  min-height: 0;
+  flex: 1 0 auto;
+}
+
 .result-overlay-control {
   position: absolute;
   top: 0.7rem;
@@ -114,10 +131,6 @@
 
 .result-preview-overlay[data-scroll-mode="overflow"] .result-overlay-scroll {
   overflow-y: auto;
-}
-
-.result-preview-overlay[data-scroll-lock="true"] .result-overlay-scroll {
-  overscroll-behavior-y: contain;
 }
 
 .result-overlay-scroll::-webkit-scrollbar {

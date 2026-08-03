@@ -466,10 +466,6 @@
   overflow-y: auto;
 }
 
-.result-preview-overlay[data-scroll-lock="true"] .result-overlay-scroll {
-  overscroll-behavior-y: contain;
-}
-
 .result-overlay-scroll::-webkit-scrollbar {
   display: none;
 }
