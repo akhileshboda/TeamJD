@@ -1,160 +1,73 @@
-import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import FindYourFitLink from './FindYourFitLink'
 import JourneyIcon from './JourneyIcon'
 import ScrollChromeSection from './ScrollChromeSection'
-import ServiceQualification from './ServiceQualification'
+import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
+import { useFindYourFitSession } from '../context/FindYourFitSession'
 
-const FOCUSABLE = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',')
+export default function ServiceReadinessGate({ service, services = [] }) {
+  const { completed, outcome, validForCompetitionPrep } = useFindYourFitSession()
+  const recommendation = outcome?.recommendationSlug
+    ? services.find((candidate) => candidate.slug === outcome.recommendationSlug)
+    : null
 
-export default function ServiceReadinessGate({
-  service,
-  services,
-  qualificationState,
-  onStateChange,
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const triggerRef = useRef(null)
-  const dialogRef = useRef(null)
-  const shouldReduceMotion = useReducedMotion()
-  const isQualified = qualificationState.status === 'qualified'
+  const heading = validForCompetitionPrep
+    ? 'Competition Preparation is your match.'
+    : !completed
+      ? 'Complete Find Your Fit before booking.'
+      : outcome.status === 'consult'
+        ? 'Talk it through before choosing prep.'
+        : `${recommendation?.name || 'Another coaching path'} is your current match.`
 
-  useEffect(() => {
-    if (!isOpen) return undefined
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        setIsOpen(false)
-        return
-      }
-
-      if (event.key !== 'Tab') return
-      const focusable = Array.from(dialogRef.current?.querySelectorAll(FOCUSABLE) || [])
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = previousOverflow
-      requestAnimationFrame(() => triggerRef.current?.focus())
-    }
-  }, [isOpen])
-
-  const motionProps = shouldReduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, y: 18, scale: 0.985 },
-        animate: { opacity: 1, y: 0, scale: 1 },
-        exit: { opacity: 0, y: 12, scale: 0.99 },
-        transition: { duration: 0.22, ease: 'easeOut' },
-      }
+  const copy = validForCompetitionPrep
+    ? 'Your result supports a Competition Preparation assessment. Jake will still decide whether your timeline and readiness are right for prep.'
+    : !completed
+      ? 'Find Your Fit gives Jake useful context before you request a prep assessment. You can complete it now or continue to the booking checkpoint.'
+      : outcome.status === 'consult'
+        ? 'Your answers suggest a direct conversation is the best next step. You can review that result or continue to the booking checkpoint.'
+        : `Your answers currently point towards ${recommendation?.name || 'another service'}. Review your result or continue to the booking checkpoint if you still want to speak about prep.`
 
   return (
-    <>
-      <ScrollChromeSection
-        id="service-fit-check"
-        className="service-content-block service-content-block--readiness service-readiness-gate"
-        aria-labelledby="service-readiness-title"
-      >
-        <div className="service-content-block-heading">
-          <span aria-hidden="true">04</span>
-          <div>
-            <span>Your next step</span>
-            <h3 id="service-readiness-title">Readiness check</h3>
-          </div>
+    <ScrollChromeSection
+      id="service-fit-check"
+      className="service-content-block service-content-block--readiness service-readiness-gate"
+      aria-labelledby="service-readiness-title"
+    >
+      <div className="service-content-block-heading">
+        <span aria-hidden="true">04</span>
+        <div>
+          <span>Your next step</span>
+          <h3 id="service-readiness-title">Find Your Fit checkpoint</h3>
         </div>
+      </div>
 
-        <div className="service-readiness-gate-body">
-          <div className="service-readiness-gate-icon" aria-hidden="true">
-            <JourneyIcon name={isQualified ? 'check' : 'compass'} size={26} />
-          </div>
-          <div>
-            <span className="eyebrow">{isQualified ? 'Fit check complete' : service.qualification.eyebrow}</span>
-            <h2>{isQualified ? service.qualification.pass_title : service.qualification.title}</h2>
-            <p>{isQualified ? service.qualification.pass_copy : service.qualification.intro}</p>
-          </div>
-          <button
-            ref={triggerRef}
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setIsOpen(true)}
+      <div className="service-readiness-gate-body">
+        <div className="service-readiness-gate-icon" aria-hidden="true">
+          <JourneyIcon name={validForCompetitionPrep ? 'check' : 'compass'} size={26} />
+        </div>
+        <div>
+          <span className="eyebrow">
+            {validForCompetitionPrep ? 'Find Your Fit complete' : 'Before Calendly'}
+          </span>
+          <h2>{heading}</h2>
+          <p>{copy}</p>
+        </div>
+        <div className="service-readiness-gate-actions">
+          {!validForCompetitionPrep && (
+            <FindYourFitLink className="btn btn-primary">
+              {completed ? 'Review Find Your Fit' : 'Start Find Your Fit'}
+              <JourneyIcon name="arrowRight" size={17} />
+            </FindYourFitLink>
+          )}
+          <CompetitionPrepBookingAction
+            service={service}
+            services={services}
+            className={`btn ${validForCompetitionPrep ? 'btn-primary' : 'btn-secondary'}`}
           >
-            {isQualified ? 'Review result' : 'Start readiness check'}
+            {service.cta_text}
             <JourneyIcon name="arrowRight" size={17} />
-          </button>
+          </CompetitionPrepBookingAction>
         </div>
-      </ScrollChromeSection>
-
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                className="service-readiness-modal-overlay"
-                role="presentation"
-                onMouseDown={(event) => {
-                  if (event.target === event.currentTarget) setIsOpen(false)
-                }}
-                initial={shouldReduceMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                <motion.div
-                  ref={dialogRef}
-                  className="service-readiness-modal"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={`${service.name} readiness check`}
-                  tabIndex={-1}
-                  {...motionProps}
-                >
-                  <div className="service-readiness-modal-bar">
-                    <span>Team JD service fit</span>
-                    <button
-                      type="button"
-                      className="service-readiness-modal-close"
-                      aria-label="Close readiness check"
-                      onClick={() => setIsOpen(false)}
-                      autoFocus
-                    >
-                      <JourneyIcon name="close" size={18} />
-                    </button>
-                  </div>
-                  <ServiceQualification
-                    service={service}
-                    services={services}
-                    initialQualified={isQualified}
-                    onStateChange={onStateChange}
-                    embedded
-                    sectionId={null}
-                  />
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body,
-        )}
-    </>
+      </div>
+    </ScrollChromeSection>
   )
 }

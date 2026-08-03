@@ -10,12 +10,11 @@ import {
   getLastFindYourFitTrigger,
 } from './FindYourFitLink'
 import {
-  clearServiceQualification,
   evaluateFinder,
   getFinderQuestions,
-  markServiceQualified,
   pruneFinderAnswers,
 } from '../utils/qualification'
+import { useFindYourFitSession } from '../context/FindYourFitSession'
 
 const FOCUSABLE = [
   'a[href]',
@@ -27,9 +26,14 @@ const FOCUSABLE = [
 const SCROLL_EDGE_TOLERANCE = 4
 
 export default function ServiceFinder({ services = [], loading = false, error = null }) {
+  const {
+    outcome: savedOutcome,
+    completeFindYourFit,
+    clearFindYourFitOutcome,
+  } = useFindYourFitSession()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState({})
-  const [result, setResult] = useState({ status: 'locked' })
+  const [result, setResult] = useState(() => savedOutcome || { status: 'locked' })
   const [scrollState, setScrollState] = useState({
     overflowing: false,
     scrolledFromStart: false,
@@ -42,7 +46,6 @@ export default function ServiceFinder({ services = [], loading = false, error = 
   const scrollContentRef = useRef(null)
   const openerRef = useRef(null)
   const previousPathnameRef = useRef(null)
-  const finderQualifiedSlugRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
   const shouldReduceMotion = useReducedMotion()
@@ -78,10 +81,11 @@ export default function ServiceFinder({ services = [], loading = false, error = 
   }, [])
 
   const restart = useCallback(() => {
+    clearFindYourFitOutcome()
     setAnswers({})
     setResult({ status: 'locked' })
     setStep(0)
-  }, [])
+  }, [clearFindYourFitOutcome])
 
   useEffect(() => {
     if (previousPathnameRef.current === null) {
@@ -91,9 +95,11 @@ export default function ServiceFinder({ services = [], loading = false, error = 
 
     if (previousPathnameRef.current !== location.pathname) {
       previousPathnameRef.current = location.pathname
-      restart()
+      setAnswers({})
+      setResult(savedOutcome || { status: 'locked' })
+      setStep(0)
     }
-  }, [location.pathname, restart])
+  }, [location.pathname, savedOutcome])
 
   const closeFinder = useCallback(() => {
     if (location.state?.[FIND_YOUR_FIT_HISTORY_KEY]) {
@@ -228,24 +234,14 @@ export default function ServiceFinder({ services = [], loading = false, error = 
     }
 
     const nextResult = evaluateFinder(answers)
-    const previouslyQualifiedSlug = finderQualifiedSlugRef.current
-
-    if (previouslyQualifiedSlug && previouslyQualifiedSlug !== nextResult.qualifiesSlug) {
-      clearServiceQualification(previouslyQualifiedSlug)
-      finderQualifiedSlugRef.current = null
-    }
-
-    if (nextResult.qualifiesSlug) {
-      markServiceQualified(nextResult.qualifiesSlug)
-      finderQualifiedSlugRef.current = nextResult.qualifiesSlug
-    }
-
+    completeFindYourFit(nextResult)
     setResult(nextResult)
   }
 
   const editAnswers = () => {
+    clearFindYourFitOutcome()
     setResult({ status: 'locked' })
-    setStep(questions.length - 1)
+    setStep(Object.keys(answers).length > 0 ? questions.length - 1 : 0)
   }
 
   const dialogMotion = shouldReduceMotion

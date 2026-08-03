@@ -63,10 +63,10 @@ export default function ServiceDetailHero({ service }) {
 
           <motion.div className="service-journey-kickers" {...itemProps}>
             <span className="eyebrow">Coaching Pathway</span>
-            {service.qualification && (
+            {service.application_required && (
               <span className="service-fit-chip">
                 <JourneyIcon name="lock" size={14} />
-                Fit check before booking
+                Find Your Fit before access and booking
               </span>
             )}
           </motion.div>
@@ -92,9 +92,9 @@ export default function ServiceDetailHero({ service }) {
           )}
 
           <motion.div {...itemProps}>
-            {service.qualification ? (
+            {service.application_required ? (
               <a className="service-hero-fit-link" href="#service-fit-check">
-                Understand the service first
+                Review your booking checkpoint
                 <JourneyIcon name="arrowRight" size={18} />
               </a>
             ) : (

@@ -65,43 +65,6 @@
         "icon": "icons/physique-optimisation.png"
       }
     ],
-    "qualification": {
-      "eyebrow": "Readiness check",
-      "title": "Before you request a prep assessment",
-      "intro": "Answer honestly. The goal is not to keep serious athletes out — it is to make sure the next step matches where you actually are.",
-      "pass_title": "You understand what a prep enquiry means.",
-      "pass_copy": "You can now request a 30-minute readiness assessment. Jake may still recommend a longer runway before competition preparation begins.",
-      "redirect_title": "Competition prep is not the right next booking yet.",
-      "redirect_copy": "A different coaching path will give you a stronger next step without forcing a stage timeline before you are ready.",
-      "questions": [
-        {
-          "id": "training_history",
-          "prompt": "How long have you trained consistently with a structured plan?",
-          "options": [
-            { "value": "under-one", "label": "Less than one year", "qualifies": false, "recommend_slug": "online-coaching" },
-            { "value": "one-to-two", "label": "One to two years", "qualifies": true },
-            { "value": "two-plus", "label": "More than two years", "qualifies": true }
-          ]
-        },
-        {
-          "id": "timeline",
-          "prompt": "If Jake believes your preferred season is too soon, are you willing to move the timeline?",
-          "options": [
-            { "value": "yes", "label": "Yes — readiness comes first", "qualifies": true },
-            { "value": "unsure", "label": "I am not sure yet", "qualifies": false, "recommend_slug": "online-coaching" },
-            { "value": "no", "label": "No — I only want my current season", "qualifies": false, "recommend_slug": "online-coaching" }
-          ]
-        },
-        {
-          "id": "commitment",
-          "prompt": "Are you ready to follow a demanding coaching process and communicate honestly throughout it?",
-          "options": [
-            { "value": "yes", "label": "Yes — I am ready for that standard", "qualifies": true },
-            { "value": "not-yet", "label": "Not yet", "qualifies": false, "response": "Take the time you need. Coaching works when you are ready to follow the process consistently; there is no benefit in forcing the booking today." }
-          ]
-        }
-      ]
-    },
     "application_required": true,
     "cta_text": "Request Prep Assessment",
     "cta_url": "https://calendly.com/team-jd/30min",

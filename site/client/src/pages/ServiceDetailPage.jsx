@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
+import CompetitionPrepAccessGate from '../components/CompetitionPrepAccessGate'
 import JourneyIcon from '../components/JourneyIcon'
 import ScrollChromeSection from '../components/ScrollChromeSection'
 import SectionReveal from '../components/SectionReveal'
@@ -11,26 +11,18 @@ import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
-import { isServiceQualified } from '../utils/qualification'
+import { useFindYourFitSession } from '../context/FindYourFitSession'
 
 const inclusionGroups = [
   { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
   { title: 'Delivery and support', range: [2, Infinity], variant: 'delivery' },
 ]
 
-function getInitialState(slug) {
-  return isServiceQualified(slug) ? { status: 'qualified' } : { status: 'locked' }
-}
-
 export default function ServiceDetailPage() {
   const { slug } = useParams()
   const { data: services } = useJSON('/content/services.json')
   const resolveAsset = useAssets()
-  const [qualificationState, setQualificationState] = useState(() => getInitialState(slug))
-
-  useEffect(() => {
-    setQualificationState(getInitialState(slug))
-  }, [slug])
+  const { canViewCompetitionPrep } = useFindYourFitSession()
 
   if (!services) {
     return (
@@ -52,10 +44,11 @@ export default function ServiceDetailPage() {
   const service = services.find((candidate) => candidate.slug === slug)
   if (!service) return <Navigate to="/services" replace />
 
+  if (service.application_required && !canViewCompetitionPrep) {
+    return <CompetitionPrepAccessGate service={service} services={services} />
+  }
+
   const others = services.filter((candidate) => candidate.slug !== slug)
-  const recommendation = qualificationState.recommendationSlug
-    ? services.find((candidate) => candidate.slug === qualificationState.recommendationSlug)
-    : null
 
   const theme = service.theme ?? {}
   const themeVars = {
@@ -234,14 +227,12 @@ export default function ServiceDetailPage() {
             </ScrollChromeSection>
           </SectionReveal>
 
-          {service.qualification ? (
+          {service.application_required ? (
             <SectionReveal>
               <ServiceReadinessGate
                 key={service.slug}
                 service={service}
                 services={services}
-                qualificationState={qualificationState}
-                onStateChange={setQualificationState}
               />
             </SectionReveal>
           ) : (
@@ -313,8 +304,7 @@ export default function ServiceDetailPage() {
 
       <StickyBookBar
         service={service}
-        qualificationState={qualificationState}
-        recommendation={recommendation}
+        services={services}
       />
     </div>
   )

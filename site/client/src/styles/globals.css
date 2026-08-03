@@ -4570,6 +4570,228 @@ p  { line-height: 1.7; color: var(--color-text); }
   white-space: nowrap;
 }
 
+.service-readiness-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.competition-prep-access-gate {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: calc(100svh - 5rem);
+  place-items: center;
+  overflow: hidden;
+  padding-block: clamp(6rem, 13vw, 10rem);
+  background:
+    radial-gradient(circle at 78% 15%, rgba(250, 128, 114, 0.12), transparent 30rem),
+    radial-gradient(circle at 18% 82%, rgba(22, 201, 221, 0.09), transparent 28rem),
+    #0d0f10;
+}
+
+.competition-prep-access-gate-glow {
+  position: absolute;
+  z-index: -1;
+  width: min(62vw, 48rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 5rem rgba(255, 255, 255, 0.012),
+    0 0 0 10rem rgba(255, 255, 255, 0.008);
+}
+
+.competition-prep-access-gate-inner {
+  display: flex;
+  width: min(100%, 52rem);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.competition-prep-access-gate-icon,
+.booking-checkpoint-icon {
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: var(--space-5);
+  place-items: center;
+  border: 1px solid rgba(250, 128, 114, 0.32);
+  border-radius: var(--radius-lg);
+  color: #fa8072;
+  background: rgba(250, 128, 114, 0.08);
+  box-shadow: 0 0 36px rgba(250, 128, 114, 0.1);
+}
+
+.competition-prep-access-gate h1 {
+  max-width: 18ch;
+  margin: var(--space-3) auto var(--space-5);
+  font-size: clamp(2.25rem, 6vw, 4.75rem);
+  line-height: 0.98;
+}
+
+.competition-prep-access-gate-inner > p {
+  max-width: 45rem;
+  color: #a8afb1;
+  line-height: 1.75;
+}
+
+.competition-prep-access-recommendation {
+  display: grid;
+  width: min(100%, 38rem);
+  gap: var(--space-2);
+  margin-top: var(--space-7);
+  padding: var(--space-5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.competition-prep-access-recommendation > span {
+  color: #7f898c;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.competition-prep-access-recommendation strong {
+  color: var(--color-white);
+  font-size: 1.25rem;
+}
+
+.competition-prep-access-recommendation p {
+  color: #9ea5a7;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.competition-prep-access-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+}
+
+.competition-prep-access-back {
+  display: inline-flex;
+  flex-basis: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: #98a0a2;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.competition-prep-access-back:hover,
+.competition-prep-access-back:focus-visible {
+  color: var(--color-white);
+}
+
+.competition-prep-access-note {
+  margin-top: var(--space-7);
+  color: #727b7e !important;
+  font-size: 0.76rem;
+}
+
+.booking-checkpoint-overlay {
+  position: fixed;
+  z-index: 230;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: rgba(2, 4, 5, 0.82);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+.booking-checkpoint-modal {
+  position: relative;
+  width: min(100%, 40rem);
+  max-height: min(90dvh, 48rem);
+  overflow: auto;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: clamp(1.1rem, 2.5vw, 1.75rem);
+  outline: none;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(250, 128, 114, 0.13), transparent 24rem),
+    rgba(15, 18, 19, 0.985);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 40px 120px rgba(0, 0, 0, 0.65);
+}
+
+.booking-checkpoint-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  color: #d6d9da;
+  background: rgba(255, 255, 255, 0.045);
+  cursor: pointer;
+}
+
+.booking-checkpoint-close:hover,
+.booking-checkpoint-close:focus-visible {
+  border-color: rgba(250, 128, 114, 0.5);
+  color: var(--color-white);
+  background: rgba(250, 128, 114, 0.1);
+}
+
+.booking-checkpoint-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.booking-checkpoint-modal h2 {
+  max-width: 18ch;
+  margin: var(--space-3) 0 var(--space-4);
+  font-size: clamp(1.75rem, 4.5vw, 2.8rem);
+  line-height: 1.05;
+}
+
+.booking-checkpoint-modal > p {
+  color: #a8afb1;
+  line-height: 1.7;
+}
+
+.booking-checkpoint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+}
+
+.booking-checkpoint-cancel {
+  flex-basis: 100%;
+  width: fit-content;
+  padding: 0.35rem 0;
+  border: 0;
+  color: #8e9799;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.booking-checkpoint-cancel:hover,
+.booking-checkpoint-cancel:focus-visible {
+  color: var(--color-white);
+}
+
 .service-readiness-modal-overlay {
   position: fixed;
   z-index: 220;
@@ -5953,6 +6175,11 @@ p  { line-height: 1.7; color: var(--color-text); }
     width: 100%;
   }
 
+  .service-readiness-gate-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
   .service-finder {
     margin-top: var(--space-16);
   }
@@ -5995,6 +6222,32 @@ p  { line-height: 1.7; color: var(--color-text); }
 
   .service-readiness-gate-body .btn {
     grid-column: auto;
+  }
+
+  .service-readiness-gate-actions,
+  .booking-checkpoint-actions,
+  .competition-prep-access-gate-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .service-readiness-gate-actions .btn,
+  .booking-checkpoint-actions .btn,
+  .competition-prep-access-gate-actions .btn {
+    width: 100%;
+  }
+
+  .booking-checkpoint-overlay {
+    align-items: end;
+    padding: 0;
+  }
+
+  .booking-checkpoint-modal {
+    max-height: 94dvh;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
 
   .service-readiness-modal-overlay {

@@ -1,14 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import services from '../../../public/content/services.json'
 import FindYourFitLink from './FindYourFitLink'
 import ServiceFinder from './ServiceFinder'
 import ServiceFinderBanner from './ServiceFinderBanner'
-import ServiceQualification from './ServiceQualification'
 import ScrollToTop from './ScrollToTop'
 import StickyBookBar from './StickyBookBar'
-import { getQualificationStorageKey } from '../utils/qualification'
+import {
+  FIND_YOUR_FIT_SESSION_KEY,
+  FIND_YOUR_FIT_SESSION_VERSION,
+  FindYourFitSessionProvider,
+  readFindYourFitSession,
+} from '../context/FindYourFitSession'
 
 afterEach(() => {
   cleanup()
@@ -40,20 +44,12 @@ function NavigateButton({ to }) {
   return <button onClick={() => navigate(to)}>Navigate</button>
 }
 
-function renderQualification(slug, props = {}) {
-  const service = getService(slug)
-  return render(
-    <MemoryRouter>
-      <ServiceQualification service={service} services={services} {...props} />
-    </MemoryRouter>
+function renderWithSession(ui) {
+  return rtlRender(
+    <FindYourFitSessionProvider>
+      {ui}
+    </FindYourFitSessionProvider>,
   )
-}
-
-function choosePassingAnswers(slug) {
-  getService(slug).qualification.questions.forEach((question) => {
-    const option = question.options.find((candidate) => candidate.qualifies)
-    fireEvent.click(screen.getByLabelText(option.label, { exact: true }))
-  })
 }
 
 function answerFinderQuestion(label) {
@@ -62,117 +58,51 @@ function answerFinderQuestion(label) {
   fireEvent.click(continueButton || screen.getByRole('button', { name: 'Show My Best Match' }))
 }
 
-describe('ServiceQualification', () => {
-  it('does not render Calendly before the fit check passes', () => {
-    const { container } = renderQualification('competition-preparation')
-
-    expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Check My Fit' })).toBeInTheDocument()
-  })
-
-  it('reveals the correct service booking only after passing and remembers the unlock', async () => {
-    const service = getService('competition-preparation')
-    const { container } = renderQualification(service.slug)
-
-    choosePassingAnswers(service.slug)
-    fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
-
-    const booking = await screen.findByRole('link', { name: /Request Prep Assessment/ })
-    expect(booking).toHaveAttribute('href', service.cta_url)
-    expect(container.querySelectorAll('a[href^="https://calendly.com/team-jd"]')).toHaveLength(1)
-    expect(window.sessionStorage.getItem(getQualificationStorageKey(service.slug))).toBe('qualified')
-  })
-
-  it('keeps booking locked and recommends the better service after a mismatch', async () => {
-    const service = getService('competition-preparation')
-    const { container } = renderQualification(service.slug)
-
-    fireEvent.click(screen.getByLabelText('Less than one year', { exact: true }))
-    fireEvent.click(screen.getByLabelText('Yes — readiness comes first', { exact: true }))
-    fireEvent.click(screen.getByLabelText('Yes — I am ready for that standard', { exact: true }))
-    fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
-
-    expect(await screen.findByRole('heading', { name: 'Competition prep is not the right next booking yet.' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Explore Online Coaching/ })).toHaveAttribute(
-      'href',
-      '/services/online-coaching'
-    )
-    expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
-  })
-
-  it('re-locks booking when a visitor chooses to review the fit check', async () => {
-    const service = getService('competition-preparation')
-    const { container } = renderQualification(service.slug)
-
-    choosePassingAnswers(service.slug)
-    fireEvent.click(screen.getByRole('button', { name: 'Check My Fit' }))
-    expect(await screen.findByRole('link', { name: /Request Prep Assessment/ })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Review fit check' }))
-    expect(screen.getByRole('button', { name: 'Check My Fit' })).toBeInTheDocument()
-    expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
-    expect(window.sessionStorage.getItem(getQualificationStorageKey(service.slug))).toBeNull()
-  })
-
-  it('restores a previously qualified session without retaining answers', () => {
-    const service = getService('competition-preparation')
-    renderQualification(service.slug, { initialQualified: true })
-
-    expect(screen.getByRole('link', { name: /Request Prep Assessment/ })).toHaveAttribute(
-      'href',
-      service.cta_url
-    )
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
-  })
-})
-
 describe('StickyBookBar', () => {
   const service = getService('competition-preparation')
 
-  it('links to the fit check while locked', () => {
-    const { container } = render(
+  it('opens a booking checkpoint without a valid result', () => {
+    renderWithSession(
       <MemoryRouter>
-        <StickyBookBar service={service} qualificationState={{ status: 'locked' }} />
+        <StickyBookBar service={service} services={services} />
       </MemoryRouter>
     )
 
-    expect(screen.getByRole('link', { name: /Check your fit/ })).toHaveAttribute('href', '#service-fit-check')
-    expect(container.querySelector('a[href^="https://calendly.com/team-jd"]')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Book now/ }))
+    expect(screen.getByRole('dialog', { name: /Complete Find Your Fit/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Continue to Calendly anyway/ })).toHaveAttribute(
+      'href',
+      service.cta_url,
+    )
   })
 
-  it('reveals booking after qualification', () => {
-    render(
+  it('books directly after a valid Find Your Fit result', () => {
+    window.sessionStorage.setItem(FIND_YOUR_FIT_SESSION_KEY, JSON.stringify({
+      version: FIND_YOUR_FIT_SESSION_VERSION,
+      competitionPrepPageBypass: false,
+      outcome: {
+        status: 'recommended',
+        recommendationSlug: service.slug,
+        qualifiesSlug: service.slug,
+        reason: 'Competition Preparation is the match.',
+        evidence: [],
+      },
+    }))
+
+    renderWithSession(
       <MemoryRouter>
-        <StickyBookBar service={service} qualificationState={{ status: 'qualified' }} />
+        <StickyBookBar service={service} services={services} />
       </MemoryRouter>
     )
 
     expect(screen.getByRole('link', { name: /Book now/ })).toHaveAttribute('href', service.cta_url)
   })
 
-  it('links to the recommended service after a mismatch', () => {
-    const recommendation = getService('online-coaching')
-    render(
-      <MemoryRouter>
-        <StickyBookBar
-          service={service}
-          qualificationState={{ status: 'redirect' }}
-          recommendation={recommendation}
-        />
-      </MemoryRouter>
-    )
-
-    expect(screen.getByRole('link', { name: /View match/ })).toHaveAttribute(
-      'href',
-      '/services/online-coaching'
-    )
-  })
-
   it('books a non-competition service directly without a fit check', () => {
     const directService = getService('online-coaching')
-    render(
+    renderWithSession(
       <MemoryRouter>
-        <StickyBookBar service={directService} qualificationState={{ status: 'locked' }} />
+        <StickyBookBar service={directService} services={services} />
       </MemoryRouter>
     )
 
@@ -186,7 +116,7 @@ describe('StickyBookBar', () => {
 
 describe('ServiceFinder', () => {
   it('keeps navigation outside the dedicated questionnaire scroll region', () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
       </MemoryRouter>
@@ -202,7 +132,7 @@ describe('ServiceFinder', () => {
   })
 
   it('updates overflow affordances at the top, middle, and bottom of the question', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
       </MemoryRouter>
@@ -244,7 +174,7 @@ describe('ServiceFinder', () => {
     const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus')
 
     try {
-      render(
+      renderWithSession(
         <MemoryRouter initialEntries={['/services#find-your-fit']}>
           <ServiceFinder services={services} />
         </MemoryRouter>
@@ -272,7 +202,7 @@ describe('ServiceFinder', () => {
   })
 
   it('recommends a detail page without exposing Calendly', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services']}>
         <ServiceFinderBanner />
         <ServiceFinder services={services} />
@@ -297,7 +227,7 @@ describe('ServiceFinder', () => {
   })
 
   it('uses the six-question path to qualify a competition-prep recommendation', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
       </MemoryRouter>
@@ -317,13 +247,42 @@ describe('ServiceFinder', () => {
     expect(screen.getByLabelText('Why this is your next step')).toHaveTextContent(
       'at least one year of consistent, structured training',
     )
-    expect(
-      window.sessionStorage.getItem(getQualificationStorageKey('competition-preparation')),
-    ).toBe('qualified')
+    expect(readFindYourFitSession().outcome).toMatchObject({
+      status: 'recommended',
+      recommendationSlug: 'competition-preparation',
+      qualifiesSlug: 'competition-preparation',
+    })
+  })
+
+  it('restores a completed result without storing answers and restarts safely', () => {
+    window.sessionStorage.setItem(FIND_YOUR_FIT_SESSION_KEY, JSON.stringify({
+      version: FIND_YOUR_FIT_SESSION_VERSION,
+      competitionPrepPageBypass: false,
+      outcome: {
+        status: 'recommended',
+        recommendationSlug: 'competition-preparation',
+        qualifiesSlug: 'competition-preparation',
+        reason: 'Competition Preparation is the right match.',
+        evidence: ['Ready for the prep assessment.'],
+      },
+    }))
+
+    renderWithSession(
+      <MemoryRouter initialEntries={['/about#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('heading', { name: 'Competition Preparation' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change answers' }))
+    expect(screen.getByRole('region', { name: 'Question 1 of 4' })).toBeInTheDocument()
+    expect(readFindYourFitSession().outcome).toBeNull()
   })
 
   it('offers a preselected personal enquiry when coaching readiness is uncertain', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
       </MemoryRouter>
@@ -343,7 +302,7 @@ describe('ServiceFinder', () => {
   })
 
   it('opens from a direct hash route and removes the hash with Escape', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>
         <ServiceFinder services={services} />
         <LocationProbe />
@@ -359,7 +318,7 @@ describe('ServiceFinder', () => {
   })
 
   it('opens over the current page and restores its exact URL and focus on close', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/contact?source=footer#contact-services']}>
         <h1>Contact page stays mounted</h1>
         <FindYourFitLink>Find Your Fit</FindYourFitLink>
@@ -391,7 +350,7 @@ describe('ServiceFinder', () => {
   })
 
   it('closes on browser Back and when the overlay is clicked', async () => {
-    const { container } = render(
+    const { container } = renderWithSession(
       <MemoryRouter initialEntries={['/results']}>
         <FindYourFitLink>Find Your Fit</FindYourFitLink>
         <BrowserBackButton />
@@ -421,7 +380,7 @@ describe('ServiceFinder', () => {
   })
 
   it('preserves answers when reopened on the same page', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/about']}>
         <FindYourFitLink>Find Your Fit</FindYourFitLink>
         <ServiceFinder services={services} />
@@ -442,7 +401,7 @@ describe('ServiceFinder', () => {
   })
 
   it('resets answers after the underlying pathname changes', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/about']}>
         <FindYourFitLink>Find Your Fit</FindYourFitLink>
         <NavigateButton to="/contact" />
@@ -463,7 +422,7 @@ describe('ServiceFinder', () => {
   })
 
   it('offers a Services recovery route when recommendation data fails to load', async () => {
-    render(
+    renderWithSession(
       <MemoryRouter initialEntries={['/#find-your-fit']}>
         <ServiceFinder services={[]} error={new Error('Service data unavailable')} />
       </MemoryRouter>
@@ -491,7 +450,7 @@ describe('ServiceFinder', () => {
     window.scrollTo = vi.fn()
 
     try {
-      render(
+      renderWithSession(
         <MemoryRouter initialEntries={['/contact']}>
           <FindYourFitLink>Find Your Fit</FindYourFitLink>
           <ServiceFinder services={services} />

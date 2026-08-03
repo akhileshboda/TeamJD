@@ -1,5 +1,3 @@
-export const QUALIFICATION_STORAGE_PREFIX = 'teamjd:service-qualification:'
-
 export const FINDER_QUESTIONS = {
   intention: {
     id: 'intention',
@@ -91,44 +89,6 @@ export function pruneFinderAnswers(answers = {}) {
   return Object.fromEntries(
     Object.entries(answers).filter(([questionId]) => activeIds.has(questionId)),
   )
-}
-
-export function evaluateQualification(qualification, answers) {
-  if (!qualification?.questions?.length) {
-    return { status: 'locked', missingQuestionIds: [] }
-  }
-
-  const missingQuestionIds = qualification.questions
-    .filter((question) => !answers?.[question.id])
-    .map((question) => question.id)
-
-  if (missingQuestionIds.length > 0) {
-    return { status: 'locked', missingQuestionIds }
-  }
-
-  const failures = qualification.questions
-    .map((question) => {
-      const selected = question.options.find((option) => option.value === answers[question.id])
-      return selected && selected.qualifies === false ? selected : null
-    })
-    .filter(Boolean)
-
-  if (failures.length === 0) {
-    return { status: 'qualified', missingQuestionIds: [] }
-  }
-
-  // A commitment failure takes priority over a service recommendation. It would
-  // be misleading to route someone into another coaching product when they have
-  // said they are not ready to participate in the coaching relationship itself.
-  const commitmentBlock = failures.find((failure) => !failure.recommend_slug)
-  const selectedFailure = commitmentBlock || failures[0]
-
-  return {
-    status: 'redirect',
-    missingQuestionIds: [],
-    recommendationSlug: selectedFailure.recommend_slug || null,
-    response: selectedFailure.response || null,
-  }
 }
 
 export function evaluateFinder(answers = {}) {
@@ -239,48 +199,4 @@ export function evaluateFinder(answers = {}) {
         : 'You are open to a flexible coaching format.',
     ],
   }
-}
-
-export function getQualificationStorageKey(slug) {
-  return `${QUALIFICATION_STORAGE_PREFIX}${slug}`
-}
-
-function getSessionStorage(storage) {
-  if (storage) return storage
-  if (typeof window === 'undefined') return null
-
-  try {
-    return window.sessionStorage
-  } catch (_) {
-    return null
-  }
-}
-
-export function isServiceQualified(slug, storage) {
-  const sessionStorage = getSessionStorage(storage)
-  if (!sessionStorage || !slug) return false
-
-  try {
-    return sessionStorage.getItem(getQualificationStorageKey(slug)) === 'qualified'
-  } catch (_) {
-    return false
-  }
-}
-
-export function markServiceQualified(slug, storage) {
-  const sessionStorage = getSessionStorage(storage)
-  if (!sessionStorage || !slug) return
-
-  try {
-    sessionStorage.setItem(getQualificationStorageKey(slug), 'qualified')
-  } catch (_) {}
-}
-
-export function clearServiceQualification(slug, storage) {
-  const sessionStorage = getSessionStorage(storage)
-  if (!sessionStorage || !slug) return
-
-  try {
-    sessionStorage.removeItem(getQualificationStorageKey(slug))
-  } catch (_) {}
 }

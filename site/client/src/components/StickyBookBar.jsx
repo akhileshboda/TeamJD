@@ -1,28 +1,36 @@
-import { Link } from 'react-router-dom'
 import JourneyIcon from './JourneyIcon'
+import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
+import { useFindYourFitSession } from '../context/FindYourFitSession'
 
-export default function StickyBookBar({ service, qualificationState, recommendation }) {
+export default function StickyBookBar({ service, services = [] }) {
+  const { validForCompetitionPrep } = useFindYourFitSession()
   if (!service) return null
 
-  const requiresQualification = Boolean(service.qualification)
-  const status = requiresQualification ? qualificationState?.status || 'locked' : 'available'
+  const requiresFindYourFit = Boolean(service.application_required)
 
   return (
     <div className="sticky-book-bar" role="region" aria-label="Service next step">
       <div className="sticky-book-bar-label">
         <span className="sticky-book-bar-name">{service.name}</span>
         <span className="sticky-book-bar-price">
-          {status === 'qualified'
-            ? 'Fit check complete'
-            : status === 'available'
-              ? 'Booking available'
-            : status === 'redirect'
-              ? 'Better path found'
-              : 'A quick fit check comes first'}
+          {requiresFindYourFit
+            ? validForCompetitionPrep
+              ? 'Find Your Fit complete'
+              : 'Booking checkpoint applies'
+            : 'Booking available'}
         </span>
       </div>
 
-      {status === 'qualified' || status === 'available' ? (
+      {requiresFindYourFit ? (
+        <CompetitionPrepBookingAction
+          service={service}
+          services={services}
+          className="btn btn-primary"
+        >
+          Book now
+          <JourneyIcon name="arrowRight" size={16} />
+        </CompetitionPrepBookingAction>
+      ) : (
         <a
           href={service.cta_url}
           className="btn btn-primary"
@@ -30,20 +38,6 @@ export default function StickyBookBar({ service, qualificationState, recommendat
           rel="noopener noreferrer"
         >
           Book now
-          <JourneyIcon name="arrowRight" size={16} />
-        </a>
-      ) : status === 'redirect' && recommendation ? (
-        <Link className="btn btn-primary" to={`/services/${recommendation.slug}`}>
-          View match
-          <JourneyIcon name="arrowRight" size={16} />
-        </Link>
-      ) : status === 'redirect' ? (
-        <Link className="btn btn-primary" to="/contact">
-          Message Jake
-        </Link>
-      ) : (
-        <a className="btn btn-primary" href="#service-fit-check">
-          Check your fit
           <JourneyIcon name="arrowRight" size={16} />
         </a>
       )}
