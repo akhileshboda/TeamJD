@@ -23,7 +23,8 @@ function createResendProvider({ apiKey, fetchImpl = global.fetch } = {}) {
           headers: {
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
-            'Idempotency-Key': idempotencyKey
+            'Idempotency-Key': idempotencyKey,
+            'User-Agent': 'TeamJD-Enquiries/1.0'
           },
           body: JSON.stringify(messages),
           signal: AbortSignal.timeout(10000)

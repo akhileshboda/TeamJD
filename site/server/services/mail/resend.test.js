@@ -20,6 +20,7 @@ test('Resend adapter sends one idempotent batch without exposing provider choice
   assert.equal(request.url, RESEND_BATCH_URL);
   assert.equal(request.options.headers.Authorization, 'Bearer resend-secret');
   assert.equal(request.options.headers['Idempotency-Key'], 'enquiry/submission-id');
+  assert.equal(request.options.headers['User-Agent'], 'TeamJD-Enquiries/1.0');
   assert.deepEqual(JSON.parse(request.options.body), messages);
 });
 
