@@ -32,6 +32,15 @@ PUBLIC_BASE_URL=https://team-jd.com.au
 DROPBOX_REDIRECT_URI=https://team-jd.com.au/auth/dropbox/callback
 ASSET_AUTO_SYNC_ENABLED=true
 ASSET_SYNC_ON_BOOT=false
+DROPBOX_OAUTH_ENABLED=false
+ENQUIRY_MAIL_PROVIDER=resend
+RESEND_API_KEY=<production-sending-only-key>
+ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
+ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
+ENQUIRY_REPLY_TO=akhileshboda@outlook.com
+ENQUIRY_EMAIL_SUBJECT_PREFIX=
+TURNSTILE_SITE_KEY=<production-hostname-restricted-site-key>
+TURNSTILE_SECRET_KEY=<production-secret-key>
 ```
 
 Staging must include its routed HTTPS hostname and these safety settings:
@@ -44,9 +53,28 @@ PUBLIC_BASE_URL=https://<staging-domain>
 DROPBOX_REDIRECT_URI=https://<staging-domain>/auth/dropbox/callback
 ASSET_AUTO_SYNC_ENABLED=false
 ASSET_SYNC_ON_BOOT=false
+DROPBOX_OAUTH_ENABLED=false
+ENQUIRY_MAIL_PROVIDER=resend
+RESEND_API_KEY=<staging-sending-only-key>
+ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
+ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
+ENQUIRY_REPLY_TO=akhileshboda@outlook.com
+ENQUIRY_EMAIL_SUBJECT_PREFIX=[STAGING]
+TURNSTILE_SITE_KEY=<staging-hostname-restricted-site-key>
+TURNSTILE_SECRET_KEY=<staging-secret-key>
 ```
 
 Keep `NODE_ENV=production` in staging so the file documents the effective runtime correctly. For safe recovery from older staging configurations, the PM2 staging entry overrides `NODE_ENV`, `HOST`, `PORT`, and both automatic-sync variables with the values in the runtime contract. Restrict each `.env` to mode `600`; the deploy scripts enforce that mode during promotion without rewriting its contents.
+
+### Enquiry delivery setup
+
+Verify `send.team-jd.com.au` in Resend using the exact SPF and DKIM records Resend supplies. Use separate sending-only API keys for staging and production, keep provider open/click tracking disabled, and restrict each Turnstile widget to its environment hostname. The application sends the internal notification and customer confirmation in one idempotent batch. Jake's later inbox cutover only changes `ENQUIRY_NOTIFICATION_TO` and `ENQUIRY_REPLY_TO`; Google Workspace SMTP is intentionally not implemented until authenticated access is available.
+
+In the Cloudflare zone, add a rate-limiting rule for `http.request.uri.path eq "/api/enquiries"` at 5 requests per 10 seconds, using managed challenge or block according to observed traffic. Keep the application limits enabled: the edge rule is supplementary and may permit a small burst before enforcement.
+
+Dropbox OAuth returns 404 in production-mode environments unless `DROPBOX_OAUTH_ENABLED=true`. Enable it only for a controlled re-authentication window, complete the flow, then disable it and restart the relevant PM2 process with `--update-env`.
+
+The rate-limit stores are process-local by design because each environment runs one PM2 fork. Do not add PM2 forks or another application host until the stores are moved to a shared backend. The origin-wide daily ceiling limits this application to 40 accepted enquiries (80 messages), but Resend key protection and provider-side monitoring are still required because no application limit can contain a key used outside this origin.
 
 ## Deploy
 

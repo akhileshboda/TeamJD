@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const { createDropboxAuth } = require('../services/dropboxAuth');
+const { dropboxOAuthLimiter } = require('../middleware/rateLimits');
 
 const router = express.Router();
 const DROPBOX_SCOPES = [
@@ -13,6 +14,14 @@ const DROPBOX_SCOPES = [
 
 function isProduction() {
   return process.env.NODE_ENV === 'production';
+}
+
+function requireDropboxOAuthWindow(req, res, next) {
+  if (isProduction() && process.env.DROPBOX_OAUTH_ENABLED !== 'true') {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+
+  return next();
 }
 
 function getCallbackPayload(dropboxSession) {
@@ -37,6 +46,9 @@ function getCallbackPayload(dropboxSession) {
     refreshToken: dropboxSession.refreshToken
   };
 }
+
+router.use(dropboxOAuthLimiter);
+router.use('/dropbox', requireDropboxOAuthWindow);
 
 router.get('/dropbox/start', async (req, res) => {
   try {
@@ -129,3 +141,4 @@ router.get('/dropbox/callback', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.requireDropboxOAuthWindow = requireDropboxOAuthWindow;

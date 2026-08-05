@@ -1,4 +1,10 @@
+const crypto = require('crypto');
 const express = require('express');
+const {
+  adminAttemptLimiter,
+  manualOperationLimiter,
+  publicAssetLimiter
+} = require('../middleware/rateLimits');
 const {
   AssetNotFoundError,
   AssetMapNotReadyError,
@@ -55,14 +61,20 @@ function requireSyncAdmin(req, res, next) {
     return res.status(401).json({ error: 'Missing bearer token.' });
   }
 
-  if (token !== expectedToken) {
+  // Hash first so timingSafeEqual always compares fixed-size buffers, including
+  // when an attacker supplies a token with a different length.
+  const expectedBuffer = crypto.createHash('sha256').update(expectedToken).digest();
+  const providedBuffer = crypto.createHash('sha256').update(token).digest();
+  const tokenMatches = crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+
+  if (!tokenMatches) {
     return res.status(403).json({ error: 'Invalid bearer token.' });
   }
 
   return next();
 }
 
-router.get('/', async (req, res) => {
+router.get('/', publicAssetLimiter, async (req, res) => {
   try {
     const manifest = await getAssetManifest();
 
@@ -81,7 +93,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/manifest', async (req, res) => {
+router.get('/manifest', publicAssetLimiter, async (req, res) => {
   try {
     const manifest = await getAssetManifest();
 
@@ -119,14 +131,23 @@ async function handleRefreshAssetMap(req, res) {
   }
 }
 
-router.get('/refresh', requireSyncAdmin, handleRefreshAssetMap);
-router.post('/refresh', requireSyncAdmin, handleRefreshAssetMap);
+router.post(
+  '/refresh',
+  adminAttemptLimiter,
+  requireSyncAdmin,
+  manualOperationLimiter,
+  handleRefreshAssetMap
+);
+router.get('/refresh', publicAssetLimiter, (req, res) => {
+  res.set('Allow', 'POST');
+  return res.status(405).json({ error: 'Method not allowed.' });
+});
 
-router.get('/status', (req, res) => {
+router.get('/status', publicAssetLimiter, (req, res) => {
   return res.json(getAssetServiceStatus());
 });
 
-router.get('/setup-status', requireSyncAdmin, async (req, res) => {
+router.get('/setup-status', adminAttemptLimiter, requireSyncAdmin, async (req, res) => {
   try {
     const manifest = await getAssetManifest().catch(() => null);
     return res.json(getSetupStatus(manifest));
@@ -136,7 +157,7 @@ router.get('/setup-status', requireSyncAdmin, async (req, res) => {
   }
 });
 
-router.get('/sync/plan', requireSyncAdmin, async (req, res) => {
+router.get('/sync/plan', adminAttemptLimiter, requireSyncAdmin, async (req, res) => {
   try {
     const plan = await planAssetSync({ record: true, source: 'api' });
     return res.status(plan.ok ? 200 : 400).json(plan);
@@ -146,7 +167,7 @@ router.get('/sync/plan', requireSyncAdmin, async (req, res) => {
   }
 });
 
-router.post('/sync', requireSyncAdmin, async (req, res) => {
+router.post('/sync', adminAttemptLimiter, requireSyncAdmin, manualOperationLimiter, async (req, res) => {
   try {
     const { report } = await runManualAssetSync();
     return res.status(report.ok ? 200 : 207).json(report);
@@ -160,7 +181,7 @@ router.post('/sync', requireSyncAdmin, async (req, res) => {
   }
 });
 
-router.get('/discover', async (req, res) => {
+router.get('/discover', adminAttemptLimiter, requireSyncAdmin, async (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(404).json({ error: 'Not found.' });
   }
@@ -178,7 +199,7 @@ router.get('/discover', async (req, res) => {
   }
 });
 
-router.get('/:assetKey', async (req, res) => {
+router.get('/:assetKey', publicAssetLimiter, async (req, res) => {
   try {
     if (!isProductionAssetMode() && !isR2AssetMode()) {
       return await streamDropboxAsset(req.params.assetKey, res);

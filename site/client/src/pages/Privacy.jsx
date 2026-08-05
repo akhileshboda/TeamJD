@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 export default function Privacy() {
   return (
     <>
-      <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="Last updated: February 2026" />
+      <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="Last updated: August 2026" />
 
       <section className="section">
         <div className="container">
@@ -108,6 +108,22 @@ export default function Privacy() {
                     <span className="arrow">→</span>
                     <strong style={{ color: 'var(--color-text)' }}>Coaching apps</strong> — for
                     program delivery and progress tracking
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <strong style={{ color: 'var(--color-text)' }}>Resend</strong> — to deliver
+                      website enquiries and confirmation emails
+                    </span>
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <strong style={{ color: 'var(--color-text)' }}>
+                        Cloudflare Turnstile
+                      </strong>{' '}
+                      — to verify enquiry submissions and help prevent automated abuse
+                    </span>
                   </li>
                 </ul>
               </div>

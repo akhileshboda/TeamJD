@@ -1,5 +1,6 @@
 const path = require('path');
 const { logVisit } = require('../services/visitLog');
+const { getClientIp } = require('./clientIp');
 
 function isPageView(req) {
   if (req.method !== 'GET') return false;
@@ -12,7 +13,7 @@ function visitLogger(req, res, next) {
   if (isPageView(req)) {
     logVisit({
       type: 'visit',
-      ip: req.ip,
+      ip: getClientIp(req),
       method: req.method,
       path: req.originalUrl || req.url,
       ua: req.get('user-agent') || null

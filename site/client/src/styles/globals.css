@@ -9318,9 +9318,61 @@ p  { line-height: 1.7; color: var(--color-text); }
   outline-offset: 3px;
 }
 
+.contact-form-actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.contact-honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+
+.contact-turnstile {
+  min-height: 65px;
+}
+
+.contact-turnstile-note,
+.contact-form-security-status {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.contact-form-security-status {
+  margin-top: calc(var(--space-4) * -1);
+}
+
+.contact-form-status {
+  min-height: 1.4em;
+  margin: calc(var(--space-3) * -1) 0 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.contact-form-status--success {
+  color: var(--color-accent);
+}
+
+.contact-form-status--error {
+  color: #ff9b90;
+}
+
 .contact-form-disclosure {
   color: #686e6f;
   font-size: 0.78rem;
+}
+
+.contact-form-disclosure a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .contact-connect {

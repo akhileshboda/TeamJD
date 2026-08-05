@@ -6,7 +6,9 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
+const enquiriesRouter = require('./routes/enquiries');
 const { visitLogger } = require('./middleware/visitLogger');
+const { genericApiLimiter } = require('./middleware/rateLimits');
 const {
   getAssetManifest,
   getAssetServiceStatus,
@@ -35,9 +37,10 @@ for (const envVar of requiredAuthEnvVars) {
 }
 
 const app = express();
-// Trust the reverse proxy in front of the app (staging/prod HTTPS termination)
-// so req.ip reflects the real client and secure cookies are sent.
-app.set('trust proxy', 1);
+app.disable('x-powered-by');
+// Only the local Cloudflare tunnel may supply proxy metadata. Limiter keys use
+// validated CF-Connecting-IP values and never use arbitrary X-Forwarded-For.
+app.set('trust proxy', 'loopback');
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '127.0.0.1';
 const listenHost = host === 'localhost' ? '127.0.0.1' : host;
@@ -196,7 +199,6 @@ async function serveManifestBackedHtml(req, res, next) {
   }
 }
 
-app.use(express.json());
 app.get('/healthz', (req, res) => {
   const assets = getAssetServiceStatus();
   const ready = assets.cacheReady && assets.state === 'ready';
@@ -236,6 +238,10 @@ app.use(
 app.use(visitLogger);
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
+app.use('/api/enquiries', enquiriesRouter);
+// Known API families above have stricter independent budgets. This governs any
+// remaining or future /api route, including unknown paths.
+app.use('/api', genericApiLimiter);
 app.use(serveManifestBackedHtml);
 app.use(
   '/assets/generated',
@@ -257,6 +263,21 @@ app.get('*', (req, res, next) => {
 });
 
 app.use((error, req, res, next) => {
+  if (
+    req.path.startsWith('/api/') &&
+    ['entity.parse.failed', 'entity.too.large'].includes(error.type)
+  ) {
+    return res.status(400).json({
+      ok: false,
+      error: {
+        code: error.type === 'entity.too.large' ? 'REQUEST_TOO_LARGE' : 'INVALID_JSON',
+        message: error.type === 'entity.too.large'
+          ? 'The request body is too large.'
+          : 'The request body must be valid JSON.'
+      }
+    });
+  }
+
   console.error('Unhandled Team JD site error:', error);
   if (res.headersSent) return next(error);
 

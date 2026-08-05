@@ -14,7 +14,7 @@
     "sync-assets:dry-run": "node server/sync-assets.js --dry-run",
     "rebuild-assets": "node server/rebuild-assets.js",
     "rebuild-assets:dry-run": "node server/rebuild-assets.js --dry-run",
-    "test": "node --test server/deploy.test.js server/routes/*.test.js server/services/*.test.js",
+    "test": "node --test --test-concurrency=1 server/deploy.test.js server/middleware/*.test.js server/routes/*.test.js server/services/*.test.js server/services/mail/*.test.js",
     "deploy:production": "bash server/deploy-production.sh",
     "deploy:staging": "bash server/deploy-staging.sh"
   },
@@ -30,12 +30,14 @@
     "dotenv": "^16.4.7",
     "dropbox": "^10.34.0",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.6.2",
     "express-session": "^1.18.1",
     "node-cron": "^4.5.0",
-    "sharp": "^0.33.5"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "supertest": "^7.2.2"
   }
 }

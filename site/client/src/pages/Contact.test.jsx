@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Contact from './Contact'
 
@@ -24,7 +24,23 @@ vi.mock('../hooks/useAssets', () => ({
   useAssets: () => (assetPath) => assetPath,
 }))
 
-afterEach(() => cleanup())
+vi.mock('../components/TurnstileWidget', async () => {
+  const React = await import('react')
+  return {
+    default: React.forwardRef(function MockTurnstile({ onToken }, ref) {
+      React.useEffect(() => onToken('verified-turnstile-token'), [onToken])
+      React.useImperativeHandle(ref, () => ({
+        reset: () => onToken('verified-turnstile-token'),
+      }))
+      return <div data-testid="turnstile-widget" />
+    }),
+  }
+})
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 function renderContact(initialEntry = '/contact') {
   return render(
@@ -71,13 +87,12 @@ describe('Contact page route chooser', () => {
     })
   })
 
-  it('keeps the enquiry form accessible and configured for the current email flow', () => {
+  it('keeps the enquiry form accessible and removes the local email-client flow', async () => {
     renderContact()
 
     const form = screen.getByRole('form', { name: 'Contact Jake' })
-    expect(form).toHaveAttribute('action', 'mailto:jake@team-jd.com.au')
-    expect(form).toHaveAttribute('method', 'POST')
-    expect(form).toHaveAttribute('enctype', 'text/plain')
+    expect(form).not.toHaveAttribute('action')
+    expect(form).not.toHaveAttribute('method')
 
     expect(screen.getByLabelText('First Name')).toBeRequired()
     expect(screen.getByLabelText('Last Name')).not.toBeRequired()
@@ -87,7 +102,121 @@ describe('Contact page route chooser', () => {
     const serviceSelect = screen.getByLabelText('Interested In')
     expect(within(serviceSelect).getByRole('option', { name: 'Competition Preparation' })).toBeInTheDocument()
     expect(within(serviceSelect).getByRole('option', { name: 'General Question' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Send enquiry/i })).toHaveAttribute('type', 'submit')
+    const button = screen.getByRole('button', { name: /Send enquiry/i })
+    expect(button).toHaveAttribute('type', 'submit')
+    await waitFor(() => expect(button).toBeEnabled())
+    expect(screen.getByTestId('turnstile-widget')).toBeInTheDocument()
+    expect(screen.getByText(/Resend delivers your enquiry/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy')
+  })
+
+  it('posts the expected request and clears fields only after success', async () => {
+    const request = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    })
+    vi.stubGlobal('fetch', request)
+    renderContact('/contact?service=online-coaching')
+
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
+    fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Boda' } })
+    fireEvent.change(screen.getByLabelText('Email Address'), {
+      target: { value: 'akhileshboda@outlook.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Your Message'), {
+      target: { value: 'I would like some clarity about coaching.' },
+    })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Send enquiry/i })).toBeEnabled())
+    fireEvent.submit(screen.getByRole('form', { name: 'Contact Jake' }))
+
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+    const [url, options] = request.mock.calls[0]
+    const payload = JSON.parse(options.body)
+    expect(url).toBe('/api/enquiries')
+    expect(options.method).toBe('POST')
+    expect(payload).toMatchObject({
+      firstName: 'Akhil',
+      lastName: 'Boda',
+      email: 'akhileshboda@outlook.com',
+      service: 'online-coaching',
+      message: 'I would like some clarity about coaching.',
+      website: '',
+      turnstileToken: 'verified-turnstile-token',
+    })
+    expect(payload.submissionId).toMatch(/^[0-9a-f-]{36}$/i)
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/confirmation is on its way/i))
+    expect(screen.getByLabelText('First Name')).toHaveValue('')
+    expect(screen.getByLabelText('Email Address')).toHaveValue('')
+  })
+
+  it('shows pending state and preserves entered data after a delivery error', async () => {
+    let resolveRequest
+    const request = vi.fn().mockImplementation(() => new Promise((resolve) => {
+      resolveRequest = resolve
+    }))
+    vi.stubGlobal('fetch', request)
+    renderContact()
+
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
+    fireEvent.change(screen.getByLabelText('Email Address'), {
+      target: { value: 'akhileshboda@outlook.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Your Message'), {
+      target: { value: 'Please keep this message after an error.' },
+    })
+    await waitFor(() => expect(screen.getByRole('button', { name: /Send enquiry/i })).toBeEnabled())
+    fireEvent.submit(screen.getByRole('form', { name: 'Contact Jake' }))
+
+    expect(await screen.findByRole('button', { name: 'Sending…' })).toBeDisabled()
+    resolveRequest({
+      ok: false,
+      json: async () => ({ error: { message: 'Enquiries are temporarily at capacity.' } }),
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily at capacity')
+    expect(screen.getByLabelText('First Name')).toHaveValue('Akhil')
+    expect(screen.getByLabelText('Email Address')).toHaveValue('akhileshboda@outlook.com')
+    expect(screen.getByLabelText('Your Message')).toHaveValue('Please keep this message after an error.')
+  })
+
+  it('reuses an idempotency reference only while the failed payload is unchanged', async () => {
+    const request = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: { message: 'Delivery failed.' } }),
+    })
+    vi.stubGlobal('fetch', request)
+    renderContact()
+
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
+    fireEvent.change(screen.getByLabelText('Email Address'), {
+      target: { value: 'akhileshboda@outlook.com' },
+    })
+    fireEvent.change(screen.getByLabelText('Your Message'), {
+      target: { value: 'Original message.' },
+    })
+    const form = screen.getByRole('form', { name: 'Contact Jake' })
+    const submit = () => fireEvent.submit(form)
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Send enquiry/i })).toBeEnabled())
+    submit()
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+    const firstId = JSON.parse(request.mock.calls[0][1].body).submissionId
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Send enquiry/i })).toBeEnabled())
+    submit()
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
+    const retryId = JSON.parse(request.mock.calls[1][1].body).submissionId
+    expect(retryId).toBe(firstId)
+
+    fireEvent.change(screen.getByLabelText('Your Message'), {
+      target: { value: 'Changed after the failed delivery.' },
+    })
+    await waitFor(() => expect(screen.getByRole('button', { name: /Send enquiry/i })).toBeEnabled())
+    submit()
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(3))
+    const changedId = JSON.parse(request.mock.calls[2][1].body).submissionId
+    expect(changedId).not.toBe(firstId)
   })
 
   it('preselects the unsure enquiry from a valid finder handoff and rejects unknown values', () => {

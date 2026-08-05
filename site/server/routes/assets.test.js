@@ -1,6 +1,9 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { requireSyncAdmin } = require('./assets');
+const express = require('express');
+const request = require('supertest');
+const assetsRouter = require('./assets');
+const { requireSyncAdmin } = assetsRouter;
 
 function withAdminToken(value, run) {
   const original = process.env.ASSET_SYNC_ADMIN_TOKEN;
@@ -72,4 +75,38 @@ test('asset admin guard allows matching bearer token', () => {
   assert.equal(result.nextCalled, true);
   assert.equal(result.statusCode, null);
   assert.equal(result.payload, null);
+});
+
+test('asset refresh is state-changing only over authenticated POST', async () => {
+  const app = express();
+  app.use('/api/assets', assetsRouter);
+
+  const response = await request(app)
+    .get('/api/assets/refresh')
+    .set('CF-Connecting-IP', '203.0.113.70');
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.allow, 'POST');
+});
+
+test('asset discovery requires an admin token in every environment', async () => {
+  const app = express();
+  app.use('/api/assets', assetsRouter);
+
+  const previous = process.env.ASSET_SYNC_ADMIN_TOKEN;
+  process.env.ASSET_SYNC_ADMIN_TOKEN = 'discovery-secret';
+  try {
+    const missing = await request(app)
+      .get('/api/assets/discover')
+      .set('CF-Connecting-IP', '203.0.113.71');
+    assert.equal(missing.status, 401);
+
+    const invalid = await request(app)
+      .get('/api/assets/discover')
+      .set('Authorization', 'Bearer wrong')
+      .set('CF-Connecting-IP', '203.0.113.72');
+    assert.equal(invalid.status, 403);
+  } finally {
+    if (previous === undefined) delete process.env.ASSET_SYNC_ADMIN_TOKEN;
+    else process.env.ASSET_SYNC_ADMIN_TOKEN = previous;
+  }
 });

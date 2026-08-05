@@ -1,9 +1,11 @@
+import { useCallback, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ContactMediaReel from '../components/ContactMediaReel'
 import ContactSocialCarousel from '../components/ContactSocialCarousel'
 import FindYourFitLink from '../components/FindYourFitLink'
 import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
+import TurnstileWidget from '../components/TurnstileWidget'
 import { useAssets } from '../hooks/useAssets'
 
 const SERVICES = [
@@ -41,6 +43,10 @@ const CONTACT_SERVICE_VALUES = new Set([
   'unsure',
   'general',
 ])
+
+function createSubmissionId() {
+  return crypto.randomUUID()
+}
 
 const SOCIAL_POSTS = [
   {
@@ -99,6 +105,78 @@ export default function Contact() {
   const [searchParams] = useSearchParams()
   const requestedService = searchParams.get('service')
   const initialService = CONTACT_SERVICE_VALUES.has(requestedService) ? requestedService : ''
+  const turnstileRef = useRef(null)
+  const submissionIdRef = useRef(createSubmissionId())
+  const payloadSignatureRef = useRef(null)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [securityStatus, setSecurityStatus] = useState('')
+  const [submitStatus, setSubmitStatus] = useState({ type: 'idle', message: '' })
+  const handleTurnstileToken = useCallback((token) => setTurnstileToken(token), [])
+  const handleTurnstileStatus = useCallback((message) => setSecurityStatus(message), [])
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    if (!turnstileToken || submitStatus.type === 'pending') {
+      setSubmitStatus({ type: 'error', message: 'Complete the security check before sending.' })
+      return
+    }
+
+    const form = event.currentTarget
+    const data = new FormData(form)
+    const formValues = {
+      firstName: data.get('firstName'),
+      lastName: data.get('lastName'),
+      email: data.get('email'),
+      service: data.get('service'),
+      message: data.get('message'),
+      website: data.get('website'),
+    }
+    const payloadSignature = JSON.stringify(formValues)
+    if (payloadSignatureRef.current && payloadSignatureRef.current !== payloadSignature) {
+      submissionIdRef.current = createSubmissionId()
+    }
+    payloadSignatureRef.current = payloadSignature
+
+    const payload = {
+      ...formValues,
+      submissionId: submissionIdRef.current,
+      turnstileToken,
+    }
+
+    setSubmitStatus({ type: 'pending', message: 'Sending your enquiry…' })
+
+    try {
+      const response = await fetch('/api/enquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(result?.error?.message || 'Your enquiry could not be sent. Please try again.')
+      }
+
+      form.reset()
+      submissionIdRef.current = createSubmissionId()
+      payloadSignatureRef.current = null
+      setTurnstileToken('')
+      turnstileRef.current?.reset()
+      setSubmitStatus({
+        type: 'success',
+        message: 'Your enquiry has been sent. A confirmation is on its way to your email.',
+      })
+    } catch (error) {
+      setSubmitStatus({
+        type: 'error',
+        message: error instanceof Error
+          ? error.message
+          : 'Your enquiry could not be sent. Please try again.',
+      })
+      setTurnstileToken('')
+      turnstileRef.current?.reset()
+    }
+  }
 
   return (
     <div className="contact-page">
@@ -257,9 +335,7 @@ export default function Contact() {
             <form
               className="contact-enquiry-form"
               aria-label="Contact Jake"
-              action="mailto:jake@team-jd.com.au"
-              method="POST"
-              encType="text/plain"
+              onSubmit={handleSubmit}
             >
               <div className="form-name-grid">
                 <div className="form-group">
@@ -270,10 +346,11 @@ export default function Contact() {
                     className="form-input"
                     type="text"
                     id="contact-first"
-                    name="first_name"
+                    name="firstName"
                     placeholder="Jake"
                     autoComplete="given-name"
                     required
+                    maxLength={100}
                   />
                 </div>
                 <div className="form-group">
@@ -284,9 +361,10 @@ export default function Contact() {
                     className="form-input"
                     type="text"
                     id="contact-last"
-                    name="last_name"
+                    name="lastName"
                     placeholder="Smith"
                     autoComplete="family-name"
+                    maxLength={100}
                   />
                 </div>
               </div>
@@ -303,6 +381,7 @@ export default function Contact() {
                   placeholder="you@example.com"
                   autoComplete="email"
                   required
+                  maxLength={254}
                 />
               </div>
 
@@ -337,12 +416,39 @@ export default function Contact() {
                   name="message"
                   placeholder="Tell Jake what you would like clarity on..."
                   required
+                  maxLength={5000}
                 />
               </div>
 
+              <div className="contact-honeypot" aria-hidden="true">
+                <label htmlFor="contact-website">Website</label>
+                <input
+                  id="contact-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
+              <TurnstileWidget
+                ref={turnstileRef}
+                onToken={handleTurnstileToken}
+                onStatus={handleTurnstileStatus}
+              />
+              {securityStatus && (
+                <p className="contact-form-security-status" role="status" aria-live="polite">
+                  {securityStatus}
+                </p>
+              )}
+
               <div className="contact-form-actions">
-                <button type="submit" className="btn btn-primary btn-lg">
-                  Send enquiry
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-lg"
+                  disabled={submitStatus.type === 'pending' || !turnstileToken}
+                >
+                  {submitStatus.type === 'pending' ? 'Sending…' : 'Send enquiry'}
                   <JourneyIcon name="arrowRight" size={18} />
                 </button>
                 <p>
@@ -351,8 +457,17 @@ export default function Contact() {
                 </p>
               </div>
 
+              <p
+                className={`contact-form-status contact-form-status--${submitStatus.type}`}
+                role={submitStatus.type === 'error' ? 'alert' : 'status'}
+                aria-live="polite"
+              >
+                {submitStatus.message}
+              </p>
+
               <p className="contact-form-disclosure">
-                This form opens your email app so you can review the message before sending it.
+                Resend delivers your enquiry and confirmation email. Cloudflare Turnstile helps
+                prevent abuse. Read our <Link to="/privacy">Privacy Policy</Link>.
               </p>
             </form>
           </SectionReveal>
