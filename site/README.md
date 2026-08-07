@@ -39,6 +39,16 @@ HOST=localhost
 PUBLIC_BASE_URL=http://localhost:3000
 SESSION_SECRET=replace-with-a-long-random-string
 
+ENQUIRY_MAIL_PROVIDER=resend
+RESEND_API_KEY=
+ENQUIRY_EMAIL_FROM=Jake at Team JD <enquiries@send.team-jd.com.au>
+ENQUIRY_EMAIL_PUBLIC_BASE_URL=https://team-jd.com.au
+ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
+ENQUIRY_REPLY_TO=akhileshboda@outlook.com
+ENQUIRY_EMAIL_SUBJECT_PREFIX=
+TURNSTILE_SITE_KEY=
+TURNSTILE_SECRET_KEY=
+
 DROPBOX_APP_KEY=
 DROPBOX_APP_SECRET=
 DROPBOX_REDIRECT_URI=http://localhost:3000/auth/dropbox/callback
@@ -66,7 +76,7 @@ DROPBOX_ASSETS_ROOT=/assets
 DROPBOX_REORGANIZE_ENABLED=true
 ```
 
-Secrets stay server-side only. Never expose Dropbox tokens, R2 keys, or `ASSET_SYNC_ADMIN_TOKEN` to the frontend.
+Secrets stay server-side only. Never expose Resend, Turnstile, Dropbox, R2, or asset-admin credentials to the frontend.
 
 ## Dropbox OAuth
 

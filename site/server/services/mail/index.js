@@ -15,7 +15,11 @@ function getMailConfig() {
     notificationTo: cleanHeaderValue(process.env.ENQUIRY_NOTIFICATION_TO),
     replyTo: cleanHeaderValue(process.env.ENQUIRY_REPLY_TO),
     subjectPrefix: cleanHeaderValue(process.env.ENQUIRY_EMAIL_SUBJECT_PREFIX) || '',
-    baseUrl: (process.env.PUBLIC_BASE_URL || 'https://team-jd.com.au').trim()
+    emailPublicBaseUrl: (
+      process.env.ENQUIRY_EMAIL_PUBLIC_BASE_URL ||
+      process.env.PUBLIC_BASE_URL ||
+      'https://team-jd.com.au'
+    ).trim()
   };
 }
 
@@ -48,13 +52,12 @@ async function deliverEnquiry(enquiry, dependencies = {}) {
   }
 
   const timestamp = dependencies.timestamp || new Date();
-  const internal = buildInternalTemplate(enquiry, { baseUrl: config.baseUrl, timestamp });
-  const customer = buildCustomerTemplate(enquiry, { baseUrl: config.baseUrl });
+  const internal = buildInternalTemplate(enquiry, { timestamp });
+  const customer = buildCustomerTemplate(enquiry, { baseUrl: config.emailPublicBaseUrl });
   const messages = [
     {
       from: config.from,
       to: [config.notificationTo],
-      reply_to: enquiry.email,
       subject: subject(config, 'New Team JD website enquiry'),
       html: internal.html,
       text: internal.text

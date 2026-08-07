@@ -35,7 +35,8 @@ ASSET_SYNC_ON_BOOT=false
 DROPBOX_OAUTH_ENABLED=false
 ENQUIRY_MAIL_PROVIDER=resend
 RESEND_API_KEY=<production-sending-only-key>
-ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
+ENQUIRY_EMAIL_FROM=Jake at Team JD <enquiries@send.team-jd.com.au>
+ENQUIRY_EMAIL_PUBLIC_BASE_URL=https://team-jd.com.au
 ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
 ENQUIRY_REPLY_TO=akhileshboda@outlook.com
 ENQUIRY_EMAIL_SUBJECT_PREFIX=
@@ -56,7 +57,8 @@ ASSET_SYNC_ON_BOOT=false
 DROPBOX_OAUTH_ENABLED=false
 ENQUIRY_MAIL_PROVIDER=resend
 RESEND_API_KEY=<staging-sending-only-key>
-ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
+ENQUIRY_EMAIL_FROM=Jake at Team JD <enquiries@send.team-jd.com.au>
+ENQUIRY_EMAIL_PUBLIC_BASE_URL=https://team-jd.com.au
 ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
 ENQUIRY_REPLY_TO=akhileshboda@outlook.com
 ENQUIRY_EMAIL_SUBJECT_PREFIX=[STAGING]
@@ -69,6 +71,8 @@ Keep `NODE_ENV=production` in staging so the file documents the effective runtim
 ### Enquiry delivery setup
 
 Verify `send.team-jd.com.au` in Resend using the exact SPF and DKIM records Resend supplies. Use separate sending-only API keys for staging and production, keep provider open/click tracking disabled, and restrict each Turnstile widget to its environment hostname. The application sends the internal notification and customer confirmation in one idempotent batch. Jake's later inbox cutover only changes `ENQUIRY_NOTIFICATION_TO` and `ENQUIRY_REPLY_TO`; Google Workspace SMTP is intentionally not implemented until authenticated access is available.
+
+Publish a monitoring-only DMARC TXT record at `_dmarc.send.team-jd.com.au` with the value `v=DMARC1; p=none;`. This record applies only to the Resend sending subdomain and must not replace or alter root-domain Google Workspace authentication. Confirm live messages report `dmarc=pass` before considering a stricter policy.
 
 In the Cloudflare zone, add a rate-limiting rule for `http.request.uri.path eq "/api/enquiries"` at 5 requests per 10 seconds, using managed challenge or block according to observed traffic. Keep the application limits enabled: the edge rule is supplementary and may permit a small burst before enforcement.
 
