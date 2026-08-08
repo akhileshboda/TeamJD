@@ -52,7 +52,7 @@ async function deliverEnquiry(enquiry, dependencies = {}) {
   }
 
   const timestamp = dependencies.timestamp || new Date();
-  const internal = buildInternalTemplate(enquiry, { timestamp });
+  const internal = buildInternalTemplate(enquiry, { timestamp, baseUrl: config.emailPublicBaseUrl });
   const customer = buildCustomerTemplate(enquiry, { baseUrl: config.emailPublicBaseUrl });
   const messages = [
     {

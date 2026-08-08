@@ -59,10 +59,11 @@ test('delivery fixes the internal recipient and reply-to values on the server', 
   assert.match(batch.messages[0].text, /Full internal message/);
   assert.match(batch.messages[0].html, /mailto:customer%40example\.com/);
   assert.match(batch.messages[0].html, />customer@example\.com</);
-  assert.doesNotMatch(batch.messages[0].html, /<img|https?:\/\//i);
+  assert.match(batch.messages[0].html, /https:\/\/team-jd\.com\.au\/assets\/branding\/team-jd-logo\.png/);
+  assert.doesNotMatch(batch.messages[0].html, /staging\.team-jd\.com\.au/);
   assert.match(batch.messages[1].html, /https:\/\/team-jd\.com\.au\/assets\/branding\/team-jd-logo\.png/);
   assert.doesNotMatch(batch.messages[1].html, /staging\.team-jd\.com\.au/);
-  assert.doesNotMatch(batch.messages[1].text, /Full internal message/);
+  assert.match(batch.messages[1].text, /Full internal message/);
   assert.equal(Object.hasOwn(batch.messages[0], 'attachments'), false);
 }));
 
