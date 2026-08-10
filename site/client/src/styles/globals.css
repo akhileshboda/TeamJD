@@ -5224,6 +5224,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-related-grid {
+  --service-related-edge-fade: clamp(2.5rem, 5vw, 4rem);
   --glass-blur: 22px;
   --glass-saturate: 165%;
   --glass-fill: rgba(255, 255, 255, 0.095);
@@ -5237,11 +5238,23 @@ p  { line-height: 1.7; color: var(--color-text); }
   gap: var(--space-4);
   overflow-x: auto;
   overscroll-behavior-inline: contain;
-  padding: var(--space-1) var(--space-1) var(--space-5);
-  scroll-padding-inline: var(--space-1);
+  padding: var(--space-1) calc(var(--service-related-edge-fade) + var(--space-2)) var(--space-5) var(--space-1);
+  scroll-padding-inline: var(--space-1) calc(var(--service-related-edge-fade) + var(--space-2));
   scroll-snap-type: inline mandatory;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000 0,
+    #000 calc(100% - var(--service-related-edge-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000 0,
+    #000 calc(100% - var(--service-related-edge-fade)),
+    transparent 100%
+  );
 }
 
 .service-related-grid:focus-visible {
@@ -5266,7 +5279,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-related-grid > div {
   display: block;
-  flex: 0 0 clamp(18rem, 34vw, 24rem);
+  flex: 0 0 clamp(20rem, 43%, 34rem);
   min-width: 0;
   scroll-snap-align: start;
 }
@@ -6160,6 +6173,9 @@ p  { line-height: 1.7; color: var(--color-text); }
   .service-related-grid {
     margin-right: calc(-1 * var(--container-pad));
     padding-right: var(--container-pad);
+    scroll-padding-right: var(--container-pad);
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .service-related-grid > div {
