@@ -40,7 +40,7 @@ export default function NotFound() {
             </li>
             <li>
               <a
-                href="https://www.instagram.com/jakededert/"
+                href="https://www.instagram.com/jake_dedert_teamjd_coaching/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
