@@ -5291,6 +5291,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-related-grid .service-glass-card-plate {
+  min-height: clamp(6rem, 42%, 7rem);
   padding: var(--space-3) var(--space-4);
 }
 
