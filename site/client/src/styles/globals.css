@@ -5531,7 +5531,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   --svc-accent-rgb: 22, 201, 221;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  width: min(46rem, 100%);
+  width: min(48rem, 100%);
   height: min(52rem, calc(100dvh - 2 * var(--space-5)));
   max-height: calc(100dvh - 2 * var(--space-5));
   overflow: hidden;
@@ -5552,29 +5552,42 @@ p  { line-height: 1.7; color: var(--color-text); }
   outline-offset: 3px;
 }
 
-.service-finder-modal-header {
+.service-finder-modal-context {
   position: relative;
   z-index: 4;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: var(--space-6);
   padding: clamp(1.15rem, 3vw, 1.75rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(21, 24, 25, 0.82);
+  background:
+    linear-gradient(135deg, rgba(22, 201, 221, 0.06), transparent 60%),
+    rgba(21, 24, 25, 0.9);
 }
 
-.service-finder-modal-header .eyebrow {
+.service-finder-modal-context .eyebrow {
   display: block;
   margin-bottom: var(--space-2);
 }
 
-.service-finder-modal-header h2 {
+.service-finder-modal-context h2 {
   max-width: 18ch;
   font-size: clamp(1.5rem, 3.3vw, 2.15rem);
 }
 
+.service-finder-context-progress {
+  grid-column: 1;
+  width: min(100%, 24rem);
+}
+
+.service-finder-context-progress .service-finder-progress-meta {
+  margin-bottom: var(--space-2);
+}
+
 .service-finder-modal-close {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   display: grid;
   width: 2.65rem;
   height: 2.65rem;
@@ -5596,6 +5609,12 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-finder-modal-close:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+.service-finder-modal-body {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
 }
 
 .service-finder-step {
@@ -5798,18 +5817,102 @@ p  { line-height: 1.7; color: var(--color-text); }
   margin: 0;
 }
 
-@media (orientation: landscape) and (min-width: 769px) {
+@media (min-width: 1024px) {
   .service-finder-modal {
-    width: min(64rem, calc(100vw - 2.5rem));
-    height: min(38rem, calc(100dvh - 2.5rem));
+    grid-template-columns: minmax(20rem, 0.76fr) minmax(0, 1.24fr);
+    grid-template-rows: minmax(0, 1fr);
+    width: min(76rem, calc(100vw - 4rem));
+    height: min(43rem, calc(100dvh - 4rem));
     max-height: calc(100dvh - 2.5rem);
   }
 
-  .service-finder-modal-header {
+  .service-finder-modal-context {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-width: 0;
+    padding: clamp(2rem, 4vw, 3.25rem);
+    overflow: hidden;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 0;
+    background:
+      radial-gradient(circle at 14% 0%, rgba(22, 201, 221, 0.18), transparent 17rem),
+      linear-gradient(150deg, rgba(35, 40, 42, 0.98), rgba(16, 18, 19, 0.98));
+  }
+
+  .service-finder-modal-context::after {
+    position: absolute;
+    right: -7rem;
+    bottom: -9rem;
+    width: 19rem;
+    height: 19rem;
+    border: 1px solid rgba(250, 128, 114, 0.16);
+    border-radius: 50%;
+    content: '';
+    opacity: 0.8;
+  }
+
+  .service-finder-modal-context > div:first-child,
+  .service-finder-context-progress {
+    position: relative;
+    z-index: 1;
+  }
+
+  .service-finder-modal-context h2 {
+    max-width: 10ch;
+    font-size: clamp(2.25rem, 3.5vw, 3.7rem);
+    line-height: 0.98;
+  }
+
+  .service-finder-context-progress {
+    width: 100%;
+    margin-top: auto;
+    padding-top: var(--space-8);
+  }
+
+  .service-finder-modal-close {
+    position: absolute;
+    z-index: 2;
+    top: var(--space-5);
+    right: var(--space-5);
+  }
+
+  .service-finder-scroll-region {
+    padding: clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .service-finder-modal .service-finder-question legend {
+    max-width: 27ch;
+    margin-bottom: var(--space-6);
+    font-size: clamp(1.7rem, 2.8vw, 2.35rem);
+  }
+
+  .service-finder-modal .service-finder-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-finder-modal .service-finder-option {
+    min-height: 4.4rem;
+  }
+
+  .service-finder-step-actions {
+    padding: var(--space-4) clamp(2rem, 4vw, 3.5rem);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .service-finder-modal {
+    width: min(46rem, calc(100vw - 3rem));
+    height: min(46rem, calc(100dvh - 3rem));
+    max-height: calc(100dvh - 3rem);
+  }
+
+  .service-finder-modal-context {
     padding: 1.15rem 1.75rem;
   }
 
-  .service-finder-modal-header h2 {
+  .service-finder-modal-context h2 {
     max-width: none;
     font-size: clamp(1.55rem, 2.6vw, 2rem);
   }
@@ -5833,7 +5936,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .service-finder-banner {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -5864,15 +5967,15 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 @media (orientation: landscape) and (max-height: 700px) {
-  .service-finder-modal-header {
+  .service-finder-modal-context {
     padding: 0.75rem 1.25rem;
   }
 
-  .service-finder-modal-header .eyebrow {
+  .service-finder-modal-context .eyebrow {
     margin-bottom: var(--space-1);
   }
 
-  .service-finder-modal-header h2 {
+  .service-finder-modal-context h2 {
     font-size: clamp(1.3rem, 2.6vw, 1.65rem);
   }
 
@@ -5883,10 +5986,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 
   .service-finder-scroll-region {
     padding: 0.9rem 1.25rem;
-  }
-
-  .service-finder-progress {
-    margin-bottom: var(--space-3);
   }
 
   .service-finder-progress-meta {
