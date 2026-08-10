@@ -115,6 +115,24 @@ describe('StickyBookBar', () => {
 })
 
 describe('ServiceFinder', () => {
+  it('separates the persistent questionnaire context from the scrollable answer stage', () => {
+    renderWithSession(
+      <MemoryRouter initialEntries={['/services#find-your-fit']}>
+        <ServiceFinder services={services} />
+      </MemoryRouter>
+    )
+
+    const dialog = screen.getByRole('dialog')
+    const context = dialog.querySelector('.service-finder-modal-context')
+    const body = dialog.querySelector('.service-finder-modal-body')
+    const scrollRegion = screen.getByRole('region', { name: 'Question 1 of 4' })
+
+    expect(context).toContainElement(screen.getByText('Start with what you actually need.'))
+    expect(context).toContainElement(screen.getByText('Question 1 of 4'))
+    expect(body).toContainElement(scrollRegion)
+    expect(context).not.toContainElement(scrollRegion)
+  })
+
   it('keeps navigation outside the dedicated questionnaire scroll region', () => {
     renderWithSession(
       <MemoryRouter initialEntries={['/services#find-your-fit']}>

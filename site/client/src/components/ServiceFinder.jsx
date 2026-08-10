@@ -278,7 +278,7 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                 tabIndex={-1}
                 {...dialogMotion}
               >
-                <header className="service-finder-modal-header">
+                <header className="service-finder-modal-context">
                   <div>
                     <span className="eyebrow">Find Your Fit</span>
                     <h2 id="service-finder-modal-title">
@@ -289,6 +289,20 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                           : 'Start with what you actually need.'}
                     </h2>
                   </div>
+                  {result.status === 'locked' && (
+                    <div
+                      className="service-finder-context-progress"
+                      aria-label={`Question ${step + 1} of ${questions.length}`}
+                    >
+                      <div className="service-finder-progress-meta">
+                        <span>Question {step + 1} of {questions.length}</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <div className="service-finder-progress-track" aria-hidden="true">
+                        <span style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="service-finder-modal-close"
@@ -300,14 +314,15 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                   </button>
                 </header>
 
-                {result.status === 'locked' ? (
-                  <form className="service-finder-step" onSubmit={submitStep}>
-                    <div
-                      className="service-finder-scroll-shell"
-                      data-overflowing={scrollState.overflowing}
-                      data-scrolled-from-start={scrollState.scrolledFromStart}
-                      data-more-below={scrollState.moreBelow}
-                    >
+                <div className="service-finder-modal-body">
+                  {result.status === 'locked' ? (
+                    <form className="service-finder-step" onSubmit={submitStep}>
+                      <div
+                        className="service-finder-scroll-shell"
+                        data-overflowing={scrollState.overflowing}
+                        data-scrolled-from-start={scrollState.scrolledFromStart}
+                        data-more-below={scrollState.moreBelow}
+                      >
                       <div
                         ref={scrollRegionRef}
                         className="service-finder-scroll-region"
@@ -316,16 +331,6 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                         tabIndex={0}
                       >
                         <div ref={scrollContentRef} className="service-finder-scroll-content">
-                          <div className="service-finder-progress">
-                            <div className="service-finder-progress-meta">
-                              <span>Question {step + 1} of {questions.length}</span>
-                              <span>{Math.round(progress)}%</span>
-                            </div>
-                            <div className="service-finder-progress-track" aria-hidden="true">
-                              <span style={{ width: `${progress}%` }} />
-                            </div>
-                          </div>
-
                           <fieldset
                             ref={questionRef}
                             className="service-finder-question"
@@ -390,122 +395,123 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                         {step === questions.length - 1 ? 'Show My Best Match' : 'Continue'}
                         <JourneyIcon name="arrowRight" size={18} />
                       </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div
-                    className="service-finder-result-shell service-finder-scroll-shell"
-                    data-overflowing={scrollState.overflowing}
-                    data-scrolled-from-start={scrollState.scrolledFromStart}
-                    data-more-below={scrollState.moreBelow}
-                  >
+                      </div>
+                    </form>
+                  ) : (
                     <div
-                      ref={scrollRegionRef}
-                      className="service-finder-scroll-region service-finder-result-scroll-region"
-                      role="region"
-                      aria-label="Find Your Fit result"
-                      tabIndex={0}
+                      className="service-finder-result-shell service-finder-scroll-shell"
+                      data-overflowing={scrollState.overflowing}
+                      data-scrolled-from-start={scrollState.scrolledFromStart}
+                      data-more-below={scrollState.moreBelow}
                     >
-                      <div ref={scrollContentRef} className="service-finder-scroll-content">
-                        <div
-                          ref={resultRef}
-                          className={`service-finder-result service-finder-result--${result.status}`}
-                          tabIndex={-1}
-                          aria-live="polite"
-                        >
-                          <span className="service-finder-result-label">
-                            {result.status === 'consult'
-                              ? 'Your next step'
-                              : 'Your recommended path'}
-                          </span>
-                          <h3>
-                            {result.status === 'consult'
-                              ? 'Talk it through with Jake'
-                              : recommendation?.name ||
-                                (loading ? 'Loading your match…' : 'Your match is ready.')}
-                          </h3>
-                          <p>{result.reason}</p>
-                          {result.evidence?.length > 0 && (
-                            <ul
-                              className="service-finder-result-reasons"
-                              aria-label="Why this is your next step"
-                            >
-                              {result.evidence.map((reason) => (
-                                <li key={reason}>
-                                  <JourneyIcon name="check" size={16} />
-                                  <span>{reason}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {recommendation && (
-                            <p className="service-finder-result-detail">
-                              {recommendation.tagline}
-                            </p>
-                          )}
-                          <div className="service-finder-result-actions">
+                      <div
+                        ref={scrollRegionRef}
+                        className="service-finder-scroll-region service-finder-result-scroll-region"
+                        role="region"
+                        aria-label="Find Your Fit result"
+                        tabIndex={0}
+                      >
+                        <div ref={scrollContentRef} className="service-finder-scroll-content">
+                          <div
+                            ref={resultRef}
+                            className={`service-finder-result service-finder-result--${result.status}`}
+                            tabIndex={-1}
+                            aria-live="polite"
+                          >
+                            <span className="service-finder-result-label">
+                              {result.status === 'consult'
+                                ? 'Your next step'
+                                : 'Your recommended path'}
+                            </span>
+                            <h3>
+                              {result.status === 'consult'
+                                ? 'Talk it through with Jake'
+                                : recommendation?.name ||
+                                  (loading ? 'Loading your match…' : 'Your match is ready.')}
+                            </h3>
+                            <p>{result.reason}</p>
+                            {result.evidence?.length > 0 && (
+                              <ul
+                                className="service-finder-result-reasons"
+                                aria-label="Why this is your next step"
+                              >
+                                {result.evidence.map((reason) => (
+                                  <li key={reason}>
+                                    <JourneyIcon name="check" size={16} />
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                             {recommendation && (
-                              <Link
-                                className="btn btn-primary btn-lg"
-                                to={`/services/${recommendation.slug}`}
-                              >
-                                Review {recommendation.name}
-                                <JourneyIcon name="arrowRight" size={18} />
-                              </Link>
-                            )}
-                            {result.status === 'consult' && (
-                              <Link
-                                className="btn btn-primary btn-lg"
-                                to={{
-                                  pathname: '/contact',
-                                  search: '?service=unsure',
-                                  hash: '#contact-enquiry',
-                                }}
-                              >
-                                Ask Jake Directly
-                                <JourneyIcon name="message" size={18} />
-                              </Link>
-                            )}
-                            {result.status === 'recommended' && !recommendation && !loading && (
-                              <Link className="btn btn-primary btn-lg" to="/services">
-                                View All Services
-                                <JourneyIcon name="arrowRight" size={18} />
-                              </Link>
-                            )}
-                            {result.status === 'recommended' && error && (
-                              <p className="service-finder-result-detail" role="status">
-                                We could not load the service details. You can still compare every
-                                coaching option on the Services page.
+                              <p className="service-finder-result-detail">
+                                {recommendation.tagline}
                               </p>
                             )}
-                            <button
-                              type="button"
-                              className="qualification-edit"
-                              onClick={editAnswers}
-                            >
-                              <JourneyIcon name="arrowLeft" size={17} />
-                              Change answers
-                            </button>
-                            <button
-                              type="button"
-                              className="qualification-edit"
-                              onClick={restart}
-                            >
-                              <JourneyIcon name="refresh" size={17} />
-                              Start again
-                            </button>
+                            <div className="service-finder-result-actions">
+                              {recommendation && (
+                                <Link
+                                  className="btn btn-primary btn-lg"
+                                  to={`/services/${recommendation.slug}`}
+                                >
+                                  Review {recommendation.name}
+                                  <JourneyIcon name="arrowRight" size={18} />
+                                </Link>
+                              )}
+                              {result.status === 'consult' && (
+                                <Link
+                                  className="btn btn-primary btn-lg"
+                                  to={{
+                                    pathname: '/contact',
+                                    search: '?service=unsure',
+                                    hash: '#contact-enquiry',
+                                  }}
+                                >
+                                  Ask Jake Directly
+                                  <JourneyIcon name="message" size={18} />
+                                </Link>
+                              )}
+                              {result.status === 'recommended' && !recommendation && !loading && (
+                                <Link className="btn btn-primary btn-lg" to="/services">
+                                  View All Services
+                                  <JourneyIcon name="arrowRight" size={18} />
+                                </Link>
+                              )}
+                              {result.status === 'recommended' && error && (
+                                <p className="service-finder-result-detail" role="status">
+                                  We could not load the service details. You can still compare every
+                                  coaching option on the Services page.
+                                </p>
+                              )}
+                              <button
+                                type="button"
+                                className="qualification-edit"
+                                onClick={editAnswers}
+                              >
+                                <JourneyIcon name="arrowLeft" size={17} />
+                                Change answers
+                              </button>
+                              <button
+                                type="button"
+                                className="qualification-edit"
+                                onClick={restart}
+                              >
+                                <JourneyIcon name="refresh" size={17} />
+                                Start again
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {scrollState.moreBelow && (
+                        <div className="service-finder-scroll-cue" aria-hidden="true">
+                          <span>More below</span>
+                          <span className="service-finder-scroll-cue-arrow" />
+                        </div>
+                      )}
                     </div>
-                    {scrollState.moreBelow && (
-                      <div className="service-finder-scroll-cue" aria-hidden="true">
-                        <span>More below</span>
-                        <span className="service-finder-scroll-cue-arrow" />
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </motion.section>
             </motion.div>
           )}
