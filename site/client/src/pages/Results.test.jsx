@@ -45,7 +45,7 @@ describe('Results page library', () => {
     renderResults('/results?type=representative&category=training')
 
     expect(screen.getByLabelText('Content type')).toHaveValue('representative')
-    expect(screen.getByRole('option', { name: 'Library order' })).toHaveValue('curated')
+    expect(screen.getByRole('option', { name: 'Featured' })).toHaveValue('curated')
     expect(screen.queryByText(/curated collection/i)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Personal Training, 24 results' })).toHaveAttribute(
       'aria-pressed',

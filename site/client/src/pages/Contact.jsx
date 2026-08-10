@@ -484,11 +484,11 @@ export default function Contact() {
             </div>
             <div className="contact-connect-links">
               <a
-                href="https://www.instagram.com/jakededert/"
+                href="https://www.instagram.com/jake_dedert_teamjd_coaching/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Instagram @jakededert
+                Instagram @jake_dedert_teamjd_coaching
                 <JourneyIcon name="arrowRight" size={17} />
               </a>
               <a

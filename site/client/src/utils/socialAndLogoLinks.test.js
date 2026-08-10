@@ -4,6 +4,8 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const FACEBOOK_URL = 'https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/'
+const INSTAGRAM_URL = 'https://www.instagram.com/jake_dedert_teamjd_coaching/'
+const RETIRED_INSTAGRAM_HANDLE = 'jakededert'
 const LOCAL_LOGO_PATH = '/assets/branding/team-jd-logo.png'
 const fallbackPages = ['404.html', '500.html', '503.html', 'offline.html']
 const clientRoot = resolve(process.cwd(), 'src')
@@ -53,6 +55,24 @@ describe('social links and resilient logos', () => {
       expect(source).toContain(FACEBOOK_URL)
       expect(source).toContain('target="_blank"')
       expect(source).toContain('rel="noopener noreferrer"')
+    })
+  })
+
+  it('uses the official Instagram profile in every social surface', () => {
+    const socialSources = [
+      'components/Footer.jsx',
+      'pages/Contact.jsx',
+      'pages/NotFound.jsx',
+      ...fallbackPages.map((filename) => `../public/${filename}`),
+    ]
+
+    socialSources.forEach((path) => {
+      const source = path.startsWith('../public/')
+        ? readFileSync(resolve(process.cwd(), path), 'utf8')
+        : readClientSource(path)
+
+      expect(source).toContain(INSTAGRAM_URL)
+      expect(source).not.toContain(`https://www.instagram.com/${RETIRED_INSTAGRAM_HANDLE}/`)
     })
   })
 })

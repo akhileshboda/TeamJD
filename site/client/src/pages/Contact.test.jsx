@@ -232,10 +232,10 @@ describe('Contact page route chooser', () => {
   it('keeps both contact social links external and secure', () => {
     renderContact()
 
-    const instagram = screen.getByRole('link', { name: /Instagram @jakededert/i })
+    const instagram = screen.getByRole('link', { name: /Instagram @jake_dedert_teamjd_coaching/i })
     const facebook = screen.getByRole('link', { name: /^Facebook/i })
 
-    expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/jakededert/')
+    expect(instagram).toHaveAttribute('href', 'https://www.instagram.com/jake_dedert_teamjd_coaching/')
     expect(facebook).toHaveAttribute(
       'href',
       'https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/',

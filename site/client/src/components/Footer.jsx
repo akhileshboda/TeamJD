@@ -59,7 +59,7 @@ export default function Footer() {
             <p className="footer-heading" style={{ marginTop: '1.5rem' }}>Connect</p>
             <ul className="footer-links" role="list">
               <li>
-                <a href="https://www.instagram.com/jakededert/" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/jake_dedert_teamjd_coaching/" target="_blank" rel="noopener noreferrer">
                   Instagram
                 </a>
               </li>
