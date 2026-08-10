@@ -212,6 +212,14 @@ When configuring nginx, Cloudflare, or another reverse proxy, map upstream
 internal server errors where the proxy supports that distinction, and `/404.html`
 for proxy-level missing routes.
 
+`MAINTENANCE_MODE` (see `.env.example`, `deploy.md`) is a separate, in-app
+mechanism: it gates the running Node process itself behind `/503.html`, for
+intentional "under construction" periods where the app is up and healthy but
+not ready for visitors. This is unrelated to the proxy-level 502/503/504
+mapping above, which only matters when the Node process is *down* or
+unreachable — the two are complementary, not the same thing, and can both be
+configured at once.
+
 ## CLI Sync
 
 ```bash

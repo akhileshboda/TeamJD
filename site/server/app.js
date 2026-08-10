@@ -8,7 +8,9 @@ const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
 const { visitLogger } = require('./middleware/visitLogger');
+const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { genericApiLimiter } = require('./middleware/rateLimits');
+const { sendStaticPage } = require('./utils/staticPages');
 const {
   getAssetManifest,
   getAssetServiceStatus,
@@ -131,15 +133,10 @@ function shouldServeSpaShell(req) {
 }
 
 function sendStaticErrorPage(res, statusCode, fileName, fallbackMessage) {
-  const errorPagePath = path.join(publicDir, fileName);
-
-  res.status(statusCode);
-  res.set('Cache-Control', 'no-cache');
-  return res.sendFile(errorPagePath, (error) => {
-    if (!error) return;
-    if (!res.headersSent) {
-      res.type('text/plain').status(statusCode).send(fallbackMessage);
-    }
+  return sendStaticPage(res, {
+    statusCode,
+    filePath: path.join(publicDir, fileName),
+    fallbackMessage
   });
 }
 
@@ -214,6 +211,8 @@ app.get('/healthz', (req, res) => {
     }
   });
 });
+app.use(visitLogger);
+app.use(maintenanceMode);
 app.use(
   session({
     store: new SQLiteStore({
@@ -235,7 +234,6 @@ app.use(
     }
   })
 );
-app.use(visitLogger);
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/enquiries', enquiriesRouter);
