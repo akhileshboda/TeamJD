@@ -3433,6 +3433,27 @@ p  { line-height: 1.7; color: var(--color-text); }
   line-height: 1.3;
 }
 
+.service-hero-stat-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--svc-accent-rgb), 0.6);
+  text-underline-offset: 0.18em;
+  transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+}
+
+.service-hero-stat-link svg {
+  flex: 0 0 auto;
+}
+
+.service-hero-stat-link:hover,
+.service-hero-stat-link:focus-visible {
+  color: var(--svc-accent);
+  text-decoration-color: currentColor;
+}
+
 .service-journey-visual {
   position: relative;
   width: min(100%, 31rem);
@@ -4321,31 +4342,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   font-size: clamp(1.05rem, 2.5vw, 1.65rem);
 }
 
-.service-investment-disclosure {
-  width: fit-content;
-  margin: var(--space-4) 0 0 auto;
-  color: #8f9799;
-  font-size: 0.75rem;
-}
-
-.service-investment-disclosure summary {
-  padding: 0.45rem 0;
-  color: #899295;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.service-investment-disclosure[open] summary {
-  color: var(--svc-accent);
-}
-
-.service-investment-disclosure > span {
-  display: block;
-  padding: 0.2rem 0 0.5rem 1rem;
-  color: #c8ced0;
-  font-weight: 750;
-}
-
 /* "A Good Fit" split panel — copy melts into photography */
 .service-fit-split {
   position: relative;
@@ -4366,11 +4362,26 @@ p  { line-height: 1.7; color: var(--color-text); }
   margin-bottom: var(--space-20);
 }
 
+.service-direct-booking {
+  --service-booking-pad: clamp(1.25rem, 3.5vw, 2.5rem);
+}
+
 .service-content-block--fit > .service-content-block-heading,
 .service-content-block--readiness > .service-content-block-heading {
   margin: 0;
   padding: var(--space-5) clamp(1.25rem, 3.5vw, 2.5rem);
   background: rgba(0, 0, 0, 0.16);
+}
+
+.service-direct-booking .service-pricing-conversion--final {
+  margin-top: 0;
+  padding: var(--space-5) var(--service-booking-pad) var(--service-booking-pad);
+  border-top: 0;
+}
+
+.service-direct-booking .service-readiness-gate-body > .btn {
+  justify-self: stretch;
+  width: 100%;
 }
 
 .service-content-block--fit .service-fit-split {
@@ -4611,41 +4622,209 @@ p  { line-height: 1.7; color: var(--color-text); }
   font-weight: 750;
 }
 
-.service-session-options {
+.service-pricing-conversion {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  gap: var(--space-3);
-  margin-top: var(--space-7);
+  min-width: 0;
 }
 
-.service-session-options article {
-  display: grid;
+.service-pricing-conversion--hero {
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.25rem var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.045);
+  align-items: end;
+  column-gap: var(--space-5);
+  width: 100%;
+  max-width: 42rem;
+  margin-top: var(--space-7);
+  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  border-block: 1px solid rgba(var(--svc-accent-rgb), 0.28);
+  background:
+    linear-gradient(118deg, rgba(var(--svc-accent-rgb), 0.14), transparent 58%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    rgba(12, 15, 16, 0.42);
+  background-size: auto, 16px 16px, auto;
 }
 
-.service-session-options span {
+.service-pricing-conversion--hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--svc-accent);
+  box-shadow: 0 0 18px rgba(var(--svc-accent-rgb), 0.36);
+}
+
+.service-pricing-conversion--hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 0 auto;
+  width: min(12rem, 34%);
+  background: linear-gradient(90deg, transparent, rgba(var(--svc-accent-rgb), 0.07));
+  pointer-events: none;
+}
+
+.service-pricing-conversion-summary {
+  min-width: 0;
+}
+
+.service-pricing-conversion-summary > span,
+.service-pricing-conversion-tiers dt {
+  display: block;
   color: #aeb4b5;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.service-pricing-conversion-hero-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+  margin-top: 0.2rem;
+  color: var(--color-white);
+  line-height: 1;
+}
+
+.service-pricing-conversion-hero-price > span {
+  color: var(--svc-accent);
+  font-size: 0.8rem;
+  font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.service-session-options strong {
-  color: var(--svc-accent);
-  font-size: 0.9rem;
+.service-pricing-conversion-hero-price strong {
+  color: var(--color-white);
+  font-size: clamp(2.25rem, 4vw, 3.15rem);
+  letter-spacing: -0.06em;
 }
 
-.service-session-options p {
+.service-pricing-conversion-hero-price small {
+  max-width: 13rem;
+  color: #c0c7c8;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.service-pricing-conversion-summary > strong {
+  display: block;
+  max-width: 20ch;
+  margin-top: 0.35rem;
+  color: var(--color-white);
+  font-size: clamp(1.35rem, 2.4vw, 1.95rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+
+.service-pricing-conversion-summary > p {
+  margin-top: 0.35rem;
+  color: #aeb4b5;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.service-pricing-conversion--hero .service-pricing-conversion-action .btn {
+  min-height: 2.75rem;
+  white-space: nowrap;
+}
+
+.service-pricing-conversion--hero .service-pricing-conversion-action,
+.service-pricing-conversion--final .service-pricing-conversion-action,
+.service-pricing-conversion--final .service-readiness-gate-body {
+  min-width: 0;
+}
+
+.service-pricing-conversion--final {
+  grid-template-columns: minmax(0, 1.05fr) minmax(17rem, 0.95fr);
+  grid-template-rows: auto auto;
+  column-gap: clamp(1.5rem, 4vw, 3rem);
+  margin-top: var(--space-4);
+  padding-top: var(--space-5);
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.service-pricing-conversion--final .service-pricing-conversion-summary {
+  grid-column: 1;
+  padding-right: var(--space-4);
+}
+
+.service-pricing-conversion--final .service-pricing-conversion-hero-price strong {
+  font-size: clamp(2.55rem, 5vw, 3.7rem);
+}
+
+.service-pricing-conversion--final .service-pricing-conversion-summary > strong {
+  max-width: 18ch;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+}
+
+.service-pricing-conversion-tiers {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0;
+  margin-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.service-pricing-conversion-tiers > div {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+}
+
+.service-pricing-conversion-tiers > div + div {
+  padding-left: var(--space-4);
+  border-left: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.service-pricing-conversion-tiers dd {
+  display: block;
+  margin: var(--space-2) 0 0;
+}
+
+.service-pricing-conversion-tiers dd strong {
+  color: var(--color-white);
+  font-size: clamp(1.45rem, 2.6vw, 1.95rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.service-pricing-conversion-tiers dd span {
+  display: block;
+  margin-top: 0.3rem;
+  color: #b6bdbf;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.service-pricing-conversion--final .service-pricing-conversion-action {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  padding-left: clamp(1.5rem, 4vw, 3rem);
+  border-left: 1px solid rgba(var(--svc-accent-rgb), 0.28);
+}
+
+.service-pricing-conversion--final .service-pricing-conversion-action .service-readiness-gate-body {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+.service-pricing-conversion--final .service-readiness-gate-body > .btn,
+.service-pricing-conversion--final .service-readiness-gate-actions {
   grid-column: 1 / -1;
-  margin-top: 0.1rem;
-  color: #c2c7c8;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  justify-self: start;
 }
 
 .service-venue-gallery {
@@ -6234,6 +6413,13 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 }
 
+@media (min-width: 901px) and (max-width: 1100px) {
+  .service-pricing-conversion--hero {
+    grid-template-columns: 1fr;
+    row-gap: var(--space-4);
+  }
+}
+
 @media (max-width: 900px) {
   .service-journey-hero-inner,
   .service-intro-section,
@@ -6323,6 +6509,26 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-block: var(--space-12) calc(var(--space-16) + 5rem + env(safe-area-inset-bottom));
   }
 
+  .service-pricing-conversion--final {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    row-gap: var(--space-5);
+    padding-inline: var(--space-5);
+  }
+
+  .service-pricing-conversion--final .service-pricing-conversion-summary,
+  .service-pricing-conversion--final .service-pricing-conversion-action {
+    grid-column: 1;
+    grid-row: auto;
+    padding-inline: 0;
+  }
+
+  .service-pricing-conversion--final .service-pricing-conversion-action {
+    padding-top: var(--space-5);
+    border-top: 1px solid rgba(var(--svc-accent-rgb), 0.28);
+    border-left: 0;
+  }
+
   .service-intro-section,
   .service-standard,
   .service-inclusions-section {
@@ -6410,6 +6616,14 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 @media (max-width: 640px) {
+  .service-journey-hero {
+    padding-block: calc(4.5rem + var(--space-4)) var(--space-8);
+  }
+
+  .service-menu-link {
+    margin-bottom: var(--space-4);
+  }
+
   .service-journey-hero-inner {
     gap: var(--space-8);
   }
@@ -6421,6 +6635,47 @@ p  { line-height: 1.7; color: var(--color-text); }
 
   .service-journey-image-frame {
     aspect-ratio: 4 / 4.6;
+  }
+
+  .service-pricing-conversion--hero {
+    grid-template-columns: 1fr;
+    margin-top: var(--space-4);
+    row-gap: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+  }
+
+  .service-hero-stats {
+    margin-top: var(--space-4);
+  }
+
+  .service-pricing-conversion--hero .service-pricing-conversion-action .btn {
+    width: 100%;
+  }
+
+  .service-pricing-conversion-hero-price strong {
+    font-size: clamp(2.25rem, 13vw, 3rem);
+  }
+
+  .service-pricing-conversion--final .service-pricing-conversion-hero-price strong {
+    font-size: clamp(2.55rem, 15vw, 3.35rem);
+  }
+
+  .service-pricing-conversion-tiers {
+    grid-template-columns: 1fr;
+  }
+
+  .service-pricing-conversion-tiers > div {
+    padding: var(--space-3) 0;
+  }
+
+  .service-pricing-conversion-tiers > div + div {
+    padding-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.11);
+    border-left: 0;
+  }
+
+  .service-pricing-conversion--final .service-pricing-conversion-action .service-readiness-gate-body .btn {
+    width: 100%;
   }
 
   .service-media-carousel {
@@ -6440,15 +6695,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     border-right: 0;
     border-left: 0;
     border-radius: 0;
-  }
-
-  .service-session-options article {
-    grid-template-columns: 1fr;
-    gap: var(--space-2);
-  }
-
-  .service-session-options p {
-    grid-column: auto;
   }
 
   .service-venue-gallery figure:first-child {
@@ -6539,9 +6785,13 @@ p  { line-height: 1.7; color: var(--color-text); }
   }
 
   .service-hero-stats li {
-    flex: 1 1 100%;
+    flex: 1 1 calc(50% - 0.25rem);
     min-height: 0;
     padding: 0.55rem 0.85rem;
+  }
+
+  .service-hero-stats li:last-child:nth-child(odd) {
+    flex-basis: 100%;
   }
 
   .service-inclusion-icon {
@@ -6611,6 +6861,23 @@ p  { line-height: 1.7; color: var(--color-text); }
     min-height: 2.75rem;
     padding-inline: 0.9rem;
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .service-journey-hero {
+    padding-top: calc(4.5rem + var(--space-2));
+  }
+
+  .service-menu-link,
+  .service-journey-kickers,
+  .service-journey-hero h1 {
+    margin-bottom: var(--space-2);
+  }
+
+  .service-hero-stats,
+  .service-pricing-conversion--hero {
+    margin-top: var(--space-2);
   }
 }
 

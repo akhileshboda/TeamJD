@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
+import ServicePricingConversion from './ServicePricingConversion'
 
 const EASE = [0.25, 0.1, 0.25, 1]
 
@@ -21,9 +22,7 @@ export default function ServiceDetailHero({ service }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const heroSrc = resolveAsset(service.hero_image)
-  const heroFacts = service.facts?.filter(
-    (fact) => fact.label.toLowerCase() !== 'investment',
-  ) ?? []
+  const heroFacts = service.facts ?? []
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -85,29 +84,46 @@ export default function ServiceDetailHero({ service }) {
               {heroFacts.map((fact) => (
                 <li key={fact.label}>
                   <span>{fact.label}</span>
-                  <strong>{fact.value}</strong>
+                  <strong>
+                    {fact.url ? (
+                      <a
+                        className="service-hero-stat-link"
+                        href={fact.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open ${fact.value} in Google Maps`}
+                      >
+                        {fact.value}
+                        <JourneyIcon name="arrowRight" size={14} />
+                      </a>
+                    ) : (
+                      fact.value
+                    )}
+                  </strong>
                 </li>
               ))}
             </motion.ul>
           )}
 
           <motion.div {...itemProps}>
-            {service.application_required ? (
-              <a className="service-hero-fit-link" href="#service-fit-check">
-                Review your booking checkpoint
-                <JourneyIcon name="arrowRight" size={18} />
-              </a>
-            ) : (
-              <a
-                className="service-hero-fit-link"
-                href={service.cta_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {service.cta_text}
-                <JourneyIcon name="arrowRight" size={18} />
-              </a>
-            )}
+            <ServicePricingConversion service={service} placement="hero">
+              {service.application_required ? (
+                <a className="btn btn-primary" href="#service-fit-check">
+                  Review your booking checkpoint
+                  <JourneyIcon name="arrowRight" size={18} />
+                </a>
+              ) : (
+                <a
+                  className="btn btn-primary"
+                  href={service.cta_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {service.cta_text}
+                  <JourneyIcon name="arrowRight" size={18} />
+                </a>
+              )}
+            </ServicePricingConversion>
           </motion.div>
         </motion.div>
 

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom'
 import services from '../../../public/content/services.json'
 import CompetitionPrepAccessGate from './CompetitionPrepAccessGate'
+import ServiceReadinessGate from './ServiceReadinessGate'
 import StickyBookBar from './StickyBookBar'
 import {
   FIND_YOUR_FIT_SESSION_KEY,
@@ -47,6 +48,16 @@ function renderGate() {
     <MemoryRouter initialEntries={['/services/competition-preparation']}>
       <FindYourFitSessionProvider>
         <GateHarness />
+      </FindYourFitSessionProvider>
+    </MemoryRouter>,
+  )
+}
+
+function renderReadinessGate() {
+  return render(
+    <MemoryRouter initialEntries={['/services/competition-preparation']}>
+      <FindYourFitSessionProvider>
+        <ServiceReadinessGate service={prepService} services={services} />
       </FindYourFitSessionProvider>
     </MemoryRouter>,
   )
@@ -136,5 +147,14 @@ describe('Competition Preparation soft gates', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(bookingTrigger).toHaveFocus()
+  })
+
+  it('keeps tailored pricing directly with the final prep checkpoint actions', () => {
+    renderReadinessGate()
+
+    const pricing = screen.getByText('Tailored pricing after your consultation.')
+    const action = screen.getByRole('button', { name: /Request Prep Assessment/ })
+    expect(pricing.compareDocumentPosition(action)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(screen.getByText('04', { selector: '.service-content-block-heading span' })).toBeInTheDocument()
   })
 })

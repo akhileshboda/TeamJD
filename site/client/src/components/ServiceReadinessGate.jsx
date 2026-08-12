@@ -2,6 +2,7 @@ import FindYourFitLink from './FindYourFitLink'
 import JourneyIcon from './JourneyIcon'
 import ScrollChromeSection from './ScrollChromeSection'
 import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
+import ServicePricingConversion from './ServicePricingConversion'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 
 export default function ServiceReadinessGate({ service, services = [] }) {
@@ -40,34 +41,36 @@ export default function ServiceReadinessGate({ service, services = [] }) {
         </div>
       </div>
 
-      <div className="service-readiness-gate-body">
-        <div className="service-readiness-gate-icon" aria-hidden="true">
-          <JourneyIcon name={validForCompetitionPrep ? 'check' : 'compass'} size={26} />
-        </div>
-        <div>
-          <span className="eyebrow">
-            {validForCompetitionPrep ? 'Find Your Fit complete' : 'Before Calendly'}
-          </span>
-          <h2>{heading}</h2>
-          <p>{copy}</p>
-        </div>
-        <div className="service-readiness-gate-actions">
-          {!validForCompetitionPrep && (
-            <FindYourFitLink className="btn btn-primary">
-              {completed ? 'Review Find Your Fit' : 'Start Find Your Fit'}
+      <ServicePricingConversion service={service} placement="final">
+        <div className="service-readiness-gate-body">
+          <div className="service-readiness-gate-icon" aria-hidden="true">
+            <JourneyIcon name={validForCompetitionPrep ? 'check' : 'compass'} size={26} />
+          </div>
+          <div>
+            <span className="eyebrow">
+              {validForCompetitionPrep ? 'Find Your Fit complete' : 'Before Calendly'}
+            </span>
+            <h2>{heading}</h2>
+            <p>{copy}</p>
+          </div>
+          <div className="service-readiness-gate-actions">
+            {!validForCompetitionPrep && (
+              <FindYourFitLink className="btn btn-primary">
+                {completed ? 'Review Find Your Fit' : 'Start Find Your Fit'}
+                <JourneyIcon name="arrowRight" size={17} />
+              </FindYourFitLink>
+            )}
+            <CompetitionPrepBookingAction
+              service={service}
+              services={services}
+              className={`btn ${validForCompetitionPrep ? 'btn-primary' : 'btn-secondary'}`}
+            >
+              {service.cta_text}
               <JourneyIcon name="arrowRight" size={17} />
-            </FindYourFitLink>
-          )}
-          <CompetitionPrepBookingAction
-            service={service}
-            services={services}
-            className={`btn ${validForCompetitionPrep ? 'btn-primary' : 'btn-secondary'}`}
-          >
-            {service.cta_text}
-            <JourneyIcon name="arrowRight" size={17} />
-          </CompetitionPrepBookingAction>
+            </CompetitionPrepBookingAction>
+          </div>
         </div>
-      </div>
+      </ServicePricingConversion>
     </ScrollChromeSection>
   )
 }

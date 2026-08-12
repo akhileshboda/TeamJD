@@ -1,6 +1,6 @@
 import { useAssets } from '../hooks/useAssets'
 
-export default function ServiceVenue({ venue, sessionOptions = [] }) {
+export default function ServiceVenue({ venue }) {
   const resolveAsset = useAssets()
 
   if (!venue) return null
@@ -12,18 +12,6 @@ export default function ServiceVenue({ venue, sessionOptions = [] }) {
         <h2 id="service-venue-title">Train at {venue.name}.</h2>
         <p>{venue.description}</p>
         <address>{venue.address}</address>
-
-        {sessionOptions.length > 0 && (
-          <div className="service-session-options" aria-label="Personal Training session options">
-            {sessionOptions.map((option) => (
-              <article key={option.title}>
-                <span>{option.title}</span>
-                <strong>{option.price}</strong>
-                <p>{option.description}</p>
-              </article>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="service-venue-gallery" aria-label={`${venue.name} gallery`}>

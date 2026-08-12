@@ -106,11 +106,21 @@ describe('StickyBookBar', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByText('Booking available')).toBeInTheDocument()
+    expect(screen.getByText('Tailored pricing')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Book now/ })).toHaveAttribute(
       'href',
       directService.cta_url,
     )
+  })
+
+  it('keeps the prep fit-check state while surfacing tailored pricing in the sticky bar', () => {
+    renderWithSession(
+      <MemoryRouter>
+        <StickyBookBar service={service} services={services} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Tailored pricing · Fit check required')).toBeInTheDocument()
   })
 })
 

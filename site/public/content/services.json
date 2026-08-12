@@ -65,6 +65,11 @@
         "icon": "icons/physique-optimisation.png"
       }
     ],
+    "pricing": {
+      "mode": "consultation",
+      "tiers": [],
+      "note": null
+    },
     "application_required": true,
     "cta_text": "Request Prep Assessment",
     "cta_url": "https://calendly.com/team-jd/30min",
@@ -137,6 +142,11 @@
         "icon": "icons/virtual-checkins.png"
       }
     ],
+    "pricing": {
+      "mode": "consultation",
+      "tiers": [],
+      "note": null
+    },
     "application_required": false,
     "cta_text": "Book Online Coaching Consult",
     "cta_url": "https://calendly.com/team-jd/15min",
@@ -163,9 +173,8 @@
     "short_description": "Face-to-face coaching for solo clients or training partners who want better form, progressive programming, and results.",
     "description": "Nothing replaces face-to-face coaching in a professional gym environment. Personal training delivers focused attention, expert guidance, and immediate feedback in solo sessions or joint sessions with a training partner. It is a practical route to better technique, real competence, and confidence under load.",
     "facts": [
-      { "label": "Location", "value": "Form First Studio, Thebarton" },
-      { "label": "Format", "value": "Solo or joint sessions" },
-      { "label": "Investment", "value": "From $75 per person" }
+      { "label": "Location", "value": "Form First Studio, Thebarton", "url": "https://www.google.com/maps/search/?api=1&query=Form%20First%20Studio%2C%206%2F22%20Ware%20Street%2C%20Thebarton%20SA%205031" },
+      { "label": "Format", "value": "Solo or joint sessions" }
     ],
     "expectation_title": "Turn up ready to learn, not just to sweat.",
     "expectation_lede": "The value of personal training comes from applying feedback, repeating good movement, and building skill over time. Sessions are focused and progressive — not random workouts chosen for entertainment.",
@@ -204,18 +213,6 @@
         "icon": "icons/ongoing-support.png"
       }
     ],
-    "session_options": [
-      {
-        "title": "Solo sessions",
-        "price": "$85 per session",
-        "description": "Focused one-to-one coaching with Jake."
-      },
-      {
-        "title": "Joint sessions",
-        "price": "$75 per person, per session",
-        "description": "Train alongside a partner while each of you receives coaching and form feedback."
-      }
-    ],
     "venue": {
       "name": "Form First Studio",
       "address": "6/22 Ware Street, Thebarton SA 5031",
@@ -235,8 +232,15 @@
         }
       ]
     },
+    "pricing": {
+      "mode": "priced",
+      "tiers": [
+        { "label": "Solo sessions", "price": "$85", "unit": "per session", "description": "Focused one-to-one coaching with Jake." },
+        { "label": "Joint sessions", "price": "$75", "unit": "per person, per session", "description": "Train alongside a partner while each of you receives coaching and form feedback." }
+      ],
+      "note": null
+    },
     "application_required": false,
-    "pricing": "Solo: $85 per session · Joint: $75 per person, per session",
     "cta_text": "Book Personal Training Consult",
     "cta_url": "https://calendly.com/team-jd/train-with-jd",
     "cta_secondary": null,
@@ -304,6 +308,13 @@
       }
     ],
     "federations": ["IFBB", "NABBA", "INBA", "ICN", "FMG", "ANB"],
+    "pricing": {
+      "mode": "priced",
+      "tiers": [
+        { "label": "Posing session", "price": "$120", "unit": "per session", "description": "One-to-one posing instruction tailored to your division and stage presence." }
+      ],
+      "note": null
+    },
     "application_required": false,
     "cta_text": "Book Posing Session",
     "cta_url": "https://calendly.com/team-jd/1-on-1-posing-session",

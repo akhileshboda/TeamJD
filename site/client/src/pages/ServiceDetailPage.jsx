@@ -6,6 +6,7 @@ import SectionReveal from '../components/SectionReveal'
 import ServiceDetailHero from '../components/ServiceDetailHero'
 import ServiceGlassCard from '../components/ServiceGlassCard'
 import ServiceMediaCarousel from '../components/ServiceMediaCarousel'
+import ServicePricingConversion from '../components/ServicePricingConversion'
 import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import ServiceVenue from '../components/ServiceVenue'
@@ -60,7 +61,6 @@ export default function ServiceDetailPage() {
   }
   const bodyImageSrc = resolveAsset(service.body_image ?? service.hero_image)
   const bannerImageSrc = resolveAsset(service.banner_image ?? service.body_image ?? service.hero_image)
-  const investment = service.facts?.find((fact) => fact.label.toLowerCase() === 'investment')
 
   return (
     <div className="service-journey-theme" style={themeVars}>
@@ -180,13 +180,6 @@ export default function ServiceDetailPage() {
                 </figcaption>
               </figure>
             </SectionReveal>
-
-            {investment && (
-              <details className="service-investment-disclosure">
-                <summary>Session investment</summary>
-                <span>{investment.value}</span>
-              </details>
-            )}
           </section>
 
           <SectionReveal>
@@ -230,7 +223,7 @@ export default function ServiceDetailPage() {
 
           {service.venue && (
             <SectionReveal>
-              <ServiceVenue venue={service.venue} sessionOptions={service.session_options} />
+              <ServiceVenue venue={service.venue} />
             </SectionReveal>
           )}
 
@@ -257,28 +250,30 @@ export default function ServiceDetailPage() {
                   </div>
                 </div>
 
-                <div className="service-readiness-gate-body">
-                  <div className="service-readiness-gate-icon" aria-hidden="true">
-                    <JourneyIcon name="check" size={26} />
+                <ServicePricingConversion service={service} placement="final">
+                  <div className="service-readiness-gate-body">
+                    <div className="service-readiness-gate-icon" aria-hidden="true">
+                      <JourneyIcon name="check" size={26} />
+                    </div>
+                    <div>
+                      <span className="eyebrow">Booking available</span>
+                      <h2>{service.name}</h2>
+                      <p>
+                        Review the service details above, then choose a time to speak with Jake
+                        about your goal and next steps.
+                      </p>
+                    </div>
+                    <a
+                      href={service.cta_url}
+                      className="btn btn-primary"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {service.cta_text}
+                      <JourneyIcon name="arrowRight" size={17} />
+                    </a>
                   </div>
-                  <div>
-                    <span className="eyebrow">Booking available</span>
-                    <h2>{service.name}</h2>
-                    <p>
-                      Review the service details above, then choose a time to speak with Jake
-                      about your goal and next steps.
-                    </p>
-                  </div>
-                  <a
-                    href={service.cta_url}
-                    className="btn btn-primary"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {service.cta_text}
-                    <JourneyIcon name="arrowRight" size={17} />
-                  </a>
-                </div>
+                </ServicePricingConversion>
               </ScrollChromeSection>
             </SectionReveal>
           )}
