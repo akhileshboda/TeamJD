@@ -261,6 +261,9 @@ export default function ServiceDetailPage() {
                       Review the service details above, then choose a time to speak with Jake
                       about your goal and next steps.
                     </p>
+                    {service.pricing_message && (
+                      <p className="service-tailored-pricing">{service.pricing_message}</p>
+                    )}
                   </div>
                   <a
                     href={service.cta_url}

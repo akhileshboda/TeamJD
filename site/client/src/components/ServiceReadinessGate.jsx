@@ -50,6 +50,9 @@ export default function ServiceReadinessGate({ service, services = [] }) {
           </span>
           <h2>{heading}</h2>
           <p>{copy}</p>
+          {service.pricing_message && (
+            <p className="service-tailored-pricing">{service.pricing_message}</p>
+          )}
         </div>
         <div className="service-readiness-gate-actions">
           {!validForCompetitionPrep && (

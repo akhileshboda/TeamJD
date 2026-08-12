@@ -3378,6 +3378,17 @@ p  { line-height: 1.7; color: var(--color-text); }
   line-height: 1.75;
 }
 
+.service-hero-action {
+  max-width: 42rem;
+}
+
+.service-hero-action > p {
+  margin-top: var(--space-6);
+  color: #c4c9ca;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 .service-hero-fit-link {
   display: inline-flex;
   align-items: center;
@@ -4564,6 +4575,11 @@ p  { line-height: 1.7; color: var(--color-text); }
   color: #9ea5a7;
   font-size: 0.9rem;
   line-height: 1.65;
+}
+
+.service-readiness-gate-body .service-tailored-pricing {
+  margin-top: var(--space-3);
+  color: #d3d8d9;
 }
 
 .service-readiness-gate-body .btn {
@@ -7516,6 +7532,49 @@ p  { line-height: 1.7; color: var(--color-text); }
 /* ── Page body offset for fixed nav ────────────────────────── */
 .page-body {
   padding-top: 4.5rem;
+}
+
+/* ── Legal tabs ─────────────────────────────────────────────── */
+.legal-tablist {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 780px;
+  margin: 0 auto 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.legal-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 0.25rem;
+  margin-bottom: -1px;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.legal-tab + .legal-tab {
+  margin-left: 1rem;
+}
+
+.legal-tab:hover {
+  color: var(--color-hover-accent);
+  border-bottom-color: var(--color-hover-accent);
+}
+
+.legal-tab.is-active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.legal-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 /* ── Privacy prose ──────────────────────────────────────────── */

@@ -51,7 +51,7 @@ const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
 const staticErrorPages = new Set(['/404.html', '/500.html', '/503.html', '/offline.html']);
-const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy']);
+const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy', '/terms']);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(generatedAssetsDir, { recursive: true });

@@ -93,20 +93,26 @@ export default function ServiceDetailHero({ service }) {
 
           <motion.div {...itemProps}>
             {service.application_required ? (
-              <a className="service-hero-fit-link" href="#service-fit-check">
-                Review your booking checkpoint
-                <JourneyIcon name="arrowRight" size={18} />
-              </a>
+              <div className="service-hero-action">
+                {service.pricing_message && <p>{service.pricing_message}</p>}
+                <a className="service-hero-fit-link" href="#service-fit-check">
+                  Review your booking checkpoint
+                  <JourneyIcon name="arrowRight" size={18} />
+                </a>
+              </div>
             ) : (
-              <a
-                className="service-hero-fit-link"
-                href={service.cta_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {service.cta_text}
-                <JourneyIcon name="arrowRight" size={18} />
-              </a>
+              <div className="service-hero-action">
+                {service.pricing_message && <p>{service.pricing_message}</p>}
+                <a
+                  className="service-hero-fit-link"
+                  href={service.cta_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {service.cta_text}
+                  <JourneyIcon name="arrowRight" size={18} />
+                </a>
+              </div>
             )}
           </motion.div>
         </motion.div>

@@ -45,6 +45,7 @@ export default function Footer() {
               <li><Link to="/results">Results</Link></li>
               <li><Link to="/contact">Contact</Link></li>
               <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms & Conditions</Link></li>
             </ul>
           </div>
 
@@ -83,12 +84,20 @@ export default function Footer() {
           <p className="footer-copyright">
             &copy; {year} Jake Dedert &mdash; Team JD. All rights reserved.
           </p>
-          <Link
-            to="/privacy"
-            style={{ color: '#a3a3a3', fontSize: '0.875rem', transition: 'color 150ms ease' }}
-          >
-            Privacy Policy
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <Link
+              to="/privacy"
+              style={{ color: '#a3a3a3', fontSize: '0.875rem', transition: 'color 150ms ease' }}
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              style={{ color: '#a3a3a3', fontSize: '0.875rem', transition: 'color 150ms ease' }}
+            >
+              Terms & Conditions
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

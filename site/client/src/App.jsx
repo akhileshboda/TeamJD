@@ -8,7 +8,7 @@ const Services = lazy(() => import('./pages/Services'))
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'))
 const Results = lazy(() => import('./pages/Results'))
 const Contact = lazy(() => import('./pages/Contact'))
-const Privacy = lazy(() => import('./pages/Privacy'))
+const Legal = lazy(() => import('./pages/Legal'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 export default function App() {
@@ -22,7 +22,8 @@ export default function App() {
           <Route path="/services/:slug" element={<ServiceDetailPage />} />
           <Route path="/results" element={<Results />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/privacy" element={<Legal initialTab="privacy" />} />
+          <Route path="/terms" element={<Legal initialTab="terms" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

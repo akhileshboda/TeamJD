@@ -66,6 +66,7 @@
       }
     ],
     "application_required": true,
+    "pricing_message": "Every coaching plan is built around you. Book a consult to discuss the right support and investment for your goals.",
     "cta_text": "Request Prep Assessment",
     "cta_url": "https://calendly.com/team-jd/30min",
     "cta_secondary": null,
@@ -138,6 +139,7 @@
       }
     ],
     "application_required": false,
+    "pricing_message": "Every coaching plan is built around you. Book a consult to discuss the right support and investment for your goals.",
     "cta_text": "Book Online Coaching Consult",
     "cta_url": "https://calendly.com/team-jd/15min",
     "cta_secondary": null,
