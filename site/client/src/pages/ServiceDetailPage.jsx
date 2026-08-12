@@ -8,6 +8,7 @@ import ServiceGlassCard from '../components/ServiceGlassCard'
 import ServiceMediaCarousel from '../components/ServiceMediaCarousel'
 import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
+import ServiceVenue from '../components/ServiceVenue'
 import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
@@ -226,6 +227,12 @@ export default function ServiceDetailPage() {
               </div>
             </ScrollChromeSection>
           </SectionReveal>
+
+          {service.venue && (
+            <SectionReveal>
+              <ServiceVenue venue={service.venue} sessionOptions={service.session_options} />
+            </SectionReveal>
+          )}
 
           {service.application_required ? (
             <SectionReveal>

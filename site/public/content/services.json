@@ -160,27 +160,27 @@
     "body_alt": "Coach guiding a battle-rope session on the gym floor",
     "gallery_images": ["service-training-2", "service-personal-training", "service-personal-training-2", "jake-hero", "movement-assessment-2"],
     "banner_image": "service-training-2",
-    "short_description": "One-on-one coaching focused on proper form, progressive programming, and achieving your individual fitness goals.",
-    "description": "Nothing replaces face-to-face coaching in a professional gym environment. Personal training delivers focused attention, expert guidance, and immediate feedback through dedicated one-on-one sessions. It is a practical route to better technique, real competence, and confidence under load.",
+    "short_description": "Face-to-face coaching for solo clients or training partners who want better form, progressive programming, and results.",
+    "description": "Nothing replaces face-to-face coaching in a professional gym environment. Personal training delivers focused attention, expert guidance, and immediate feedback in solo sessions or joint sessions with a training partner. It is a practical route to better technique, real competence, and confidence under load.",
     "facts": [
-      { "label": "Location", "value": "Adelaide, SA" },
-      { "label": "Format", "value": "One-to-one sessions" },
-      { "label": "Investment", "value": "$120 per session" }
+      { "label": "Location", "value": "Form First Studio, Thebarton" },
+      { "label": "Format", "value": "Solo or joint sessions" },
+      { "label": "Investment", "value": "From $75 per person" }
     ],
     "expectation_title": "Turn up ready to learn, not just to sweat.",
     "expectation_lede": "The value of personal training comes from applying feedback, repeating good movement, and building skill over time. Sessions are focused and progressive — not random workouts chosen for entertainment.",
     "expectations": [
-      "Attend sessions in Adelaide reliably and arrive ready to train.",
+      "Attend sessions at Form First Studio in Thebarton reliably and arrive ready to train.",
       "Use immediate technique feedback instead of chasing load at any cost.",
       "Practise the standards established in sessions when training independently.",
       "Treat progress as a skill-building process, not a single hard workout."
     ],
     "who_its_for": [
-      "You want hands-on coaching and immediate form correction",
+      "You want hands-on coaching and immediate form correction, solo or with a training partner",
       "You are new to training and want to build a strong foundation",
       "You have hit a plateau and need expert programming to break through",
       "You want structured, progressive sessions with full accountability",
-      "You are in or near Adelaide and can train in person"
+      "You are in or near Adelaide and can train at Form First Studio in Thebarton"
     ],
     "includes": [
       {
@@ -204,10 +204,41 @@
         "icon": "icons/ongoing-support.png"
       }
     ],
+    "session_options": [
+      {
+        "title": "Solo sessions",
+        "price": "$85 per session",
+        "description": "Focused one-to-one coaching with Jake."
+      },
+      {
+        "title": "Joint sessions",
+        "price": "$75 per person, per session",
+        "description": "Train alongside a partner while each of you receives coaching and form feedback."
+      }
+    ],
+    "venue": {
+      "name": "Form First Studio",
+      "address": "6/22 Ware Street, Thebarton SA 5031",
+      "description": "Personal Training is completed at Form First Studio in Thebarton, Adelaide — a private, well-equipped training space built for focused coaching.",
+      "images": [
+        {
+          "asset": "form-first-thebarton-training-floor",
+          "alt": "Wide view of the Form First Studio training floor, including strength machines, benches, and dumbbells"
+        },
+        {
+          "asset": "form-first-thebarton-machine-floor",
+          "alt": "Form First Studio machine area with leg equipment, benches, and free weights"
+        },
+        {
+          "asset": "form-first-thebarton-strength-space",
+          "alt": "Form First Studio strength space with squat racks, plates, benches, and mirrors"
+        }
+      ]
+    },
     "application_required": false,
-    "pricing": "$120 per session",
+    "pricing": "Solo: $85 per session · Joint: $75 per person, per session",
     "cta_text": "Book Personal Training Consult",
-    "cta_url": "https://calendly.com/team-jd/15min",
+    "cta_url": "https://calendly.com/team-jd/train-with-jd",
     "cta_secondary": null,
     "cta_secondary_url": null
   },

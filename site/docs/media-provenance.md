@@ -2,6 +2,22 @@
 
 This file records externally sourced media used by the Team JD website. Runtime assets are stored in Dropbox as the source library, optimized by the asset sync, and served from the Team JD Cloudflare R2 custom domain through `/api/assets` mappings.
 
+## Personal Training
+
+### Form First Studio venue gallery
+
+- Source: [Form First Studio](https://www.formfirststudio.com.au/), official venue photography.
+- Permission basis: Form First Studio approved Team JD to download, optimise, and publish the selected venue photographs on the Personal Training service page.
+- Accessed: 12 August 2026.
+- Transformations: official JPEGs optimised to WebP by the Team JD asset pipeline; responsive CSS crops only.
+- Placement: `/services/personal-training`, “Train at Form First” venue gallery.
+
+| Asset key | Official source image | Description | Runtime mapping |
+| --- | --- | --- | --- |
+| `form-first-thebarton-training-floor` | [Training floor](https://cdn.prod.website-files.com/67a9fd92004b28a0a0ce2ac1/690c42cf044310c6bd119322_Form-First-Private-Gym-Memberships-08.jpg) | Wide training-floor view with machines, benches, and dumbbells | `site-assets/services/form-first-thebarton-training-floor.webp` |
+| `form-first-thebarton-machine-floor` | [Machine floor](https://cdn.prod.website-files.com/67a9fd92004b28a0a0ce2ac1/690c41ebd76930d13e5af21b_Form-First-Private-Gym-Memberships-01.jpg) | Strength-machine and free-weight area | `site-assets/misc/form-first-thebarton-machine-floor.webp` |
+| `form-first-thebarton-strength-space` | [Strength space](https://cdn.prod.website-files.com/67a9fd92004b28a0a0ce2ac1/690c42553ffc5174c6579b5b_Form-First-Private-Gym-Memberships-05.jpg) | Squat racks, plates, benches, and mirror wall | `site-assets/misc/form-first-thebarton-strength-space.webp` |
+
 ## Contact page
 
 ### Cinematic athlete training reel
