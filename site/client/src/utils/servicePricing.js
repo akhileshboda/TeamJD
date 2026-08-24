@@ -1,4 +1,4 @@
-export const CONSULTATION_PRICING_COPY = 'Tailored pricing after your consultation.'
+export const CONSULTATION_PRICING_COPY = 'Set after your consultation.'
 
 function compactUnit(unit = '') {
   if (unit === 'per person, per session') return '/ person'

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import services from '../../../public/content/services.json'
+import { CONSULTATION_PRICING_COPY } from '../utils/servicePricing'
 import CompetitionPrepAccessGate from './CompetitionPrepAccessGate'
 import ServiceReadinessGate from './ServiceReadinessGate'
 import StickyBookBar from './StickyBookBar'
@@ -152,7 +153,7 @@ describe('Competition Preparation soft gates', () => {
   it('keeps tailored pricing directly with the final prep checkpoint actions', () => {
     renderReadinessGate()
 
-    const pricing = screen.getByText('Tailored pricing after your consultation.')
+    const pricing = screen.getByText(CONSULTATION_PRICING_COPY)
     const action = screen.getByRole('button', { name: /Request Prep Assessment/ })
     expect(pricing.compareDocumentPosition(action)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(screen.getByText('04', { selector: '.service-content-block-heading span' })).toBeInTheDocument()
