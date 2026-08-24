@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import services from '../../../public/content/services.json'
 import ServicePricingConversion from './ServicePricingConversion'
+import { CONSULTATION_PRICING_COPY } from '../utils/servicePricing'
 
 const getService = (slug) => services.find((service) => service.slug === slug)
 
@@ -51,7 +52,7 @@ describe('ServicePricingConversion', () => {
       </ServicePricingConversion>,
     )
 
-    const message = screen.getByText('Tailored pricing after your consultation.')
+    const message = screen.getByText(CONSULTATION_PRICING_COPY)
     const cta = screen.getByRole('link', { name: 'Book Online Coaching Consult' })
     expect(screen.getByRole('region', { name: 'Tailored pricing' })).toHaveClass(
       'service-pricing-conversion--consultation',
