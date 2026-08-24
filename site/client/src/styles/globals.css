@@ -3275,7 +3275,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-journey-orb--coral {
   top: 6rem;
   right: -8rem;
-  background: rgba(var(--svc-accent-2-rgb), 0.13);
+  background: rgba(var(--svc-accent-2-rgb), 0.22);
 }
 
 .service-journey-hero-inner {
@@ -3339,6 +3339,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-journey-kickers .eyebrow {
   margin-bottom: 0;
+  color: var(--svc-accent-2);
 }
 
 .service-fit-chip {
@@ -3476,23 +3477,23 @@ p  { line-height: 1.7; color: var(--color-text); }
 /* Slow conic ring orbiting the image frame */
 .service-journey-ring {
   position: absolute;
-  inset: -0.7rem;
+  inset: -0.35rem;
   z-index: -1;
   padding: 2px;
-  border-radius: clamp(1.9rem, 4vw, 3rem);
-  opacity: 0.62;
+  border-radius: calc(clamp(1.25rem, 3vw, 2.25rem) + 0.35rem);
+  opacity: 0.85;
   background: conic-gradient(
     from var(--svc-ring-angle, 0deg),
     transparent 0deg 16deg,
-    rgba(250, 128, 114, 0.34) 24deg,
-    rgba(250, 128, 114, 0.74) 54deg 112deg,
+    rgba(var(--svc-accent-2-rgb), 0.34) 24deg,
+    rgba(var(--svc-accent-2-rgb), 0.74) 54deg 112deg,
     rgba(246, 250, 251, 0.88) 124deg,
-    rgba(250, 128, 114, 0.5) 136deg 156deg,
+    rgba(var(--svc-accent-2-rgb), 0.5) 136deg 156deg,
     transparent 168deg 196deg,
-    rgba(22, 201, 221, 0.34) 206deg,
-    rgba(22, 201, 221, 0.72) 236deg 294deg,
+    rgba(var(--svc-accent-rgb), 0.34) 206deg,
+    rgba(var(--svc-accent-rgb), 0.72) 236deg 294deg,
     rgba(246, 250, 251, 0.86) 306deg,
-    rgba(22, 201, 221, 0.48) 318deg 338deg,
+    rgba(var(--svc-accent-rgb), 0.48) 318deg 338deg,
     transparent 350deg 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -3502,8 +3503,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   filter:
     saturate(1.18)
     drop-shadow(0 0 8px rgba(238, 246, 248, 0.18))
-    drop-shadow(0 0 12px rgba(22, 201, 221, 0.24))
-    drop-shadow(0 0 12px rgba(250, 128, 114, 0.22));
+    drop-shadow(0 0 12px rgba(var(--svc-accent-rgb), 0.24))
+    drop-shadow(0 0 12px rgba(var(--svc-accent-2-rgb), 0.22));
   pointer-events: none;
 }
 
@@ -3534,7 +3535,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   z-index: 1;
   background:
     linear-gradient(180deg, rgba(7, 8, 9, 0.02) 40%, rgba(7, 8, 9, 0.78) 100%),
-    linear-gradient(120deg, rgba(22, 201, 221, 0.08), transparent 42%);
+    linear-gradient(120deg, rgba(var(--svc-accent-2-rgb), 0.1), transparent 42%);
 }
 
 .service-journey-image-plate {
@@ -3555,7 +3556,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-journey-image-plate span {
   display: block;
   margin-bottom: 0.35rem;
-  color: var(--color-accent);
+  color: var(--svc-accent-2);
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -4657,7 +4658,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   z-index: 2;
   inset: 0 auto 0 0;
   width: 3px;
-  background: var(--svc-accent);
+  background: linear-gradient(180deg, var(--svc-accent), var(--svc-accent-2));
   box-shadow: 0 0 20px rgba(var(--svc-accent-rgb), 0.3);
 }
 
@@ -6324,7 +6325,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 @media (prefers-reduced-motion: no-preference) {
   .service-journey-ring {
     animation:
-      svc-ring-spin 32s linear infinite,
+      svc-ring-spin 16s linear infinite,
       svc-ring-shimmer 6.5s ease-in-out infinite;
   }
 
@@ -6361,10 +6362,10 @@ p  { line-height: 1.7; color: var(--color-text); }
 @keyframes svc-ring-shimmer {
   0%,
   100% {
-    opacity: 0.56;
+    opacity: 0.78;
   }
   50% {
-    opacity: 0.72;
+    opacity: 0.96;
   }
 }
 

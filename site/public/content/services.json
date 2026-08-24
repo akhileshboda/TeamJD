@@ -163,8 +163,8 @@
     "theme": {
       "accent": "#12aebf",
       "accent_rgb": "18, 174, 191",
-      "accent2": "#16c9dd",
-      "accent2_rgb": "22, 201, 221"
+      "accent2": "#FA8072",
+      "accent2_rgb": "250, 128, 114"
     },
     "body_image": "service-training-2",
     "body_alt": "Coach guiding a battle-rope session on the gym floor",
