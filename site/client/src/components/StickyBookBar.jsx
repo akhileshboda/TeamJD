@@ -2,16 +2,17 @@ import JourneyIcon from './JourneyIcon'
 import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { getServicePricingContext } from '../utils/servicePricing'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 export default function StickyBookBar({ service, services = [] }) {
   const { validForCompetitionPrep } = useFindYourFitSession()
   if (!service) return null
 
-  const requiresFindYourFit = Boolean(service.application_required)
+  const action = resolveServiceAction(service)
   const pricing = getServicePricingContext(service)
   const pricingLabel = pricing?.compactLabel ?? 'Book a consultation'
-  const secondaryLabel = requiresFindYourFit && !validForCompetitionPrep
-    ? `${pricingLabel} · Fit check required`
+  const secondaryLabel = action.isApplication && !validForCompetitionPrep
+    ? `${pricingLabel} · Application required`
     : pricingLabel
 
   return (
@@ -21,23 +22,23 @@ export default function StickyBookBar({ service, services = [] }) {
         <span className="sticky-book-bar-price">{secondaryLabel}</span>
       </div>
 
-      {requiresFindYourFit ? (
+      {action.isApplication ? (
         <CompetitionPrepBookingAction
           service={service}
           services={services}
           className="btn btn-primary"
         >
-          Book now
+          {action.shortLabel}
           <JourneyIcon name="arrowRight" size={16} />
         </CompetitionPrepBookingAction>
       ) : (
         <a
-          href={service.cta_url}
+          href={action.href}
           className="btn btn-primary"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Book now
+          {action.shortLabel}
           <JourneyIcon name="arrowRight" size={16} />
         </a>
       )}

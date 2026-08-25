@@ -14,6 +14,7 @@ import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 const inclusionGroups = [
   { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
@@ -64,7 +65,7 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="service-journey-theme" style={themeVars}>
-      <ServiceDetailHero service={service} />
+      <ServiceDetailHero service={service} services={services} />
 
       <div className="service-journey-page">
         <div className="service-journey-page-glow" aria-hidden="true" />
@@ -264,12 +265,12 @@ export default function ServiceDetailPage() {
                       </p>
                     </div>
                     <a
-                      href={service.cta_url}
+                      href={resolveServiceAction(service).href}
                       className="btn btn-primary"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {service.cta_text}
+                      {resolveServiceAction(service).label}
                       <JourneyIcon name="arrowRight" size={17} />
                     </a>
                   </div>

@@ -4,6 +4,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 import ServicePricingConversion from './ServicePricingConversion'
+import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 const EASE = [0.25, 0.1, 0.25, 1]
 
@@ -17,8 +19,9 @@ const copyItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 }
 
-export default function ServiceDetailHero({ service }) {
+export default function ServiceDetailHero({ service, services = [] }) {
   const sectionRef = useRef(null)
+  const action = resolveServiceAction(service)
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const heroSrc = resolveAsset(service.hero_image)
@@ -65,7 +68,7 @@ export default function ServiceDetailHero({ service }) {
             {service.application_required && (
               <span className="service-fit-chip">
                 <JourneyIcon name="lock" size={14} />
-                Find Your Fit before access and booking
+                Find Your Fit first &middot; Application required
               </span>
             )}
           </motion.div>
@@ -107,19 +110,28 @@ export default function ServiceDetailHero({ service }) {
 
           <motion.div {...itemProps}>
             <ServicePricingConversion service={service} placement="hero">
-              {service.application_required ? (
-                <a className="btn btn-primary" href="#service-fit-check">
-                  Review your booking checkpoint
-                  <JourneyIcon name="arrowRight" size={18} />
-                </a>
+              {action.isApplication ? (
+                <div className="service-hero-actions">
+                  <CompetitionPrepBookingAction
+                    service={service}
+                    services={services}
+                    className="btn btn-primary"
+                  >
+                    {action.label}
+                    <JourneyIcon name="arrowRight" size={18} />
+                  </CompetitionPrepBookingAction>
+                  <a className="service-hero-secondary-link" href="#service-fit-check">
+                    See what Jake assesses first
+                  </a>
+                </div>
               ) : (
                 <a
                   className="btn btn-primary"
-                  href={service.cta_url}
+                  href={action.href}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {service.cta_text}
+                  {action.label}
                   <JourneyIcon name="arrowRight" size={18} />
                 </a>
               )}

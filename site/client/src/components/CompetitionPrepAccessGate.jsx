@@ -64,8 +64,8 @@ export default function CompetitionPrepAccessGate({ service, services = [] }) {
         </div>
 
         <p className="competition-prep-access-note">
-          Continuing lets you review the service for this browser session. Booking remains a
-          separate checkpoint.
+          Continuing lets you review the service for this browser session. Applying is a
+          separate step, and Jake reviews every application.
         </p>
       </div>
     </section>

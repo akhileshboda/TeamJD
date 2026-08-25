@@ -81,7 +81,7 @@ describe('Competition Preparation soft gates', () => {
     expect(screen.getByRole('heading', { name: 'Competition Preparation service details' })).toBeInTheDocument()
   })
 
-  it('uses a valid prep result for both page access and direct Calendly booking', () => {
+  it('uses a valid prep result for both page access and a direct application link', () => {
     seedSession({
       status: 'recommended',
       recommendationSlug: prepService.slug,
@@ -93,7 +93,10 @@ describe('Competition Preparation soft gates', () => {
     renderGate()
 
     expect(screen.getByRole('heading', { name: 'Competition Preparation service details' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Book now/ })).toHaveAttribute('href', prepService.cta_url)
+    expect(screen.getByRole('link', { name: /Apply now/ })).toHaveAttribute(
+      'href',
+      prepService.application_url,
+    )
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
@@ -113,21 +116,21 @@ describe('Competition Preparation soft gates', () => {
     expect(screen.queryByRole('heading', { name: 'Competition Preparation service details' })).not.toBeInTheDocument()
   })
 
-  it('does not let a remembered page bypass unlock Calendly', async () => {
+  it('does not let a remembered page bypass skip the application checkpoint', async () => {
     seedSession(null, true)
     renderGate()
 
-    const bookingTrigger = screen.getByRole('button', { name: /Book now/ })
+    const bookingTrigger = screen.getByRole('button', { name: /Apply now/ })
     fireEvent.click(bookingTrigger)
 
-    expect(screen.getByRole('dialog', { name: /Complete Find Your Fit before booking/ })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: /Complete Find Your Fit before applying/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Start Find Your Fit/ })).toHaveAttribute(
       'href',
       '/services/competition-preparation#find-your-fit',
     )
-    expect(screen.getByRole('link', { name: /Continue to Calendly anyway/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Continue to the application anyway/ })).toHaveAttribute(
       'href',
-      prepService.cta_url,
+      prepService.application_url,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
@@ -135,14 +138,14 @@ describe('Competition Preparation soft gates', () => {
     expect(bookingTrigger).toHaveFocus()
 
     fireEvent.click(bookingTrigger)
-    expect(screen.getByRole('dialog', { name: /Complete Find Your Fit before booking/ })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: /Complete Find Your Fit before applying/ })).toBeInTheDocument()
   })
 
-  it('closes the booking checkpoint with Escape and restores focus', async () => {
+  it('closes the application checkpoint with Escape and restores focus', async () => {
     seedSession(null, true)
     renderGate()
 
-    const bookingTrigger = screen.getByRole('button', { name: /Book now/ })
+    const bookingTrigger = screen.getByRole('button', { name: /Apply now/ })
     fireEvent.click(bookingTrigger)
     fireEvent.keyDown(window, { key: 'Escape' })
 
@@ -154,8 +157,82 @@ describe('Competition Preparation soft gates', () => {
     renderReadinessGate()
 
     const pricing = screen.getByText(CONSULTATION_PRICING_COPY)
-    const action = screen.getByRole('button', { name: /Request Prep Assessment/ })
+    const action = screen.getByRole('button', { name: /Apply for Competition Prep/ })
     expect(pricing.compareDocumentPosition(action)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(screen.getByText('04', { selector: '.service-content-block-heading span' })).toBeInTheDocument()
+  })
+})
+
+// The hard gate is enforced by the absence of the booking destination, not by
+// blocking the visitor. These pin that invariant across every session state so a
+// later refactor cannot quietly reintroduce a Calendly escape hatch.
+describe('Competition Preparation application destination', () => {
+  const SESSION_STATES = [
+    ['no Find Your Fit result', null, true],
+    [
+      'a consult outcome',
+      { status: 'consult', recommendationSlug: null, qualifiesSlug: null, reason: 'Talk first.', evidence: [] },
+      true,
+    ],
+    [
+      'another service recommended',
+      { status: 'recommended', recommendationSlug: 'online-coaching', qualifiesSlug: null, reason: 'Online Coaching first.', evidence: [] },
+      true,
+    ],
+    [
+      'a qualifying prep result',
+      { status: 'recommended', recommendationSlug: 'competition-preparation', qualifiesSlug: 'competition-preparation', reason: 'Prep is the match.', evidence: [] },
+      false,
+    ],
+  ]
+
+  function renderPrepSurfaces() {
+    return render(
+      <MemoryRouter initialEntries={['/services/competition-preparation']}>
+        <FindYourFitSessionProvider>
+          <ServiceReadinessGate service={prepService} services={services} />
+          <StickyBookBar service={prepService} services={services} />
+        </FindYourFitSessionProvider>
+      </MemoryRouter>,
+    )
+  }
+
+  function openAnyCheckpoint() {
+    const trigger = screen.queryAllByRole('button', { name: /Apply/ })[0]
+    if (trigger) fireEvent.click(trigger)
+  }
+
+  it.each(SESSION_STATES)('renders no Calendly link with %s', (_label, outcome, bypass) => {
+    seedSession(outcome, bypass)
+    renderPrepSurfaces()
+
+    expect(document.querySelectorAll('a[href*="calendly.com"]')).toHaveLength(0)
+    openAnyCheckpoint()
+    expect(document.querySelectorAll('a[href*="calendly.com"]')).toHaveLength(0)
+  })
+
+  it.each(SESSION_STATES)('points every outbound action at the application with %s', (_label, outcome, bypass) => {
+    seedSession(outcome, bypass)
+    renderPrepSurfaces()
+    openAnyCheckpoint()
+
+    const outbound = Array.from(document.querySelectorAll('a[target="_blank"]'))
+    expect(outbound.length).toBeGreaterThan(0)
+    outbound.forEach((link) => {
+      expect(link.getAttribute('href')).toBe(prepService.application_url)
+    })
+  })
+
+  it('restores body scroll when the checkpoint unmounts while open', async () => {
+    const previousOverflow = document.body.style.overflow
+    seedSession(null, true)
+    const view = renderGate()
+
+    fireEvent.click(screen.getByRole('button', { name: /Apply now/ }))
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument())
+    expect(document.body.style.overflow).toBe('hidden')
+
+    view.unmount()
+    expect(document.body.style.overflow).toBe(previousOverflow)
   })
 })

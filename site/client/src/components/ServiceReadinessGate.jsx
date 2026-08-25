@@ -4,9 +4,11 @@ import ScrollChromeSection from './ScrollChromeSection'
 import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
 import ServicePricingConversion from './ServicePricingConversion'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 export default function ServiceReadinessGate({ service, services = [] }) {
   const { completed, outcome, validForCompetitionPrep } = useFindYourFitSession()
+  const action = resolveServiceAction(service)
   const recommendation = outcome?.recommendationSlug
     ? services.find((candidate) => candidate.slug === outcome.recommendationSlug)
     : null
@@ -14,18 +16,18 @@ export default function ServiceReadinessGate({ service, services = [] }) {
   const heading = validForCompetitionPrep
     ? 'Competition Preparation is your match.'
     : !completed
-      ? 'Complete Find Your Fit before booking.'
+      ? 'Complete Find Your Fit before you apply.'
       : outcome.status === 'consult'
         ? 'Talk it through before choosing prep.'
         : `${recommendation?.name || 'Another coaching path'} is your current match.`
 
   const copy = validForCompetitionPrep
-    ? 'Your result supports a Competition Preparation assessment. Jake will still decide whether your timeline and readiness are right for prep.'
+    ? 'Your result supports a Competition Preparation application. Jake will still decide whether your timeline and readiness are right for prep.'
     : !completed
-      ? 'Find Your Fit gives Jake useful context before you request a prep assessment. You can complete it now or continue to the booking checkpoint.'
+      ? 'Find Your Fit gives Jake useful context before you apply for prep. You can complete it now or continue to the application anyway.'
       : outcome.status === 'consult'
-        ? 'Your answers suggest a direct conversation is the best next step. You can review that result or continue to the booking checkpoint.'
-        : `Your answers currently point towards ${recommendation?.name || 'another service'}. Review your result or continue to the booking checkpoint if you still want to speak about prep.`
+        ? 'Your answers suggest a direct conversation is the best next step. You can review that result or continue to the application anyway.'
+        : `Your answers currently point towards ${recommendation?.name || 'another service'}. Review your result or continue to the application if you still want Jake to assess you for prep.`
 
   return (
     <ScrollChromeSection
@@ -48,7 +50,7 @@ export default function ServiceReadinessGate({ service, services = [] }) {
           </div>
           <div>
             <span className="eyebrow">
-              {validForCompetitionPrep ? 'Find Your Fit complete' : 'Before Calendly'}
+              {validForCompetitionPrep ? 'Find Your Fit complete' : 'Before you apply'}
             </span>
             <h2>{heading}</h2>
             <p>{copy}</p>
@@ -65,7 +67,7 @@ export default function ServiceReadinessGate({ service, services = [] }) {
               services={services}
               className={`btn ${validForCompetitionPrep ? 'btn-primary' : 'btn-secondary'}`}
             >
-              {service.cta_text}
+              {action.label}
               <JourneyIcon name="arrowRight" size={17} />
             </CompetitionPrepBookingAction>
           </div>

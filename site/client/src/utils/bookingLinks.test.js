@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { isApplicationService, resolveServiceAction } from './bookingLinks'
 
 const TEAM_JD_CALENDLY = /https:\/\/calendly\.com\/team-jd\//g
 
@@ -44,5 +45,61 @@ describe('global booking entry points', () => {
     expect(services).toHaveLength(4)
     expect(services.every((service) => service.cta_url.startsWith('https://calendly.com/team-jd/'))).toBe(true)
     expect(new Set(services.map((service) => service.slug)).size).toBe(4)
+  })
+})
+
+function loadServices() {
+  return JSON.parse(readFileSync(resolve(process.cwd(), '../public/content/services.json'), 'utf8'))
+}
+
+describe('application destinations', () => {
+  it('gives every application service a non-Calendly application URL', () => {
+    const applicationServices = loadServices().filter(isApplicationService)
+
+    expect(applicationServices.length).toBeGreaterThan(0)
+    applicationServices.forEach((service) => {
+      expect(service.application_url).toMatch(/^https:\/\/[a-z0-9.-]*typeform\.com\//)
+      expect(service.application_url.startsWith('https://calendly.com/')).toBe(false)
+      expect(service.application_cta_text).toEqual(expect.any(String))
+    })
+  })
+
+  it('does not leave an application URL on a directly bookable service', () => {
+    const strays = loadServices().filter(
+      (service) => !isApplicationService(service) && service.application_url,
+    )
+
+    expect(strays.map((service) => service.slug)).toEqual([])
+  })
+})
+
+describe('resolveServiceAction', () => {
+  it('routes an application service to its Typeform, never its Calendly link', () => {
+    const prep = loadServices().find((service) => service.slug === 'competition-preparation')
+    const action = resolveServiceAction(prep)
+
+    expect(action).toEqual({
+      href: prep.application_url,
+      label: prep.application_cta_text,
+      shortLabel: 'Apply now',
+      isApplication: true,
+    })
+    expect(action.href).not.toBe(prep.cta_url)
+  })
+
+  it('routes a directly bookable service to its Calendly link', () => {
+    const coaching = loadServices().find((service) => service.slug === 'online-coaching')
+
+    expect(resolveServiceAction(coaching)).toEqual({
+      href: coaching.cta_url,
+      label: coaching.cta_text,
+      shortLabel: 'Book now',
+      isApplication: false,
+    })
+  })
+
+  it('returns a null href rather than falling back when the URL is missing', () => {
+    expect(resolveServiceAction({ application_required: true }).href).toBeNull()
+    expect(resolveServiceAction(undefined).href).toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import FindYourFitLink from './FindYourFitLink'
 import JourneyIcon from './JourneyIcon'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 const FOCUSABLE = [
   'a[href]',
@@ -18,6 +19,7 @@ export default function CompetitionPrepBookingAction({
   children,
 }) {
   const { completed, outcome, validForCompetitionPrep } = useFindYourFitSession()
+  const action = resolveServiceAction(service)
   const [isOpen, setIsOpen] = useState(false)
   const triggerRef = useRef(null)
   const dialogRef = useRef(null)
@@ -70,7 +72,7 @@ export default function CompetitionPrepBookingAction({
   if (validForCompetitionPrep) {
     return (
       <a
-        href={service.cta_url}
+        href={action.href}
         className={className}
         target="_blank"
         rel="noopener noreferrer"
@@ -81,7 +83,7 @@ export default function CompetitionPrepBookingAction({
   }
 
   const title = !completed
-    ? 'Complete Find Your Fit before booking?'
+    ? 'Complete Find Your Fit before applying?'
     : outcome.status === 'consult'
       ? 'Your result recommends a conversation first.'
       : `${recommendation?.name || 'Another service'} is your current match.`
@@ -89,8 +91,8 @@ export default function CompetitionPrepBookingAction({
   const copy = !completed
     ? 'You have not completed Find Your Fit in this session. It takes four to six focused questions and helps Jake direct you to the right starting point.'
     : outcome.status === 'consult'
-      ? 'Your answers suggest talking with Jake before selecting a coaching service. You can review that result or continue to the prep calendar anyway.'
-      : `Your answers currently point towards ${recommendation?.name || 'a different coaching path'}, not Competition Preparation. You can review your result or continue to the prep calendar anyway.`
+      ? 'Your answers suggest talking with Jake before selecting a coaching service. You can review that result or continue to the prep application anyway.'
+      : `Your answers currently point towards ${recommendation?.name || 'a different coaching path'}, not Competition Preparation. You can review your result or continue to the prep application anyway.`
 
   const motionProps = shouldReduceMotion
     ? {}
@@ -140,7 +142,7 @@ export default function CompetitionPrepBookingAction({
                   <button
                     type="button"
                     className="booking-checkpoint-close"
-                    aria-label="Close booking checkpoint"
+                    aria-label="Close application checkpoint"
                     onClick={() => setIsOpen(false)}
                     autoFocus
                   >
@@ -149,7 +151,7 @@ export default function CompetitionPrepBookingAction({
                   <div className="booking-checkpoint-icon" aria-hidden="true">
                     <JourneyIcon name="compass" size={28} />
                   </div>
-                  <span className="eyebrow">Before Calendly</span>
+                  <span className="eyebrow">Before you apply</span>
                   <h2 id="booking-checkpoint-title">{title}</h2>
                   <p id="booking-checkpoint-copy">{copy}</p>
                   <div className="booking-checkpoint-actions">
@@ -161,13 +163,13 @@ export default function CompetitionPrepBookingAction({
                       <JourneyIcon name="arrowRight" size={18} />
                     </FindYourFitLink>
                     <a
-                      href={service.cta_url}
+                      href={action.href}
                       className="btn btn-secondary btn-lg"
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setIsOpen(false)}
                     >
-                      Continue to Calendly anyway
+                      Continue to the application anyway
                     </a>
                     <button
                       type="button"
