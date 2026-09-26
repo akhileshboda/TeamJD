@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
-import { useAssets } from '../hooks/useAssets'
+import { useMedia } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 
 const AUTOPLAY_INTERVAL_MS = 5200
+const GALLERY_SLOTS = [1, 2, 3, 4, 5]
 
 // Alt text follows the image, not the slide position: the first gallery slide is not
 // always the body image, and body_alt describes that specific photo.
@@ -14,14 +15,17 @@ function slideAlt(service, image) {
 }
 
 export default function ServiceMediaCarousel({ service }) {
-  const resolveAsset = useAssets()
+  const media = useMedia()
   const shouldReduceMotion = useReducedMotion()
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const images = (service.gallery_images?.length
+  const builtIn = service.gallery_images?.length
     ? service.gallery_images
-    : [service.body_image, service.hero_image]
-  ).filter(Boolean).slice(0, 5)
+    : [service.body_image, service.hero_image].filter(Boolean)
+  // Five replaceable gallery spots; a spot shows only if Jake filled it or it has a built-in photo.
+  const images = GALLERY_SLOTS.map((n) =>
+    media(`services.${service.slug}.gallery-${n}`, builtIn[n - 1], slideAlt(service, builtIn[n - 1])),
+  ).filter((image) => image.src)
 
   useEffect(() => {
     setActiveIndex(0)
@@ -62,11 +66,11 @@ export default function ServiceMediaCarousel({ service }) {
           <figure
             className="service-media-carousel-slide"
             aria-hidden={index !== activeIndex}
-            key={`${image}-${index}`}
+            key={`${image.src}-${index}`}
           >
             <img
-              src={resolveAsset(image)}
-              alt={slideAlt(service, image)}
+              src={image.src}
+              alt={image.alt}
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />
@@ -101,7 +105,7 @@ export default function ServiceMediaCarousel({ service }) {
                 aria-label={`Show image ${index + 1} of ${images.length}`}
                 aria-current={index === activeIndex ? 'true' : undefined}
                 onClick={() => showSlide(index)}
-                key={`${image}-dot`}
+                key={`${image.src}-${index}-dot`}
               />
             ))}
           </div>

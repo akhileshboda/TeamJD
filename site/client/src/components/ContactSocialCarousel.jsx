@@ -112,7 +112,7 @@ export default function ContactSocialCarousel({ posts = [] }) {
         aria-label={duplicate ? undefined : `View Facebook post: ${post.label}`}
       >
         <img
-          src={resolveAsset(`/api/assets/${post.asset}`)}
+          src={post.src || resolveAsset(`/api/assets/${post.asset}`)}
           alt={duplicate ? '' : post.alt}
           loading="lazy"
           decoding="async"

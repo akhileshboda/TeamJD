@@ -22,6 +22,7 @@ vi.mock('../components/ContactMediaReel', () => ({
 
 vi.mock('../hooks/useAssets', () => ({
   useAssets: () => (assetPath) => assetPath,
+  useMedia: () => (slotId, assetPath, alt = '') => ({ src: assetPath, alt, poster: '', replaced: false, ready: true }),
 }))
 
 vi.mock('../components/TurnstileWidget', async () => {

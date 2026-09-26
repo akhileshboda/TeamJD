@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fallbackHeroPosterUrl, fallbackHeroVideoUrl } from '../config/heroMedia'
 import FindYourFitLink from './FindYourFitLink'
+import { useMedia } from '../hooks/useAssets'
 
 const itemVariants = {
   hidden: { opacity: 0, y: 28 },
@@ -28,11 +29,18 @@ export default function Hero() {
   const [saveDataEnabled, setSaveDataEnabled] = useState(getSaveDataEnabled)
   const [videoFailed, setVideoFailed] = useState(false)
   const [hasVideoEnded, setHasVideoEnded] = useState(false)
-  const heroVideoUrl = fallbackHeroVideoUrl
-  const heroPosterUrl = fallbackHeroPosterUrl
+  const heroMedia = useMedia()('home.hero-video')
+  const heroVideoUrl = heroMedia.replaced ? heroMedia.src : fallbackHeroVideoUrl
+  const heroPosterUrl = heroMedia.replaced ? heroMedia.poster : fallbackHeroPosterUrl
 
+  // Wait for the manifest so the built-in loop never starts only to be swapped for Jake's.
   const canUseVideo =
-    Boolean(heroVideoUrl) && !isMobileHero && !shouldReduce && !saveDataEnabled && !videoFailed
+    heroMedia.ready &&
+    Boolean(heroVideoUrl) &&
+    !isMobileHero &&
+    !shouldReduce &&
+    !saveDataEnabled &&
+    !videoFailed
 
   const containerVariants = shouldReduce
     ? {}

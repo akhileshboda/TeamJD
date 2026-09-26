@@ -7,7 +7,7 @@ import ClientResultsCarousel from '../components/ClientResultsCarousel'
 import AboutProcessCarousel from '../components/AboutProcessCarousel'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
-import { useAssets } from '../hooks/useAssets'
+import { useAssets, useMedia } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
 import wnbfLogo from '../assets/wnbf.svg'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -207,6 +207,16 @@ export default function About() {
       'Pro Physique competitor, competition prep coach and personal trainer. One coaching standard, built around the person doing the work.',
   })
   const resolveAsset = useAssets()
+  const media = useMedia()
+  const portrait = media(
+    'about.portrait',
+    '/api/assets/jake-hero',
+    'Jake Dedert, Pro Physique bodybuilder and fitness coach, posing in a gym',
+  )
+  const processImages = PROCESS_IMAGES.map((image, index) => {
+    const { src, alt } = media(`about.process-${index + 1}`, `/api/assets/${image.asset}`, image.alt)
+    return { ...image, src, alt }
+  })
   const { data: resultsLibrary } = useJSON('/content/results-library.json')
   const results = (resultsLibrary || [])
     .filter((result) => result.kind === 'client' && result.featured)
@@ -253,8 +263,8 @@ export default function About() {
               <div className="about-photo-wrap">
                   <div className="about-photo-frame">
                     <img
-                      src={resolveAsset('/api/assets/jake-hero')}
-                      alt="Jake Dedert, Pro Physique bodybuilder and fitness coach, posing in a gym"
+                      src={portrait.src}
+                      alt={portrait.alt}
                       decoding="async"
                       fetchpriority="high"
                       width="600"
@@ -410,7 +420,7 @@ export default function About() {
             <div className="about-process-story">
               <SectionReveal className="about-process-media">
                 <AboutProcessCarousel
-                  images={PROCESS_IMAGES}
+                  images={processImages}
                   caption="The standard carries from the first conversation to the final detail."
                 />
               </SectionReveal>

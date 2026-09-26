@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
+const { createAdminRouter } = require('./routes/admin');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { securityHeaders } = require('./middleware/securityHeaders');
@@ -53,7 +54,7 @@ const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
 const staticErrorPages = new Set(['/404.html', '/500.html', '/503.html', '/offline.html']);
-const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy']);
+const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy', '/admin']);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(generatedAssetsDir, { recursive: true });
@@ -239,6 +240,7 @@ app.use(
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/enquiries', enquiriesRouter);
+app.use('/api/admin', createAdminRouter());
 // Known API families above have stricter independent budgets. This governs any
 // remaining or future /api route, including unknown paths.
 app.use('/api', genericApiLimiter);

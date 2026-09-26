@@ -76,6 +76,20 @@ describe('ContactMediaReel', () => {
     )
   })
 
+  it("plays Jake's uploaded reel muted and looping, without the YouTube embed or credit", () => {
+    const { container } = render(
+      <ContactMediaReel videoSrc="https://cdn.example/reel.mp4" poster="https://cdn.example/reel.webp" />,
+    )
+
+    const video = container.querySelector('video')
+    expect(video).toHaveAttribute('src', 'https://cdn.example/reel.mp4')
+    expect(video).toHaveAttribute('poster', 'https://cdn.example/reel.webp')
+    expect(video.muted).toBe(true)
+    expect(video).toHaveAttribute('loop')
+    expect(container.querySelector('iframe')).toBeNull()
+    expect(screen.queryByText(/Film:/)).not.toBeInTheDocument()
+  })
+
   it('includes a subtle secure credit link to the original upload', () => {
     render(<ContactMediaReel {...defaultProps} />)
 

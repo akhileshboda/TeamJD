@@ -9,7 +9,7 @@ import FindYourFitLink from '../components/FindYourFitLink'
 
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
-import { useAssets } from '../hooks/useAssets'
+import { useMedia } from '../hooks/useAssets'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 
@@ -69,7 +69,12 @@ export default function Home() {
   })
   const { data: services } = useJSON('/content/services.json')
   const { data: faqs } = useJSON('/content/faqs.json')
-  const resolveAsset = useAssets()
+  const media = useMedia()
+  const aboutPhoto = media(
+    'home.about-photo',
+    '/api/assets/jake-hero',
+    'Jake Dedert — Pro Physique bodybuilder and fitness coach',
+  )
   const shouldReduce = useReducedMotion()
 
   const servicesById = new Map((services || []).map((service) => [service.id, service]))
@@ -111,7 +116,10 @@ export default function Home() {
                 const service = servicesById.get(pathway.id)
                 const serviceName = service?.name || pathway.fallbackName
                 const serviceSlug = service?.slug || pathway.fallbackSlug
-                const backgroundSrc = resolveAsset(service?.hero_image || pathway.fallbackImage)
+                const backgroundSrc = media(
+                  `services.${serviceSlug}.hero`,
+                  service?.hero_image || pathway.fallbackImage,
+                ).src
 
                 return (
                   <StaggerItem key={pathway.id}>
@@ -220,8 +228,8 @@ export default function Home() {
                     }}
                   >
                     <img
-                      src={resolveAsset('/api/assets/jake-hero')}
-                      alt="Jake Dedert — Pro Physique bodybuilder and fitness coach"
+                      src={aboutPhoto.src}
+                      alt={aboutPhoto.alt}
                       loading="lazy"
                       decoding="async"
                       width="600"

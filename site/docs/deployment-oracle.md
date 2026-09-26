@@ -76,6 +76,31 @@ Dropbox OAuth returns 404 in production-mode environments unless `DROPBOX_OAUTH_
 
 The rate-limit stores are process-local by design because each environment runs one PM2 fork. Do not add PM2 forks or another application host until the stores are moved to a shared backend. The origin-wide daily ceiling limits this application to 40 accepted enquiries (80 messages), but Resend key protection and provider-side monitoring are still required because no application limit can contain a key used outside this origin.
 
+### Media manager setup
+
+1. On the VM, install ffmpeg once. Video uploads report "Video processing is not available" until you do; photo uploads don't need it.
+
+   ```bash
+   sudo apt-get update && sudo apt-get install -y ffmpeg
+   ffmpeg -version | head -1
+   ```
+
+2. In Cloudflare Zero Trust, go to **Access → Applications → Add a self-hosted application**.
+   - Domain `team-jd.com.au`, paths `admin` and `api/admin`. Add a second application or path for the staging hostname if staging should have it too.
+   - Policy: **Allow**, with **Emails** set to Jake's address (and yours). Login method: One-time PIN.
+   - Copy the application's **Audience (AUD) tag**.
+3. Add to each environment's `.env`, then restart:
+
+   ```env
+   CF_ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com
+   CF_ACCESS_AUD=<audience tag>
+   CMS_ADMIN_EMAILS=<jake's email>,<your email>
+   ```
+
+4. Check it. `curl -s -o /dev/null -w '%{http_code}' https://team-jd.com.au/api/admin/slots` should return a redirect or 403 from Cloudflare (never 200). Signing in at `/admin` should list the pages.
+
+Staging and production share the R2 bucket and Dropbox account. Staging uploads are real files: harmless, but visible in Dropbox `/assets`.
+
 ## Deploy
 
 Install and test locally before deployment:

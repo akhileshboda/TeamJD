@@ -176,6 +176,11 @@ There is no lint/format tooling and no CI configured. Don't invent an
   ending `-2` are often line-art icons, not photos — view before using one.
   Signed URLs in `data/asset-manifest.json` expire; fetch current ones via
   the running dev server's `/api/assets/{key}`, not the file directly.
+- **Media slots (`/admin` CMS).** Images and videos Jake can replace go through
+  `useMedia()(slotId, builtInPath, builtInAlt)`, not bare `resolveAsset`. Slot ids
+  must exist in `server/services/mediaSlots.js`; `mediaSlots.test.js` fails when
+  client and registry drift. `/admin` sits outside `Layout`, is in the SPA
+  whitelist, and is exempt from the maintenance gate (Cloudflare Access guards it).
 - **`whileInView` stagger animations** (`SectionReveal.jsx`) can render
   invisible if placed above the fold and mounted before async data
   resolves — mount the stagger container only once data is loaded.

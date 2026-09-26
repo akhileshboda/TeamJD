@@ -21,6 +21,7 @@ const {
   streamDropboxAsset,
   refreshAssetMap
 } = require('../services/dropbox');
+const { getPublicSlots } = require('../services/mediaSlots');
 
 const router = express.Router();
 const ASSET_REDIRECT_CACHE_SECONDS = 60 * 60;
@@ -76,10 +77,15 @@ function requireSyncAdmin(req, res, next) {
 
 router.get('/', publicAssetLimiter, async (req, res) => {
   try {
-    const manifest = await getAssetManifest();
+    // Jake's media-manager replacements ride along with the manifest, so the site
+    // needs no extra request; a store failure leaves the built-in media in place.
+    const [manifest, slots] = await Promise.all([getAssetManifest(), getPublicSlots().catch((error) => {
+      console.error('[cms] media slots unavailable, serving built-in media:', error.message);
+      return {};
+    })]);
 
     res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
-    return res.json(manifest);
+    return res.json({ ...manifest, slots });
   } catch (error) {
     console.error('GET /api/assets error:', error);
     res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
