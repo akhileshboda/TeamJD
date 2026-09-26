@@ -106,28 +106,36 @@ export default function Privacy() {
                   </li>
                   <li>
                     <span className="arrow">→</span>
-                    <strong style={{ color: 'var(--color-text)' }}>Payment processors</strong>
-                    {' '}— for billing and transactions
-                  </li>
-                  <li>
-                    <span className="arrow">→</span>
-                    <strong style={{ color: 'var(--color-text)' }}>Coaching apps</strong> — for
-                    program delivery and progress tracking
-                  </li>
-                  <li>
-                    <span className="arrow">→</span>
                     <span>
-                      <strong style={{ color: 'var(--color-text)' }}>Resend</strong> — to deliver
-                      website enquiries and confirmation emails
+                      <strong style={{ color: 'var(--color-text)' }}>Payment processors</strong>
+                      {' '}— for billing and transactions
                     </span>
                   </li>
                   <li>
                     <span className="arrow">→</span>
                     <span>
-                      <strong style={{ color: 'var(--color-text)' }}>
-                        Cloudflare Turnstile
-                      </strong>{' '}
-                      — to verify enquiry submissions and help prevent automated abuse
+                      <strong style={{ color: 'var(--color-text)' }}>Coaching apps</strong> — for
+                      program delivery and progress tracking
+                    </span>
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <span>
+                        <strong style={{ color: 'var(--color-text)' }}>Resend</strong> — to deliver
+                        website enquiries and confirmation emails
+                      </span>
+                    </span>
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <span>
+                        <strong style={{ color: 'var(--color-text)' }}>
+                          Cloudflare Turnstile
+                        </strong>{' '}
+                        — to verify enquiry submissions and help prevent automated abuse
+                      </span>
                     </span>
                   </li>
                 </ul>

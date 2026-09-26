@@ -93,7 +93,8 @@ const COACHED_FEDERATIONS = [
   { name: 'ICN', asset: 'icn' },
   { name: 'ANB', asset: 'anb' },
   { name: 'NABBA', asset: 'nabba' },
-  { name: 'WNBF', src: wnbfLogo },
+  // White mark on transparent -- inverted so it reads on the light federation card.
+  { name: 'WNBF', src: wnbfLogo, lightMark: true },
 ]
 
 const ABOUT_FINAL_ACTIONS = [
@@ -341,6 +342,7 @@ export default function About() {
                           <img
                             src={federation.src || resolveAsset(`/api/assets/${federation.asset}`)}
                             alt={`${federation.name} logo`}
+                            className={federation.lightMark ? 'is-light-mark' : undefined}
                             loading="lazy"
                             decoding="async"
                             width="112"

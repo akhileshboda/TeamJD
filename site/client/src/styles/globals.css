@@ -2082,13 +2082,25 @@ p  { line-height: 1.7; color: var(--color-text); }
 .home-services-intro {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.72fr);
-  gap: var(--space-8);
+  gap: var(--space-3) var(--space-8);
   align-items: end;
   margin-bottom: var(--space-10);
 }
 
+/* Eyebrow and heading stack in the left column; the lede sits beside them. Left to
+   auto-placement, the heading jumped to the right column away from its eyebrow. */
+.home-services-intro .eyebrow,
+.home-services-intro h2 {
+  grid-column: 1;
+}
+
 .home-services-intro h2 {
   max-width: 720px;
+}
+
+.home-services-intro p {
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .home-services-intro p {
@@ -2662,6 +2674,11 @@ p  { line-height: 1.7; color: var(--color-text); }
   .home-services-intro {
     grid-template-columns: 1fr;
     gap: var(--space-5);
+  }
+
+  .home-services-intro p {
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .home-service-pathways {
@@ -4793,6 +4810,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   isolation: isolate;
   display: grid;
   min-height: calc(100svh - 5rem);
+  /* An auto track sizes to content, so the inner min(100%, …) width overflowed phones. */
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   overflow: hidden;
   padding-block: clamp(6rem, 13vw, 10rem);
@@ -6546,8 +6565,15 @@ p  { line-height: 1.7; color: var(--color-text); }
     margin-top: var(--space-4);
   }
 
+  /* Let long CTA labels wrap instead of widening the grid item past the card edge. */
+  .service-pricing-conversion--hero .service-pricing-conversion-action {
+    min-width: 0;
+  }
+
   .service-pricing-conversion--hero .service-pricing-conversion-action .btn {
     width: 100%;
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .service-pricing-conversion-hero-price strong {
@@ -6613,6 +6639,13 @@ p  { line-height: 1.7; color: var(--color-text); }
   .competition-prep-access-gate-actions {
     align-items: stretch;
     flex-direction: column;
+    width: 100%;
+  }
+
+  /* Long labels ("View Competition Preparation anyway") must wrap, not widen the column. */
+  .competition-prep-access-gate-actions .btn {
+    white-space: normal;
+    text-wrap: balance;
   }
 
   .service-readiness-gate-actions .btn,
@@ -7005,6 +7038,10 @@ p  { line-height: 1.7; color: var(--color-text); }
   height: 2.85rem;
   object-fit: contain;
   filter: grayscale(1) contrast(1.16);
+}
+
+.about-federations-panel img.is-light-mark {
+  filter: grayscale(1) invert(1) contrast(1.16);
 }
 
 .about-federations-panel li > span {
@@ -9135,7 +9172,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .contact-hero h1 {
-  max-width: 8ch;
+  max-width: 11ch;
+  text-wrap: balance;
   margin-bottom: var(--space-6);
   font-size: clamp(3rem, 5.4vw, 5rem);
   letter-spacing: -0.045em;
