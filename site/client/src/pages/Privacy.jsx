@@ -2,8 +2,13 @@ import PageHero from '../components/PageHero'
 import SectionReveal from '../components/SectionReveal'
 import FindYourFitLink from '../components/FindYourFitLink'
 import { Link } from 'react-router-dom'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export default function Privacy() {
+  usePageMeta({
+    title: 'Privacy Policy',
+    description: 'How Team JD collects, uses and protects your personal information.',
+  })
   return (
     <>
       <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="Last updated: August 2026" />
@@ -101,28 +106,36 @@ export default function Privacy() {
                   </li>
                   <li>
                     <span className="arrow">→</span>
-                    <strong style={{ color: 'var(--color-text)' }}>Payment processors</strong>
-                    {' '}— for billing and transactions
-                  </li>
-                  <li>
-                    <span className="arrow">→</span>
-                    <strong style={{ color: 'var(--color-text)' }}>Coaching apps</strong> — for
-                    program delivery and progress tracking
-                  </li>
-                  <li>
-                    <span className="arrow">→</span>
                     <span>
-                      <strong style={{ color: 'var(--color-text)' }}>Resend</strong> — to deliver
-                      website enquiries and confirmation emails
+                      <strong style={{ color: 'var(--color-text)' }}>Payment processors</strong>
+                      {' '}— for billing and transactions
                     </span>
                   </li>
                   <li>
                     <span className="arrow">→</span>
                     <span>
-                      <strong style={{ color: 'var(--color-text)' }}>
-                        Cloudflare Turnstile
-                      </strong>{' '}
-                      — to verify enquiry submissions and help prevent automated abuse
+                      <strong style={{ color: 'var(--color-text)' }}>Coaching apps</strong> — for
+                      program delivery and progress tracking
+                    </span>
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <span>
+                        <strong style={{ color: 'var(--color-text)' }}>Resend</strong> — to deliver
+                        website enquiries and confirmation emails
+                      </span>
+                    </span>
+                  </li>
+                  <li>
+                    <span className="arrow">→</span>
+                    <span>
+                      <span>
+                        <strong style={{ color: 'var(--color-text)' }}>
+                          Cloudflare Turnstile
+                        </strong>{' '}
+                        — to verify enquiry submissions and help prevent automated abuse
+                      </span>
                     </span>
                   </li>
                 </ul>

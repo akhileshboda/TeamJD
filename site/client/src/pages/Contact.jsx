@@ -7,6 +7,7 @@ import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
 import TurnstileWidget from '../components/TurnstileWidget'
 import { useAssets } from '../hooks/useAssets'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const SERVICES = [
   {
@@ -101,6 +102,10 @@ const SOCIAL_POSTS = [
 ]
 
 export default function Contact() {
+  usePageMeta({
+    title: 'Contact Jake',
+    description: 'Book a consultation or send Jake Dedert a message about coaching, competition prep or posing.',
+  })
   const resolveAsset = useAssets()
   const [searchParams] = useSearchParams()
   const requestedService = searchParams.get('service')

@@ -3,8 +3,14 @@ import ServiceGlassCard from '../components/ServiceGlassCard'
 import ServiceFinderBanner from '../components/ServiceFinderBanner'
 import { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export default function Services() {
+  usePageMeta({
+    title: 'Coaching Services',
+    description:
+      'Competition preparation, online coaching, personal training and posing with Jake Dedert, in Adelaide or online from anywhere.',
+  })
   const { data: services } = useJSON('/content/services.json')
 
   return (

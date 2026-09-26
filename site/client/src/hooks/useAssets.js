@@ -62,19 +62,26 @@ function getAssetKey(assetPath) {
   return filename.replace(/\.[^.]+$/, '')
 }
 
-function resolveAsset(assetPath, manifest, fallbackAssetPath) {
+// Files Express serves straight from public/ -- a fallback pointing here must be
+// used as-is, not re-keyed into /api/assets/<key>, which has no such key and 404s.
+const STATIC_PATH = /^\/assets\//
+
+// `manifest` is null until /api/assets resolves. Until then the server redirect is
+// the best guess; the fallback is only chosen once the manifest proves the key absent.
+export function resolveAsset(assetPath, manifest, fallbackAssetPath) {
   if (!assetPath) return ''
   if (/^(?:[a-z]+:|#|\/\/)/i.test(assetPath)) return assetPath
   const key = getAssetKey(assetPath)
   if (manifest?.assets?.[key]?.url) return manifest.assets[key].url
-  if (fallbackAssetPath !== undefined) {
+  if (manifest && fallbackAssetPath !== undefined) {
+    if (STATIC_PATH.test(fallbackAssetPath)) return fallbackAssetPath
     return fallbackAssetPath ? resolveAsset(fallbackAssetPath, manifest) : ''
   }
   return `/api/assets/${key}`
 }
 
 export function useAssets() {
-  const [manifest, setManifest] = useState({ assets: {} })
+  const [manifest, setManifest] = useState(null)
 
   useEffect(() => {
     fetchManifest().then(setManifest)

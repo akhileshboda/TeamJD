@@ -9,6 +9,7 @@ const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
+const { securityHeaders } = require('./middleware/securityHeaders');
 const { genericApiLimiter } = require('./middleware/rateLimits');
 const { sendStaticPage } = require('./utils/staticPages');
 const {
@@ -40,6 +41,7 @@ for (const envVar of requiredAuthEnvVars) {
 
 const app = express();
 app.disable('x-powered-by');
+app.use(securityHeaders);
 // Only the local Cloudflare tunnel may supply proxy metadata. Limiter keys use
 // validated CF-Connecting-IP values and never use arbitrary X-Forwarded-For.
 app.set('trust proxy', 'loopback');

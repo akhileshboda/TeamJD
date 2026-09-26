@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /assets/
 
 Sitemap: https://team-jd.com.au/sitemap.xml

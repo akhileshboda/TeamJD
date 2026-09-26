@@ -10,6 +10,7 @@ import SectionReveal, { StaggerContainer, StaggerItem } from '../components/Sect
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
 import wnbfLogo from '../assets/wnbf.svg'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const STATS = [
   { value: '100+', label: 'Clients Transformed' },
@@ -92,7 +93,8 @@ const COACHED_FEDERATIONS = [
   { name: 'ICN', asset: 'icn' },
   { name: 'ANB', asset: 'anb' },
   { name: 'NABBA', asset: 'nabba' },
-  { name: 'WNBF', src: wnbfLogo },
+  // White mark on transparent -- inverted so it reads on the light federation card.
+  { name: 'WNBF', src: wnbfLogo, lightMark: true },
 ]
 
 const ABOUT_FINAL_ACTIONS = [
@@ -199,6 +201,11 @@ function ProcessTimeline({ steps }) {
 }
 
 export default function About() {
+  usePageMeta({
+    title: 'About Jake Dedert',
+    description:
+      'Pro Physique competitor, competition prep coach and personal trainer. One coaching standard, built around the person doing the work.',
+  })
   const resolveAsset = useAssets()
   const { data: resultsLibrary } = useJSON('/content/results-library.json')
   const results = (resultsLibrary || [])
@@ -335,6 +342,7 @@ export default function About() {
                           <img
                             src={federation.src || resolveAsset(`/api/assets/${federation.asset}`)}
                             alt={`${federation.name} logo`}
+                            className={federation.lightMark ? 'is-light-mark' : undefined}
                             loading="lazy"
                             decoding="async"
                             width="112"
