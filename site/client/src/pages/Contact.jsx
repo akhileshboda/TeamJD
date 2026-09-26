@@ -6,7 +6,7 @@ import FindYourFitLink from '../components/FindYourFitLink'
 import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
 import TurnstileWidget from '../components/TurnstileWidget'
-import { useAssets } from '../hooks/useAssets'
+import { useMedia } from '../hooks/useAssets'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const SERVICES = [
@@ -106,7 +106,13 @@ export default function Contact() {
     title: 'Contact Jake',
     description: 'Book a consultation or send Jake Dedert a message about coaching, competition prep or posing.',
   })
-  const resolveAsset = useAssets()
+  const media = useMedia()
+  // Until Jake uploads his own reel, the licensed YouTube reel and its poster stay in place.
+  const reel = media('contact.reel', '/api/assets/video-contact-athlete-reel-poster')
+  const socialPosts = SOCIAL_POSTS.map((post, index) => {
+    const { src, alt } = media(`contact.social-${index + 1}`, `/api/assets/${post.asset}`, post.alt)
+    return { ...post, src, alt }
+  })
   const [searchParams] = useSearchParams()
   const requestedService = searchParams.get('service')
   const initialService = CONTACT_SERVICE_VALUES.has(requestedService) ? requestedService : ''
@@ -277,12 +283,16 @@ export default function Contact() {
           </SectionReveal>
 
           <SectionReveal className="contact-services-media" delay={0.05}>
-            <ContactMediaReel
-              youtubeId="GbQomqb28os"
-              poster={resolveAsset('/api/assets/video-contact-athlete-reel-poster')}
-              credit="Nike"
-              creditHref="https://www.youtube.com/watch?v=GbQomqb28os"
-            />
+            {reel.replaced ? (
+              <ContactMediaReel videoSrc={reel.src} poster={reel.poster} />
+            ) : (
+              <ContactMediaReel
+                youtubeId="GbQomqb28os"
+                poster={reel.src}
+                credit="Nike"
+                creditHref="https://www.youtube.com/watch?v=GbQomqb28os"
+              />
+            )}
           </SectionReveal>
 
           <div className="contact-services-directory">
@@ -508,7 +518,7 @@ export default function Contact() {
           </SectionReveal>
 
           <SectionReveal className="contact-social-gallery" delay={0.08}>
-            <ContactSocialCarousel posts={SOCIAL_POSTS} />
+            <ContactSocialCarousel posts={socialPosts} />
           </SectionReveal>
         </div>
       </section>

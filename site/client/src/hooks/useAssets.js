@@ -80,12 +80,44 @@ export function resolveAsset(assetPath, manifest, fallbackAssetPath) {
   return `/api/assets/${key}`
 }
 
-export function useAssets() {
+function useManifest() {
   const [manifest, setManifest] = useState(null)
 
   useEffect(() => {
     fetchManifest().then(setManifest)
   }, [])
 
+  return manifest
+}
+
+export function useAssets() {
+  const manifest = useManifest()
   return (assetPath, fallbackAssetPath) => resolveAsset(assetPath, manifest, fallbackAssetPath)
+}
+
+// Media-manager slots: Jake's replacement for a spot when he has uploaded one, otherwise
+// the component's built-in asset and alt text. `slotId` matches server/services/mediaSlots.js.
+export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
+  const replaced = manifest?.slots?.[slotId]
+  if (replaced?.url) {
+    return {
+      src: replaced.url,
+      poster: replaced.posterUrl || '',
+      alt: replaced.alt || fallbackAlt,
+      replaced: true,
+      ready: true,
+    }
+  }
+  return {
+    src: resolveAsset(fallbackPath, manifest),
+    poster: '',
+    alt: fallbackAlt,
+    replaced: false,
+    ready: Boolean(manifest),
+  }
+}
+
+export function useMedia() {
+  const manifest = useManifest()
+  return (slotId, fallbackPath, fallbackAlt) => resolveMedia(slotId, manifest, fallbackPath, fallbackAlt)
 }

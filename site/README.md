@@ -147,6 +147,31 @@ curl -X POST \
 
 The protected API real sync requires a matching API dry-run before mutating Dropbox/R2. Server-side syncs started by the Express scheduler, startup hook, or `npm run sync-assets` create and verify their own dry-run plan before mutating.
 
+## Media Manager (Jake's CMS)
+
+`/admin` lets Jake replace any photo or video on the site, and its alt text, without a developer.
+
+- **Slots.** Every replaceable spot is a slot defined in `server/services/mediaSlots.js`: fixed slots for Home, About and Contact, plus hero, body, banner, gallery and venue slots generated from `public/content/services.json`. Client components ask for a slot with `useMedia()(slotId, builtInPath, builtInAlt)`. Without an upload, the built-in media shows. `mediaSlots.test.js` fails if client code and the registry drift apart.
+- **Upload flow.** Uploads go up in chunks (32 MB each; Cloudflare caps request bodies at 100 MB), then a job processes them one at a time:
+  - Photos become WebP with the existing optimizer, at most 2400px wide.
+  - Videos become H.264 MP4 through system `ffmpeg`: at most 1920px, audio removed, faststart, plus a WebP poster.
+  - The file is archived to Dropbox `/assets/<category>/`, then written to R2 at the same key the Dropbox→R2 sync would derive, so the sync keeps it instead of orphaning it.
+- **State.** `data/media-slots.json` holds each slot's current version and its last 10 versions, and is mirrored to Dropbox `/cms-backup/<environment>/media-slots.json` after every change. Replacements reach the site through the existing `/api/assets` response (`slots` field), with no extra request.
+- **Access.** Cloudflare Access protects `/admin` and `/api/admin` at the edge. The app also verifies the `Cf-Access-Jwt-Assertion` token (signature, audience, issuer, expiry) and the optional `CMS_ADMIN_EMAILS` allowlist. It fails closed in production when `CF_ACCESS_TEAM_DOMAIN` / `CF_ACCESS_AUD` are unset. Both paths stay reachable while `MAINTENANCE_MODE` gates the public site, so Jake can load media before launch.
+
+Setup steps are in `docs/deployment-oracle.md` under "Media manager setup".
+
+**For Jake:**
+1. Go to `https://team-jd.com.au/admin` and sign in with the emailed code.
+2. Pick a page, find the spot and press **Replace photo** or **Replace video**.
+3. Once it says it's live, add a short description of the photo and press **Save**.
+4. **Use original** puts the built-in image back. **Show earlier versions** lets you restore any of your last 10 uploads.
+5. JPG, PNG, WebP or AVIF photos up to 30 MB. MP4, MOV or WebM videos up to 3 minutes. iPhone HEIC photos need exporting as JPG first.
+
+**Restore after losing the VM:** copy `/cms-backup/production/media-slots.json` from Dropbox to `data/media-slots.json` and restart the app. The media files themselves are in both R2 and Dropbox.
+
+**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. Before trying uploads locally, override `R2_ASSET_PREFIX` and `DROPBOX_ASSETS_ROOT` with a sandbox prefix/folder, turn sync off, and set `CMS_DEV_BYPASS=true`.
+
 ## Health Check
 
 `GET /healthz` returns HTTP 200 only after the asset manifest cache is ready. The response includes liveness and non-secret asset-cache status and is safe for local process monitoring.

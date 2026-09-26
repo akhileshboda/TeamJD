@@ -14,15 +14,15 @@ function getSaveDataEnabled() {
   return Boolean(navigator.connection?.saveData)
 }
 
-export default function ContactMediaReel({ youtubeId, poster, credit, creditHref }) {
+export default function ContactMediaReel({ youtubeId, videoSrc, poster, credit, creditHref }) {
   const shouldReduceMotion = useReducedMotion()
   const embedRef = useRef(null)
   const [isMobile, setIsMobile] = useState(getInitialMobileState)
   const [saveDataEnabled, setSaveDataEnabled] = useState(getSaveDataEnabled)
   const [embedFailed, setEmbedFailed] = useState(false)
   const canPlayVideo =
-    Boolean(youtubeId) && !isMobile && !shouldReduceMotion && !saveDataEnabled && !embedFailed
-  const embedSrc = canPlayVideo
+    Boolean(youtubeId || videoSrc) && !isMobile && !shouldReduceMotion && !saveDataEnabled && !embedFailed
+  const embedSrc = canPlayVideo && youtubeId
     ? `https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&controls=0&disablekb=1&enablejsapi=1&fs=0&playsinline=1&rel=0&modestbranding=1`
     : ''
 
@@ -95,7 +95,22 @@ export default function ContactMediaReel({ youtubeId, poster, credit, creditHref
         height="1920"
       />
 
-      {canPlayVideo && (
+      {canPlayVideo && videoSrc && (
+        <video
+          className="contact-media-reel-video"
+          src={videoSrc}
+          poster={poster}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          onError={() => setEmbedFailed(true)}
+        />
+      )}
+
+      {canPlayVideo && youtubeId && (
         <iframe
           ref={embedRef}
           className="contact-media-reel-video contact-media-reel-embed"
@@ -118,7 +133,7 @@ export default function ContactMediaReel({ youtubeId, poster, credit, creditHref
             Film: {credit}<span aria-hidden="true"> ↗</span>
           </a>
         ) : (
-          <span>{credit}</span>
+          credit && <span>{credit}</span>
         )}
       </figcaption>
     </figure>

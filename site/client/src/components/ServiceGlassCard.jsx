@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'motion/react'
-import { useAssets } from '../hooks/useAssets'
+import { useAssets, useMedia } from '../hooks/useAssets'
 
 export default function ServiceGlassCard({ service }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
 
-  const heroSrc = service.hero_image ? resolveAsset(service.hero_image) : ''
+  const heroSrc = useMedia()(`services.${service.slug}.hero`, service.hero_image).src
   const fallbackIcon = service.includes?.[0]?.icon || ''
 
   const MotionLink = shouldReduce ? Link : motion.create(Link)

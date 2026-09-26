@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
-import { useAssets } from '../hooks/useAssets'
+import { useMedia } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 import ServicePricingConversion from './ServicePricingConversion'
 import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
@@ -22,9 +22,8 @@ const copyItem = {
 export default function ServiceDetailHero({ service, services = [] }) {
   const sectionRef = useRef(null)
   const action = resolveServiceAction(service)
-  const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
-  const heroSrc = resolveAsset(service.hero_image)
+  const { src: heroSrc, alt: heroAlt } = useMedia()(`services.${service.slug}.hero`, service.hero_image, service.hero_alt)
   const heroFacts = service.facts ?? []
 
   const { scrollYProgress } = useScroll({
@@ -152,7 +151,7 @@ export default function ServiceDetailHero({ service, services = [] }) {
           >
             <div className="service-journey-ring" aria-hidden="true" />
             <div className="service-journey-image-frame">
-              <img src={heroSrc} alt={service.hero_alt} decoding="async" fetchpriority="high" />
+              <img src={heroSrc} alt={heroAlt} decoding="async" fetchpriority="high" />
               {/* The plate that sat here captioned the image with expectation_title,
                   which is the heading of the Team JD Standard section one scroll below.
                   The section owns that line; the hero no longer pre-empts it. */}

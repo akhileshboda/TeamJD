@@ -12,7 +12,7 @@ import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import ServiceVenue from '../components/ServiceVenue'
 import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
-import { useAssets } from '../hooks/useAssets'
+import { useAssets, useMedia } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { resolveServiceAction } from '../utils/bookingLinks'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -26,6 +26,7 @@ export default function ServiceDetailPage() {
   const { slug } = useParams()
   const { data: services } = useJSON('/content/services.json')
   const resolveAsset = useAssets()
+  const media = useMedia()
   const { canViewCompetitionPrep } = useFindYourFitSession()
   const metaService = services?.find((candidate) => candidate.slug === slug)
   usePageMeta({ title: metaService?.name, description: metaService?.short_description })
@@ -63,8 +64,13 @@ export default function ServiceDetailPage() {
     '--svc-accent-2': theme.accent2,
     '--svc-accent-2-rgb': theme.accent2_rgb,
   }
-  const bodyImageSrc = resolveAsset(service.body_image ?? service.hero_image)
-  const bannerImageSrc = resolveAsset(service.banner_image ?? service.body_image ?? service.hero_image)
+  const bodyImage = media(`services.${slug}.body`, service.body_image ?? service.hero_image, service.body_alt ?? '')
+  const bodyImageSrc = bodyImage.src
+  const bannerImage = media(
+    `services.${slug}.banner`,
+    service.banner_image ?? service.body_image ?? service.hero_image,
+    `${service.name} coaching in action`,
+  )
   const bookingAction = resolveServiceAction(service)
 
   return (
@@ -173,8 +179,8 @@ export default function ServiceDetailPage() {
             <SectionReveal>
               <figure className="service-ultrawide-media" data-service-media-slot="video-ready">
                 <img
-                  src={bannerImageSrc}
-                  alt={`${service.name} coaching in action`}
+                  src={bannerImage.src}
+                  alt={bannerImage.alt}
                   loading="lazy"
                   decoding="async"
                 />
@@ -218,7 +224,7 @@ export default function ServiceDetailPage() {
                 <div
                   className="service-fit-split-photo"
                   role="img"
-                  aria-label={service.body_alt ?? ''}
+                  aria-label={bodyImage.alt}
                   style={{ '--svc-fit-photo': `url("${bodyImageSrc}")` }}
                 />
               </div>
@@ -227,7 +233,7 @@ export default function ServiceDetailPage() {
 
           {service.venue && (
             <SectionReveal>
-              <ServiceVenue venue={service.venue} />
+              <ServiceVenue venue={service.venue} slug={service.slug} />
             </SectionReveal>
           )}
 

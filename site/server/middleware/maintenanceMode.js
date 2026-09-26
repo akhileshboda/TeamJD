@@ -16,8 +16,15 @@ function isMaintenanceModeEnabled(env = process.env) {
   return isProductionRuntime(env);
 }
 
+// The media manager stays reachable while the public site is gated so Jake can load
+// his photos before launch. Cloudflare Access still guards both paths.
+const EXEMPT_PREFIXES = ['/assets', '/admin', '/api/admin'];
+
 function isExemptPath(requestPath) {
-  return EXEMPT_PATHS.has(requestPath) || requestPath === '/assets' || requestPath.startsWith('/assets/');
+  return (
+    EXEMPT_PATHS.has(requestPath) ||
+    EXEMPT_PREFIXES.some((prefix) => requestPath === prefix || requestPath.startsWith(`${prefix}/`))
+  );
 }
 
 let hasLoggedActiveState = false;

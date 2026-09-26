@@ -73,3 +73,22 @@ test('gate off passes requests through untouched', async () => {
     else process.env.MAINTENANCE_MODE = previous;
   }
 });
+
+test('the media manager stays reachable while the public site is gated', async () => {
+  const previous = process.env.MAINTENANCE_MODE;
+  process.env.MAINTENANCE_MODE = 'true';
+  try {
+    const app = express();
+    app.use(maintenanceMode);
+    app.get('/admin', (req, res) => res.send('admin'));
+    app.get('/api/admin/slots', (req, res) => res.json({ ok: true }));
+    app.get('/administrator', (req, res) => res.send('not exempt'));
+
+    assert.equal((await request(app).get('/admin')).status, 200);
+    assert.equal((await request(app).get('/api/admin/slots')).status, 200);
+    assert.equal((await request(app).get('/administrator')).status, 503);
+  } finally {
+    if (previous === undefined) delete process.env.MAINTENANCE_MODE;
+    else process.env.MAINTENANCE_MODE = previous;
+  }
+});

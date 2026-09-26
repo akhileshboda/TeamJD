@@ -271,7 +271,7 @@ async function putR2Object({ objectKey, body, contentType, contentLength, metada
   );
 }
 
-async function uploadAssetToR2({ buffer, stream, objectKey, contentType, cacheControl, metadata = {} }) {
+async function uploadAssetToR2({ buffer, stream, contentLength, objectKey, contentType, cacheControl, metadata = {} }) {
   const client = createR2Client();
   if (!client) throw new Error('Cloudflare R2 is not configured.');
 
@@ -281,7 +281,7 @@ async function uploadAssetToR2({ buffer, stream, objectKey, contentType, cacheCo
       Key: objectKey,
       Body: stream || buffer,
       ContentType: contentType,
-      ContentLength: buffer?.length,
+      ContentLength: contentLength ?? buffer?.length,
       CacheControl: cacheControl || PUBLIC_CACHE_CONTROL,
       Metadata: metadata
     })
