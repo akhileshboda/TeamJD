@@ -2622,10 +2622,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 /* ── Service detail page ────────────────────────────────────── */
-.service-detail-body {
-  max-width: 780px;
-}
-
 .service-back-link {
   display: inline-block;
   margin-bottom: var(--space-6);
@@ -2638,28 +2634,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-back-link:hover {
   color: var(--color-accent);
-}
-
-.explore-others {
-  margin-top: var(--space-16);
-  padding-top: var(--space-10);
-  border-top: 1px solid var(--color-border);
-}
-
-.explore-others-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-4);
-}
-
-.explore-others-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
 }
 
 /* ── Service detail section (legacy) ────────────────────────── */
@@ -3326,7 +3300,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-menu-link:focus-visible,
-.service-hero-fit-link:focus-visible,
 .qualification-edit:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
@@ -3380,24 +3353,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   color: #b5b5b5;
   font-size: clamp(1rem, 1.7vw, 1.2rem);
   line-height: 1.75;
-}
-
-.service-hero-fit-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-8);
-  color: var(--svc-accent);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition: color var(--transition-fast), gap var(--transition-fast);
-}
-
-.service-hero-fit-link:hover {
-  gap: var(--space-3);
-  color: var(--color-hover-accent);
 }
 
 .service-hero-stats {
@@ -3541,38 +3496,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     linear-gradient(120deg, rgba(var(--svc-accent-2-rgb), 0.1), transparent 42%);
 }
 
-.service-journey-image-plate {
-  position: absolute;
-  z-index: 2;
-  left: var(--space-5);
-  right: var(--space-5);
-  bottom: var(--space-5);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-xl);
-  background: rgba(17, 19, 20, 0.62);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
-}
-
-.service-journey-image-plate span {
-  display: block;
-  margin-bottom: 0.35rem;
-  color: var(--svc-accent-2);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.service-journey-image-plate strong {
-  display: block;
-  color: var(--color-white);
-  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
-  line-height: 1.45;
-}
-
 .service-journey-page {
   position: relative;
   isolation: isolate;
@@ -3650,6 +3573,20 @@ p  { line-height: 1.7; color: var(--color-text); }
   opacity: 0.62;
 }
 
+/* One scale for the service template. Card padding, the gap between major sections
+   and the three heading sizes each resolve to a token here, so the four service pages
+   stay in step by construction. Before this, the same "card" role carried five
+   different padding clamps and the same h2 role five different sizes, because each
+   fix was applied to one variant rather than to the shared rule. */
+.service-journey-theme {
+  --service-card-pad: clamp(1.4rem, 3.5vw, 2.5rem);
+  --service-card-pad-tight: clamp(1.15rem, 2.5vw, 1.75rem);
+  --service-section-gap: var(--space-20);
+  --service-heading-section: clamp(1.85rem, 3.5vw, 3.15rem);
+  --service-heading-card: clamp(1.45rem, 2.6vw, 2rem);
+  --service-heading-panel: clamp(1.05rem, 2vw, 1.35rem);
+}
+
 .service-journey-container {
   max-width: 76rem;
   padding-block: var(--space-20) var(--space-24);
@@ -3660,16 +3597,15 @@ p  { line-height: 1.7; color: var(--color-text); }
   grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
   align-items: center;
   gap: clamp(2.5rem, 7vw, 6rem);
-  margin-bottom: var(--space-16);
+  margin-bottom: var(--service-section-gap);
 }
 
 .service-intro-copy h2,
 .service-section-heading h2,
 .service-standard-heading h2,
-.service-fit-panel h2,
 .service-qualification h2,
 .service-finder h2 {
-  font-size: clamp(1.85rem, 3.5vw, 3.15rem);
+  font-size: var(--service-heading-section);
   letter-spacing: -0.04em;
   text-wrap: balance;
 }
@@ -3684,69 +3620,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   color: #aaa;
   font-size: 1.05rem;
   line-height: 1.85;
-}
-
-.service-facts-grid {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-}
-
-.service-fact {
-  display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-4);
-  min-height: 4.25rem;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.service-fact dt {
-  color: #8f8f8f;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.service-fact dd {
-  margin: 0;
-  color: var(--color-white);
-  font-size: 0.9rem;
-  font-weight: 750;
-  line-height: 1.4;
-}
-
-.service-intro-photo {
-  position: relative;
-  overflow: hidden;
-  margin: 0;
-  aspect-ratio: 4 / 5;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: clamp(1.25rem, 3vw, 2rem);
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 26px 64px rgba(0, 0, 0, 0.42);
-}
-
-.service-intro-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-.service-intro-photo-scrim {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(7, 8, 9, 0.02) 45%, rgba(7, 8, 9, 0.66) 100%),
-    radial-gradient(circle at 12% 4%, rgba(var(--svc-accent-rgb), 0.14), transparent 14rem);
 }
 
 /* Five-image service carousel */
@@ -3863,7 +3736,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 /* ── "Team JD Standard" scroll-drawn timeline ─────────────── */
 .service-standard {
-  margin-bottom: var(--space-24);
+  margin-bottom: var(--service-section-gap);
 }
 
 .service-standard-heading {
@@ -3924,22 +3797,23 @@ p  { line-height: 1.7; color: var(--color-text); }
   position: relative;
 }
 
+/* A page runs three independent 01.. sequences: these timeline steps, the numbered
+   section badges, and the watermark on each inclusion card. Only the section badge is
+   an accent-outlined pill, so the reader has one sequence that means "section" -- this
+   one used to wear the same pill at nearly the same size and competed with it. It is a
+   step marker within a single section, so it reads quieter and squarer. */
 .service-standard-node {
   position: absolute;
-  top: -0.15rem;
+  top: -0.05rem;
   left: -3.25rem;
   display: grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 1px solid rgba(var(--svc-accent-rgb), 0.38);
-  border-radius: 999px;
-  color: var(--svc-accent);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)),
-    rgba(16, 18, 19, 0.92);
-  box-shadow: 0 0 18px rgba(var(--svc-accent-rgb), 0.2);
-  font-size: 0.62rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  color: rgba(var(--svc-accent-rgb), 0.75);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.06em;
 }
@@ -3979,7 +3853,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-inclusions-section {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--service-section-gap);
 }
 
 .service-inclusions-groups {
@@ -3992,7 +3866,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   isolation: isolate;
   overflow: hidden;
   min-width: 0;
-  padding: clamp(1.25rem, 3.5vw, 2.5rem);
+  padding: var(--service-card-pad);
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: clamp(1.15rem, 2.5vw, 1.75rem);
   background:
@@ -4114,9 +3988,9 @@ p  { line-height: 1.7; color: var(--color-text); }
   text-transform: uppercase;
 }
 
-.service-content-block-heading h3 {
+.service-content-block-heading :is(h2, h3) {
   color: var(--color-white);
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-size: var(--service-heading-panel);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -4159,7 +4033,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   overflow: hidden;
   width: 100%;
   min-height: 15rem;
-  padding: clamp(1.35rem, 3vw, 2rem);
+  padding: var(--service-card-pad-tight);
   border-radius: var(--radius-xl);
   transition: border-color var(--transition-normal), background-color var(--transition-normal);
 }
@@ -4284,7 +4158,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
 }
 
-.service-inclusion-card h3 {
+.service-inclusion-card h4 {
   max-width: 26rem;
   margin-bottom: var(--space-3);
   font-size: 1.2rem;
@@ -4358,34 +4232,40 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-content-block--fit,
 .service-content-block--readiness {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--service-section-gap);
   padding: 0;
 }
 
+/* The inset belongs to the section type, not to one of its two branches: both
+   the readiness gate and the direct booking block render a --final pricing
+   conversion inside a card whose own padding is stripped above. */
 .service-content-block--readiness {
-  margin-bottom: var(--space-20);
-}
-
-.service-direct-booking {
-  --service-booking-pad: clamp(1.25rem, 3.5vw, 2.5rem);
+  --service-booking-pad: var(--service-card-pad);
+  margin-bottom: var(--service-section-gap);
 }
 
 .service-content-block--fit > .service-content-block-heading,
 .service-content-block--readiness > .service-content-block-heading {
   margin: 0;
-  padding: var(--space-5) clamp(1.25rem, 3.5vw, 2.5rem);
+  padding: var(--space-5) var(--service-card-pad);
   background: rgba(0, 0, 0, 0.16);
 }
 
-.service-direct-booking .service-pricing-conversion--final {
+/* Supplies the horizontal inset for both branches. Keyed on the section rather
+   than on .service-direct-booking, which used to leave the readiness gate flush
+   against the card edge and clipped by its overflow. The heading's own
+   background band is the separator, so no border is needed here. */
+.service-content-block--readiness .service-pricing-conversion--final {
   margin-top: 0;
   padding: var(--space-5) var(--service-booking-pad) var(--service-booking-pad);
   border-top: 0;
 }
 
 /* The action row spans the full card width now that --final is stacked, so the
-   CTA sits at its natural width instead of stretching across it. */
-.service-direct-booking .service-readiness-gate-body > .btn {
+   CTA sits at its natural width instead of stretching across it. Keyed on the shared
+   section class, not on one branch: scoping it to .service-direct-booking gave the same
+   button two different widths depending on whether the service needed an application. */
+.service-content-block--readiness .service-readiness-gate-body > .btn {
   justify-self: start;
   min-width: min(100%, 20rem);
 }
@@ -4413,12 +4293,12 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-fit-panel {
   width: 100%;
-  padding: clamp(1.4rem, 3.5vw, 2.5rem);
+  padding: var(--service-card-pad);
   border-radius: var(--radius-2xl);
 }
 
 .service-fit-split .service-fit-panel {
-  padding: clamp(1.5rem, 4vw, 3rem);
+  padding: var(--service-card-pad);
   border-radius: 0;
 }
 
@@ -4430,12 +4310,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   color: var(--color-accent);
 }
 
-.service-fit-panel-heading .eyebrow {
-  margin-bottom: var(--space-2);
-}
-
-.service-fit-panel h2 {
-  font-size: clamp(1.45rem, 2.6vw, 2rem);
+.service-fit-panel h3 {
+  font-size: var(--service-heading-card);
 }
 
 .service-fit-panel ul {
@@ -4549,7 +4425,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1rem, 3vw, 2rem);
-  padding: clamp(1.4rem, 4vw, 3rem);
+  padding: var(--service-card-pad);
   background:
     radial-gradient(circle at 100% 0%, rgba(var(--svc-accent-rgb), 0.1), transparent 22rem),
     rgba(13, 16, 17, 0.5);
@@ -4599,8 +4475,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   grid-template-columns: minmax(0, 0.9fr) minmax(22rem, 1.1fr);
   gap: clamp(1.5rem, 4vw, 3.5rem);
   align-items: start;
-  margin-bottom: var(--space-24);
-  padding: clamp(1.5rem, 4vw, 3rem);
+  margin-bottom: var(--service-section-gap);
+  padding: var(--service-card-pad);
   border: 1px solid rgba(var(--svc-accent-rgb), 0.25);
   border-radius: clamp(1.25rem, 3vw, 2rem);
   background:
@@ -4611,7 +4487,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-venue-copy h2 {
   max-width: 12ch;
   margin-bottom: var(--space-4);
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: var(--service-heading-section);
   line-height: 1;
 }
 
@@ -4813,7 +4689,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   gap: 0;
   margin-top: var(--space-4);
   border-top: 1px solid rgba(255, 255, 255, 0.11);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
 }
 
 .service-pricing-conversion-tiers > div {
@@ -4846,13 +4721,15 @@ p  { line-height: 1.7; color: var(--color-text); }
   line-height: 1.35;
 }
 
+/* The parent grid's row-gap is the only thing separating the action from the price
+   above it. This rule used to add a second hairline and a second gap of its own, so a
+   card with a tier table drew two rules with an empty band between them, and every card
+   spent twice the intended space above its button. */
 .service-pricing-conversion--final .service-pricing-conversion-action {
   grid-column: 1;
   display: grid;
   align-items: center;
   min-width: 0;
-  padding-top: var(--space-5);
-  border-top: 1px solid rgba(var(--svc-accent-rgb), 0.28);
 }
 
 .service-pricing-conversion--final .service-pricing-conversion-action .service-readiness-gate-body {
@@ -6439,7 +6316,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-panel,
   .service-menu-link,
-  .service-journey-image-plate,
   .service-finder {
     background-color: rgba(25, 25, 26, 0.97);
   }
@@ -6498,22 +6374,8 @@ p  { line-height: 1.7; color: var(--color-text); }
     max-width: 20ch;
   }
 
-  .service-facts-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .service-fact {
-    grid-template-columns: 1fr;
-    align-content: center;
-  }
-
   .service-section-heading {
     gap: var(--space-4);
-  }
-
-  .service-intro-photo {
-    max-width: 36rem;
-    aspect-ratio: 16 / 10;
   }
 
   .service-media-carousel {
@@ -6551,10 +6413,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 
   .service-journey-container {
     padding-block: var(--space-12) calc(var(--space-16) + 5rem + env(safe-area-inset-bottom));
-  }
-
-  .service-pricing-conversion--final {
-    padding-inline: var(--space-5);
   }
 
   .service-intro-section,
@@ -6777,21 +6635,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
 
-  .service-journey-image-plate {
-    left: var(--space-3);
-    right: var(--space-3);
-    bottom: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-  }
-
-  .service-facts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .service-fact {
-    grid-template-columns: 6rem minmax(0, 1fr);
-  }
-
   .service-fit-split,
   .service-fit-panel,
   .service-qualification,
@@ -6911,7 +6754,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 @media (prefers-reduced-motion: reduce) {
   .service-menu-link,
-  .service-hero-fit-link,
   .service-inclusion-card,
   .service-inclusion-card--feature::before,
   .qualification-option,

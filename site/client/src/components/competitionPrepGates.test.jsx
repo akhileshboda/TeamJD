@@ -153,6 +153,17 @@ describe('Competition Preparation soft gates', () => {
     expect(bookingTrigger).toHaveFocus()
   })
 
+  // The card's horizontal inset hangs off this shared class. Dropping it does not
+  // fail any rendering assertion -- it silently returns the card to zero padding,
+  // so the content collides with the accent bar and is clipped by overflow.
+  it('keeps the section class that carries the card inset', () => {
+    renderReadinessGate()
+
+    const section = document.querySelector('#service-fit-check')
+    expect(section).toBeInTheDocument()
+    expect(section.className).toContain('service-content-block--readiness')
+  })
+
   it('keeps tailored pricing directly with the final prep checkpoint actions', () => {
     renderReadinessGate()
 

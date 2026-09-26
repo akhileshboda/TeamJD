@@ -56,7 +56,7 @@ export default function ServiceGlassCard({ service }) {
       <div className="service-glass-card-scrim" aria-hidden="true" />
 
       {service.application_required && (
-        <span className="service-glass-badge">Find Your Fit First &middot; Application Required</span>
+        <span className="service-glass-badge">Find Your Fit first &middot; Application required</span>
       )}
 
       <div className="service-glass-card-plate">

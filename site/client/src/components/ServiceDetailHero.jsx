@@ -153,11 +153,10 @@ export default function ServiceDetailHero({ service, services = [] }) {
             <div className="service-journey-ring" aria-hidden="true" />
             <div className="service-journey-image-frame">
               <img src={heroSrc} alt={service.hero_alt} decoding="async" fetchpriority="high" />
+              {/* The plate that sat here captioned the image with expectation_title,
+                  which is the heading of the Team JD Standard section one scroll below.
+                  The section owns that line; the hero no longer pre-empts it. */}
               <div className="service-journey-image-scrim" aria-hidden="true" />
-              <div className="service-journey-image-plate">
-                <span>Team JD standard</span>
-                <strong>{service.expectation_title}</strong>
-              </div>
             </div>
           </motion.div>
         </motion.div>
