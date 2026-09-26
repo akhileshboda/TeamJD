@@ -10,6 +10,7 @@ import FindYourFitLink from '../components/FindYourFitLink'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 
 const servicePathways = [
@@ -62,6 +63,10 @@ const servicePathways = [
 const MotionLink = motion.create(Link)
 
 export default function Home() {
+  usePageMeta({
+    description:
+      'Jake Dedert is a Pro Physique bodybuilder and coach in Adelaide offering competition preparation, online coaching, personal training and posing.',
+  })
   const { data: services } = useJSON('/content/services.json')
   const { data: faqs } = useJSON('/content/faqs.json')
   const resolveAsset = useAssets()

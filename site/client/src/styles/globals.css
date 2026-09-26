@@ -3710,8 +3710,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   bottom: var(--space-4);
   left: 50%;
   display: flex;
-  gap: 0.45rem;
-  padding: 0.42rem 0.55rem;
+  padding: 0 0.2rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(8, 10, 11, 0.5);
@@ -3720,16 +3719,29 @@ p  { line-height: 1.7; color: var(--color-text); }
   transform: translateX(-50%);
 }
 
+/* The button is the 24px target (WCAG 2.5.8); ::before draws the small visible dot. */
 .service-media-carousel-dots button {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.service-media-carousel-dots button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.36);
-  cursor: pointer;
+  transform: translate(-50%, -50%);
   transition: width var(--transition-fast), background-color var(--transition-fast);
 }
 
-.service-media-carousel-dots button.is-active {
+.service-media-carousel-dots button.is-active::before {
   width: 1.15rem;
   background: var(--svc-accent);
 }
@@ -7800,6 +7812,12 @@ p  { line-height: 1.7; color: var(--color-text); }
 .prose-card p {
   color: var(--color-text-muted);
   line-height: 1.75;
+}
+
+/* Inline links must be distinguishable without colour alone (WCAG 1.4.1). */
+.prose-card :is(p, li) a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .prose-list {

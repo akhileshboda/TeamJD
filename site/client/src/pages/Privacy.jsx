@@ -2,8 +2,13 @@ import PageHero from '../components/PageHero'
 import SectionReveal from '../components/SectionReveal'
 import FindYourFitLink from '../components/FindYourFitLink'
 import { Link } from 'react-router-dom'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export default function Privacy() {
+  usePageMeta({
+    title: 'Privacy Policy',
+    description: 'How Team JD collects, uses and protects your personal information.',
+  })
   return (
     <>
       <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="Last updated: August 2026" />

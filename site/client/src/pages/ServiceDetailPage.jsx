@@ -15,6 +15,7 @@ import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { resolveServiceAction } from '../utils/bookingLinks'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const inclusionGroups = [
   { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
@@ -26,6 +27,8 @@ export default function ServiceDetailPage() {
   const { data: services } = useJSON('/content/services.json')
   const resolveAsset = useAssets()
   const { canViewCompetitionPrep } = useFindYourFitSession()
+  const metaService = services?.find((candidate) => candidate.slug === slug)
+  usePageMeta({ title: metaService?.name, description: metaService?.short_description })
 
   if (!services) {
     return (

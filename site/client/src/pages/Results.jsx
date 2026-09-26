@@ -19,6 +19,7 @@ import {
   getResultsParams,
   paginateResults,
 } from '../utils/resultsLibrary'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const DEFAULT_PARAMS = {
   category: 'all',
@@ -28,6 +29,11 @@ const DEFAULT_PARAMS = {
 }
 
 export default function Results() {
+  usePageMeta({
+    title: 'Client Results',
+    description:
+      'Explore Team JD client outcomes alongside a visual library of training, posing and coaching references.',
+  })
   const { data: results, loading, error } = useJSON('/content/results-library.json')
   const [searchParams, setSearchParams] = useSearchParams()
   const shouldReduceMotion = useReducedMotion()

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import FindYourFitLink from '../components/FindYourFitLink'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 export default function NotFound() {
+  usePageMeta({ title: 'Page Not Found', noindex: true })
   return (
     <section className="not-found-page" aria-labelledby="not-found-heading">
       <div className="not-found-bg" aria-hidden="true" />

@@ -5,6 +5,14 @@ import JourneyIcon from './JourneyIcon'
 
 const AUTOPLAY_INTERVAL_MS = 5200
 
+// Alt text follows the image, not the slide position: the first gallery slide is not
+// always the body image, and body_alt describes that specific photo.
+function slideAlt(service, image) {
+  if (image === service.body_image && service.body_alt) return service.body_alt
+  if (image === service.hero_image && service.hero_alt) return service.hero_alt
+  return `${service.name} coaching in action`
+}
+
 export default function ServiceMediaCarousel({ service }) {
   const resolveAsset = useAssets()
   const shouldReduceMotion = useReducedMotion()
@@ -58,7 +66,7 @@ export default function ServiceMediaCarousel({ service }) {
           >
             <img
               src={resolveAsset(image)}
-              alt={index === 0 ? service.body_alt ?? '' : `${service.name} coaching in action`}
+              alt={slideAlt(service, image)}
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />

@@ -10,6 +10,7 @@ import SectionReveal, { StaggerContainer, StaggerItem } from '../components/Sect
 import { useAssets } from '../hooks/useAssets'
 import { useJSON } from '../hooks/useJSON'
 import wnbfLogo from '../assets/wnbf.svg'
+import { usePageMeta } from '../hooks/usePageMeta'
 
 const STATS = [
   { value: '100+', label: 'Clients Transformed' },
@@ -199,6 +200,11 @@ function ProcessTimeline({ steps }) {
 }
 
 export default function About() {
+  usePageMeta({
+    title: 'About Jake Dedert',
+    description:
+      'Pro Physique competitor, competition prep coach and personal trainer. One coaching standard, built around the person doing the work.',
+  })
   const resolveAsset = useAssets()
   const { data: resultsLibrary } = useJSON('/content/results-library.json')
   const results = (resultsLibrary || [])
