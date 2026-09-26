@@ -21,6 +21,7 @@ export function getServicePricingContext(service) {
       heroUnit: null,
       heroDetail: 'Your consultation determines the right level of support.',
       tiers: [],
+      showTierList: false,
     }
   }
 
@@ -47,5 +48,10 @@ export function getServicePricingContext(service) {
       ? tiers[0].label
       : `${tiers.map((tier) => tier.label.replace(/ sessions?$/, '')).join(' and ')} session options`,
     tiers,
+    /* A single tier IS the summary: heroPrice, heroUnit and heroDetail are that tier's
+       price, unit and label. Listing it again below printed the same $120 and the same
+       "Posing session" twice in one card. Only a multi-tier service has anything the
+       summary cannot say, so only it earns the table. */
+    showTierList: tiers.length > 1,
   }
 }

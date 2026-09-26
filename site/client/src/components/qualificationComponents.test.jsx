@@ -61,22 +61,22 @@ function answerFinderQuestion(label) {
 describe('StickyBookBar', () => {
   const service = getService('competition-preparation')
 
-  it('opens a booking checkpoint without a valid result', () => {
+  it('opens an application checkpoint without a valid result', () => {
     renderWithSession(
       <MemoryRouter>
         <StickyBookBar service={service} services={services} />
       </MemoryRouter>
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /Book now/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Apply now/ }))
     expect(screen.getByRole('dialog', { name: /Complete Find Your Fit/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Continue to Calendly anyway/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Continue to the application anyway/ })).toHaveAttribute(
       'href',
-      service.cta_url,
+      service.application_url,
     )
   })
 
-  it('books directly after a valid Find Your Fit result', () => {
+  it('links straight to the application after a valid Find Your Fit result', () => {
     window.sessionStorage.setItem(FIND_YOUR_FIT_SESSION_KEY, JSON.stringify({
       version: FIND_YOUR_FIT_SESSION_VERSION,
       competitionPrepPageBypass: false,
@@ -95,7 +95,10 @@ describe('StickyBookBar', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByRole('link', { name: /Book now/ })).toHaveAttribute('href', service.cta_url)
+    expect(screen.getByRole('link', { name: /Apply now/ })).toHaveAttribute(
+      'href',
+      service.application_url,
+    )
   })
 
   it('books a non-competition service directly without a fit check', () => {
@@ -120,7 +123,7 @@ describe('StickyBookBar', () => {
       </MemoryRouter>
     )
 
-    expect(screen.getByText('Tailored pricing · Fit check required')).toBeInTheDocument()
+    expect(screen.getByText('Tailored pricing · Application required')).toBeInTheDocument()
   })
 })
 

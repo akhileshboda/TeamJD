@@ -45,6 +45,33 @@ describe('ServicePricingConversion', () => {
     expect(dock.querySelector('.service-pricing-conversion-action')).toContainElement(cta)
   })
 
+  it('states a single-tier price once instead of summarising the only tier above itself', () => {
+    render(
+      <ServicePricingConversion service={getService('posing-only')} placement="final">
+        <a href="https://example.com">Book Posing Session</a>
+      </ServicePricingConversion>,
+    )
+
+    // The summary for a one-tier service is built from that tier, so rendering the
+    // tier table as well printed the same price and the same label twice in one card.
+    expect(screen.getAllByText('$120')).toHaveLength(1)
+    expect(screen.getAllByText('Posing session')).toHaveLength(1)
+    expect(screen.getAllByText('per session')).toHaveLength(1)
+  })
+
+  it('lets the tier table own the numbers so the multi-tier summary cannot repeat one', () => {
+    render(
+      <ServicePricingConversion service={getService('personal-training')} placement="final">
+        <a href="https://example.com">Book Personal Training Consult</a>
+      </ServicePricingConversion>,
+    )
+
+    // "From $85" above a table whose first row is $85 stated the same price twice.
+    expect(screen.getAllByText('$85')).toHaveLength(1)
+    expect(screen.getAllByText('$75')).toHaveLength(1)
+    expect(screen.queryByText('From')).not.toBeInTheDocument()
+  })
+
   it('uses the approved tailored-pricing consultation signal before a consultation CTA', () => {
     render(
       <ServicePricingConversion service={getService('online-coaching')} placement="hero">

@@ -3,10 +3,10 @@ import CompetitionPrepAccessGate from '../components/CompetitionPrepAccessGate'
 import JourneyIcon from '../components/JourneyIcon'
 import ScrollChromeSection from '../components/ScrollChromeSection'
 import SectionReveal from '../components/SectionReveal'
+import ServiceBookingCard from '../components/ServiceBookingCard'
 import ServiceDetailHero from '../components/ServiceDetailHero'
 import ServiceGlassCard from '../components/ServiceGlassCard'
 import ServiceMediaCarousel from '../components/ServiceMediaCarousel'
-import ServicePricingConversion from '../components/ServicePricingConversion'
 import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import ServiceVenue from '../components/ServiceVenue'
@@ -14,6 +14,7 @@ import StickyBookBar from '../components/StickyBookBar'
 import { useJSON } from '../hooks/useJSON'
 import { useAssets } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
+import { resolveServiceAction } from '../utils/bookingLinks'
 
 const inclusionGroups = [
   { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
@@ -61,10 +62,11 @@ export default function ServiceDetailPage() {
   }
   const bodyImageSrc = resolveAsset(service.body_image ?? service.hero_image)
   const bannerImageSrc = resolveAsset(service.banner_image ?? service.body_image ?? service.hero_image)
+  const bookingAction = resolveServiceAction(service)
 
   return (
     <div className="service-journey-theme" style={themeVars}>
-      <ServiceDetailHero service={service} />
+      <ServiceDetailHero service={service} services={services} />
 
       <div className="service-journey-page">
         <div className="service-journey-page-glow" aria-hidden="true" />
@@ -153,7 +155,7 @@ export default function ServiceDetailPage() {
                                   decoding="async"
                                 />
                               </div>
-                              <h3>{item.title}</h3>
+                              <h4>{item.title}</h4>
                               <p>{item.description}</p>
                             </article>
                           </SectionReveal>
@@ -188,7 +190,7 @@ export default function ServiceDetailPage() {
                 <span aria-hidden="true">03</span>
                 <div>
                   <span>Before you continue</span>
-                  <h3 id="service-fit-title">Good fit</h3>
+                  <h2 id="service-fit-title">Good fit</h2>
                 </div>
               </div>
 
@@ -196,10 +198,9 @@ export default function ServiceDetailPage() {
                 <article className="service-fit-panel service-fit-split-copy">
                   <div className="service-fit-panel-heading">
                     <JourneyIcon name="user" size={24} />
-                    <div>
-                      <span className="eyebrow">A Good Fit Looks Like</span>
-                      <h2>This matches you if&hellip;</h2>
-                    </div>
+                    {/* The section heading above already says "Good fit"; this panel only
+                        needs to introduce the list, not re-announce the section. */}
+                    <h3>This matches you if&hellip;</h3>
                   </div>
                   <ul>
                     {service.who_its_for.map((item) => (
@@ -237,44 +238,37 @@ export default function ServiceDetailPage() {
             </SectionReveal>
           ) : (
             <SectionReveal>
-              <ScrollChromeSection
+              <ServiceBookingCard
                 id="service-booking"
-                className="service-content-block service-content-block--readiness service-direct-booking"
-                aria-labelledby="service-booking-title"
+                service={service}
+                heading="Ready to get started?"
+                headingId="service-booking-title"
+                className="service-direct-booking"
               >
-                <div className="service-content-block-heading">
-                  <span aria-hidden="true">04</span>
+                <div className="service-readiness-gate-body">
+                  <div className="service-readiness-gate-icon" aria-hidden="true">
+                    <JourneyIcon name="check" size={26} />
+                  </div>
                   <div>
-                    <span>Your next step</span>
-                    <h3 id="service-booking-title">Ready to get started?</h3>
+                    {/* No eyebrow or service name here: the card is already titled by its
+                        section heading, and the name is carried by the page h1, the
+                        banner caption and the sticky bar. */}
+                    <p>
+                      Review the service details above, then choose a time to speak with Jake
+                      about your goal and next steps.
+                    </p>
                   </div>
+                  <a
+                    href={bookingAction.href}
+                    className="btn btn-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {bookingAction.label}
+                    <JourneyIcon name="arrowRight" size={17} />
+                  </a>
                 </div>
-
-                <ServicePricingConversion service={service} placement="final">
-                  <div className="service-readiness-gate-body">
-                    <div className="service-readiness-gate-icon" aria-hidden="true">
-                      <JourneyIcon name="check" size={26} />
-                    </div>
-                    <div>
-                      <span className="eyebrow">Booking available</span>
-                      <h2>{service.name}</h2>
-                      <p>
-                        Review the service details above, then choose a time to speak with Jake
-                        about your goal and next steps.
-                      </p>
-                    </div>
-                    <a
-                      href={service.cta_url}
-                      className="btn btn-primary"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {service.cta_text}
-                      <JourneyIcon name="arrowRight" size={17} />
-                    </a>
-                  </div>
-                </ServicePricingConversion>
-              </ScrollChromeSection>
+              </ServiceBookingCard>
             </SectionReveal>
           )}
 

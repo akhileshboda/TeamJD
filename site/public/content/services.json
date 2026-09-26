@@ -71,6 +71,8 @@
       "note": null
     },
     "application_required": true,
+    "application_cta_text": "Apply for Competition Prep",
+    "application_url": "https://form.typeform.com/to/REPLACE-WITH-COMP-PREP-FORM-ID",
     "cta_text": "Request Prep Assessment",
     "cta_url": "https://calendly.com/team-jd/30min",
     "cta_secondary": null,
