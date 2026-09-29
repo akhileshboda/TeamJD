@@ -5759,6 +5759,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-finder-modal {
   --svc-accent: var(--color-accent);
   --svc-accent-rgb: 22, 201, 221;
+  --finder-context-pad: clamp(1.15rem, 3vw, 1.75rem);
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(48rem, 100%);
@@ -5789,7 +5791,9 @@ p  { line-height: 1.7; color: var(--color-text); }
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--space-6);
-  padding: clamp(1.15rem, 3vw, 1.75rem);
+  padding: var(--finder-context-pad);
+  /* Room for the dialog-level close button, which overlays this header's corner. */
+  padding-right: calc(var(--finder-context-pad) + 2.65rem + var(--space-4));
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background:
     linear-gradient(135deg, rgba(22, 201, 221, 0.06), transparent 60%),
@@ -5816,8 +5820,10 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-finder-modal-close {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  position: absolute;
+  z-index: 5;
+  top: var(--finder-context-pad);
+  right: var(--finder-context-pad);
   display: grid;
   width: 2.65rem;
   height: 2.65rem;
@@ -6102,8 +6108,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   }
 
   .service-finder-modal-close {
-    position: absolute;
-    z-index: 2;
     top: var(--space-5);
     right: var(--space-5);
   }
@@ -6198,7 +6202,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 @media (orientation: landscape) and (max-height: 700px) {
   .service-finder-modal-context {
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem calc(1.25rem + 2.5rem + var(--space-4)) 0.75rem 1.25rem;
   }
 
   .service-finder-modal-context .eyebrow {
@@ -6210,6 +6214,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   }
 
   .service-finder-modal-close {
+    top: 0.75rem;
+    right: 1.25rem;
     width: 2.5rem;
     height: 2.5rem;
   }

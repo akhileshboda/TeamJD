@@ -303,16 +303,19 @@ export default function ServiceFinder({ services = [], loading = false, error = 
                       </div>
                     </div>
                   )}
-                  <button
-                    type="button"
-                    className="service-finder-modal-close"
-                    aria-label="Close Find Your Fit"
-                    onClick={closeFinder}
-                    autoFocus
-                  >
-                    <JourneyIcon name="close" size={19} />
-                  </button>
                 </header>
+
+                {/* A child of the dialog, not the header: on wide screens the header is only the
+                    left column, so anchoring the button there put it mid-dialog. */}
+                <button
+                  type="button"
+                  className="service-finder-modal-close"
+                  aria-label="Close Find Your Fit"
+                  onClick={closeFinder}
+                  autoFocus
+                >
+                  <JourneyIcon name="close" size={19} />
+                </button>
 
                 <div className="service-finder-modal-body">
                   {result.status === 'locked' ? (
