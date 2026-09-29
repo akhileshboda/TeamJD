@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
+import { useDragScroll } from '../hooks/useDragScroll'
 
 const LOOP_DURATION_MS = 35000
 
@@ -16,10 +17,10 @@ export default function ClientResultsCarousel({
   const resolveAsset = useAssets()
   const shouldReduceMotion = useReducedMotion()
   const viewportRef = useRef(null)
-  const pointerRef = useRef(null)
   const hoverPausedRef = useRef(false)
   const focusPausedRef = useRef(false)
   const interactionPausedRef = useRef(false)
+  const dragScroll = useDragScroll(viewportRef, interactionPausedRef)
   const [isPaused, setIsPaused] = useState(false)
   const [isInView, setIsInView] = useState(false)
 
@@ -128,32 +129,6 @@ export default function ClientResultsCarousel({
     onOpen(result, trigger)
   }
 
-  const handlePointerDown = (event) => {
-    if (event.pointerType === 'touch') return
-    pointerRef.current = {
-      id: event.pointerId,
-      x: event.clientX,
-      scrollLeft: viewportRef.current.scrollLeft,
-    }
-    interactionPausedRef.current = true
-    viewportRef.current.setPointerCapture(event.pointerId)
-  }
-
-  const handlePointerMove = (event) => {
-    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
-    viewportRef.current.scrollLeft =
-      pointerRef.current.scrollLeft - (event.clientX - pointerRef.current.x)
-  }
-
-  const endPointerInteraction = (event) => {
-    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
-    pointerRef.current = null
-    interactionPausedRef.current = false
-    if (viewportRef.current.hasPointerCapture(event.pointerId)) {
-      viewportRef.current.releasePointerCapture(event.pointerId)
-    }
-  }
-
   const renderResult = (result, duplicate = false) => (
     <li
       key={`${duplicate ? 'duplicate' : 'primary'}-${result.id}`}
@@ -244,10 +219,7 @@ export default function ClientResultsCarousel({
             }}
             onTouchStart={() => { interactionPausedRef.current = true }}
             onTouchEnd={() => { interactionPausedRef.current = false }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={endPointerInteraction}
-            onPointerCancel={endPointerInteraction}
+            {...dragScroll}
           >
             <div className="client-results-track">
               <ul className="client-results-group">

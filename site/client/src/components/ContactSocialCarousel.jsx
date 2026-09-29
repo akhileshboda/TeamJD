@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
+import { useDragScroll } from '../hooks/useDragScroll'
 
 const LOOP_DURATION_MS = 42000
 
@@ -11,7 +12,7 @@ export default function ContactSocialCarousel({ posts = [] }) {
   const hoverPausedRef = useRef(false)
   const focusPausedRef = useRef(false)
   const interactionPausedRef = useRef(false)
-  const pointerRef = useRef(null)
+  const dragScroll = useDragScroll(viewportRef, interactionPausedRef)
   const [isPaused, setIsPaused] = useState(false)
   const [isInView, setIsInView] = useState(false)
 
@@ -69,32 +70,6 @@ export default function ContactSocialCarousel({ posts = [] }) {
     frameId = window.requestAnimationFrame(animate)
     return () => window.cancelAnimationFrame(frameId)
   }, [isInView, isPaused, posts.length, shouldReduceMotion])
-
-  const handlePointerDown = (event) => {
-    if (event.pointerType === 'touch') return
-    pointerRef.current = {
-      id: event.pointerId,
-      x: event.clientX,
-      scrollLeft: viewportRef.current.scrollLeft,
-    }
-    interactionPausedRef.current = true
-    viewportRef.current.setPointerCapture(event.pointerId)
-  }
-
-  const handlePointerMove = (event) => {
-    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
-    viewportRef.current.scrollLeft =
-      pointerRef.current.scrollLeft - (event.clientX - pointerRef.current.x)
-  }
-
-  const endPointerInteraction = (event) => {
-    if (!pointerRef.current || pointerRef.current.id !== event.pointerId) return
-    pointerRef.current = null
-    interactionPausedRef.current = false
-    if (viewportRef.current.hasPointerCapture(event.pointerId)) {
-      viewportRef.current.releasePointerCapture(event.pointerId)
-    }
-  }
 
   const renderPost = (post, duplicate = false) => (
     <li
@@ -164,10 +139,7 @@ export default function ContactSocialCarousel({ posts = [] }) {
           }}
           onTouchStart={() => { interactionPausedRef.current = true }}
           onTouchEnd={() => { interactionPausedRef.current = false }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={endPointerInteraction}
-          onPointerCancel={endPointerInteraction}
+          {...dragScroll}
         >
           <div className="contact-social-carousel-track">
             <ul className="contact-social-carousel-group">
