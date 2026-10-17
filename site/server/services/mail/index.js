@@ -7,13 +7,21 @@ function cleanHeaderValue(value) {
   return result;
 }
 
+// Where enquiries go: the dashboard setting if Jake has set one, else .env.
+function enquiryRecipientOverride() {
+  // Lazy: the content store is not needed to send sign-in codes.
+  const { getCmsStore } = require('../cmsStore');
+  return cleanHeaderValue(getCmsStore().cachedSettings()?.enquiries?.sendTo);
+}
+
 function getMailConfig() {
+  const override = enquiryRecipientOverride();
   return {
     provider: cleanHeaderValue(process.env.ENQUIRY_MAIL_PROVIDER),
     apiKey: (process.env.RESEND_API_KEY || '').trim(),
     from: cleanHeaderValue(process.env.ENQUIRY_EMAIL_FROM),
-    notificationTo: cleanHeaderValue(process.env.ENQUIRY_NOTIFICATION_TO),
-    replyTo: cleanHeaderValue(process.env.ENQUIRY_REPLY_TO),
+    notificationTo: override || cleanHeaderValue(process.env.ENQUIRY_NOTIFICATION_TO),
+    replyTo: override || cleanHeaderValue(process.env.ENQUIRY_REPLY_TO),
     subjectPrefix: cleanHeaderValue(process.env.ENQUIRY_EMAIL_SUBJECT_PREFIX) || '',
     baseUrl: (process.env.PUBLIC_BASE_URL || 'https://team-jd.com.au').trim()
   };

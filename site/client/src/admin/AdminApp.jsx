@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { getSession, SIGNED_OUT_EVENT, signOut } from './api'
 import AdminShell from './AdminShell'
-import ComingNext from './pages/ComingNext'
+import NotFoundPage from './pages/NotFoundPage'
 import SignIn from './SignIn'
 import { SECTIONS } from './sections'
 import './admin.css'
@@ -74,13 +74,12 @@ export default function AdminApp() {
         <Suspense fallback={<Loading />}>
           <Routes>
             {SECTIONS.map((section) => {
-              const Page = section.element || ComingNext
-              const element = <Page section={section} />
+              const element = <section.element />
               return section.path
                 ? <Route key={section.id} path={`${section.path}/*`} element={element} />
                 : <Route key={section.id} index element={element} />
             })}
-            <Route path="*" element={<ComingNext section={null} />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </AdminShell>

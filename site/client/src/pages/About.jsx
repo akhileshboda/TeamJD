@@ -201,11 +201,7 @@ function ProcessTimeline({ steps }) {
 }
 
 export default function About() {
-  usePageMeta({
-    title: 'About Jake Dedert',
-    description:
-      'Pro Physique competitor, competition prep coach and personal trainer. One coaching standard, built around the person doing the work.',
-  })
+  usePageMeta({ page: 'about' })
   const resolveAsset = useAssets()
   const media = useMedia()
   const portrait = media(

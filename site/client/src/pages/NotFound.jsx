@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import FindYourFitLink from '../components/FindYourFitLink'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useSettings } from '../hooks/useSettings'
 
 export default function NotFound() {
+  const { contact } = useSettings()
   usePageMeta({ title: 'Page Not Found', noindex: true })
   return (
     <section className="not-found-page" aria-labelledby="not-found-heading">
@@ -40,15 +42,13 @@ export default function NotFound() {
             <li>
               <FindYourFitLink>Find the right coaching path</FindYourFitLink>
             </li>
-            <li>
-              <a
-                href="https://www.instagram.com/jake_dedert_teamjd_coaching/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Check Team JD on Instagram
-              </a>
-            </li>
+            {contact.instagramUrl && (
+              <li>
+                <a href={contact.instagramUrl} target="_blank" rel="noopener noreferrer">
+                  Check Team JD on Instagram
+                </a>
+              </li>
+            )}
           </ul>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAssets } from '../hooks/useAssets'
 import FindYourFitLink from './FindYourFitLink'
+import { useSettings } from '../hooks/useSettings'
 
 const LOGO_FALLBACK = '/assets/branding/team-jd-logo.png'
 
@@ -11,6 +12,7 @@ function restoreLocalLogo(event) {
 }
 
 export default function Footer() {
+  const { contact } = useSettings()
   const resolveAsset = useAssets()
   const year = new Date().getFullYear()
 
@@ -58,20 +60,20 @@ export default function Footer() {
             </ul>
             <p className="footer-heading" style={{ marginTop: '1.5rem' }}>Connect</p>
             <ul className="footer-links" role="list">
-              <li>
-                <a href="https://www.instagram.com/jake_dedert_teamjd_coaching/" target="_blank" rel="noopener noreferrer">
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Facebook
-                </a>
-              </li>
+              {contact.instagramUrl && (
+                <li>
+                  <a href={contact.instagramUrl} target="_blank" rel="noopener noreferrer">
+                    Instagram
+                  </a>
+                </li>
+              )}
+              {contact.facebookUrl && (
+                <li>
+                  <a href={contact.facebookUrl} target="_blank" rel="noopener noreferrer">
+                    Facebook
+                  </a>
+                </li>
+              )}
               <li>
                 <FindYourFitLink>Find Your Fit</FindYourFitLink>
               </li>

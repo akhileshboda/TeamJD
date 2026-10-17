@@ -124,3 +124,9 @@ export const ACCEPTED_FILES = {
   image: '.jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif',
   video: '.mp4,.mov,.m4v,.webm,video/mp4,video/quicktime,video/webm',
 }
+
+// ── Settings (apply immediately) ─────────────────────────────────────────────
+
+export const getSettings = () => adminRequest('/api/admin/settings')
+export const saveSettings = (section, values) =>
+  adminRequest(`/api/admin/settings/${section}`, { method: 'PUT', json: values })

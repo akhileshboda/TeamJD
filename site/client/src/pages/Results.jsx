@@ -29,11 +29,7 @@ const DEFAULT_PARAMS = {
 }
 
 export default function Results() {
-  usePageMeta({
-    title: 'Client Results',
-    description:
-      'Explore genuine Team JD client outcomes across competition prep, posing and coaching.',
-  })
+  usePageMeta({ page: 'results' })
   const { data: results, loading, error } = useContent('results')
   const [searchParams, setSearchParams] = useSearchParams()
   const shouldReduceMotion = useReducedMotion()

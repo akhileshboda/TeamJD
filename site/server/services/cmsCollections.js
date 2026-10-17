@@ -1,5 +1,6 @@
 const path = require('path');
 const services = require('./cmsServiceCollections');
+const { publicSettings } = require('./cmsSettings');
 
 // What each dashboard collection is: how a draft is cleaned on save, what must
 // be true before it can go live, what the public site receives, how a list row
@@ -292,7 +293,8 @@ const PUBLIC_OUTPUTS = {
   results: (data, sortedLive) => sortedLive('results').map((record) => toPublicResult(record, data)),
   slots: (data) => publicSlots(data),
   services: services.publicServices,
-  faqs: services.publicFaqs
+  faqs: services.publicFaqs,
+  settings: (data) => publicSettings(data.settings)
 };
 
 const COLLECTIONS = {

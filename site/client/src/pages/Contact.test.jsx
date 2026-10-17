@@ -20,6 +20,11 @@ vi.mock('../components/ContactMediaReel', () => ({
   ),
 }))
 
+vi.mock('../hooks/useSettings', async () => {
+  const { CONTACT_FALLBACK } = await import('../content/siteDefaults')
+  return { useSettings: () => ({ contact: CONTACT_FALLBACK, seo: {} }) }
+})
+
 vi.mock('../hooks/useAssets', () => ({
   useAssets: () => (assetPath) => assetPath,
   useMedia: () => (slotId, assetPath, alt = '') => ({ src: assetPath, alt, poster: '', replaced: false, ready: true }),

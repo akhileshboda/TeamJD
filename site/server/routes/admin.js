@@ -7,6 +7,8 @@ const { getPublicR2Url } = require('../services/r2');
 const mediaSlots = require('../services/mediaSlots');
 const ingest = require('../services/mediaIngest');
 const { createAdminContentRouter } = require('./adminContent');
+const { getMailConfig } = require('../services/mail');
+const { isMaintenanceModeEnabled, isMaintenanceModeEnabledByEnv } = require('../middleware/maintenanceMode');
 
 // Dashboard API, signed-in admins only (see routes/adminAuth.js for sign-in).
 // Every route here is Jake-facing, so errors carry plain-English messages the
@@ -51,6 +53,35 @@ function createAdminRouter(options = {}) {
   router.use(createAdminContentRouter({ store }));
 
   router.get('/stats', handle((req) => analytics.getStats(String(req.query.range || '30d'))));
+
+  // ── Settings (apply immediately) ───────────────────────────────────────────
+
+  async function settingsView() {
+    const [settings, services] = await Promise.all([store.getSettings(), store.getPublic('services')]);
+    return {
+      settings,
+      // What each setting falls back to, so the dashboard can say so.
+      defaults: {
+        enquiriesTo: (process.env.ENQUIRY_NOTIFICATION_TO || '').trim(),
+        maintenanceByEnv: isMaintenanceModeEnabledByEnv()
+      },
+      siteIsLive: !isMaintenanceModeEnabled(process.env, settings),
+      enquiriesGoTo: getMailConfig().notificationTo,
+      bookingLinks: services.map((service) => ({
+        id: service.id,
+        name: service.name,
+        bookingUrl: service.cta_url,
+        applicationUrl: service.application_required ? service.application_url : null
+      }))
+    };
+  }
+
+  router.get('/settings', handle(settingsView));
+
+  router.put('/settings/:section', parseJson, handle(async (req) => {
+    await store.updateSettings(req.params.section, req.body, req.admin.email);
+    return settingsView();
+  }));
 
   // ── Page photo spots ───────────────────────────────────────────────────────
 

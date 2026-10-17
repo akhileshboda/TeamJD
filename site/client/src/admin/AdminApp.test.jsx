@@ -69,11 +69,17 @@ describe('dashboard shell', () => {
     expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('deep links open their section, and unbuilt sections say so', async () => {
-    renderAt('/admin/settings', signedIn)
-    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+  it('deep links open their section', async () => {
+    renderAt('/admin/testimonials', (url) => (url === '/api/admin/collections/testimonials'
+      ? json({ items: [] })
+      : signedIn(url)))
+    expect(await screen.findByRole('heading', { name: 'Testimonials' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
-    expect(within(nav).getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'Testimonials' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('every section in the registry has a page', () => {
+    expect(SECTIONS.every((section) => section.element)).toBe(true)
   })
 
   it('unknown dashboard paths offer a way home', async () => {

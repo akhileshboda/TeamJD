@@ -1,6 +1,7 @@
 const path = require('path');
 const { sendStaticPage } = require('../utils/staticPages');
 const { getAdmin } = require('./adminAuth');
+const { getCmsStore } = require('../services/cmsStore');
 
 const publicDir = path.join(__dirname, '..', '..', 'public');
 const MAINTENANCE_PAGE_PATH = path.join(publicDir, '503.html');
@@ -11,7 +12,15 @@ function isProductionRuntime(env = process.env) {
   return env.NODE_ENV === 'production' && env.APP_ENV !== 'staging';
 }
 
-function isMaintenanceModeEnabled(env = process.env) {
+// The dashboard's Settings > Site visibility wins; 'default' follows .env.
+function isMaintenanceModeEnabled(env = process.env, settings = getCmsStore().cachedSettings()) {
+  const visibility = settings?.site?.visibility;
+  if (visibility === 'live') return false;
+  if (visibility === 'maintenance') return true;
+  return isMaintenanceModeEnabledByEnv(env);
+}
+
+function isMaintenanceModeEnabledByEnv(env = process.env) {
   if (env.MAINTENANCE_MODE === 'true') return true;
   if (env.MAINTENANCE_MODE === 'false') return false;
   return isProductionRuntime(env);
@@ -37,7 +46,7 @@ function maintenanceMode(req, res, next) {
 
   if (!hasLoggedActiveState) {
     hasLoggedActiveState = true;
-    console.log('[maintenance] gate is ACTIVE — set MAINTENANCE_MODE=false in .env and restart to disable.');
+    console.log('[maintenance] gate is ACTIVE. Turn it off in the dashboard (Settings > Site visibility) or set MAINTENANCE_MODE=false in .env and restart.');
   }
 
   // Signed-in admins see the real site behind the gate: dashboard previews and
@@ -64,5 +73,6 @@ function maintenanceMode(req, res, next) {
 module.exports = {
   maintenanceMode,
   isMaintenanceModeEnabled,
+  isMaintenanceModeEnabledByEnv,
   isProductionRuntime
 };

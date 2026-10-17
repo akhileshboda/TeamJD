@@ -8,6 +8,7 @@ import SectionReveal from '../components/SectionReveal'
 import TurnstileWidget from '../components/TurnstileWidget'
 import { useMedia } from '../hooks/useAssets'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useSettings } from '../hooks/useSettings'
 
 const SERVICES = [
   {
@@ -102,10 +103,8 @@ const SOCIAL_POSTS = [
 ]
 
 export default function Contact() {
-  usePageMeta({
-    title: 'Contact Jake',
-    description: 'Book a consultation or send Jake Dedert a message about coaching, competition prep or posing.',
-  })
+  usePageMeta({ page: 'contact' })
+  const { contact } = useSettings()
   const media = useMedia()
   // Until Jake uploads his own reel, the licensed YouTube reel and its poster stay in place.
   const reel = media('contact.reel', '/api/assets/video-contact-athlete-reel-poster')
@@ -498,22 +497,18 @@ export default function Contact() {
               <p>Training, perspective, and the work behind each outcome.</p>
             </div>
             <div className="contact-connect-links">
-              <a
-                href="https://www.instagram.com/jake_dedert_teamjd_coaching/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Instagram @jake_dedert_teamjd_coaching
-                <JourneyIcon name="arrowRight" size={17} />
-              </a>
-              <a
-                href="https://www.facebook.com/p/Jake-Dedert-Team-JD-Coaching-100063678694779/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Facebook
-                <JourneyIcon name="arrowRight" size={17} />
-              </a>
+              {contact.instagramUrl && (
+                <a href={contact.instagramUrl} target="_blank" rel="noopener noreferrer">
+                  Instagram{contact.instagramHandle ? ` @${contact.instagramHandle}` : ''}
+                  <JourneyIcon name="arrowRight" size={17} />
+                </a>
+              )}
+              {contact.facebookUrl && (
+                <a href={contact.facebookUrl} target="_blank" rel="noopener noreferrer">
+                  Facebook
+                  <JourneyIcon name="arrowRight" size={17} />
+                </a>
+              )}
             </div>
           </SectionReveal>
 

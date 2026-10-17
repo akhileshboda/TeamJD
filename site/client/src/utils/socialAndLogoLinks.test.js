@@ -41,17 +41,15 @@ describe('social links and resilient logos', () => {
   })
 
   it('keeps Facebook external and secure in every social surface', () => {
-    const socialSources = [
-      'components/Footer.jsx',
-      'pages/Contact.jsx',
-      ...fallbackPages.map((filename) => `../public/${filename}`),
-    ]
-
-    socialSources.forEach((path) => {
-      const source = path.startsWith('../public/')
-        ? readFileSync(resolve(process.cwd(), path), 'utf8')
-        : readClientSource(path)
-
+    // React pages take the link from Settings (content/siteDefaults.js is the fallback);
+    // the static fallback pages carry it directly.
+    expect(readClientSource('content/siteDefaults.js')).toContain(FACEBOOK_URL)
+    ;['components/Footer.jsx', 'pages/Contact.jsx'].forEach((path) => {
+      const source = readClientSource(path)
+      expect(source).toContain('href={contact.facebookUrl} target="_blank" rel="noopener noreferrer"')
+    })
+    fallbackPages.forEach((filename) => {
+      const source = readFileSync(join(publicRoot, filename), 'utf8')
       expect(source).toContain(FACEBOOK_URL)
       expect(source).toContain('target="_blank"')
       expect(source).toContain('rel="noopener noreferrer"')
@@ -59,18 +57,14 @@ describe('social links and resilient logos', () => {
   })
 
   it('uses the official Instagram profile in every social surface', () => {
-    const socialSources = [
-      'components/Footer.jsx',
-      'pages/Contact.jsx',
-      'pages/NotFound.jsx',
-      ...fallbackPages.map((filename) => `../public/${filename}`),
-    ]
-
-    socialSources.forEach((path) => {
-      const source = path.startsWith('../public/')
-        ? readFileSync(resolve(process.cwd(), path), 'utf8')
-        : readClientSource(path)
-
+    expect(readClientSource('content/siteDefaults.js')).toContain(INSTAGRAM_URL)
+    ;['components/Footer.jsx', 'pages/Contact.jsx', 'pages/NotFound.jsx'].forEach((path) => {
+      const source = readClientSource(path)
+      expect(source).toContain('href={contact.instagramUrl}')
+      expect(source).not.toContain(`https://www.instagram.com/${RETIRED_INSTAGRAM_HANDLE}/`)
+    })
+    fallbackPages.forEach((filename) => {
+      const source = readFileSync(join(publicRoot, filename), 'utf8')
       expect(source).toContain(INSTAGRAM_URL)
       expect(source).not.toContain(`https://www.instagram.com/${RETIRED_INSTAGRAM_HANDLE}/`)
     })

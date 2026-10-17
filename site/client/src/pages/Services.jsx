@@ -6,11 +6,7 @@ import { useContent } from '../hooks/useContent'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 export default function Services() {
-  usePageMeta({
-    title: 'Coaching Services',
-    description:
-      'Competition preparation, online coaching, personal training and posing with Jake Dedert, in Adelaide or online from anywhere.',
-  })
+  usePageMeta({ page: 'services' })
   const { data: services } = useContent('services')
 
   return (

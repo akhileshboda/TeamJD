@@ -3,12 +3,11 @@ import SectionReveal from '../components/SectionReveal'
 import FindYourFitLink from '../components/FindYourFitLink'
 import { Link } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useSettings } from '../hooks/useSettings'
 
 export default function Privacy() {
-  usePageMeta({
-    title: 'Privacy Policy',
-    description: 'How Team JD collects, uses and protects your personal information.',
-  })
+  usePageMeta({ page: 'privacy' })
+  const { contact } = useSettings()
   return (
     <>
       <PageHero eyebrow="Legal" title="Privacy Policy" subtitle="Last updated: August 2026" />
@@ -185,8 +184,8 @@ export default function Privacy() {
                 <p>
                   If you have questions about this Privacy Policy or wish to exercise your
                   rights, please contact us at{' '}
-                  <a href="mailto:jake@team-jd.com.au" style={{ color: 'var(--color-accent)' }}>
-                    jake@team-jd.com.au
+                  <a href={`mailto:${contact.email}`} style={{ color: 'var(--color-accent)' }}>
+                    {contact.email}
                   </a>{' '}
                   or start with the{' '}
                   <FindYourFitLink style={{ color: 'var(--color-accent)' }}>

@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
 const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, mediaUsage } = require('./cmsCollections');
+const { normalizeSection, withDefaults } = require('./cmsSettings');
 
 // The dashboard's content store: one JSON file holding every collection.
 //
@@ -322,6 +323,25 @@ function createCmsStore(options = {}) {
       return read((data) => Object.keys(COLLECTIONS).flatMap((name) => sortedByOrder(data.collections[name])
         .filter((record) => ['changed', 'draft'].includes(statusOf(record)))
         .map((record) => ({ collection: name, ...summaryRow(data, name, record) }))));
+    },
+
+    getSettings() {
+      return read((data) => withDefaults(data.settings));
+    },
+
+    // Applies at once: settings are not drafted.
+    updateSettings(section, input, user) {
+      return mutate((data, at) => {
+        const value = normalizeSection(section, input);
+        data.settings = { ...data.settings, [section]: value, updatedAt: at, updatedBy: user || 'unknown' };
+        return withDefaults(data.settings);
+      });
+    },
+
+    // Synchronous read for per-request code (maintenance gate, enquiry email).
+    // Null until the store has loaded; app.js loads it at startup.
+    cachedSettings() {
+      return cache ? withDefaults(cache.settings) : null;
     },
 
     listMedia() {

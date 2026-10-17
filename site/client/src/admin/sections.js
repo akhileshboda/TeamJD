@@ -1,8 +1,7 @@
 import { lazy } from 'react'
 
 // The dashboard's sections. This list drives both the sidebar and the routes, so a
-// new section is one entry here plus its page component. Sections without an
-// `element` yet show a "coming next" page.
+// new section is one entry here plus its page component.
 
 const HomeStats = lazy(() => import('./pages/HomeStats'))
 const ResultsSection = lazy(() => import('./sections/ResultsSection'))
@@ -11,6 +10,7 @@ const PagesSection = lazy(() => import('./sections/PagesSection'))
 const MediaSection = lazy(() => import('./sections/MediaSection'))
 const ServicesSection = lazy(() => import('./sections/ServicesSection'))
 const FaqsSection = lazy(() => import('./sections/FaqsSection'))
+const SettingsSection = lazy(() => import('./sections/SettingsSection'))
 
 export const SECTIONS = [
   { id: 'home', path: '', label: 'Home', icon: 'home', element: HomeStats },
@@ -20,7 +20,6 @@ export const SECTIONS = [
     label: 'Pages',
     icon: 'layout',
     element: PagesSection,
-    summary: 'Choose the photos and videos shown on each page of your site.',
   },
   {
     id: 'results',
@@ -29,7 +28,6 @@ export const SECTIONS = [
     icon: 'trophy',
     group: 'Content',
     element: ResultsSection,
-    summary: 'Add your clients’ results and choose which ones the site shows.',
   },
   {
     id: 'testimonials',
@@ -38,7 +36,6 @@ export const SECTIONS = [
     icon: 'quote',
     group: 'Content',
     element: TestimonialsSection,
-    summary: 'Collect what clients say about working with you.',
   },
   {
     id: 'services',
@@ -47,7 +44,6 @@ export const SECTIONS = [
     icon: 'tag',
     group: 'Content',
     element: ServicesSection,
-    summary: 'Update what each service includes, its prices and its booking link.',
   },
   {
     id: 'faqs',
@@ -56,7 +52,6 @@ export const SECTIONS = [
     icon: 'help',
     group: 'Content',
     element: FaqsSection,
-    summary: 'Answer the questions people ask before they book.',
   },
   {
     id: 'media',
@@ -65,7 +60,6 @@ export const SECTIONS = [
     icon: 'image',
     group: 'Content',
     element: MediaSection,
-    summary: 'Every photo and video you have uploaded, and where each one is used.',
   },
   {
     id: 'settings',
@@ -73,7 +67,7 @@ export const SECTIONS = [
     label: 'Settings',
     icon: 'settings',
     group: 'Site',
-    summary: 'Contact details, social links, search listings and site controls.',
+    element: SettingsSection,
   },
 ]
 

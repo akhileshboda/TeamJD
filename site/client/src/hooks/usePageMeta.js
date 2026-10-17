@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { PAGE_META } from '../content/siteDefaults'
+import { useSettings } from './useSettings'
 
 export const SITE_URL = 'https://team-jd.com.au'
 export const SITE_NAME = 'Team JD'
@@ -23,8 +25,15 @@ const meta = (attr, key) => () => {
 // Per-route title, description, canonical and share tags. index.html carries the
 // site-wide defaults for crawlers that do not run JavaScript; this refines them
 // for the ones that do (Google) and for the browser tab.
-export function usePageMeta({ title, description, noindex = false } = {}) {
+//
+// `page` names a page in PAGE_META: its built-in words, overridden by anything
+// Jake has set in the dashboard's Settings > Search listings.
+export function usePageMeta({ page, title: givenTitle, description: givenDescription, noindex = false } = {}) {
   const { pathname } = useLocation()
+  const { seo } = useSettings()
+  const builtIn = page ? PAGE_META[page] : null
+  const title = (page && seo[page]?.title) || builtIn?.title || givenTitle
+  const description = (page && seo[page]?.description) || builtIn?.description || givenDescription
 
   useEffect(() => {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE

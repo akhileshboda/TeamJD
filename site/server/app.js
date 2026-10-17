@@ -11,6 +11,8 @@ const { createAdminRouter } = require('./routes/admin');
 const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createAnalyticsRouter } = require('./routes/analytics');
 const { createContentRouter } = require('./routes/content');
+const { getCmsStore } = require('./services/cmsStore');
+const { buildSitemap } = require('./services/sitemap');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { securityHeaders } = require('./middleware/securityHeaders');
@@ -253,6 +255,21 @@ app.use('/api/admin', createAdminRouter());
 // Known API families above have stricter independent budgets. This governs any
 // remaining or future /api route, including unknown paths.
 app.use('/api', genericApiLimiter);
+// Generated from the live services; replaces the old static public/sitemap.xml.
+app.get('/sitemap.xml', async (req, res, next) => {
+  try {
+    const store = getCmsStore();
+    const [services, lastmod] = await Promise.all([
+      store.getPublic('services'),
+      store.read((data) => Object.values(data.collections).flat()
+        .map((record) => record.publishedAt || '').sort().pop()?.slice(0, 10) || new Date().toISOString().slice(0, 10))
+    ]);
+    res.type('application/xml').set('Cache-Control', 'public, max-age=3600');
+    return res.send(buildSitemap({ baseUrl: publicBaseUrl, services, lastmod }));
+  } catch (error) {
+    return next(error);
+  }
+});
 app.use(serveManifestBackedHtml);
 app.use(
   '/assets/generated',
@@ -317,6 +334,9 @@ app.use((req, res) => {
 
 async function startServer() {
   await preloadAssetMap();
+  // Load (and on first run, seed) the dashboard's content store before serving:
+  // the maintenance gate and enquiry email read its settings synchronously.
+  await getCmsStore().getSettings();
 
   await new Promise((resolve, reject) => {
     const server = app.listen(port, listenHost);

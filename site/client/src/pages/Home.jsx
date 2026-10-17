@@ -63,10 +63,7 @@ const servicePathways = [
 const MotionLink = motion.create(Link)
 
 export default function Home() {
-  usePageMeta({
-    description:
-      'Jake Dedert is a Pro Physique bodybuilder and coach in Adelaide offering competition preparation, online coaching, personal training and posing.',
-  })
+  usePageMeta({ page: 'home' })
   const { data: services } = useContent('services')
   const { data: faqs } = useContent('faqs')
   const media = useMedia()
