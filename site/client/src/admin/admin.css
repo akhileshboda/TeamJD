@@ -818,3 +818,730 @@
   color: var(--jd-subtle);
   font-size: 0.8125rem;
 }
+
+/* ── Status ────────────────────────────────────────────────────────────── */
+
+.jd-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.jd-chip--live {
+  background: var(--jd-live-soft);
+  color: var(--jd-live);
+}
+.jd-chip--pending {
+  background: var(--jd-pending-soft);
+  color: var(--jd-pending);
+}
+.jd-chip--muted {
+  background: var(--jd-raised);
+  color: var(--jd-muted);
+}
+.jd-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+.jd-dot--live {
+  background: var(--jd-live);
+}
+.jd-dot--pending {
+  background: var(--jd-pending);
+}
+
+/* ── Pending changes (top bar) ─────────────────────────────────────────── */
+
+.jd-pending {
+  position: relative;
+}
+.jd-pending-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 999px;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.jd-pending-button.has-changes {
+  border-color: rgba(250, 128, 114, 0.45);
+  color: var(--jd-pending);
+}
+.jd-pending-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+  box-shadow: var(--shadow-modal);
+}
+.jd-pending-title {
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+.jd-pending-panel .jd-admin-notice,
+.jd-pending-panel .jd-admin-error {
+  margin-bottom: 0.75rem;
+}
+.jd-pending-list {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+.jd-pending-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.25rem;
+}
+.jd-pending-list a {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-pending-list a:hover {
+  color: var(--jd-live);
+}
+.jd-pending-publish {
+  width: 100%;
+  margin-top: 0.875rem;
+}
+
+/* ── List pages ────────────────────────────────────────────────────────── */
+
+.jd-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.jd-page-lede {
+  max-width: 40rem;
+  margin-top: 0.375rem;
+  color: var(--jd-muted);
+}
+.jd-list-head-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.jd-list-page > .jd-admin-notice,
+.jd-list-page > .jd-admin-error {
+  margin-bottom: 1rem;
+}
+.jd-list-hint {
+  margin-bottom: 1rem;
+  color: var(--jd-muted);
+}
+.jd-list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.jd-list-tools > label:not(.jd-search) {
+  flex: 1 1 9rem;
+}
+.jd-list-tools .jd-select {
+  min-width: 9rem;
+}
+.jd-search {
+  position: relative;
+  flex: 1 1 14rem;
+  color: var(--jd-subtle);
+}
+.jd-search svg {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.jd-search .jd-input {
+  padding-left: 2.25rem;
+}
+.jd-select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+.jd-select option {
+  background: var(--jd-panel);
+  color: var(--jd-text);
+}
+
+.jd-bulk-bar {
+  position: sticky;
+  top: calc(var(--jd-topbar) + 0.5rem);
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid rgba(22, 201, 221, 0.35);
+  border-radius: var(--jd-radius);
+  background: #10292c;
+}
+.jd-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.jd-list-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.875rem 0.5rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+}
+
+.jd-rows {
+  display: grid;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  overflow: hidden;
+  background: var(--jd-panel);
+}
+.jd-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 4rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--jd-panel);
+}
+.jd-row + .jd-row {
+  border-top: 1px solid var(--jd-line);
+}
+.jd-row:hover,
+.jd-row.is-selected {
+  background: #1f1f1f;
+}
+.jd-row-check,
+.jd-select-all input {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--jd-live);
+}
+.jd-row-check {
+  position: relative;
+  z-index: 1;
+  flex: none;
+}
+.jd-row-thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--jd-raised);
+  color: var(--jd-subtle);
+}
+.jd-row-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.jd-row-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.jd-row-title,
+.jd-row-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-row-title {
+  font-weight: 700;
+}
+.jd-row-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.jd-row-link:hover {
+  color: var(--jd-live);
+}
+.jd-row-subtitle {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-row-cell {
+  flex: none;
+  width: 9rem;
+  color: var(--jd-muted);
+  font-size: 0.875rem;
+}
+.jd-row-status {
+  flex: none;
+  width: 9.5rem;
+}
+.jd-row-updated {
+  flex: none;
+  width: 6.5rem;
+  color: var(--jd-subtle);
+  font-size: 0.8125rem;
+  text-align: right;
+}
+.jd-rows--reorder .jd-row {
+  cursor: grab;
+}
+.jd-rows--reorder .jd-row:active {
+  cursor: grabbing;
+}
+.jd-row-grip {
+  flex: none;
+  color: var(--jd-subtle);
+}
+.jd-row-move {
+  display: flex;
+  flex: none;
+}
+.jd-flip {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 899px) {
+  .jd-row-cell,
+  .jd-row-updated {
+    display: none;
+  }
+  .jd-row-status {
+    width: auto;
+  }
+}
+@media (max-width: 559px) {
+  .jd-row {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+  .jd-row-main {
+    flex-basis: calc(100% - 7.5rem);
+  }
+  .jd-row-status {
+    margin-left: calc(1.125rem + 3rem + 1.75rem);
+  }
+  .jd-list-head-actions {
+    width: 100%;
+  }
+  .jd-list-head-actions .jd-admin-button {
+    flex: 1;
+  }
+}
+
+.jd-empty--inline {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--jd-line-strong);
+  border-radius: var(--jd-radius);
+  max-width: none;
+  justify-items: center;
+  text-align: center;
+}
+.jd-skeleton--list {
+  height: 24rem;
+}
+.jd-skeleton--editor {
+  height: 32rem;
+}
+
+/* ── Editor ────────────────────────────────────────────────────────────── */
+
+.jd-editor {
+  padding-bottom: 5rem;
+}
+.jd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+  color: var(--jd-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.jd-back:hover {
+  color: var(--jd-text);
+}
+.jd-editor-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.jd-editor > .jd-admin-notice,
+.jd-editor > .jd-admin-error {
+  margin-bottom: 1rem;
+}
+.jd-banner-action {
+  margin-left: 0.75rem;
+}
+.jd-editor-switch {
+  display: none;
+  margin-bottom: 1rem;
+}
+.jd-editor-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+  align-items: start;
+  gap: 1.5rem;
+}
+.jd-editor-form {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.jd-editor-preview {
+  position: sticky;
+  top: calc(var(--jd-topbar) + 1rem);
+}
+@media (max-width: 1099px) {
+  .jd-editor-switch {
+    display: inline-flex;
+  }
+  .jd-editor-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jd-editor-body.is-showing-edit .jd-editor-preview,
+  .jd-editor-body.is-showing-preview .jd-editor-form {
+    display: none;
+  }
+  .jd-editor-preview {
+    position: static;
+  }
+}
+
+.jd-form-section {
+  padding: 1.25rem;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+}
+.jd-form-section-head {
+  margin-bottom: 1rem;
+}
+.jd-admin .jd-form-section-head h2 {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.jd-form-section-head p {
+  margin-top: 0.25rem;
+  color: var(--jd-muted);
+  font-size: 0.875rem;
+}
+.jd-form-section-body {
+  display: grid;
+  gap: 1rem;
+}
+.jd-form-section-body > .jd-field + .jd-field {
+  margin-top: 0;
+}
+.jd-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 559px) {
+  .jd-field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.jd-field-required {
+  color: var(--jd-subtle);
+  font-weight: 500;
+}
+.jd-field-count {
+  justify-self: end;
+  color: var(--jd-subtle);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.jd-input--multiline {
+  min-height: 7rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.jd-choice {
+  border: 0;
+}
+.jd-choice-options {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+}
+.jd-choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.jd-choice-option:has(input:checked) {
+  border-color: var(--jd-live);
+  background: var(--jd-live-soft);
+}
+.jd-choice-option input {
+  margin-top: 0.25rem;
+  accent-color: var(--jd-live);
+}
+.jd-choice-option span {
+  display: grid;
+}
+.jd-choice-option small {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+
+.jd-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.jd-toggle input {
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.5rem;
+  margin-top: 0.125rem;
+  border-radius: 999px;
+  background: var(--jd-line-strong);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.jd-toggle input::after {
+  content: '';
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--jd-text);
+  transition: transform var(--transition-fast);
+}
+.jd-toggle input:checked {
+  background: var(--jd-live);
+}
+.jd-toggle input:checked::after {
+  transform: translateX(1rem);
+}
+.jd-toggle label {
+  display: grid;
+  gap: 0.125rem;
+  cursor: pointer;
+}
+
+.jd-photo-field {
+  display: grid;
+  gap: 0.875rem;
+}
+.jd-photo-frame {
+  display: grid;
+  place-items: center;
+  max-width: 22rem;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: #070707;
+}
+.jd-photo-pick {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.jd-photo-pick:enabled {
+  cursor: crosshair;
+}
+.jd-photo-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.jd-focus-dot {
+  position: absolute;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid var(--jd-live);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.jd-photo-missing {
+  color: var(--jd-muted);
+}
+
+.jd-danger-zone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.jd-usage ul {
+  display: grid;
+  gap: 0.375rem;
+}
+.jd-usage a {
+  color: var(--jd-live);
+  font-weight: 600;
+}
+
+/* ── Preview ───────────────────────────────────────────────────────────── */
+
+.jd-preview {
+  padding: 1rem;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+}
+.jd-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.jd-preview-title {
+  font-weight: 700;
+}
+.jd-preview-note {
+  margin-bottom: 0.75rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-preview-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--jd-canvas);
+}
+.jd-preview-stage iframe {
+  display: block;
+  border: 0;
+  transform-origin: top left;
+  background: var(--jd-canvas);
+}
+
+/* ── Publish bar ───────────────────────────────────────────────────────── */
+
+.jd-publish-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: var(--jd-sidebar);
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1.5rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--jd-line-strong);
+  background: rgba(20, 20, 20, 0.96);
+  backdrop-filter: blur(12px);
+}
+.jd-publish-bar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+.jd-publish-bar-status > span:last-child {
+  display: grid;
+}
+.jd-publish-bar-save {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-publish-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+@media (max-width: 899px) {
+  .jd-publish-bar {
+    left: 0;
+    padding-inline: 1rem;
+  }
+  .jd-publish-bar-actions {
+    flex: 1;
+    justify-content: flex-end;
+  }
+}
+
+/* ── Dialog ────────────────────────────────────────────────────────────── */
+
+.jd-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+}
+.jd-dialog {
+  width: min(28rem, 100%);
+  padding: 1.5rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 1rem;
+  background: var(--jd-panel);
+  box-shadow: var(--shadow-modal);
+}
+.jd-admin .jd-dialog-title {
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.jd-dialog-body {
+  color: var(--jd-muted);
+}
+.jd-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}

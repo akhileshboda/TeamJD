@@ -7,7 +7,7 @@ import ResultCard from '../components/ResultCard'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal from '../components/SectionReveal'
 import JourneyIcon from '../components/JourneyIcon'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import {
   RESULT_CATEGORIES,
   RESULT_SORTS,
@@ -32,15 +32,16 @@ export default function Results() {
   usePageMeta({
     title: 'Client Results',
     description:
-      'Explore Team JD client outcomes alongside a visual library of training, posing and coaching references.',
+      'Explore genuine Team JD client outcomes across competition prep, posing and coaching.',
   })
-  const { data: results, loading, error } = useJSON('/content/results-library.json')
+  const { data: results, loading, error } = useContent('results')
   const [searchParams, setSearchParams] = useSearchParams()
   const shouldReduceMotion = useReducedMotion()
   const libraryRef = useRef(null)
   const summaryRef = useRef(null)
   const viewerOriginRef = useRef(null)
-  const [selectedId, setSelectedId] = useState(null)
+  // ?view=<id> opens a result directly: shareable links and dashboard previews.
+  const [selectedId, setSelectedId] = useState(() => searchParams.get('view'))
   const [isToolbarVisible, setIsToolbarVisible] = useState(true)
 
   const filters = getResultsParams(searchParams)
@@ -55,6 +56,16 @@ export default function Results() {
   const categoryCounts = useMemo(
     () => getCategoryCounts(results || [], filters),
     [filters.query, filters.type, results],
+  )
+  // Only offer filters the published library can satisfy; the active choice
+  // stays visible so a shared link never hides its own filter.
+  const visibleCategories = useMemo(() => {
+    const present = new Set((results || []).map((result) => result.category))
+    return RESULT_CATEGORIES.filter(({ value }) => value === 'all' || value === filters.category || present.has(value))
+  }, [filters.category, results])
+  const hasMixedTypes = useMemo(
+    () => new Set((results || []).map((result) => result.kind)).size > 1 || filters.type !== 'all',
+    [filters.type, results],
   )
   const paginationRange = getPaginationRange(pagination.page, pagination.totalPages)
   const selectedIndex = selectedId === null
@@ -93,8 +104,9 @@ export default function Results() {
   }, [filters.page, pagination.page])
 
   useEffect(() => {
-    if (selectedId !== null && selectedIndex === -1) setSelectedId(null)
-  }, [selectedId, selectedIndex])
+    // Wait for the library before dropping a selection it does not contain.
+    if (results && selectedId !== null && selectedIndex === -1) setSelectedId(null)
+  }, [results, selectedId, selectedIndex])
 
   const resetFilters = () => {
     setSearchParams(new URLSearchParams(), { replace: false })
@@ -150,7 +162,7 @@ export default function Results() {
       <PageHero
         eyebrow="Client Results"
         title="Proof in the Prep."
-        subtitle="Explore genuine Team JD client outcomes alongside a growing visual library of training, posing, and coaching references."
+        subtitle="Explore genuine Team JD client outcomes across competition prep, posing, and coaching."
       />
 
       <section ref={libraryRef} className="results-library" aria-labelledby="results-heading">
@@ -162,8 +174,8 @@ export default function Results() {
                 <h2 id="results-heading">Find the work that matches your goal.</h2>
               </div>
               <p>
-                Search by coaching focus, narrow the category, or move through the full
-                library without loading hundreds of images at once.
+                Search by coaching focus or narrow the category to find results like the
+                one you are working towards.
               </p>
             </div>
           </SectionReveal>
@@ -188,17 +200,19 @@ export default function Results() {
                     />
                   </label>
 
-                  <label className="results-select">
-                    <span className="visually-hidden">Content type</span>
-                    <select
-                      value={filters.type}
-                      onChange={(event) => updateParams({ type: event.target.value, page: 1 })}
-                    >
-                      {RESULT_TYPES.map(({ value, label }) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </label>
+                  {hasMixedTypes && (
+                    <label className="results-select">
+                      <span className="visually-hidden">Content type</span>
+                      <select
+                        value={filters.type}
+                        onChange={(event) => updateParams({ type: event.target.value, page: 1 })}
+                      >
+                        {RESULT_TYPES.map(({ value, label }) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   <label className="results-select">
                     <span className="visually-hidden">Sort results</span>
@@ -226,7 +240,7 @@ export default function Results() {
 
                 <div className="results-category-row">
                   <div className="results-category-rail" role="group" aria-label="Filter by category">
-                    {RESULT_CATEGORIES.map(({ value, label }) => (
+                    {visibleCategories.map(({ value, label }) => (
                       <button
                         key={value}
                         type="button"

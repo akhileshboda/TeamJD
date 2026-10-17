@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireAdmin, requireSameOrigin } = require('../middleware/adminAuth');
 const { getAnalytics } = require('../services/analytics');
+const { createAdminContentRouter } = require('./adminContent');
 const { getAssetManifest } = require('../services/dropbox');
 const { getPublicR2Url } = require('../services/r2');
 const mediaSlots = require('../services/mediaSlots');
@@ -42,6 +43,7 @@ function createAdminRouter(options = {}) {
   }
 
   router.get('/me', (req, res) => res.json({ email: req.admin.email }));
+  router.use(createAdminContentRouter({ store: options.store }));
 
   router.get('/stats', async (req, res) => {
     try {

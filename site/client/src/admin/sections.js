@@ -5,6 +5,8 @@ import { lazy } from 'react'
 // `element` yet show a "coming next" page.
 
 const HomeStats = lazy(() => import('./pages/HomeStats'))
+const ResultsSection = lazy(() => import('./sections/ResultsSection'))
+const TestimonialsSection = lazy(() => import('./sections/TestimonialsSection'))
 
 export const SECTIONS = [
   { id: 'home', path: '', label: 'Home', icon: 'home', element: HomeStats },
@@ -21,6 +23,7 @@ export const SECTIONS = [
     label: 'Results',
     icon: 'trophy',
     group: 'Content',
+    element: ResultsSection,
     summary: 'Add your clients’ results and choose which ones the site shows.',
   },
   {
@@ -29,6 +32,7 @@ export const SECTIONS = [
     label: 'Testimonials',
     icon: 'quote',
     group: 'Content',
+    element: TestimonialsSection,
     summary: 'Collect what clients say about working with you.',
   },
   {

@@ -78,3 +78,31 @@ export async function uploadMedia(startPath, file, { onProgress = () => {} } = {
     if (job.status === 'failed') throw new Error(job.error)
   }
 }
+
+// ── Content collections ──────────────────────────────────────────────────────
+
+export const CONTENT_CHANGED_EVENT = 'jd-admin:content-changed'
+const announceChange = (result) => {
+  window.dispatchEvent(new Event(CONTENT_CHANGED_EVENT))
+  return result
+}
+const collectionPath = (collection, rest = '') => `/api/admin/collections/${collection}${rest}`
+
+export const listItems = (collection) => adminRequest(collectionPath(collection)).then((body) => body.items)
+export const getItem = (collection, id) => adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}`))
+export const createItem = (collection, draft) =>
+  adminRequest(collectionPath(collection), { method: 'POST', json: { draft } }).then(announceChange)
+export const saveDraft = (collection, id, draft, rev) =>
+  adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}`), { method: 'PUT', json: { draft, rev } }).then(announceChange)
+export const applyAction = (collection, id, action) =>
+  adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}/${action}`), { method: 'POST' }).then(announceChange)
+export const deleteItem = (collection, id) =>
+  adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}`), { method: 'DELETE' }).then(announceChange)
+export const reorderItems = (collection, ids) =>
+  adminRequest(collectionPath(collection, '/order'), { method: 'PUT', json: { ids } }).then((body) => announceChange(body.items))
+export const bulkAction = (collection, action, ids) =>
+  adminRequest(collectionPath(collection, '/bulk'), { method: 'POST', json: { action, ids } }).then(announceChange)
+export const previewItem = (collection, id, draft) =>
+  adminRequest(collectionPath(collection, '/preview'), { method: 'POST', json: { id, draft } })
+export const getPending = () => adminRequest('/api/admin/pending').then((body) => body.items)
+export const publishAll = () => adminRequest('/api/admin/publish', { method: 'POST', json: { all: true } }).then(announceChange)

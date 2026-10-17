@@ -1,11 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import results from '../../../public/content/results-library.json'
+import results from '../../../server/seed/results-library.json'
 import Results from './Results'
 
-vi.mock('../hooks/useJSON', () => ({
-  useJSON: () => ({ data: results, loading: false, error: null }),
+const library = vi.hoisted(() => ({ data: null }))
+
+vi.mock('../hooks/useContent', () => ({
+  useContent: () => ({ data: library.data, loading: false, error: null }),
 }))
 
 vi.mock('../hooks/useAssets', () => ({
@@ -15,6 +17,10 @@ vi.mock('../hooks/useAssets', () => ({
 vi.mock('../components/SectionReveal', () => ({
   default: ({ children }) => <div>{children}</div>,
 }))
+
+beforeEach(() => {
+  library.data = results
+})
 
 afterEach(() => cleanup())
 
@@ -29,6 +35,21 @@ function renderResults(path = '/results') {
 }
 
 describe('Results page library', () => {
+  it('only offers the categories and content types the published library contains', () => {
+    library.data = results.filter((result) => result.kind === 'client')
+    renderResults()
+
+    expect(screen.queryByLabelText('Content type')).not.toBeInTheDocument()
+    const chips = screen.getAllByRole('button', { name: /, \d+ results$/ })
+    expect(chips.map((chip) => chip.textContent.replace(/\d+$/, ''))).toEqual(['All', 'Competition Prep', 'Posing'])
+  })
+
+  it('opens a result straight from a ?view= link', () => {
+    library.data = results.filter((result) => result.kind === 'client')
+    renderResults('/results?view=2')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
   it('renders only 24 cards at once and pages through the full library', () => {
     renderResults()
 

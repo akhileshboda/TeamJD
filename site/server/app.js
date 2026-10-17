@@ -10,6 +10,7 @@ const enquiriesRouter = require('./routes/enquiries');
 const { createAdminRouter } = require('./routes/admin');
 const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createAnalyticsRouter } = require('./routes/analytics');
+const { createContentRouter } = require('./routes/content');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { securityHeaders } = require('./middleware/securityHeaders');
@@ -246,6 +247,7 @@ app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/enquiries', enquiriesRouter);
 app.use('/api/analytics', createAnalyticsRouter());
+app.use('/api/content', createContentRouter());
 app.use('/api/admin/auth', createAdminAuthRouter());
 app.use('/api/admin', createAdminRouter());
 // Known API families above have stricter independent budgets. This governs any

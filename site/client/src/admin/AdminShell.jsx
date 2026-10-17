@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import JourneyIcon from '../components/JourneyIcon'
+import PendingChanges from './components/PendingChanges'
 import { groupedSections, sectionForPath } from './sections'
 
 function SidebarNav({ onNavigate }) {
@@ -110,6 +111,7 @@ export default function AdminShell({ email, onSignOut, children }) {
           </button>
           <p className="jd-admin-topbar-title">{section?.label || 'Dashboard'}</p>
           <div className="jd-admin-topbar-actions">
+            <PendingChanges />
             <a className="jd-admin-button jd-admin-button--quiet" href="/" target="_blank" rel="noreferrer">
               <JourneyIcon name="external" size={16} />
               <span className="jd-admin-hide-sm">View site</span>

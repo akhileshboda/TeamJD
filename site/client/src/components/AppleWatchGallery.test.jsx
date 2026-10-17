@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import results from '../../../public/content/results-library.json'
+import results from '../../../server/seed/results-library.json'
 import AppleWatchGallery, {
   canUseEnhancedGalleryDrag,
   centerGalleryViewport,
@@ -53,9 +53,9 @@ vi.mock('motion/react', async (importOriginal) => ({
   useReducedMotion: () => motionPreference.reduced,
 }))
 
-vi.mock('../hooks/useJSON', () => ({
-  useJSON: (path) => ({
-    data: path === '/content/results-library.json' ? results : null,
+vi.mock('../hooks/useContent', () => ({
+  useContent: (collection) => ({
+    data: collection === 'results' ? results : null,
     loading: false,
     error: null,
   }),

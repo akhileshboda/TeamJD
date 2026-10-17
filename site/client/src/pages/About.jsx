@@ -8,7 +8,7 @@ import AboutProcessCarousel from '../components/AboutProcessCarousel'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useAssets, useMedia } from '../hooks/useAssets'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import wnbfLogo from '../assets/wnbf.svg'
 import { usePageMeta } from '../hooks/usePageMeta'
 
@@ -217,7 +217,7 @@ export default function About() {
     const { src, alt } = media(`about.process-${index + 1}`, `/api/assets/${image.asset}`, image.alt)
     return { ...image, src, alt }
   })
-  const { data: resultsLibrary } = useJSON('/content/results-library.json')
+  const { data: resultsLibrary } = useContent('results')
   const results = (resultsLibrary || [])
     .filter((result) => result.kind === 'client' && result.featured)
     .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id))

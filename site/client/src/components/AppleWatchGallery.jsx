@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
@@ -398,7 +398,7 @@ function ResultModal({ item, src, open, onClose }) {
 }
 
 export default function AppleWatchGallery() {
-  const { data: results } = useJSON('/content/results-library.json')
+  const { data: results } = useContent('results')
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const viewportRef = useRef(null)
