@@ -32,6 +32,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Keep fields that receive focus clear of the sticky top bar and fixed publish bar. */
+html:has(.jd-admin) {
+  scroll-padding: calc(var(--jd-topbar, 3.75rem) + 1rem) 0 6rem;
+}
+
 /* Undo the public site's marketing type scale inside the dashboard. */
 .jd-admin h1,
 .jd-admin h2,
@@ -1049,9 +1054,20 @@
   accent-color: var(--jd-live);
 }
 .jd-row-check {
+  margin: 0;
+}
+/* A 44px tap target around the small checkbox, above the row's link overlay,
+   without taking more room in the row. */
+.jd-row-check-hit {
   position: relative;
   z-index: 1;
+  display: grid;
   flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.8125rem;
+  cursor: pointer;
 }
 .jd-row-thumb {
   display: grid;
@@ -1112,15 +1128,19 @@
   font-size: 0.8125rem;
   text-align: right;
 }
-.jd-rows--reorder .jd-row {
-  cursor: grab;
-}
-.jd-rows--reorder .jd-row:active {
-  cursor: grabbing;
-}
 .jd-row-grip {
+  display: grid;
   flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.8125rem -0.5rem;
   color: var(--jd-subtle);
+  cursor: grab;
+  touch-action: none;
+}
+.jd-row-grip:active {
+  cursor: grabbing;
 }
 .jd-row-move {
   display: flex;
@@ -1813,6 +1833,7 @@
     z-index: 45;
     top: auto;
     max-height: 80dvh;
+    overscroll-behavior: contain;
     border-radius: 1rem 1rem 0 0;
     box-shadow: var(--shadow-modal);
   }
@@ -2054,4 +2075,10 @@
   font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Containers that take focus only so keyboard users land inside them. */
+.jd-pending-panel:focus,
+.jd-asset-detail-head .jd-panel-title:focus {
+  outline: none;
 }

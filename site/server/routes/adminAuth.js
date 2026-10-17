@@ -1,10 +1,12 @@
 const express = require('express');
-const { adminAttemptLimiter, adminCodeEmailLimiter } = require('../middleware/rateLimits');
+const { getClientIp } = require('../middleware/clientIp');
+const { adminAttemptLimiter, adminCodeEmailLimiter, adminCodeEmailTotalLimiter } = require('../middleware/rateLimits');
 const { getAdmin, requireSameOrigin } = require('../middleware/adminAuth');
 const auth = require('../services/adminAuth');
 
 // /api/admin/auth — the dashboard's email-code sign-in. Responses never reveal
-// whether an address is on the allowlist.
+// whether an address is on the allowlist, by content or by timing: the email is
+// sent after the response, so failures are logged rather than reported.
 
 function createAdminAuthRouter(options = {}) {
   const router = express.Router();
@@ -24,7 +26,7 @@ function createAdminAuthRouter(options = {}) {
     return res.json({ signedIn: Boolean(admin), email: admin?.email || null });
   });
 
-  router.post('/code', adminAttemptLimiter, parseJson, adminCodeEmailLimiter, async (req, res) => {
+  router.post('/code', adminAttemptLimiter, parseJson, adminCodeEmailLimiter, adminCodeEmailTotalLimiter, (req, res) => {
     const email = auth.normalizeEmail(req.body?.email);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Enter a valid email address.' });
@@ -34,24 +36,22 @@ function createAdminAuthRouter(options = {}) {
     }
 
     if (auth.getAllowedEmails(env).has(email)) {
-      try {
-        await sendCode(email, codes.issue(email));
-      } catch (error) {
-        console.error('[admin-auth] sign-in code email failed:', error.message);
-        return res.status(502).json({ error: 'We could not send the email just now. Try again in a minute.' });
-      }
+      Promise.resolve()
+        .then(() => sendCode(email, codes.issue(email)))
+        .catch((error) => console.error('[admin-auth] sign-in code email failed:', error.message));
     }
     return res.json({ ok: true });
   });
 
   router.post('/verify', adminAttemptLimiter, parseJson, (req, res, next) => {
     const email = auth.normalizeEmail(req.body?.email);
-    const result = email ? codes.verify(email, req.body?.code) : 'missing';
+    const result = email ? codes.verify(email, req.body?.code, getClientIp(req)) : 'missing';
     if (result !== 'ok') {
-      const message = result === 'expired'
-        ? 'That code has expired. Ask for a new one.'
-        : 'That code is not right. Check the latest email, or ask for a new code.';
-      return res.status(401).json({ error: message });
+      const messages = {
+        expired: 'That code has expired. Ask for a new one.',
+        locked: 'Too many wrong codes from this device. Wait 10 minutes, then ask for a new code.'
+      };
+      return res.status(401).json({ error: messages[result] || 'That code is not right. Check the latest email, or ask for a new code.' });
     }
 
     // A fresh session id on sign-in prevents session fixation.

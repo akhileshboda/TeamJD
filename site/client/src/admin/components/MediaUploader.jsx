@@ -83,13 +83,15 @@ export default function MediaUploader({ kinds = ['image', 'video'], multiple = t
               <span className="jd-upload-name">{item.name}</span>
               <span className="jd-upload-state">
                 {item.state === 'waiting' && 'Waiting…'}
-                {item.state === 'uploading' && `Uploading ${item.progress || 0}%`}
+                {/* Only changes of state are announced, not every percent. */}
+                {item.state === 'uploading' && <>Uploading<span aria-hidden="true"> {item.progress || 0}%</span></>}
                 {item.state === 'processing' && 'Optimising for the web…'}
                 {item.state === 'done' && 'Added to your library'}
                 {item.state === 'failed' && item.error}
               </span>
               {item.state === 'uploading' && (
-                <span className="jd-upload-bar" style={{ width: `${item.progress || 0}%` }} aria-hidden="true" />
+                <span className="jd-upload-bar" style={{ width: `${item.progress || 0}%` }}
+                  role="progressbar" aria-label={`Uploading ${item.name}`} aria-valuenow={item.progress || 0} aria-valuemin={0} aria-valuemax={100} />
               )}
             </li>
           ))}

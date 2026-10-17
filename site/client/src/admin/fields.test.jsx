@@ -27,7 +27,7 @@ describe('list fields', () => {
     )
     expect(screen.queryByRole('button', { name: /Add fact|Remove/ })).not.toBeInTheDocument()
     expect(screen.getByText('Links need to start with https://')).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Label'), { target: { value: 'Studio' } })
+    fireEvent.change(screen.getByLabelText('Label (fact 1)'), { target: { value: 'Studio' } })
     expect(onChange).toHaveBeenLastCalledWith([{ label: 'Studio', url: 'bad' }])
   })
 

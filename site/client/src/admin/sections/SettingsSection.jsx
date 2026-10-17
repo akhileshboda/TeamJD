@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PAGE_LABELS, PAGE_META } from '../../content/siteDefaults'
 import { getSettings, saveSettings } from '../api'
@@ -15,11 +15,25 @@ function SettingsCard({ title, description, initial, section, onSaved, confirm, 
   const [message, setMessage] = useState(null)
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(null)
-  const changed = JSON.stringify(values) !== JSON.stringify(initial)
+  const formRef = useRef(null)
+  // Saving any card hands every card a fresh `initial` object; only reset when
+  // this card's saved values really changed, so other cards keep their edits.
+  const initialKey = JSON.stringify(initial)
+  const changed = JSON.stringify(values) !== initialKey
 
   useEffect(() => {
-    setValues(initial)
-  }, [initial])
+    setValues(JSON.parse(initialKey))
+  }, [initialKey])
+
+  useEffect(() => {
+    if (!changed) return undefined
+    const warn = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [changed])
 
   const save = async () => {
     setBusy(true)
@@ -31,6 +45,7 @@ function SettingsCard({ title, description, initial, section, onSaved, confirm, 
     } catch (error) {
       setErrors(error.fields || {})
       setMessage({ tone: 'error', text: error.message })
+      requestAnimationFrame(() => formRef.current?.querySelector('[aria-invalid="true"]')?.focus())
     } finally {
       setBusy(false)
       setConfirming(null)
@@ -45,14 +60,14 @@ function SettingsCard({ title, description, initial, section, onSaved, confirm, 
   }
 
   return (
-    <form className="jd-form-section jd-settings-card" onSubmit={requestSave} noValidate>
+    <form ref={formRef} className="jd-form-section jd-settings-card" onSubmit={requestSave} noValidate>
       <div className="jd-form-section-head">
         <h2>{title}</h2>
         {description && <p>{description}</p>}
       </div>
       <div className="jd-form-section-body">
         {children({ values, setValues, errors })}
-        {message && <p className={message.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role="status">{message.text}</p>}
+        {message && <p className={message.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}
         <div>
           <button type="submit" className="jd-admin-button jd-admin-button--primary" disabled={busy || !changed}>
             {busy ? 'Saving…' : 'Save'}

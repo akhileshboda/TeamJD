@@ -13,6 +13,7 @@ const RATE_LIMIT_POLICIES = Object.freeze({
   dropboxOAuth: { windowMs: 15 * MINUTE, limit: 10 },
   adminAttempt: { windowMs: 15 * MINUTE, limit: 10 },
   adminCodeEmail: { windowMs: 15 * MINUTE, limit: 5 },
+  adminCodeEmailTotal: { windowMs: 60 * MINUTE, limit: 20 },
   pageView: { windowMs: 5 * MINUTE, limit: 120 },
   manualOperation: { windowMs: 15 * MINUTE, limit: 3 }
 });
@@ -91,12 +92,21 @@ const adminAttemptLimiter = jsonRateLimit({
   message: 'Too many sign-in attempts. Wait 15 minutes and try again.'
 });
 
-// Sign-in codes per email address, so one inbox cannot be flooded from many IPs.
+// Sign-in codes per email address. Counted per address *and* client so a
+// stranger asking for Jake's codes cannot use up his own allowance; the wider
+// per-address cap still stops one inbox being flooded from many IPs.
 const adminCodeEmailLimiter = jsonRateLimit({
   ...RATE_LIMIT_POLICIES.adminCodeEmail,
-  keyGenerator: normalizedEmailKey,
+  keyGenerator: (req) => `${normalizedEmailKey(req)}:${clientKey(req)}`,
   code: 'ADMIN_CODE_LIMITED',
   message: 'Too many sign-in codes for this email. Wait a few minutes and try again.'
+});
+
+const adminCodeEmailTotalLimiter = jsonRateLimit({
+  ...RATE_LIMIT_POLICIES.adminCodeEmailTotal,
+  keyGenerator: normalizedEmailKey,
+  code: 'ADMIN_CODE_LIMITED',
+  message: 'Too many sign-in codes for this email. Wait an hour and try again.'
 });
 
 const pageViewLimiter = jsonRateLimit({
@@ -121,6 +131,7 @@ const manualOperationLimiter = jsonRateLimit({
 module.exports = {
   adminAttemptLimiter,
   adminCodeEmailLimiter,
+  adminCodeEmailTotalLimiter,
   clientKey,
   dropboxOAuthLimiter,
   enquiryAttemptLimiter,

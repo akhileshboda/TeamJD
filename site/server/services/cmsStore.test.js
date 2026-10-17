@@ -84,6 +84,19 @@ test('a save from a stale tab is refused', async () => {
   await store.saveDraft('results', '1', { draft: record.draft, rev: record.rev });
   await assert.rejects(store.saveDraft('results', '1', { draft: record.draft, rev: record.rev }), { statusCode: 409 });
   await assert.rejects(store.saveDraft('results', '1', { draft: record.draft }), { statusCode: 400 });
+  // Nor can that tab publish or discard a draft it has not seen.
+  await assert.rejects(store.apply('results', '1', 'publish', 'jake', record.rev), { statusCode: 409 });
+  await assert.rejects(store.apply('results', '1', 'discard', 'jake', record.rev), { statusCode: 409 });
+});
+
+test('publishing or hiding elsewhere does not break an editor that is still open', async () => {
+  const { store } = await tempStore();
+  const record = await store.get('results', '1');
+  const saved = await store.saveDraft('results', '1', { draft: { ...record.draft, caption: 'First' }, rev: record.rev });
+  await store.bulk([{ collection: 'results', id: '1' }], 'publish', 'akhil');
+  await store.apply('results', '1', 'unpublish', 'akhil');
+  const next = await store.saveDraft('results', '1', { draft: { ...record.draft, caption: 'Second' }, rev: saved.rev });
+  assert.equal(next.draft.caption, 'Second');
 });
 
 test('publishing an incomplete item is refused with the fields to fix', async () => {

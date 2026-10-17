@@ -30,27 +30,56 @@ export function timeAgo(iso, now = Date.now()) {
   return dateOnly.format(new Date(iso))
 }
 
-// A modal confirmation. Focus starts on the safe choice; Escape cancels.
-export function ConfirmDialog({ title, children, confirmLabel, tone = 'primary', busy = false, onConfirm, onCancel }) {
-  const cancelRef = useRef(null)
-  const titleId = useId()
+const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
+// Keeps keyboard focus inside an open modal: focus starts on `initialRef`, Tab
+// wraps around inside `containerRef`, Escape closes, and focus goes back to
+// where it was. onClose sits in a ref so a parent re-render never refocuses.
+export function useModalFocus(containerRef, initialRef, onClose) {
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
 
   useEffect(() => {
     const previous = document.activeElement
-    cancelRef.current?.focus()
+    initialRef.current?.focus()
     const onKey = (event) => {
-      if (event.key === 'Escape') onCancel()
+      if (event.key === 'Escape') {
+        closeRef.current()
+        return
+      }
+      const container = containerRef.current
+      if (event.key !== 'Tab' || !container) return
+      const focusable = [...container.querySelectorAll(FOCUSABLE)]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const outside = !container.contains(document.activeElement)
+      if (event.shiftKey && (outside || document.activeElement === first)) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (outside || document.activeElement === last)) {
+        event.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
       previous?.focus?.()
     }
-  }, [onCancel])
+  }, [containerRef, initialRef])
+}
+
+// A modal confirmation. Focus starts on the safe choice; Escape cancels.
+export function ConfirmDialog({ title, children, confirmLabel, tone = 'primary', busy = false, onConfirm, onCancel }) {
+  const dialogRef = useRef(null)
+  const cancelRef = useRef(null)
+  const titleId = useId()
+  useModalFocus(dialogRef, cancelRef, onCancel)
 
   return (
     <div className="jd-dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onCancel()}>
-      <div className="jd-dialog" role="alertdialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={dialogRef} className="jd-dialog" role="alertdialog" aria-modal="true" aria-labelledby={titleId}>
         <h2 id={titleId} className="jd-dialog-title">{title}</h2>
         <div className="jd-dialog-body">{children}</div>
         <div className="jd-dialog-actions">

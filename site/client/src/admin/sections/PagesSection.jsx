@@ -70,23 +70,30 @@ function PageList({ pages }) {
   )
 }
 
-function Spot({ slot, onChange, busy }) {
+function Spot({ slot, onChange, scheduleAlt, cancelAlt, busy }) {
   const [picking, setPicking] = useState(false)
   const [alt, setAlt] = useState(slot.record?.draft.alt || '')
-  const altTimer = useRef(null)
+  const typing = useRef(false)
   const draft = slot.record?.draft || { assetId: null, alt: '' }
   const showing = draft.assetId ? slot.draftAsset : null
   const status = spotStatus(slot)
   const small = showing?.kind === 'image' && slot.minWidth && showing.width < slot.minWidth
 
+  // A save finishing while the field is in use must not replace what is being typed.
   useEffect(() => {
-    setAlt(slot.record?.draft.alt || '')
+    if (!typing.current) setAlt(slot.record?.draft.alt || '')
   }, [slot.record?.draft.alt])
 
   const saveAlt = (value) => {
     setAlt(value)
-    clearTimeout(altTimer.current)
-    altTimer.current = setTimeout(() => onChange(slot, { ...draft, alt: value }), 700)
+    scheduleAlt(slot, { ...draft, alt: value })
+  }
+
+  // Choosing a photo replaces the whole spot, so a description save still
+  // waiting would put the old photo back.
+  const replace = (next) => {
+    cancelAlt(slot.id)
+    onChange(slot, next)
   }
 
   return (
@@ -110,6 +117,8 @@ function Spot({ slot, onChange, busy }) {
         {small && <p className="jd-spot-warning">This photo is {showing.width} px wide; at least {slot.minWidth} px looks sharper.</p>}
         {showing?.kind === 'image' && (
           <TextField label="Description" value={alt} maxLength={300} onChange={saveAlt}
+            onFocus={() => { typing.current = true }}
+            onBlur={() => { typing.current = false }}
             hint="What the photo shows, for people using screen readers." />
         )}
         <div className="jd-spot-actions">
@@ -118,13 +127,13 @@ function Spot({ slot, onChange, busy }) {
           </button>
           {draft.assetId && (
             <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" disabled={busy}
-              onClick={() => onChange(slot, { assetId: null, alt: '' })}>
+              onClick={() => replace({ assetId: null, alt: '' })}>
               Use the built-in {slot.kind === 'video' ? 'video' : 'photo'}
             </button>
           )}
           {status === 'changed' && (
             <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" disabled={busy}
-              onClick={() => onChange(slot, null, 'discard')}>
+              onClick={() => { cancelAlt(slot.id); onChange(slot, null, 'discard') }}>
               Undo change
             </button>
           )}
@@ -138,7 +147,7 @@ function Spot({ slot, onChange, busy }) {
           onClose={() => setPicking(false)}
           onPick={(asset) => {
             setPicking(false)
-            onChange(slot, { assetId: asset.id, alt: draft.assetId === asset.id ? draft.alt : asset.alt })
+            replace({ assetId: asset.id, alt: draft.assetId === asset.id ? alt : asset.alt })
           }}
         />
       )}
@@ -152,6 +161,22 @@ function PageSpots({ pages, reload, setSlot }) {
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
   const [mobileView, setMobileView] = useState('edit')
+  // Saves run one at a time and each sends the newest rev the server gave back,
+  // so quick edits to a spot never trip the "changed in another tab" check.
+  const revs = useRef({})
+  const queue = useRef(Promise.resolve())
+  const altSaves = useRef(new Map())
+  const saved = useRef(new Set())
+
+  useEffect(() => {
+    for (const slot of pages.flatMap((item) => item.slots)) {
+      revs.current[slot.id] = Math.max(revs.current[slot.id] ?? 0, slot.record?.rev ?? 0)
+    }
+  }, [pages])
+
+  useEffect(() => () => {
+    for (const { timer } of altSaves.current.values()) clearTimeout(timer)
+  }, [])
 
   const previewSlots = useMemo(() => {
     if (!page) return null
@@ -174,28 +199,56 @@ function PageSpots({ pages, reload, setSlot }) {
 
   const pending = page.slots.filter((slot) => ['changed', 'draft'].includes(spotStatus(slot)))
 
-  const change = async (slot, draft, action) => {
-    setBusy(true)
-    setBanner(null)
-    try {
-      if (action === 'discard') {
-        await applyAction('placements', slot.id, 'discard')
-      } else {
-        const saved = await savePlacement(slot.id, { ...draft, rev: slot.record?.rev ?? 0 })
-        setSlot(slot.id, saved)
+  const change = (slot, draft, action) => {
+    queue.current = queue.current.then(async () => {
+      setBusy(true)
+      setBanner(null)
+      try {
+        if (action === 'discard') {
+          await applyAction('placements', slot.id, 'discard')
+        } else {
+          const record = await savePlacement(slot.id, { ...draft, rev: revs.current[slot.id] ?? 0 })
+          revs.current[slot.id] = record.rev
+          saved.current.add(slot.id)
+          setSlot(slot.id, record)
+        }
+        await reload()
+      } catch (error) {
+        setBanner({ tone: 'error', text: error.message })
+      } finally {
+        setBusy(false)
       }
-      await reload()
-    } catch (error) {
-      setBanner({ tone: 'error', text: error.message })
-    } finally {
-      setBusy(false)
-    }
+    })
+    return queue.current
   }
 
+  const cancelAlt = (id) => {
+    clearTimeout(altSaves.current.get(id)?.timer)
+    altSaves.current.delete(id)
+  }
+  const scheduleAlt = (slot, draft) => {
+    cancelAlt(slot.id)
+    const run = () => {
+      altSaves.current.delete(slot.id)
+      return change(slot, draft)
+    }
+    altSaves.current.set(slot.id, { timer: setTimeout(run, 700), run })
+  }
+  const flushAlts = () => Promise.all([...altSaves.current.values()].map(({ timer, run }) => {
+    clearTimeout(timer)
+    return run()
+  }))
+
   const publishPage = async () => {
+    await flushAlts()
+    await queue.current
+    // Spots saved since this render (the flush above) count as pending too.
+    const ids = page.slots.map((slot) => slot.id)
+      .filter((id) => saved.current.has(id) || pending.some((slot) => slot.id === id))
+    saved.current.clear()
     setBusy(true)
     try {
-      const outcome = await bulkAction('placements', 'publish', pending.map((slot) => slot.id))
+      const outcome = await bulkAction('placements', 'publish', ids)
       const label = (id) => page.slots.find((slot) => slot.id === id)?.label || id
       const problems = outcome.failed.map((item) => `${label(item.id)}: ${Object.values(item.fields || {}).join(' ') || item.error}`)
       setBanner(outcome.failed.length
@@ -224,15 +277,8 @@ function PageSpots({ pages, reload, setSlot }) {
         <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => setMobileView('preview')}>Preview</button>
       </div>
 
-      <div className={`jd-editor-body is-showing-${mobileView}`}>
-        <ul className="jd-editor-form jd-spots">
-          {page.slots.map((slot) => <Spot key={slot.id} slot={slot} onChange={change} busy={busy} />)}
-        </ul>
-        <div className="jd-editor-preview">
-          <PreviewFrame path={page.path} collections={previewSlots} title="Live preview" note={`The ${page.name} page with your changes.`} />
-        </div>
-      </div>
-
+      {/* Before the preview so keyboard users reach Publish first; it is fixed
+          to the bottom of the screen, so this does not move it visually. */}
       <div className="jd-publish-bar" role="region" aria-label="Publishing">
         <p className="jd-publish-bar-status">
           <span className={`jd-dot jd-dot--${pending.length ? 'pending' : 'live'}`} aria-hidden="true" />
@@ -242,6 +288,16 @@ function PageSpots({ pages, reload, setSlot }) {
           <button type="button" className="jd-admin-button jd-admin-button--primary" disabled={busy || !pending.length} onClick={publishPage}>
             {busy ? 'Working…' : 'Publish'}
           </button>
+        </div>
+      </div>
+      <div className={`jd-editor-body is-showing-${mobileView}`}>
+        <ul className="jd-editor-form jd-spots">
+          {page.slots.map((slot) => (
+            <Spot key={slot.id} slot={slot} onChange={change} scheduleAlt={scheduleAlt} cancelAlt={cancelAlt} busy={busy} />
+          ))}
+        </ul>
+        <div className="jd-editor-preview">
+          <PreviewFrame path={page.path} collections={previewSlots} title="Live preview" note={`The ${page.name} page with your changes.`} />
         </div>
       </div>
     </div>

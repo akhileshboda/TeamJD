@@ -21,6 +21,7 @@ test('declares every route-family budget in milliseconds and request counts', ()
     dropboxOAuth: { windowMs: 15 * 60 * 1000, limit: 10 },
     adminAttempt: { windowMs: 15 * 60 * 1000, limit: 10 },
     adminCodeEmail: { windowMs: 15 * 60 * 1000, limit: 5 },
+    adminCodeEmailTotal: { windowMs: 60 * 60 * 1000, limit: 20 },
     pageView: { windowMs: 5 * 60 * 1000, limit: 120 },
     manualOperation: { windowMs: 15 * 60 * 1000, limit: 3 }
   });

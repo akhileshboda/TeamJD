@@ -29,28 +29,58 @@ const COLUMNS = [
   { key: 'kind', label: 'Type', render: (row) => (row.kind === 'client' ? 'Client' : 'Representative') },
 ]
 
-// Where the photo sits inside its frame when it is cropped to fill it.
+const NUDGE = { ArrowLeft: [-5, 0], ArrowRight: [5, 0], ArrowUp: [0, -5], ArrowDown: [0, 5] }
+const clamp = (value) => Math.min(100, Math.max(0, Math.round(value)))
+
+// How far the photo sits in from each edge of its frame, as fractions, when it
+// is shown whole (object-fit: contain) and so may have bars at the sides.
+function letterbox(img) {
+  const imageRatio = img.naturalWidth / img.naturalHeight
+  const frameRatio = img.clientWidth / img.clientHeight
+  return imageRatio > frameRatio
+    ? { x: 0, y: (1 - frameRatio / imageRatio) / 2 }
+    : { x: (1 - imageRatio / frameRatio) / 2, y: 0 }
+}
+
+// Where the photo sits inside its frame when it is cropped to fill it. Click the
+// photo, or use the arrow keys, to move the point that always stays in view.
 function FocusPicker({ src, presentation, onChange }) {
+  const [inset, setInset] = useState({ x: 0, y: 0 })
   const fill = presentation?.fit === 'cover'
   const focus = presentation?.focus || { x: 50, y: 50 }
   const set = (next) => onChange({ fit: fill ? 'cover' : 'contain', focus, ...next })
 
   const pick = (event) => {
+    if (event.detail === 0) return // Enter or Space: the arrow keys do this instead
     const box = event.currentTarget.getBoundingClientRect()
+    const across = (event.clientX - box.left) / box.width
+    const down = (event.clientY - box.top) / box.height
     set({ focus: {
-      x: Math.round(((event.clientX - box.left) / box.width) * 100),
-      y: Math.round(((event.clientY - box.top) / box.height) * 100),
+      x: clamp(((across - inset.x) / (1 - 2 * inset.x)) * 100),
+      y: clamp(((down - inset.y) / (1 - 2 * inset.y)) * 100),
     } })
+  }
+
+  const nudge = (event) => {
+    const step = NUDGE[event.key]
+    if (!step) return
+    event.preventDefault()
+    set({ focus: { x: clamp(focus.x + step[0]), y: clamp(focus.y + step[1]) } })
+  }
+
+  const dot = {
+    left: `${(inset.x + (focus.x / 100) * (1 - 2 * inset.x)) * 100}%`,
+    top: `${(inset.y + (focus.y / 100) * (1 - 2 * inset.y)) * 100}%`,
   }
 
   return (
     <div className="jd-photo-field">
       <div className="jd-photo-frame">
         {src ? (
-          <button type="button" className="jd-photo-pick" onClick={fill ? pick : undefined} disabled={!fill}
-            aria-label={fill ? 'Click the part of the photo that must stay in view' : 'Photo'}>
-            <img src={src} alt="" />
-            {fill && <span className="jd-focus-dot" style={{ left: `${focus.x}%`, top: `${focus.y}%` }} aria-hidden="true" />}
+          <button type="button" className="jd-photo-pick" onClick={fill ? pick : undefined} onKeyDown={fill ? nudge : undefined} disabled={!fill}
+            aria-label={fill ? `Point that stays in view: ${focus.x}% across, ${focus.y}% down. Click the photo or use the arrow keys to move it.` : 'Photo'}>
+            <img src={src} alt="" onLoad={(event) => setInset(letterbox(event.currentTarget))} />
+            {fill && <span className="jd-focus-dot" style={dot} aria-hidden="true" />}
           </button>
         ) : (
           <p className="jd-photo-missing">No photo yet.</p>
@@ -58,7 +88,7 @@ function FocusPicker({ src, presentation, onChange }) {
       </div>
       <ToggleField
         label="Fill the frame"
-        hint={fill ? 'Click the photo to choose the part that always stays in view.' : 'Off: the whole photo shows, with space around it if needed.'}
+        hint={fill ? 'Click the photo, or use the arrow keys, to choose the part that always stays in view.' : 'Off: the whole photo shows, with space around it if needed.'}
         checked={fill}
         onChange={(checked) => set({ fit: checked ? 'cover' : 'contain' })}
       />

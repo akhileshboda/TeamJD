@@ -74,9 +74,9 @@ function createAdminContentRouter({ store = getCmsStore() } = {}) {
     store.saveDraft(req.params.collection, req.params.id, req.body || {}, user(req))
   )));
 
-  collection.post('/:id/:action', handle(async (req) => {
+  collection.post('/:id/:action', parseJson, handle(async (req) => {
     if (!SINGLE_ACTIONS.has(req.params.action)) throw badRequest('Unknown action.');
-    return store.apply(req.params.collection, req.params.id, req.params.action, user(req));
+    return store.apply(req.params.collection, req.params.id, req.params.action, user(req), req.body?.rev);
   }));
 
   collection.delete('/:id', handle(async (req) => store.apply(req.params.collection, req.params.id, 'delete', user(req))));

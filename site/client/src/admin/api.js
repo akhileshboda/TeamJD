@@ -2,6 +2,7 @@
 // that never reach the server get a plain-English message too.
 
 export const SIGNED_OUT_EVENT = 'jd-admin:signed-out'
+export const SIGNED_IN_EVENT = 'jd-admin:signed-in'
 const NETWORK_MESSAGE = 'Could not reach the server. Check your connection and try again.'
 const POLL_INTERVAL_MS = 1500
 const CHUNK_RETRIES = 3
@@ -94,8 +95,9 @@ export const createItem = (collection, draft) =>
   adminRequest(collectionPath(collection), { method: 'POST', json: { draft } }).then(announceChange)
 export const saveDraft = (collection, id, draft, rev) =>
   adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}`), { method: 'PUT', json: { draft, rev } }).then(announceChange)
-export const applyAction = (collection, id, action) =>
-  adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}/${action}`), { method: 'POST' }).then(announceChange)
+export const applyAction = (collection, id, action, rev) =>
+  adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}/${action}`), { method: 'POST', json: rev === undefined ? undefined : { rev } })
+    .then(announceChange)
 export const deleteItem = (collection, id) =>
   adminRequest(collectionPath(collection, `/${encodeURIComponent(id)}`), { method: 'DELETE' }).then(announceChange)
 export const reorderItems = (collection, ids) =>

@@ -76,30 +76,29 @@ Dropbox OAuth returns 404 in production-mode environments unless `DROPBOX_OAUTH_
 
 The rate-limit stores are process-local by design because each environment runs one PM2 fork. Do not add PM2 forks or another application host until the stores are moved to a shared backend. The origin-wide daily ceiling limits this application to 40 accepted enquiries (80 messages), but Resend key protection and provider-side monitoring are still required because no application limit can contain a key used outside this origin.
 
-### Media manager setup
+### Dashboard setup
 
-1. On the VM, install ffmpeg once. Video uploads report "Video processing is not available" until you do; photo uploads don't need it.
+1. Add to each environment's `.env`, then restart with `--update-env`:
+
+   ```env
+   CMS_ADMIN_EMAILS=jake@team-jd.com.au,akboda00@gmail.com
+   ```
+
+   Sign-in codes are sent through the enquiry Resend settings (`ENQUIRY_MAIL_PROVIDER`, `RESEND_API_KEY`, `ENQUIRY_EMAIL_FROM`); no other setup is needed. Never set `CMS_DEV_BYPASS` on the VM (it is ignored in production anyway). If a Cloudflare Access application from the old media manager exists for `/admin`, delete it: the dashboard has its own sign-in page.
+2. On the VM, install ffmpeg once. Video uploads report "Video processing is not available" until you do; photo uploads don't need it.
 
    ```bash
    sudo apt-get update && sudo apt-get install -y ffmpeg
    ffmpeg -version | head -1
    ```
 
-2. In Cloudflare Zero Trust, go to **Access → Applications → Add a self-hosted application**.
-   - Domain `team-jd.com.au`, paths `admin` and `api/admin`. Add a second application or path for the staging hostname if staging should have it too.
-   - Policy: **Allow**, with **Emails** set to Jake's address (and yours). Login method: One-time PIN.
-   - Copy the application's **Audience (AUD) tag**.
-3. Add to each environment's `.env`, then restart:
+3. Check it.
+   - `curl -s -o /dev/null -w '%{http_code}' https://team-jd.com.au/api/admin/stats` returns `401`.
+   - Signing in at `/admin` with an allowlisted address emails a code and opens the dashboard.
+   - `curl -s https://team-jd.com.au/api/content/services | head -c 80` returns JSON (seeded on first start).
+4. Back up and restore: `data/cms.json` is copied to Dropbox `/cms-backup/<environment>/cms.json` after each change. To restore, stop the app, copy that file to `data/cms.json`, start it again.
 
-   ```env
-   CF_ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com
-   CF_ACCESS_AUD=<audience tag>
-   CMS_ADMIN_EMAILS=<jake's email>,<your email>
-   ```
-
-4. Check it. `curl -s -o /dev/null -w '%{http_code}' https://team-jd.com.au/api/admin/slots` should return a redirect or 403 from Cloudflare (never 200). Signing in at `/admin` should list the pages.
-
-Staging and production share the R2 bucket and Dropbox account. Staging uploads are real files: harmless, but visible in Dropbox `/assets`.
+Library uploads live in R2 under `cms/<environment>/` (`R2_CMS_PREFIX`), outside the sync's `R2_ASSET_PREFIX`. Staging and production share the bucket and Dropbox account but use different folders. `data/cms.json` and `data/analytics/` are runtime state like `data/asset-manifest.json`: deploys keep them.
 
 ## Deploy
 

@@ -55,6 +55,8 @@ export default function VisitsChart({ daily }) {
     <figure className="jd-chart">
       <div
         className="jd-chart-plot"
+        role="group"
+        aria-roledescription="chart"
         tabIndex={0}
         aria-label="Daily visits chart. Use the arrow keys to read each day."
         aria-describedby="jd-chart-caption"

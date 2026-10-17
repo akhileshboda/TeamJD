@@ -71,6 +71,20 @@ describe('settings', () => {
     expect(screen.getByRole('alertdialog')).toHaveTextContent('new enquiries will be sent to jake@team-jd.com.au')
   })
 
+  it('saving one card keeps unsaved edits in the others', async () => {
+    const fetchMock = vi.fn((url, init = {}) => (init.method === 'PUT' ? json(view({ site: JSON.parse(init.body) })) : json(view())))
+    renderSettings(fetchMock)
+    await screen.findByRole('heading', { name: 'Contact and social links' })
+
+    const contact = card('Contact and social links')
+    fireEvent.change(within(contact).getByLabelText(/Instagram name/), { target: { value: 'not-saved-yet' } })
+    const site = card('Site visibility')
+    fireEvent.click(within(site).getByLabelText(/^The "under construction" page/))
+    fireEvent.click(within(site).getByRole('button', { name: 'Save' }))
+    expect(await within(site).findByText('Saved. This is live on the site now.')).toBeInTheDocument()
+    expect(within(contact).getByLabelText(/Instagram name/)).toHaveValue('not-saved-yet')
+  })
+
   it('shows field errors from the server', async () => {
     const fetchMock = vi.fn((url, init = {}) => (init.method === 'PUT'
       ? json({ error: 'Some settings need attention.', fields: { facebookUrl: 'Paste the full link, starting with https://' } }, 422)

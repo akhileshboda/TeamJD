@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONTENT_CHANGED_EVENT, getPending, publishAll } from '../api'
 import { adminLinkFor } from '../links'
@@ -11,6 +11,10 @@ export default function PendingChanges() {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)
+  const rootRef = useRef(null)
+  const buttonRef = useRef(null)
+  const panelRef = useRef(null)
+  const panelId = useId()
 
   const refresh = useCallback(() => getPending().then(setItems).catch(() => {}), [])
 
@@ -20,12 +24,25 @@ export default function PendingChanges() {
     return () => window.removeEventListener(CONTENT_CHANGED_EVENT, refresh)
   }, [refresh])
 
+  const close = useCallback((returnFocus) => {
+    setOpen(false)
+    setMessage(null)
+    if (returnFocus) buttonRef.current?.focus()
+  }, [])
+
+  // Focus moves into the panel; Escape or a click outside closes it.
   useEffect(() => {
     if (!open) return undefined
-    const onKey = (event) => event.key === 'Escape' && setOpen(false)
+    panelRef.current?.focus()
+    const onKey = (event) => event.key === 'Escape' && close(true)
+    const onPointer = (event) => !rootRef.current?.contains(event.target) && close(false)
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open])
+    document.addEventListener('pointerdown', onPointer)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('pointerdown', onPointer)
+    }
+  }, [open, close])
 
   const publish = async () => {
     setBusy(true)
@@ -45,13 +62,14 @@ export default function PendingChanges() {
   if (!items.length && !message) return null
 
   return (
-    <div className="jd-pending">
-      <button type="button" className={`jd-pending-button${items.length ? ' has-changes' : ''}`} aria-expanded={open} onClick={() => setOpen(!open)}>
+    <div className="jd-pending" ref={rootRef}>
+      <button ref={buttonRef} type="button" className={`jd-pending-button${items.length ? ' has-changes' : ''}`}
+        aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => (open ? close(false) : setOpen(true))}>
         <span className="jd-dot jd-dot--pending" aria-hidden="true" />
         {items.length ? `${items.length} not live` : 'All live'}
       </button>
       {open && (
-        <div className="jd-pending-panel" role="dialog" aria-label="Changes not live yet">
+        <div ref={panelRef} id={panelId} className="jd-pending-panel" role="dialog" aria-label="Changes not live yet" tabIndex={-1}>
           <p className="jd-pending-title">Saved but not on the site yet</p>
           {message && <p className={message.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role="status">{message.text}</p>}
           {items.length > 0 && (
@@ -59,7 +77,7 @@ export default function PendingChanges() {
               <ul className="jd-pending-list">
                 {items.map((item) => (
                   <li key={`${item.collection}:${item.id}`}>
-                    <Link to={adminLinkFor(item.collection, item.id)} onClick={() => setOpen(false)}>
+                    <Link to={adminLinkFor(item.collection, item.id)} onClick={() => close(false)}>
                       {item.title}
                     </Link>
                     <StatusChip status={item.status} />

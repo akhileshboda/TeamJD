@@ -3,12 +3,20 @@ const { createMailProvider, getMailConfig, MailProviderError } = require('./mail
 const { buildSignInCodeTemplate } = require('./enquiryTemplates');
 
 // Dashboard sign-in: an allowlisted email address receives a one-time six-digit
-// code. Codes live only in memory (one PM2 process), are stored as HMACs, expire
-// after 10 minutes and die after 5 wrong guesses. A restart simply means asking
-// for a new code.
+// code. Codes live only in memory (one PM2 process), are stored as HMACs and
+// expire after 10 minutes. A restart simply means asking for a new code.
+//
+// Jake's address is public, so nobody else should be able to lock him out:
+//   - asking for a new code never cancels earlier ones still within their time;
+//   - wrong guesses are counted per address *and* client, so a stranger's
+//     guesses never block Jake's own device;
+//   - a higher cap across all clients still stops guessing from many machines,
+//     at which point every code for that address dies and a new one is needed.
 
 const CODE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
+const MAX_TOTAL_ATTEMPTS = 25;
+const MAX_LIVE_CODES = 5;
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function normalizeEmail(value) {
@@ -25,40 +33,49 @@ function isDevBypass(env = process.env) {
 }
 
 function createCodeStore({ now = Date.now } = {}) {
-  const codes = new Map();
+  // email → { codes: [{ digest, expiresAt }], wrongByClient: Map, wrongTotal }
+  const entries = new Map();
   const secret = () => process.env.SESSION_SECRET || 'team-jd-unconfigured-session-secret';
   const digest = (email, code) => crypto.createHmac('sha256', secret()).update(`${email}:${code}`).digest();
 
-  function sweep() {
-    for (const [email, entry] of codes) {
-      if (now() > entry.expiresAt) codes.delete(email);
-    }
+  // Drops expired codes, and an address's whole entry (with its wrong-guess
+  // counts) once none of its codes are left.
+  function liveEntry(email) {
+    const entry = entries.get(email);
+    if (!entry) return null;
+    entry.codes = entry.codes.filter((code) => now() <= code.expiresAt);
+    if (entry.codes.length) return entry;
+    entries.delete(email);
+    return null;
   }
 
   return {
-    // A new code replaces any earlier one for the same address.
     issue(email) {
-      sweep();
+      for (const known of entries.keys()) liveEntry(known);
       const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-      codes.set(email, { digest: digest(email, code), expiresAt: now() + CODE_TTL_MS, attempts: 0 });
+      const entry = entries.get(email) || { codes: [], wrongByClient: new Map(), wrongTotal: 0 };
+      entry.codes = [...entry.codes, { digest: digest(email, code), expiresAt: now() + CODE_TTL_MS }].slice(-MAX_LIVE_CODES);
+      entries.set(email, entry);
       return code;
     },
 
-    // 'ok' | 'wrong' | 'expired' | 'missing'
-    verify(email, code) {
-      const entry = codes.get(email);
-      if (!entry) return 'missing';
-      if (now() > entry.expiresAt) {
-        codes.delete(email);
-        return 'expired';
-      }
-      entry.attempts += 1;
+    // 'ok' | 'wrong' | 'locked' | 'expired' | 'missing'
+    verify(email, code, client = 'unknown') {
+      const known = entries.has(email);
+      const entry = liveEntry(email);
+      if (!entry) return known ? 'expired' : 'missing';
+      if ((entry.wrongByClient.get(client) || 0) >= MAX_ATTEMPTS) return 'locked';
+
       const candidate = String(code ?? '').trim();
-      if (/^\d{6}$/.test(candidate) && crypto.timingSafeEqual(entry.digest, digest(email, candidate))) {
-        codes.delete(email);
+      const valid = /^\d{6}$/.test(candidate)
+        && entry.codes.some((stored) => crypto.timingSafeEqual(stored.digest, digest(email, candidate)));
+      if (valid) {
+        entries.delete(email);
         return 'ok';
       }
-      if (entry.attempts >= MAX_ATTEMPTS) codes.delete(email);
+      entry.wrongByClient.set(client, (entry.wrongByClient.get(client) || 0) + 1);
+      entry.wrongTotal += 1;
+      if (entry.wrongTotal >= MAX_TOTAL_ATTEMPTS) entries.delete(email);
       return 'wrong';
     }
   };
@@ -84,6 +101,7 @@ async function sendSignInCode(email, code, { config = getMailConfig(), provider 
 module.exports = {
   CODE_TTL_MS,
   MAX_ATTEMPTS,
+  MAX_TOTAL_ATTEMPTS,
   SESSION_MAX_AGE_MS,
   createCodeStore,
   getAllowedEmails,

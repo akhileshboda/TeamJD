@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import JourneyIcon from '../../components/JourneyIcon'
 
 // Form fields for the dashboard editors. Each takes the field's value, an
@@ -150,13 +150,33 @@ function moveItem(list, index, delta) {
   return next
 }
 
+// Rows are keyed by position, so after a move or remove the focused button would
+// belong to a different row (or be disabled). These put focus back on the same
+// item: its arrow in the new position, or the first field of the row that took
+// a removed row's place, never another Remove button.
+function focusMoved(container, index, delta) {
+  requestAnimationFrame(() => {
+    const row = container.current?.querySelector(`[data-row="${index}"]`)
+    const same = row?.querySelector(`[data-dir="${delta}"]`)
+    ;(same && !same.disabled ? same : row?.querySelector(`[data-dir="${-delta}"]`))?.focus()
+  })
+}
+
+function focusAfterRemove(container, index) {
+  requestAnimationFrame(() => {
+    const rows = container.current?.querySelectorAll('[data-row]') || []
+    const row = rows[Math.min(index, rows.length - 1)]
+    ;(row?.querySelector('input, textarea') || container.current?.querySelector('[data-add]'))?.focus()
+  })
+}
+
 function RowControls({ index, total, noun, onMove, onRemove }) {
   return (
     <span className="jd-rows-controls">
-      <button type="button" className="jd-admin-icon-button" disabled={index === 0} aria-label={`Move ${noun} ${index + 1} up`} onClick={() => onMove(index, -1)}>
+      <button type="button" className="jd-admin-icon-button" data-dir="-1" disabled={index === 0} aria-label={`Move ${noun} ${index + 1} up`} onClick={() => onMove(index, -1)}>
         <JourneyIcon name="chevronDown" size={16} className="jd-flip" />
       </button>
-      <button type="button" className="jd-admin-icon-button" disabled={index === total - 1} aria-label={`Move ${noun} ${index + 1} down`} onClick={() => onMove(index, 1)}>
+      <button type="button" className="jd-admin-icon-button" data-dir="1" disabled={index === total - 1} aria-label={`Move ${noun} ${index + 1} down`} onClick={() => onMove(index, 1)}>
         <JourneyIcon name="chevronDown" size={16} />
       </button>
       {onRemove && (
@@ -171,13 +191,14 @@ function RowControls({ index, total, noun, onMove, onRemove }) {
 // A list of short texts (bullet points). Empty entries are dropped on save.
 export function ListField({ label, hint, items, onChange, noun = 'item', maxItems = 8, multiline = false, maxLength }) {
   const list = items || []
+  const container = useRef(null)
   return (
-    <fieldset className="jd-field jd-list-field">
+    <fieldset ref={container} className="jd-field jd-list-field">
       <legend className="jd-field-label">{label}</legend>
       {hint && <p className="jd-field-hint">{hint}</p>}
       <ol className="jd-list-field-items">
         {list.map((item, index) => (
-          <li key={index}>
+          <li key={index} data-row={index}>
             <TextField
               label={`${noun[0].toUpperCase()}${noun.slice(1)} ${index + 1}`}
               value={item}
@@ -187,13 +208,19 @@ export function ListField({ label, hint, items, onChange, noun = 'item', maxItem
               onChange={(value) => onChange(list.map((current, at) => (at === index ? value : current)))}
             />
             <RowControls index={index} total={list.length} noun={noun}
-              onMove={(at, delta) => onChange(moveItem(list, at, delta))}
-              onRemove={(at) => onChange(list.filter((_, position) => position !== at))} />
+              onMove={(at, delta) => {
+                onChange(moveItem(list, at, delta))
+                focusMoved(container, at + delta, delta)
+              }}
+              onRemove={(at) => {
+                onChange(list.filter((_, position) => position !== at))
+                focusAfterRemove(container, at)
+              }} />
           </li>
         ))}
       </ol>
       {list.length < maxItems && (
-        <button type="button" className="jd-admin-button jd-admin-button--sm" onClick={() => onChange([...list, ''])}>
+        <button type="button" className="jd-admin-button jd-admin-button--sm" data-add onClick={() => onChange([...list, ''])}>
           <JourneyIcon name="plus" size={14} />
           Add {noun}
         </button>
@@ -208,19 +235,20 @@ export function RowsField({ label, hint, rows, onChange, columns, noun = 'row', 
   const list = rows || []
   const blank = Object.fromEntries(columns.map((column) => [column.key, '']))
   const setCell = (index, key, value) => onChange(list.map((row, at) => (at === index ? { ...row, [key]: value } : row)))
+  const container = useRef(null)
 
   return (
-    <fieldset className="jd-field jd-rows-field">
+    <fieldset ref={container} className="jd-field jd-rows-field">
       <legend className="jd-field-label">{label}</legend>
       {hint && <p className="jd-field-hint">{hint}</p>}
       <ol className="jd-rows-field-items">
         {list.map((row, index) => (
-          <li key={index} className="jd-rows-field-row">
+          <li key={index} data-row={index} className="jd-rows-field-row">
             <div className={`jd-rows-field-cells jd-rows-field-cells--${columns.length}`}>
               {columns.map((column) => (
                 <TextField
                   key={column.key}
-                  label={column.label}
+                  label={<>{column.label}<span className="visually-hidden"> ({noun} {index + 1})</span></>}
                   hint={index === 0 ? column.hint : undefined}
                   value={row[column.key] || ''}
                   multiline={column.multiline}
@@ -233,14 +261,20 @@ export function RowsField({ label, hint, rows, onChange, columns, noun = 'row', 
             </div>
             {!fixed && (
               <RowControls index={index} total={list.length} noun={noun}
-                onMove={(at, delta) => onChange(moveItem(list, at, delta))}
-                onRemove={(at) => onChange(list.filter((_, position) => position !== at))} />
+                onMove={(at, delta) => {
+                  onChange(moveItem(list, at, delta))
+                  focusMoved(container, at + delta, delta)
+                }}
+                onRemove={(at) => {
+                  onChange(list.filter((_, position) => position !== at))
+                  focusAfterRemove(container, at)
+                }} />
             )}
           </li>
         ))}
       </ol>
       {!fixed && list.length < maxRows && (
-        <button type="button" className="jd-admin-button jd-admin-button--sm" onClick={() => onChange([...list, blank])}>
+        <button type="button" className="jd-admin-button jd-admin-button--sm" data-add onClick={() => onChange([...list, blank])}>
           <JourneyIcon name="plus" size={14} />
           Add {noun}
         </button>

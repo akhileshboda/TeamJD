@@ -176,11 +176,15 @@ There is no lint/format tooling and no CI configured. Don't invent an
   ending `-2` are often line-art icons, not photos — view before using one.
   Signed URLs in `data/asset-manifest.json` expire; fetch current ones via
   the running dev server's `/api/assets/{key}`, not the file directly.
-- **Media slots (`/admin` CMS).** Images and videos Jake can replace go through
-  `useMedia()(slotId, builtInPath, builtInAlt)`, not bare `resolveAsset`. Slot ids
-  must exist in `server/services/mediaSlots.js`; `mediaSlots.test.js` fails when
-  client and registry drift. `/admin` sits outside `Layout`, is in the SPA
-  whitelist, and is exempt from the maintenance gate (Cloudflare Access guards it).
+- **Dashboard content (`/admin`).** Services, FAQs, results and settings come from
+  the content store through `useContent('<collection>')` / `useSettings()`, never from
+  JSON files (`server/seed/*.json` only seeds a fresh store). Keep public output
+  shapes unchanged when editing `server/services/cms*.js`: the seed round-trip tests
+  pin them. Images and videos Jake can replace go through
+  `useMedia()(slotId, builtInPath, builtInAlt)`; slot ids must exist in
+  `server/services/mediaSlots.js` (`mediaSlots.test.js` checks for drift). Pages
+  name their search listing with `usePageMeta({ page })` (built-in words in
+  `client/src/content/siteDefaults.js`). See README "Jake's dashboard".
 - **`whileInView` stagger animations** (`SectionReveal.jsx`) can render
   invisible if placed above the fold and mounted before async data
   resolves — mount the stagger container only once data is loaded.

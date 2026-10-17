@@ -40,7 +40,7 @@ function Brand() {
   )
 }
 
-export default function AdminShell({ email, onSignOut, children }) {
+export default function AdminShell({ email, onSignOut, inert, children }) {
   const { pathname } = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [narrow, setNarrow] = useState(() => window.matchMedia?.('(max-width: 899px)').matches ?? false)
@@ -74,7 +74,7 @@ export default function AdminShell({ email, onSignOut, children }) {
   }, [drawerOpen])
 
   return (
-    <div className={`jd-admin-shell${drawerOpen ? ' is-drawer-open' : ''}`}>
+    <div className={`jd-admin-shell${drawerOpen ? ' is-drawer-open' : ''}`} inert={inert ? '' : undefined}>
       <a className="jd-admin-skip" href="#jd-admin-main">Skip to content</a>
 
       {/* On phones the closed drawer is off-screen, so keep it out of the tab order. */}
@@ -97,7 +97,8 @@ export default function AdminShell({ email, onSignOut, children }) {
         onClick={() => setDrawerOpen(false)}
       />
 
-      <div className="jd-admin-frame">
+      {/* While the phone drawer is open, keep Tab inside it. */}
+      <div className="jd-admin-frame" inert={narrow && drawerOpen ? '' : undefined}>
         <header className="jd-admin-topbar">
           <button
             ref={menuButtonRef}

@@ -12,6 +12,7 @@ const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createAnalyticsRouter } = require('./routes/analytics');
 const { createContentRouter } = require('./routes/content');
 const { getCmsStore } = require('./services/cmsStore');
+const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
@@ -337,6 +338,7 @@ async function startServer() {
   // Load (and on first run, seed) the dashboard's content store before serving:
   // the maintenance gate and enquiry email read its settings synchronously.
   await getCmsStore().getSettings();
+  await clearLeftoverUploads();
 
   await new Promise((resolve, reject) => {
     const server = app.listen(port, listenHost);

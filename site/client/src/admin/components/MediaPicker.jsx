@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import JourneyIcon from '../../components/JourneyIcon'
 import { listMedia } from '../api'
 import MediaUploader from './MediaUploader'
+import { useModalFocus } from './ui'
 
 export function MediaThumb({ asset, size = 'md' }) {
   if (!asset) return <span className={`jd-thumb jd-thumb--${size} is-empty`}><JourneyIcon name="image" size={18} /></span>
@@ -21,6 +22,7 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(currentId || null)
   const titleId = useId()
+  const dialogRef = useRef(null)
   const closeRef = useRef(null)
 
   useEffect(() => {
@@ -29,16 +31,7 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
       .catch((failure) => setError(failure.message))
   }, [kind])
 
-  useEffect(() => {
-    const previous = document.activeElement
-    closeRef.current?.focus()
-    const onKey = (event) => event.key === 'Escape' && onClose()
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      previous?.focus?.()
-    }
-  }, [onClose])
+  useModalFocus(dialogRef, closeRef, onClose)
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase()
@@ -49,7 +42,7 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
 
   return (
     <div className="jd-dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div className="jd-dialog jd-picker" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={dialogRef} className="jd-dialog jd-picker" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="jd-picker-head">
           <h2 id={titleId} className="jd-dialog-title">{title}</h2>
           <button ref={closeRef} type="button" className="jd-admin-icon-button" aria-label="Close" onClick={onClose}>
@@ -82,13 +75,12 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
           </p>
         )}
 
-        <div className="jd-picker-grid" role="listbox" aria-label="Library">
+        <div className="jd-picker-grid" role="group" aria-label="Library">
           {visible.map((asset) => (
             <button
               key={asset.id}
               type="button"
-              role="option"
-              aria-selected={selected === asset.id}
+              aria-pressed={selected === asset.id}
               className={`jd-picker-tile${selected === asset.id ? ' is-selected' : ''}`}
               onClick={() => setSelected(asset.id)}
               onDoubleClick={() => onPick(asset)}

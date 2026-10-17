@@ -147,30 +147,33 @@ curl -X POST \
 
 The protected API real sync requires a matching API dry-run before mutating Dropbox/R2. Server-side syncs started by the Express scheduler, startup hook, or `npm run sync-assets` create and verify their own dry-run plan before mutating.
 
-## Media Manager (Jake's CMS)
+## Jake's dashboard (`/admin`)
 
-`/admin` lets Jake replace any photo or video on the site, and its alt text, without a developer.
+`/admin` is Jake's dashboard: visit stats, plus the content he manages himself (page photos and videos, results, testimonials, services and prices, FAQs) and site settings. Code lives in `client/src/admin/` (UI) and `server/routes/admin*.js` + `server/services/cms*.js` (API and store).
 
-- **Slots.** Every replaceable spot is a slot defined in `server/services/mediaSlots.js`: fixed slots for Home, About and Contact, plus hero, body, banner, gallery and venue slots generated from `public/content/services.json`. Client components ask for a slot with `useMedia()(slotId, builtInPath, builtInAlt)`. Without an upload, the built-in media shows. `mediaSlots.test.js` fails if client code and the registry drift apart.
-- **Upload flow.** Uploads go up in chunks (32 MB each; Cloudflare caps request bodies at 100 MB), then a job processes them one at a time:
-  - Photos become WebP with the existing optimizer, at most 2400px wide.
-  - Videos become H.264 MP4 through system `ffmpeg`: at most 1920px, audio removed, faststart, plus a WebP poster.
-  - The file is archived to Dropbox `/assets/<category>/`, then written to R2 at the same key the Dropbox→R2 sync would derive, so the sync keeps it instead of orphaning it.
-- **State.** `data/media-slots.json` holds each slot's current version and its last 10 versions, and is mirrored to Dropbox `/cms-backup/<environment>/media-slots.json` after every change. Replacements reach the site through the existing `/api/assets` response (`slots` field), with no extra request.
-- **Access.** Cloudflare Access protects `/admin` and `/api/admin` at the edge. The app also verifies the `Cf-Access-Jwt-Assertion` token (signature, audience, issuer, expiry) and the optional `CMS_ADMIN_EMAILS` allowlist. It fails closed in production when `CF_ACCESS_TEAM_DOMAIN` / `CF_ACCESS_AUD` are unset. Both paths stay reachable while `MAINTENANCE_MODE` gates the public site, so Jake can load media before launch.
+- **Sign-in.** Allowlisted addresses (`CMS_ADMIN_EMAILS`) ask for a 6-digit code, emailed through the Resend settings used for enquiries (`ENQUIRY_EMAIL_FROM`). Codes expire after 10 minutes. Five wrong tries lock out that device only, and 25 across all devices kill every code for the address, so nobody can lock Jake out from elsewhere. A session lasts 30 days on that device, and ends as soon as its address is taken off `CMS_ADMIN_EMAILS` (after a restart). If a code email fails to send, the server logs it rather than telling the browser, so the response never shows which addresses are allowed. Every write to `/api/admin` must come from this site (a `Sec-Fetch-Site`/`Origin` check). `CMS_DEV_BYPASS=true` skips sign-in locally and is ignored whenever `NODE_ENV=production`.
+- **Content store.** `data/cms.json` (override with `CMS_DATA_PATH`) holds every collection, the media library and settings. It is seeded on first start from `server/seed/*.json` (services, FAQs, results, testimonials), so a fresh environment shows exactly what the site showed before. Each content record has a `draft` and a `published` version: Jake's edits autosave to the draft and reach the site only when he publishes. Reordering is live immediately. Settings apply as soon as they are saved.
+- **Public reads.** The site reads published content from `GET /api/content/{results,services,faqs,settings}` through `useContent()` (`client/src/hooks/useContent.js`), in the same shapes the old JSON files had. Photo and video spots still come through `useMedia()`, fed by the `slots` field of `/api/assets`.
+- **Live preview.** Editors show the real public page in an iframe (`?cmsPreview=1`). The dashboard posts draft data into it (same origin only) and `useContent`/`useMedia` show it in place of the published data. Signed-in admins pass the maintenance gate, so previews work before launch.
+- **Media.** Uploads are chunked (32 MB pieces), then processed one at a time: photos to WebP (at most 2400 px), videos to H.264 MP4 through system `ffmpeg` (at most 1920 px, no audio) with a poster. Files go to R2 under `cms/<environment>/` (`R2_CMS_PREFIX`, default `cms`), outside the Dropbox→R2 sync's `R2_ASSET_PREFIX`, so the sync never touches them; originals are also copied to Dropbox `/cms-backup/<environment>/media/` when Dropbox is configured. Files in use cannot be deleted.
+- **Visit stats.** The public site sends one cookie-less beacon per page view (`PageViewTracker`). The server keeps only the page, time, rough source (Instagram, Google, ...), device type and whether it started a visit, in `data/analytics/YYYY-MM.jsonl`; no IP address, cookie or user agent is stored. Bots, automated browsers and signed-in admins are not counted. Days follow `ANALYTICS_TIME_ZONE` (default Australia/Adelaide).
+- **Settings.** Site visibility (the under-construction page) overrides `MAINTENANCE_MODE`; the enquiry address overrides `ENQUIRY_NOTIFICATION_TO`/`ENQUIRY_REPLY_TO`; contact details and search listings feed the footer, Contact page and page titles. `/sitemap.xml` is generated from the live services.
+- **What stays in code.** Page headlines and paragraphs, service ids/slugs/colours, and the static `public/*.html` fallback pages. Services can be edited but not added, removed or hidden: their ids are hard-coded in the contact form, enquiry validation, Find Your Fit and the footer.
 
-Setup steps are in `docs/deployment-oracle.md` under "Media manager setup".
+Setup steps are in `docs/deployment-oracle.md` under "Dashboard setup".
 
 **For Jake:**
-1. Go to `https://team-jd.com.au/admin` and sign in with the emailed code.
-2. Pick a page, find the spot and press **Replace photo** or **Replace video**.
-3. Once it says it's live, add a short description of the photo and press **Save**.
-4. **Use original** puts the built-in image back. **Show earlier versions** lets you restore any of your last 10 uploads.
-5. JPG, PNG, WebP or AVIF photos up to 30 MB. MP4, MOV or WebM videos up to 3 minutes. iPhone HEIC photos need exporting as JPG first.
+1. Go to `https://team-jd.com.au/admin`, enter your email and type in the 6-digit code we email you.
+2. **Home** shows how many people visited, which pages they looked at and where they came from.
+3. **Pages**: open a page, press **Choose photo** on any spot and pick from your library or upload a new one. Add a short description, then press **Publish**.
+4. **Results**, **Testimonials**, **Services & prices** and **FAQs**: open an item, change it, and watch the preview on the right (or the Preview tab on your phone). Your edits save as you type but only go live when you press **Publish**. **Discard changes** goes back to what is live.
+5. **Media library** holds everything you have uploaded. JPG, PNG, WebP or AVIF photos up to 30 MB; MP4, MOV or WebM videos up to 3 minutes. iPhone HEIC photos need exporting as JPG first.
+6. **Settings** change straight away: contact and social links, where enquiries go, search listings, and whether visitors see the site or the under-construction page.
+7. The orange "not live" button at the top lists everything you have saved but not published, with **Publish all**.
 
-**Restore after losing the VM:** copy `/cms-backup/production/media-slots.json` from Dropbox to `data/media-slots.json` and restart the app. The media files themselves are in both R2 and Dropbox.
+**Backup and restore.** `data/cms.json` is copied to Dropbox `/cms-backup/<environment>/cms.json` about 10 seconds after each change. After losing the VM: copy that file back to `data/cms.json` and restart. Library files are in R2 (and their originals in Dropbox); visit stats in `data/analytics/` are not backed up.
 
-**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. Before trying uploads locally, override `R2_ASSET_PREFIX` and `DROPBOX_ASSETS_ROOT` with a sandbox prefix/folder, turn sync off, and set `CMS_DEV_BYPASS=true`.
+**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. For dashboard work, run with `NODE_ENV=development`, `CMS_DEV_BYPASS=true`, the asset sync off (`ASSET_SYNC_ENABLED=false ASSET_AUTO_SYNC_ENABLED=false ASSET_SYNC_ON_BOOT=false`) and `CMS_DATA_PATH` pointing at a scratch file; uploads then land under `cms/development/` and are safe to delete.
 
 ## Health Check
 

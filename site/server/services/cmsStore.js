@@ -55,11 +55,20 @@ function sortedByOrder(records) {
   return [...records].sort((a, b) => a.order - b.order);
 }
 
-function touchRecord(record, user, now) {
-  record.rev += 1;
+function stampRecord(record, user, now) {
   record.updatedAt = now;
   record.updatedBy = user || 'unknown';
 }
+
+// `rev` counts changes to the draft only. Publishing or hiding leaves the draft
+// as it was, so an editor still open on it (say Jake pressed "Publish all" in
+// the top bar mid-edit) can keep autosaving without a false conflict.
+function touchRecord(record, user, now) {
+  record.rev += 1;
+  stampRecord(record, user, now);
+}
+
+const STALE_MESSAGE = 'This was changed in another tab or window. Reload to see the latest version.';
 
 function assertPublishable(data, name, record) {
   const errors = collectionDef(name).validateForPublish(record.draft, data);
@@ -75,14 +84,14 @@ const OPERATIONS = {
     record.published = structuredClone(record.draft);
     record.publishedAt = now;
     record.hiddenAt = null;
-    touchRecord(record, user, now);
+    stampRecord(record, user, now);
   },
   unpublish(data, name, record, user, now) {
     const def = collectionDef(name);
     if (def.canHide === false) throw new CmsError(405, `A ${def.label} cannot be hidden here.`);
     record.published = null;
     record.hiddenAt = now;
-    touchRecord(record, user, now);
+    stampRecord(record, user, now);
   },
   discard(data, name, record, user, now) {
     if (!record.published) {
@@ -142,10 +151,18 @@ function createCmsStore(options = {}) {
   let cache = null;
   let queue = Promise.resolve();
 
+  // Flushed to disk before the rename, so a power cut leaves the old file or the
+  // new one, never an empty one the server cannot start with.
   async function write(data) {
     const tmpPath = `${storePath}.tmp`;
     await fs.mkdir(path.dirname(storePath), { recursive: true });
-    await fs.writeFile(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
+    const handle = await fs.open(tmpPath, 'w');
+    try {
+      await handle.writeFile(`${JSON.stringify(data, null, 2)}\n`);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
     await fs.rename(tmpPath, storePath);
   }
 
@@ -262,9 +279,7 @@ function createCmsStore(options = {}) {
           });
         }
         const record = findRecord(data, name, id);
-        if (record.rev !== rev) {
-          throw new CmsError(409, 'This was changed in another tab or window. Reload to see the latest version.');
-        }
+        if (record.rev !== rev) throw new CmsError(409, STALE_MESSAGE);
         // The current draft lets a collection keep fields Jake cannot change.
         record.draft = def.normalizeDraft(draft, record.draft);
         touchRecord(record, user, at);
@@ -272,11 +287,14 @@ function createCmsStore(options = {}) {
       });
     },
 
-    apply(name, id, action, user) {
+    // With `rev` (the editor sends it), the action only goes ahead on the draft
+    // that tab has seen, so it never publishes or discards another tab's edits.
+    apply(name, id, action, user, rev) {
       const operation = Object.hasOwn(OPERATIONS, action) ? OPERATIONS[action] : null;
       if (!operation) return Promise.reject(new CmsError(400, 'Unknown action.'));
       return mutate((data, at) => {
         const record = findRecord(data, name, id);
+        if (Number.isInteger(rev) && record.rev !== rev) throw new CmsError(409, STALE_MESSAGE);
         operation(data, name, record, user, at);
         return action === 'delete' ? { id: record.id, deleted: true } : withStatus(record);
       });

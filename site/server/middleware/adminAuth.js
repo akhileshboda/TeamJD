@@ -1,12 +1,14 @@
-const { isDevBypass } = require('../services/adminAuth');
+const { getAllowedEmails, isDevBypass } = require('../services/adminAuth');
 
 // Guards for the dashboard API. Sessions come from express-session (app.js), so
 // these must be mounted after it.
 
+// A session only counts while its address is still on the allowlist, so taking
+// someone off CMS_ADMIN_EMAILS (and restarting) signs them out everywhere.
 function getAdmin(req, env = process.env) {
   if (isDevBypass(env)) return { email: 'dev@localhost' };
   const admin = req.session?.admin;
-  return admin?.email ? admin : null;
+  return admin?.email && getAllowedEmails(env).has(admin.email) ? admin : null;
 }
 
 function requireAdmin({ env } = {}) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
-import { applyAction, deleteItem, getItem, previewItem, saveDraft } from '../api'
+import { applyAction, deleteItem, getItem, previewItem, saveDraft, SIGNED_IN_EVENT } from '../api'
 import PreviewFrame from './PreviewFrame'
 import { ConfirmDialog, StatusChip, timeAgo } from './ui'
 
@@ -42,6 +42,7 @@ export default function RecordEditor({
   const saving = useRef(null)
   const saveTimer = useRef(null)
   const previewTimer = useRef(null)
+  const formRef = useRef(null)
 
   const refreshPreview = useCallback((nextDraft) => {
     clearTimeout(previewTimer.current)
@@ -101,12 +102,18 @@ export default function RecordEditor({
     return () => clearTimeout(saveTimer.current)
   }, [saveState, draft, flush])
 
-  // Leaving the editor (Back, the sidebar) inside the autosave delay still saves.
+  // Leaving the editor (Back, the sidebar) inside the autosave delay, or while a
+  // save is running, still sends the newest draft.
   useEffect(() => () => {
-    if (dirty.current && !saving.current) {
-      saveDraft(collection, id, draftRef.current, revRef.current).catch(() => {})
-    }
-  }, [collection, id])
+    if (dirty.current) flush().catch(() => {})
+  }, [flush])
+
+  // After signing in again, retry a save the expired session refused.
+  useEffect(() => {
+    const retry = () => dirty.current && setSaveState((state) => (state === 'conflict' ? state : 'unsaved'))
+    window.addEventListener(SIGNED_IN_EVENT, retry)
+    return () => window.removeEventListener(SIGNED_IN_EVENT, retry)
+  }, [])
 
   useEffect(() => {
     if (saveState === 'saved') return undefined
@@ -129,12 +136,20 @@ export default function RecordEditor({
     setSaveState((state) => (state === 'conflict' ? state : 'unsaved'))
   }, [refreshPreview])
 
+  // Publishing can be refused for missing fields: show the form (phones may be
+  // on the preview) and put the cursor in the first field to fix.
+  const showFieldErrors = (fields) => {
+    setErrors(fields)
+    setMobileView('edit')
+    requestAnimationFrame(() => formRef.current?.querySelector('[aria-invalid="true"]')?.focus())
+  }
+
   const run = async (action) => {
     setBusy(true)
     setBanner(null)
     try {
       await flush()
-      const updated = await applyAction(collection, id, action)
+      const updated = await applyAction(collection, id, action, revRef.current)
       revRef.current = updated.rev
       draftRef.current = updated.draft
       setRecord((current) => ({ ...updated, usage: current?.usage || [] }))
@@ -144,7 +159,7 @@ export default function RecordEditor({
       const messages = { publish: 'Published. It is live on the site now.', unpublish: 'Hidden from the site.', discard: 'Changes discarded.' }
       setBanner({ tone: 'notice', text: messages[action] })
     } catch (error) {
-      if (error.fields) setErrors(error.fields)
+      if (error.fields) showFieldErrors(error.fields)
       setBanner({ tone: 'error', text: error.message, reload: error.status === 409 })
     } finally {
       setBusy(false)
@@ -220,8 +235,36 @@ export default function RecordEditor({
         <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => setMobileView('preview')}>Preview</button>
       </div>
 
+      {/* Before the preview in the page order, so keyboard users reach Publish
+          without tabbing through the whole site in the preview. It is fixed to the
+          bottom of the screen, so this does not move it visually. */}
+      <div className="jd-publish-bar" role="region" aria-label="Publishing">
+        <p className="jd-publish-bar-status">
+          <span className={`jd-dot jd-dot--${status === 'published' ? 'live' : 'pending'}`} aria-hidden="true" />
+          <span>
+            <strong>{liveText}</strong>
+            <span className="jd-publish-bar-save">{saveText}</span>
+          </span>
+        </p>
+        <div className="jd-publish-bar-actions">
+          {isLive && status === 'changed' && (
+            <button type="button" className="jd-admin-button jd-admin-button--quiet" disabled={busy} onClick={() => setConfirm('discard')}>
+              Discard changes
+            </button>
+          )}
+          <button
+            type="button"
+            className="jd-admin-button jd-admin-button--primary"
+            disabled={busy || !hasChanges}
+            onClick={() => run('publish')}
+          >
+            {busy ? 'Publishing…' : 'Publish'}
+          </button>
+        </div>
+      </div>
+
       <div className={`jd-editor-body is-showing-${mobileView}`}>
-        <div className="jd-editor-form">
+        <div className="jd-editor-form" ref={formRef}>
           {renderFields({ draft, update, errors, record })}
           {renderAside?.({ draft, record })}
           <div className="jd-danger-zone">
@@ -246,31 +289,6 @@ export default function RecordEditor({
             title="Live preview"
             note={path ? previewNote : previewNote || 'This is not shown anywhere on the site yet.'}
           />
-        </div>
-      </div>
-
-      <div className="jd-publish-bar" role="region" aria-label="Publishing">
-        <p className="jd-publish-bar-status">
-          <span className={`jd-dot jd-dot--${status === 'published' ? 'live' : 'pending'}`} aria-hidden="true" />
-          <span>
-            <strong>{liveText}</strong>
-            <span className="jd-publish-bar-save" role="status">{saveText}</span>
-          </span>
-        </p>
-        <div className="jd-publish-bar-actions">
-          {isLive && status === 'changed' && (
-            <button type="button" className="jd-admin-button jd-admin-button--quiet" disabled={busy} onClick={() => setConfirm('discard')}>
-              Discard changes
-            </button>
-          )}
-          <button
-            type="button"
-            className="jd-admin-button jd-admin-button--primary"
-            disabled={busy || !hasChanges}
-            onClick={() => run('publish')}
-          >
-            {busy ? 'Publishing…' : 'Publish'}
-          </button>
         </div>
       </div>
 

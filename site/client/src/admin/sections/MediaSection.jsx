@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { deleteMedia, listMedia, updateMedia } from '../api'
@@ -25,6 +25,20 @@ function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
   const [message, setMessage] = useState(null)
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
+  const headingRef = useRef(null)
+
+  // On phones this is a sheet over the grid: move focus into it, and let Escape
+  // close it (unless the delete confirmation is the thing being dismissed).
+  useEffect(() => {
+    headingRef.current?.focus()
+  }, [asset.id])
+
+  useEffect(() => {
+    if (confirming) return undefined
+    const onKey = (event) => event.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [confirming, onClose])
 
   useEffect(() => {
     setAlt(asset.alt)
@@ -58,7 +72,7 @@ function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
   return (
     <aside className="jd-asset-detail" aria-label="File details">
       <div className="jd-asset-detail-head">
-        <h2 className="jd-panel-title">{asset.originalName}</h2>
+        <h2 ref={headingRef} className="jd-panel-title" tabIndex={-1}>{asset.originalName}</h2>
         <button type="button" className="jd-admin-icon-button" aria-label="Close details" onClick={onClose}>
           <JourneyIcon name="close" size={18} />
         </button>
@@ -134,6 +148,12 @@ export default function MediaSection() {
     setParams(next, { replace: true })
   }
 
+  const closeDetail = () => {
+    const id = params.get('file')
+    setParam('file', '')
+    requestAnimationFrame(() => document.querySelector(`[data-asset="${CSS.escape(id || '')}"]`)?.focus())
+  }
+
   const visible = useMemo(() => (items || []).filter((asset) => {
     if (filter === 'unused') return asset.usage.length === 0
     return !filter || asset.kind === filter
@@ -173,6 +193,7 @@ export default function MediaSection() {
             <li key={asset.id}>
               <button
                 type="button"
+                data-asset={asset.id}
                 className={`jd-media-tile${selected?.id === asset.id ? ' is-selected' : ''}`}
                 aria-pressed={selected?.id === asset.id}
                 onClick={() => setParam('file', asset.id)}
@@ -187,7 +208,7 @@ export default function MediaSection() {
         {selected && (
           <AssetDetail
             asset={selected}
-            onClose={() => setParam('file', '')}
+            onClose={closeDetail}
             onChanged={(updated) => setItems((current) => current.map((asset) => (asset.id === updated.id ? updated : asset)))}
             onDeleted={(id) => {
               setItems((current) => current.filter((asset) => asset.id !== id))

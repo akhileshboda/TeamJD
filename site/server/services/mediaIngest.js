@@ -110,6 +110,12 @@ function createUploadSession({ fileName, size, uploadedBy }) {
   return { uploadId: id, chunkBytes: CHUNK_BYTES, kind };
 }
 
+// Upload sessions live in memory, so after a restart (PM2 restarts the app at
+// 300 MB) any half-uploaded temp files belong to nobody. Clear them at startup.
+async function clearLeftoverUploads() {
+  await fsp.rm(UPLOAD_DIR, { recursive: true, force: true });
+}
+
 function getSession(uploadId) {
   const session = sessions.get(uploadId);
   if (!session) throw new IngestError('This upload has expired. Please choose the file again.', 404);
@@ -118,6 +124,11 @@ function getSession(uploadId) {
 
 async function appendChunk(uploadId, index, source) {
   const session = getSession(uploadId);
+  // The browser retries a piece whose response was lost; it is already saved.
+  if (index === session.nextIndex - 1) {
+    source.resume?.();
+    return { received: session.received };
+  }
   if (index !== session.nextIndex) throw new IngestError('Upload pieces arrived out of order.', 409);
 
   await fsp.mkdir(UPLOAD_DIR, { recursive: true });
@@ -362,19 +373,22 @@ const defaultStorage = {
   }
 };
 
-// Removes a deleted asset's files from R2. Only keys under the CMS prefix are ever
-// deleted, whatever the asset record says.
+// Removes a deleted asset's files from R2. Only keys under this environment's CMS
+// prefix are ever deleted, whatever the asset record says, so staging can never
+// remove production's files. Every key is tried even if one fails.
 async function deleteAssetFiles(asset, { remove = deleteR2Object } = {}) {
-  const root = `${getCmsPrefix().split('/')[0]}/`;
-  for (const key of asset.r2Keys || []) {
-    if (key.startsWith(root)) await remove(key);
-  }
+  const root = `${getCmsPrefix()}/`;
+  const keys = (asset.r2Keys || []).filter((key) => key.startsWith(root));
+  const outcomes = await Promise.allSettled(keys.map((key) => remove(key)));
+  const failed = keys.filter((key, index) => outcomes[index].status === 'rejected');
+  if (failed.length) throw new Error(`Could not delete ${failed.join(', ')}: ${outcomes.find((outcome) => outcome.reason).reason.message}`);
 }
 
 module.exports = {
   IngestError,
   MAX_BYTES,
   appendChunk,
+  clearLeftoverUploads,
   cmsPrefixIsSafe,
   completeUpload,
   createUploadSession,

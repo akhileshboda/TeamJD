@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Reorder } from 'motion/react'
+import { Reorder, useDragControls } from 'motion/react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { bulkAction, createItem, listItems, reorderItems } from '../api'
@@ -25,19 +25,23 @@ function bulkMessage(action, outcome, rows) {
   return { tone: outcome.failed.length ? 'error' : 'notice', text: parts.join(' ') }
 }
 
-function Row({ row, columns, selected, onSelect, reordering, onMove, index, total }) {
+function Row({ row, columns, selected, onSelect, reordering, onMove, onGrab, index, total }) {
   return (
     <>
       {reordering ? (
-        <span className="jd-row-grip" aria-hidden="true"><JourneyIcon name="grip" size={18} /></span>
+        // Dragging starts only from the grip, so the rest of the row still scrolls
+        // the page on a phone. The arrow buttons are the keyboard alternative.
+        <span className="jd-row-grip" aria-hidden="true" onPointerDown={onGrab}><JourneyIcon name="grip" size={18} /></span>
       ) : (
-        <input
-          type="checkbox"
-          className="jd-row-check"
-          checked={selected}
-          onChange={(event) => onSelect(row.id, event.target.checked)}
-          aria-label={`Select ${row.title}`}
-        />
+        <label className="jd-row-check-hit">
+          <input
+            type="checkbox"
+            className="jd-row-check"
+            checked={selected}
+            onChange={(event) => onSelect(row.id, event.target.checked)}
+            aria-label={`Select ${row.title}`}
+          />
+        </label>
       )}
       {'thumbnail' in row && (
         <span className="jd-row-thumb">
@@ -58,10 +62,10 @@ function Row({ row, columns, selected, onSelect, reordering, onMove, index, tota
       <span className="jd-row-status"><StatusChip status={row.status} /></span>
       {reordering ? (
         <span className="jd-row-move">
-          <button type="button" className="jd-admin-icon-button" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={`Move ${row.title} up`}>
+          <button type="button" className="jd-admin-icon-button" data-move-row={row.id} data-dir="-1" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={`Move ${row.title} up`}>
             <JourneyIcon name="chevronDown" size={18} className="jd-flip" />
           </button>
-          <button type="button" className="jd-admin-icon-button" disabled={index === total - 1} onClick={() => onMove(index, 1)} aria-label={`Move ${row.title} down`}>
+          <button type="button" className="jd-admin-icon-button" data-move-row={row.id} data-dir="1" disabled={index === total - 1} onClick={() => onMove(index, 1)} aria-label={`Move ${row.title} down`}>
             <JourneyIcon name="chevronDown" size={18} />
           </button>
         </span>
@@ -69,6 +73,15 @@ function Row({ row, columns, selected, onSelect, reordering, onMove, index, tota
         <span className="jd-row-updated">{timeAgo(row.updatedAt)}</span>
       )}
     </>
+  )
+}
+
+function ReorderRow({ row, ...rest }) {
+  const controls = useDragControls()
+  return (
+    <Reorder.Item value={row} className="jd-row" dragListener={false} dragControls={controls}>
+      <Row row={row} reordering onGrab={(event) => controls.start(event)} {...rest} />
+    </Reorder.Item>
   )
 }
 
@@ -95,8 +108,9 @@ export default function CollectionList({
   const [reordering, setReordering] = useState(false)
   const [busy, setBusy] = useState(false)
   const [banner, setBanner] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmBulk, setConfirmBulk] = useState(null)
   const orderTimer = useRef(null)
+  const pendingOrder = useRef(null)
 
   const load = useCallback(() => listItems(collection)
     .then((items) => {
@@ -105,10 +119,21 @@ export default function CollectionList({
     })
     .catch((failure) => setError(failure.message)), [collection])
 
+  const sendOrder = useCallback(() => {
+    clearTimeout(orderTimer.current)
+    const ids = pendingOrder.current
+    pendingOrder.current = null
+    if (!ids) return undefined
+    return reorderItems(collection, ids)
+  }, [collection])
+
+  // Leaving the page inside the save delay still sends the new order.
   useEffect(() => {
     load()
-    return () => clearTimeout(orderTimer.current)
-  }, [load])
+    return () => {
+      sendOrder()?.catch(() => {})
+    }
+  }, [load, sendOrder])
 
   const query = params.get('q') || ''
   const statusFilter = params.get('status') || ''
@@ -135,13 +160,16 @@ export default function CollectionList({
     else next.delete(id)
     return next
   })
-  const allVisibleSelected = visible.length > 0 && visible.every((row) => selected.has(row.id))
+  // Bulk actions only touch rows the filters show, never ones selected earlier
+  // and filtered out of sight since.
+  const chosen = visible.filter((row) => selected.has(row.id))
+  const allVisibleSelected = visible.length > 0 && chosen.length === visible.length
   const toggleAll = (checked) => setSelected(checked ? new Set(visible.map((row) => row.id)) : new Set())
 
   const runBulk = async (action) => {
     setBusy(true)
     try {
-      const outcome = await bulkAction(collection, action, [...selected])
+      const outcome = await bulkAction(collection, action, chosen.map((row) => row.id))
       setBanner(bulkMessage(action, outcome, rows))
       setSelected(new Set())
       await load()
@@ -149,14 +177,15 @@ export default function CollectionList({
       setBanner({ tone: 'error', text: failure.message })
     } finally {
       setBusy(false)
-      setConfirmDelete(false)
+      setConfirmBulk(null)
     }
   }
 
   const saveOrder = (next) => {
     clearTimeout(orderTimer.current)
+    pendingOrder.current = next.map((row) => row.id)
     orderTimer.current = setTimeout(() => {
-      reorderItems(collection, next.map((row) => row.id))
+      sendOrder()
         .then(() => setBanner({ tone: 'notice', text: 'New order saved. It is live on the site.' }))
         .catch((failure) => {
           setBanner({ tone: 'error', text: failure.message })
@@ -173,6 +202,13 @@ export default function CollectionList({
     const [item] = next.splice(index, 1)
     next.splice(index + delta, 0, item)
     reorder(next)
+    // At the top or bottom the pressed arrow becomes disabled and would drop
+    // focus; move it to the row's other arrow instead.
+    requestAnimationFrame(() => {
+      const buttons = [...document.querySelectorAll(`[data-move-row="${CSS.escape(item.id)}"]`)]
+      if (buttons.includes(document.activeElement) && !document.activeElement.disabled) return
+      buttons.find((button) => !button.disabled)?.focus()
+    })
   }
 
   const createNew = async () => {
@@ -245,13 +281,13 @@ export default function CollectionList({
         </div>
       )}
 
-      {!reordering && selected.size > 0 && (
+      {!reordering && chosen.length > 0 && (
         <div className="jd-bulk-bar" role="region" aria-label="Selected items">
-          <p><strong>{selected.size}</strong> selected</p>
+          <p><strong>{chosen.length}</strong> selected</p>
           <div className="jd-bulk-actions">
             <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('publish')}>Publish</button>
-            {canHide && <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('unpublish')}>Hide</button>}
-            {canDelete && <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--danger" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete</button>}
+            {canHide && <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => setConfirmBulk('unpublish')}>Hide</button>}
+            {canDelete && <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--danger" disabled={busy} onClick={() => setConfirmBulk('delete')}>Delete</button>}
             <button type="button" className="jd-link-button" onClick={() => setSelected(new Set())}>Clear</button>
           </div>
         </div>
@@ -294,23 +330,23 @@ export default function CollectionList({
       {rows && reordering && (
         <Reorder.Group axis="y" values={rows} onReorder={reorder} className="jd-rows jd-rows--reorder">
           {rows.map((row, index) => (
-            <Reorder.Item key={row.id} value={row} className="jd-row">
-              <Row row={row} columns={columns} reordering onMove={move} index={index} total={rows.length} />
-            </Reorder.Item>
+            <ReorderRow key={row.id} row={row} columns={columns} onMove={move} index={index} total={rows.length} />
           ))}
         </Reorder.Group>
       )}
 
-      {confirmDelete && (
+      {confirmBulk && (
         <ConfirmDialog
-          title={`Delete ${selected.size} ${selected.size === 1 ? noun : `${noun}s`}?`}
-          confirmLabel="Delete"
-          tone="danger"
+          title={`${confirmBulk === 'delete' ? 'Delete' : 'Hide'} ${chosen.length} ${chosen.length === 1 ? noun : `${noun}s`}?`}
+          confirmLabel={confirmBulk === 'delete' ? 'Delete' : 'Hide from site'}
+          tone={confirmBulk === 'delete' ? 'danger' : 'primary'}
           busy={busy}
-          onConfirm={() => runBulk('delete')}
-          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => runBulk(confirmBulk)}
+          onCancel={() => setConfirmBulk(null)}
         >
-          <p>They are removed from the site and from your dashboard. This cannot be undone.</p>
+          <p>{confirmBulk === 'delete'
+            ? 'They are removed from the site and from your dashboard. This cannot be undone.'
+            : 'They come off the site straight away. They stay here, and you can publish them again at any time.'}</p>
         </ConfirmDialog>
       )}
     </div>

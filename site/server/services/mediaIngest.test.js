@@ -93,6 +93,8 @@ test('chunks must arrive in order, and a retried chunk does not double-append', 
   await ingest.appendChunk(uploadId, 0, Readable.from([Buffer.from('abc')]));
   await assert.rejects(ingest.appendChunk(uploadId, 1, Readable.from([Buffer.from('defgh')])), { statusCode: 413 });
   const { received } = await ingest.appendChunk(uploadId, 1, Readable.from([Buffer.from('def')]));
+  // A retry of a piece already saved (its response was lost) is accepted as-is.
+  assert.deepEqual(await ingest.appendChunk(uploadId, 1, Readable.from([Buffer.from('def')])), { received });
   assert.equal(received, 6);
 });
 
@@ -179,11 +181,20 @@ test('a playlist disguised as an MP4 never reaches ffmpeg', async () => {
   assert.equal(storage.writes.r2.length, 0);
 });
 
-test('deleting an asset only ever removes keys under the CMS prefix', async () => {
+test('deleting an asset only ever removes keys under this environment\'s CMS prefix', async () => {
   const removed = [];
   await ingest.deleteAssetFiles(
-    { r2Keys: ['cms/test/a.webp', 'site-assets/about/jake.webp', 'cms/test/a-poster.webp'] },
+    { r2Keys: ['cms/test/a.webp', 'site-assets/about/jake.webp', 'cms/production/a.webp', 'cms/test/a-poster.webp'] },
     { remove: async (key) => removed.push(key) }
   );
   assert.deepEqual(removed, ['cms/test/a.webp', 'cms/test/a-poster.webp']);
+});
+
+test('one failed delete does not stop the others, and is reported', async () => {
+  const removed = [];
+  await assert.rejects(ingest.deleteAssetFiles(
+    { r2Keys: ['cms/test/v.mp4', 'cms/test/v-poster.webp'] },
+    { remove: async (key) => (key.endsWith('.mp4') ? Promise.reject(new Error('timeout')) : removed.push(key)) }
+  ), /cms\/test\/v\.mp4/);
+  assert.deepEqual(removed, ['cms/test/v-poster.webp']);
 });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import AdminApp from './AdminApp'
+import { SIGNED_OUT_EVENT } from './api'
 import { SECTIONS } from './sections'
 
 vi.mock('./pages/HomeStats', () => ({ default: () => <h1>Stats home</h1> }))
@@ -51,6 +52,29 @@ describe('dashboard sign-in', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('heading', { name: 'Stats home' })).toBeInTheDocument()
     expect(screen.getByText('jake@team-jd.com.au')).toBeInTheDocument()
+  })
+})
+
+describe('session expiry', () => {
+  it('asks to sign in again over the dashboard, keeping the page open underneath', async () => {
+    renderAt('/admin', (url, init) => {
+      if (url === '/api/admin/auth/session') return json({ signedIn: true, email: 'jake@team-jd.com.au' })
+      if (url === '/api/admin/auth/code') return json({ ok: true })
+      if (url === '/api/admin/auth/verify') return json({ email: JSON.parse(init.body).email })
+      return json({}, 404)
+    })
+    const page = await screen.findByRole('heading', { name: 'Stats home' })
+
+    window.dispatchEvent(new Event(SIGNED_OUT_EVENT))
+    const dialog = await screen.findByRole('dialog', { name: 'Sign in to your dashboard' })
+    expect(page).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Email')).toHaveValue('jake@team-jd.com.au')
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a code' }))
+    fireEvent.change(await within(dialog).findByLabelText('6-digit code'), { target: { value: '123456' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(page).toBeInTheDocument()
   })
 })
 
