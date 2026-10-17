@@ -18,7 +18,6 @@ async function buildApp() {
   app.use('/api/admin', createAdminRouter({
     access: { env: { NODE_ENV: 'development', CMS_DEV_BYPASS: 'true' } },
     analytics: createAnalytics({ dataDir: dir }),
-    storePath: path.join(dir, 'media-slots.json'),
     store
   }));
   const write = (method, url) => request(app)[method](url).set('Sec-Fetch-Site', 'same-origin');

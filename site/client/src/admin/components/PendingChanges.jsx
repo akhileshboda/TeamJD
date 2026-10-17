@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONTENT_CHANGED_EVENT, getPending, publishAll } from '../api'
+import { adminLinkFor } from '../links'
 import { StatusChip } from './ui'
-
-const SECTION_PATHS = { results: 'results', testimonials: 'testimonials' }
 
 // Top-bar counter of saved-but-not-live changes, with a panel to review them and
 // publish everything at once.
@@ -60,7 +59,7 @@ export default function PendingChanges() {
               <ul className="jd-pending-list">
                 {items.map((item) => (
                   <li key={`${item.collection}:${item.id}`}>
-                    <Link to={`/admin/${SECTION_PATHS[item.collection] || item.collection}/${item.id}`} onClick={() => setOpen(false)}>
+                    <Link to={adminLinkFor(item.collection, item.id)} onClick={() => setOpen(false)}>
                       {item.title}
                     </Link>
                     <StatusChip status={item.status} />

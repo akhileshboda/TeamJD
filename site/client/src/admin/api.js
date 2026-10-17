@@ -106,3 +106,21 @@ export const previewItem = (collection, id, draft) =>
   adminRequest(collectionPath(collection, '/preview'), { method: 'POST', json: { id, draft } })
 export const getPending = () => adminRequest('/api/admin/pending').then((body) => body.items)
 export const publishAll = () => adminRequest('/api/admin/publish', { method: 'POST', json: { all: true } }).then(announceChange)
+
+// ── Media library and page spots ─────────────────────────────────────────────
+
+export const listMedia = () => adminRequest('/api/admin/media')
+export const updateMedia = (id, alt) =>
+  adminRequest(`/api/admin/media/${encodeURIComponent(id)}`, { method: 'PATCH', json: { alt } })
+export const deleteMedia = (id) =>
+  adminRequest(`/api/admin/media/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(announceChange)
+export const uploadToLibrary = (file, options) =>
+  uploadMedia('/api/admin/media/uploads', file, options).then((job) => job.asset)
+export const getPlacements = () => adminRequest('/api/admin/placements')
+export const savePlacement = (slotId, { assetId, alt, rev }) =>
+  adminRequest(`/api/admin/placements/${encodeURIComponent(slotId)}`, { method: 'PUT', json: { assetId, alt, rev } }).then(announceChange)
+
+export const ACCEPTED_FILES = {
+  image: '.jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif',
+  video: '.mp4,.mov,.m4v,.webm,video/mp4,video/quicktime,video/webm',
+}

@@ -8,15 +8,17 @@ const { Transform } = require('stream');
 const { pipeline } = require('stream/promises');
 const sharp = require('sharp');
 const { optimizeAssetBuffer } = require('./assetOptimizer');
-const { createR2ObjectKey, getAssetKey } = require('./assetClassifier');
-const { getPublicR2Url, getR2Config, isR2Configured, uploadAssetToR2 } = require('./r2');
-const { createDropboxClient, getSyncConfig } = require('./assetSync');
+const { deleteR2Object, getPublicR2Url, getR2Config, isR2Configured, uploadAssetToR2 } = require('./r2');
+const { createDropboxClient } = require('./assetSync');
 
-// Turns one uploaded file into a live slot version:
+// Turns one uploaded file into a media-library asset:
 //   chunked upload to a temp file -> validate + compress (sharp / ffmpeg)
-//   -> Dropbox /assets/<category>/ -> R2 at the key the Dropbox sync would also derive.
-// Writing to Dropbox first matters: the sync rebuilds its manifest from Dropbox, so a
-// file that exists there is kept and re-derived identically instead of being orphaned.
+//   -> R2 under its own prefix, cms/<environment>/<asset id>.<ext>
+//   -> best-effort copy of the original to Dropbox /cms-backup/<environment>/media/.
+//
+// The CMS prefix sits outside the Dropbox->R2 sync's prefix (site-assets/), and the
+// sync only ever lists, replaces or deletes keys under its own prefix, so library
+// files are never touched by it. Asset ids are random, so URLs never need a version.
 
 const UPLOAD_DIR = path.join(os.tmpdir(), 'teamjd-cms');
 const MB = 1024 * 1024;
@@ -30,6 +32,9 @@ const EXTENSIONS = {
 const VIDEO_MAX_SECONDS = 180;
 const VIDEO_MAX_OUTPUT_BYTES = 120 * MB;
 const DROPBOX_SESSION_CHUNK = 8 * MB;
+const KIND_BY_EXTENSION = Object.fromEntries(
+  Object.entries(EXTENSIONS).flatMap(([kind, extensions]) => extensions.map((extension) => [extension, kind]))
+);
 const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
 const FFMPEG_TIMEOUT_MS = 10 * 60 * 1000;
 const HEIC_MESSAGE =
@@ -48,8 +53,25 @@ const jobs = new Map();
 // restarts the app above 300 MB.
 let processingQueue = Promise.resolve();
 
+function environmentName() {
+  return process.env.APP_ENV || process.env.NODE_ENV || 'development';
+}
+
+// cms/<environment>: dev, staging and production share one bucket and Dropbox.
+function getCmsPrefix() {
+  const root = String(process.env.R2_CMS_PREFIX || 'cms').replace(/^\/+|\/+$/g, '');
+  return `${root}/${environmentName()}`;
+}
+
+// Library uploads must never land where the Dropbox->R2 sync manages (and deletes) keys.
+function cmsPrefixIsSafe(cmsPrefix = getCmsPrefix(), assetPrefix = getR2Config().assetPrefix) {
+  const cmsRoot = cmsPrefix.split('/')[0];
+  const syncRoot = String(assetPrefix || '').replace(/^\/+|\/+$/g, '').split('/')[0];
+  return Boolean(cmsRoot && syncRoot && cmsRoot !== syncRoot);
+}
+
 function getStorageStatus() {
-  return { r2: isR2Configured(), dropbox: Boolean(process.env.DROPBOX_REFRESH_TOKEN) };
+  return { r2: isR2Configured(), dropbox: Boolean(process.env.DROPBOX_REFRESH_TOKEN), prefixSafe: cmsPrefixIsSafe() };
 }
 
 function dropStaleSessions(now = Date.now()) {
@@ -64,28 +86,28 @@ function dropStaleSessions(now = Date.now()) {
   }
 }
 
-function createUploadSession({ slot, fileName, size, uploadedBy }) {
+function createUploadSession({ fileName, size, uploadedBy }) {
   const extension = path.extname(String(fileName || '')).toLowerCase();
   if (['.heic', '.heif'].includes(extension)) throw new IngestError(HEIC_MESSAGE, 415);
-  if (!EXTENSIONS[slot.kind].includes(extension)) {
-    const allowed = slot.kind === 'video' ? 'an MP4, MOV or WebM video' : 'a JPG, PNG, WebP or AVIF photo';
-    throw new IngestError(`This spot needs ${allowed}.`, 415);
-  }
+  const kind = KIND_BY_EXTENSION[extension];
+  if (!kind) throw new IngestError('Upload a JPG, PNG, WebP or AVIF photo, or an MP4, MOV or WebM video.', 415);
   if (!Number.isInteger(size) || size <= 0) throw new IngestError('The file appears to be empty.');
-  if (size > MAX_BYTES[slot.kind]) {
-    throw new IngestError(`That file is too large. The limit is ${MAX_BYTES[slot.kind] / MB} MB.`, 413);
+  if (size > MAX_BYTES[kind]) {
+    throw new IngestError(`That file is too large. The limit is ${MAX_BYTES[kind] / MB} MB for a ${kind === 'video' ? 'video' : 'photo'}.`, 413);
   }
   const storage = getStorageStatus();
-  if (!storage.r2 || !storage.dropbox) throw new IngestError('Media storage is not configured on this server.', 503);
+  if (!storage.r2) throw new IngestError('Media storage is not set up on this server.', 503);
+  if (!storage.prefixSafe) throw new IngestError('Media storage is misconfigured on this server (R2_CMS_PREFIX).', 503);
 
   dropStaleSessions();
   const id = crypto.randomUUID();
   sessions.set(id, {
-    id, slot, extension, size, uploadedBy,
+    id, kind, extension, size, uploadedBy,
+    originalName: path.basename(String(fileName)).replace(/[^\w.\- ]+/g, '').slice(0, 120) || `upload${extension}`,
     received: 0, nextIndex: 0, createdAt: Date.now(),
     filePath: path.join(UPLOAD_DIR, `${id}${extension}`)
   });
-  return { uploadId: id, chunkBytes: CHUNK_BYTES };
+  return { uploadId: id, chunkBytes: CHUNK_BYTES, kind };
 }
 
 function getSession(uploadId) {
@@ -120,18 +142,18 @@ async function appendChunk(uploadId, index, source) {
   return { received: session.received };
 }
 
-function completeUpload(uploadId, { alt = '' } = {}, options = {}) {
+function completeUpload(uploadId, options = {}) {
   const session = getSession(uploadId);
   if (session.received !== session.size) throw new IngestError('The upload did not finish. Please try again.');
   sessions.delete(uploadId);
 
-  const job = { id: uploadId, slotId: session.slot.id, status: 'processing', startedAt: new Date().toISOString() };
+  const job = { id: uploadId, kind: session.kind, status: 'processing', startedAt: new Date().toISOString() };
   jobs.set(job.id, job);
 
   processingQueue = processingQueue.then(async () => {
     try {
-      job.version = await processUpload(session, { alt, ...options });
-      if (options.onVersion) job.entry = await options.onVersion(session.slot, job.version);
+      const asset = await processUpload(session, options);
+      job.asset = options.onAsset ? await options.onAsset(asset) : asset;
       job.status = 'done';
     } catch (error) {
       job.status = 'failed';
@@ -148,20 +170,35 @@ function getJob(jobId) {
   return jobs.get(jobId) || null;
 }
 
-function versionStamp(date = new Date()) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\..*$/, '').toLowerCase();
+async function processUpload(session, { storage = defaultStorage, now = new Date() } = {}) {
+  const id = crypto.randomUUID();
+  const context = { session, id, prefix: getCmsPrefix(), storage };
+  const media = session.kind === 'video' ? await processVideo(context) : await processImage(context);
+  return {
+    id,
+    kind: session.kind,
+    ...media,
+    originalName: session.originalName,
+    alt: '',
+    uploadedAt: now.toISOString(),
+    uploadedBy: session.uploadedBy || null
+  };
 }
 
-async function processUpload(session, { alt = '', storage = defaultStorage, now = new Date() } = {}) {
-  const stamp = versionStamp(now);
-  const assetKey = getAssetKey(`${session.slot.id.replace(/\./g, '-')}-${stamp}`);
-  const base = { assetKey, kind: session.slot.kind, uploadedAt: now.toISOString(), uploadedBy: session.uploadedBy || null };
-  const context = { session, assetKey, stamp, storage };
-  const media = session.slot.kind === 'video' ? await processVideo(context) : await processImage(context);
-  return { ...base, ...media, alt: session.slot.kind === 'image' ? String(alt).trim().slice(0, 300) : '' };
+// The original (or transcoded video) is copied to Dropbox as a backup. A failure is
+// recorded on the asset but never fails the upload: R2 already has the file.
+async function backupOriginal(storage, { id, session }, source) {
+  const dropboxPath = `/cms-backup/${environmentName()}/media/${id}-${session.originalName}`;
+  try {
+    const result = await storage.putDropbox(dropboxPath, source);
+    return result === null ? 'skipped' : 'done';
+  } catch (error) {
+    console.error('[cms] media backup to Dropbox failed:', error.message);
+    return 'failed';
+  }
 }
 
-async function processImage({ session, assetKey, stamp, storage }) {
+async function processImage({ session, id, prefix, storage }) {
   const input = await fsp.readFile(session.filePath);
   let meta;
   try {
@@ -173,26 +210,19 @@ async function processImage({ session, assetKey, stamp, storage }) {
   const originalExtension = { jpeg: '.jpg', png: '.png', webp: '.webp', heif: '.avif' }[meta.format];
   if (!originalExtension) throw new IngestError('That file is not a JPG, PNG, WebP or AVIF photo.', 415);
 
-  const originalName = `${assetKey}${originalExtension}`;
-  const optimized = await optimizeAssetBuffer({ buffer: input, fileName: originalName });
+  const optimized = await optimizeAssetBuffer({ buffer: input, fileName: `${id}${originalExtension}` });
   const { width, height } = await sharp(optimized.buffer).metadata();
-  const { assetsRoot } = getSyncConfig();
-  const dropboxPath = `${assetsRoot}/${session.slot.category}/${originalName}`;
-  const objectKey = createR2ObjectKey({
-    assetPrefix: getR2Config().assetPrefix,
-    category: session.slot.category,
-    fileName: optimized.fileName
-  });
-
-  await storage.putDropbox(dropboxPath, { buffer: input });
+  const objectKey = `${prefix}/${id}${path.extname(optimized.fileName)}`;
   await storage.putR2({ objectKey, buffer: optimized.buffer, contentType: optimized.contentType });
 
   return {
-    url: getPublicR2Url(objectKey, stamp),
+    url: getPublicR2Url(objectKey),
+    posterUrl: null,
     width, height,
     bytes: optimized.buffer.length,
     originalBytes: input.length,
-    dropboxPath
+    r2Keys: [objectKey],
+    backup: await backupOriginal(storage, { id, session }, { buffer: input })
   };
 }
 
@@ -258,7 +288,7 @@ function transcodeArgs(input, container, output) {
   ];
 }
 
-async function processVideo({ session, assetKey, stamp, storage }) {
+async function processVideo({ session, id, prefix, storage }) {
   const container = await detectContainer(session.filePath);
   const { duration } = await probeVideo(session.filePath, container);
   const outPath = `${session.filePath}.out.mp4`;
@@ -270,28 +300,24 @@ async function processVideo({ session, assetKey, stamp, storage }) {
     const { size } = await fsp.stat(outPath);
     if (size > VIDEO_MAX_OUTPUT_BYTES) throw new IngestError('That video is still too large after compression. Please use a shorter clip.');
 
-    const poster = await optimizeAssetBuffer({ buffer: await fsp.readFile(posterPath), fileName: `${assetKey}-poster.jpg` });
+    const poster = await optimizeAssetBuffer({ buffer: await fsp.readFile(posterPath), fileName: `${id}-poster.jpg` });
     const { width, height } = await sharp(poster.buffer).metadata();
-    const { assetsRoot } = getSyncConfig();
-    const { assetPrefix } = getR2Config();
-    const videoName = `${assetKey}.mp4`;
-    const videoKey = createR2ObjectKey({ assetPrefix, category: 'video', fileName: videoName });
-    const posterKey = createR2ObjectKey({ assetPrefix, category: 'video', fileName: poster.fileName });
-    const dropboxPath = `${assetsRoot}/video/${videoName}`;
+    const videoKey = `${prefix}/${id}.mp4`;
+    const posterKey = `${prefix}/${id}-poster${path.extname(poster.fileName)}`;
 
-    await storage.putDropbox(dropboxPath, { filePath: outPath, size });
-    await storage.putDropbox(`${assetsRoot}/video/${poster.fileName}`, { buffer: poster.buffer });
     await storage.putR2({ objectKey: videoKey, filePath: outPath, size, contentType: 'video/mp4' });
     await storage.putR2({ objectKey: posterKey, buffer: poster.buffer, contentType: poster.contentType });
 
     return {
-      url: getPublicR2Url(videoKey, stamp),
-      posterUrl: getPublicR2Url(posterKey, stamp),
+      url: getPublicR2Url(videoKey),
+      posterUrl: getPublicR2Url(posterKey),
       width, height,
       duration: Math.round(duration),
       bytes: size,
       originalBytes: session.size,
-      dropboxPath
+      r2Keys: [videoKey, posterKey],
+      // Streamed from disk in slices, before the finally block removes the file.
+      backup: await backupOriginal(storage, { id, session }, { filePath: outPath, size })
     };
   } finally {
     await fsp.rm(outPath, { force: true }).catch(() => {});
@@ -309,7 +335,7 @@ const defaultStorage = {
 
   async putDropbox(dropboxPath, { buffer, filePath, size }) {
     const client = createDropboxClient();
-    if (!client) throw new IngestError('Dropbox is not configured on this server.', 503);
+    if (!client) return null;
     const commit = { path: dropboxPath, mode: { '.tag': 'overwrite' }, autorename: false, mute: true };
     if (buffer) return client.filesUpload({ ...commit, contents: buffer });
 
@@ -333,32 +359,27 @@ const defaultStorage = {
     } finally {
       await handle.close();
     }
-  },
-
-  async putJson(dropboxPath, data) {
-    const client = createDropboxClient();
-    if (!client) return null;
-    return client.filesUpload({
-      path: dropboxPath, mode: { '.tag': 'overwrite' }, mute: true,
-      contents: Buffer.from(`${JSON.stringify(data, null, 2)}\n`)
-    });
   }
 };
 
-// Off-server copy of the slot assignments; data/ lives only on the VM. Namespaced by
-// environment because local dev and staging share the production Dropbox account.
-function backupSlotStore(data) {
-  const environment = process.env.APP_ENV || process.env.NODE_ENV || 'development';
-  return defaultStorage.putJson(`/cms-backup/${environment}/media-slots.json`, data);
+// Removes a deleted asset's files from R2. Only keys under the CMS prefix are ever
+// deleted, whatever the asset record says.
+async function deleteAssetFiles(asset, { remove = deleteR2Object } = {}) {
+  const root = `${getCmsPrefix().split('/')[0]}/`;
+  for (const key of asset.r2Keys || []) {
+    if (key.startsWith(root)) await remove(key);
+  }
 }
 
 module.exports = {
   IngestError,
   MAX_BYTES,
   appendChunk,
-  backupSlotStore,
+  cmsPrefixIsSafe,
   completeUpload,
   createUploadSession,
+  deleteAssetFiles,
+  getCmsPrefix,
   getJob,
   getStorageStatus,
   processUpload

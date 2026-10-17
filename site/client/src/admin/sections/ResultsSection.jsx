@@ -4,6 +4,7 @@ import { RESULT_CATEGORY_LABELS } from '../../utils/resultsLibrary'
 import { listItems } from '../api'
 import CollectionList from '../components/CollectionList'
 import { ChoiceField, FormSection, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
+import MediaPicker from '../components/MediaPicker'
 import RecordEditor from '../components/RecordEditor'
 
 const CATEGORY_OPTIONS = Object.entries(RESULT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))
@@ -66,9 +67,27 @@ function FocusPicker({ src, presentation, onChange }) {
 }
 
 function ResultFields({ draft, update, errors, testimonials }) {
+  const [picking, setPicking] = useState(false)
   return (
     <>
       <FormSection title="Photo" description="The image people see on the Results page and in the result's story.">
+        <div className="jd-spot-actions">
+          <button type="button" className="jd-admin-button jd-admin-button--sm" onClick={() => setPicking(true)}>
+            {draft.image.src ? 'Change photo' : 'Choose photo'}
+          </button>
+        </div>
+        {picking && (
+          <MediaPicker
+            kind="image"
+            title="Choose a photo for this result"
+            currentId={draft.image.assetId}
+            onClose={() => setPicking(false)}
+            onPick={(asset) => {
+              setPicking(false)
+              update({ image: { assetId: asset.id, src: asset.url }, alt: draft.alt || asset.alt })
+            }}
+          />
+        )}
         <FocusPicker
           src={draft.image.src}
           presentation={draft.presentation}

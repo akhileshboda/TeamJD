@@ -7,6 +7,8 @@ import { lazy } from 'react'
 const HomeStats = lazy(() => import('./pages/HomeStats'))
 const ResultsSection = lazy(() => import('./sections/ResultsSection'))
 const TestimonialsSection = lazy(() => import('./sections/TestimonialsSection'))
+const PagesSection = lazy(() => import('./sections/PagesSection'))
+const MediaSection = lazy(() => import('./sections/MediaSection'))
 
 export const SECTIONS = [
   { id: 'home', path: '', label: 'Home', icon: 'home', element: HomeStats },
@@ -15,6 +17,7 @@ export const SECTIONS = [
     path: 'pages',
     label: 'Pages',
     icon: 'layout',
+    element: PagesSection,
     summary: 'Choose the photos and videos shown on each page of your site.',
   },
   {
@@ -57,6 +60,7 @@ export const SECTIONS = [
     label: 'Media library',
     icon: 'image',
     group: 'Content',
+    element: MediaSection,
     summary: 'Every photo and video you have uploaded, and where each one is used.',
   },
   {

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { COLLECTIONS, SEED_DIR } = require('./cmsCollections');
+const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, mediaUsage } = require('./cmsCollections');
 
 // The dashboard's content store: one JSON file holding every collection.
 //
@@ -96,14 +96,12 @@ const OPERATIONS = {
   }
 };
 
-// Public output for one site collection: every live record of the collections
-// that feed it, through that collection's toPublic.
+// One public output the site reads (results, slots, ...), from live records only.
 function buildPublic(data, publicName) {
-  const def = COLLECTIONS[publicName];
-  if (!def?.toPublic || def.publicCollection !== publicName) throw new CmsError(404, 'Not found.');
-  return sortedByOrder(data.collections[publicName])
-    .filter((record) => record.published)
-    .map((record) => def.toPublic(record, data));
+  const build = Object.hasOwn(PUBLIC_OUTPUTS, publicName) ? PUBLIC_OUTPUTS[publicName] : null;
+  if (!build) throw new CmsError(404, 'Not found.');
+  const sortedLive = (name) => sortedByOrder(data.collections[name]).filter((record) => record.published);
+  return build(data, sortedLive);
 }
 
 async function backupToDropbox(data) {
@@ -209,6 +207,7 @@ function createCmsStore(options = {}) {
   return {
     read,
     mutate,
+    statusOf,
 
     list(name) {
       collectionDef(name);
@@ -247,10 +246,18 @@ function createCmsStore(options = {}) {
       });
     },
 
-    saveDraft(name, id, { draft, rev } = {}, user) {
+    // `meta` labels a record created on first save (createOnSave collections).
+    saveDraft(name, id, { draft, rev } = {}, user, meta = {}) {
       const def = collectionDef(name);
       if (!Number.isInteger(rev)) return Promise.reject(new CmsError(400, 'Missing revision number. Reload the page.'));
       return mutate((data, at) => {
+        const exists = data.collections[name].some((item) => item.id === String(id));
+        if (!exists && def.createOnSave) {
+          data.collections[name].push({
+            id: String(id), order: 0, ...meta, draft: def.normalizeDraft({}), published: null,
+            rev: 0, createdAt: at, updatedAt: at, updatedBy: user || 'unknown', publishedAt: null, hiddenAt: null
+          });
+        }
         const record = findRecord(data, name, id);
         if (record.rev !== rev) {
           throw new CmsError(409, 'This was changed in another tab or window. Reload to see the latest version.');
@@ -312,6 +319,43 @@ function createCmsStore(options = {}) {
       return read((data) => Object.keys(COLLECTIONS).flatMap((name) => sortedByOrder(data.collections[name])
         .filter((record) => ['changed', 'draft'].includes(statusOf(record)))
         .map((record) => ({ collection: name, ...summaryRow(data, name, record) }))));
+    },
+
+    listMedia() {
+      return read((data) => [...data.media]
+        .sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
+        .map((asset) => ({ ...asset, usage: mediaUsage(data, asset.id) })));
+    },
+
+    addMedia(asset) {
+      return mutate((data) => {
+        data.media.push(asset);
+        return { ...asset, usage: [] };
+      });
+    },
+
+    updateMedia(id, { alt }) {
+      return mutate((data) => {
+        const asset = data.media.find((item) => item.id === id);
+        if (!asset) throw new CmsError(404, 'That file is no longer in the media library.');
+        asset.alt = String(alt ?? '').trim().slice(0, 300);
+        return { ...asset, usage: mediaUsage(data, id) };
+      });
+    },
+
+    // Refused while anything (live or draft) still uses the file; the caller then
+    // removes the returned asset's files from storage.
+    removeMedia(id) {
+      return mutate((data) => {
+        const asset = data.media.find((item) => item.id === id);
+        if (!asset) throw new CmsError(404, 'That file is no longer in the media library.');
+        const usage = mediaUsage(data, id);
+        if (usage.length) {
+          throw new CmsError(409, `This is still used in: ${usage.map((use) => use.title).join('; ')}. Choose something else there first.`);
+        }
+        data.media = data.media.filter((item) => item !== asset);
+        return asset;
+      });
     },
 
     getPublic(publicName) {

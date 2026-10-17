@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { usePreviewOverride } from './useContent'
 
 const STORAGE_KEY = 'teamjd:asset-manifest'
 const TTL_MS = 5 * 60 * 1000
@@ -95,8 +96,9 @@ export function useAssets() {
   return (assetPath, fallbackAssetPath) => resolveAsset(assetPath, manifest, fallbackAssetPath)
 }
 
-// Media-manager slots: Jake's replacement for a spot when he has uploaded one, otherwise
-// the component's built-in asset and alt text. `slotId` matches server/services/mediaSlots.js.
+// Photo and video spots: what Jake has published from the dashboard for a spot,
+// otherwise the component's built-in asset and alt text. `slotId` matches
+// server/services/mediaSlots.js.
 export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
   const replaced = manifest?.slots?.[slotId]
   if (replaced?.url) {
@@ -119,5 +121,8 @@ export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
 
 export function useMedia() {
   const manifest = useManifest()
-  return (slotId, fallbackPath, fallbackAlt) => resolveMedia(slotId, manifest, fallbackPath, fallbackAlt)
+  // Inside the dashboard's live preview, draft spots replace the published ones.
+  const previewSlots = usePreviewOverride('slots')
+  const effective = previewSlots && manifest ? { ...manifest, slots: previewSlots } : manifest
+  return (slotId, fallbackPath, fallbackAlt) => resolveMedia(slotId, effective, fallbackPath, fallbackAlt)
 }

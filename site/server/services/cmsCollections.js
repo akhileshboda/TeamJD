@@ -187,6 +187,58 @@ function summarizeTestimonial(record) {
   };
 }
 
+// ── Placements ───────────────────────────────────────────────────────────────
+// One record per media slot (mediaSlots.js) Jake has touched, keyed by slot id.
+// assetId null means "use the site's built-in photo or video".
+
+function normalizePlacement(input = {}) {
+  return { assetId: text(input.assetId, 80) || null, alt: text(input.alt, 300) };
+}
+
+function validatePlacement(draft, data) {
+  if (!draft.assetId) return {};
+  const asset = findAsset(data, draft.assetId);
+  if (!asset) return { assetId: 'That file is no longer in the media library. Choose another.' };
+  if (asset.kind === 'image' && !draft.alt) return { alt: 'Describe the photo before it goes live.' };
+  return {};
+}
+
+function summarizePlacement(record, data) {
+  const asset = record.draft.assetId ? findAsset(data, record.draft.assetId) : null;
+  return {
+    title: record.label || record.id,
+    subtitle: record.page || '',
+    thumbnail: asset ? asset.posterUrl || asset.url : ''
+  };
+}
+
+function publicSlots(data) {
+  const slots = {};
+  for (const record of data.collections.placements || []) {
+    const asset = record.published?.assetId && findAsset(data, record.published.assetId);
+    if (!asset) continue;
+    slots[record.id] = { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl || null, alt: record.published.alt };
+  }
+  return slots;
+}
+
+// ── Media library usage ──────────────────────────────────────────────────────
+
+function mediaUsage(data, assetId) {
+  const uses = [];
+  for (const record of data.collections.placements || []) {
+    if ([record.draft, record.published].some((version) => version?.assetId === assetId)) {
+      uses.push({ collection: 'placements', id: record.id, title: `${record.page ? `${record.page}: ` : ''}${record.label || record.id}` });
+    }
+  }
+  for (const record of data.collections.results || []) {
+    if ([record.draft, record.published].some((version) => version?.image?.assetId === assetId)) {
+      uses.push({ collection: 'results', id: record.id, title: summarizeResult(record, data).title });
+    }
+  }
+  return uses;
+}
+
 // ── Seed ─────────────────────────────────────────────────────────────────────
 // A brand-new store starts from the JSON files the site used to serve. Real
 // client results go live; stock "representative" images arrive hidden so Jake
@@ -234,13 +286,18 @@ function seedTestimonials({ now, seedDir = SEED_DIR }) {
   return [...linked, ...unused].map((item, index) => seedRecord({ ...item, order: index + 1, now }));
 }
 
+// Public outputs the site reads, built from live records only.
+const PUBLIC_OUTPUTS = {
+  results: (data, sortedLive) => sortedLive('results').map((record) => toPublicResult(record, data)),
+  slots: (data) => publicSlots(data)
+};
+
 const COLLECTIONS = {
   results: {
     label: 'result',
     publicCollection: 'results',
     normalizeDraft: normalizeResult,
     validateForPublish: validateResult,
-    toPublic: toPublicResult,
     summarize: summarizeResult,
     seed: seedResults
   },
@@ -254,11 +311,25 @@ const COLLECTIONS = {
     usage: testimonialUsage,
     onDelete: (data, record, touch) => unlinkTestimonial(data, record.id, touch),
     seed: seedTestimonials
+  },
+  placements: {
+    label: 'photo spot',
+    publicCollection: 'slots',
+    // Records appear the first time Jake picks something for a slot.
+    createOnSave: true,
+    canCreate: false,
+    canDelete: false,
+    normalizeDraft: normalizePlacement,
+    validateForPublish: validatePlacement,
+    summarize: summarizePlacement,
+    seed: () => []
   }
 };
 
 module.exports = {
   COLLECTIONS,
+  PUBLIC_OUTPUTS,
+  mediaUsage,
   RESULT_CATEGORIES,
   RESULT_KINDS,
   SEED_DIR,

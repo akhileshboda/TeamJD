@@ -53,15 +53,23 @@ export function clearContentCache() {
   overrides.clear()
 }
 
-// Same { data, loading, error } shape as useJSON, so pages can switch over as-is.
-export function useContent(collection) {
-  const [state, setState] = useState({ data: null, loading: true, error: null })
+// The draft version of a public output posted by the dashboard preview, or
+// undefined outside a preview.
+export function usePreviewOverride(name) {
   const [, rerender] = useReducer((count) => count + 1, 0)
 
   useEffect(() => {
     listeners.add(rerender)
     return () => listeners.delete(rerender)
   }, [])
+
+  return overrides.get(name)
+}
+
+// Same { data, loading, error } shape as useJSON, so pages can switch over as-is.
+export function useContent(collection) {
+  const [state, setState] = useState({ data: null, loading: true, error: null })
+  const override = usePreviewOverride(collection)
 
   useEffect(() => {
     let cancelled = false
@@ -73,5 +81,5 @@ export function useContent(collection) {
     }
   }, [collection])
 
-  return overrides.has(collection) ? { data: overrides.get(collection), loading: false, error: null } : state
+  return override === undefined ? state : { data: override, loading: false, error: null }
 }
