@@ -1,12 +1,14 @@
 const express = require('express');
-const { requireCmsAccess } = require('../middleware/cloudflareAccess');
+const { requireAdmin, requireSameOrigin } = require('../middleware/adminAuth');
+const { getAnalytics } = require('../services/analytics');
 const { getAssetManifest } = require('../services/dropbox');
 const { getPublicR2Url } = require('../services/r2');
 const mediaSlots = require('../services/mediaSlots');
 const ingest = require('../services/mediaIngest');
 
-// Media manager API behind Cloudflare Access. Every route here is Jake-facing, so
-// errors carry plain-English messages the admin page shows as-is.
+// Dashboard API, signed-in admins only (see routes/adminAuth.js for sign-in).
+// Every route here is Jake-facing, so errors carry plain-English messages the
+// dashboard shows as-is.
 
 // Errors with a statusCode carry a message written for Jake; anything else is unexpected.
 function sendError(res, error) {
@@ -25,7 +27,9 @@ function createAdminRouter(options = {}) {
     onVersion: (slot, version) => mediaSlots.assignVersion(slot.id, version, storeOptions)
   };
 
-  router.use(requireCmsAccess(options.access));
+  const analytics = options.analytics || getAnalytics();
+
+  router.use(requireSameOrigin, requireAdmin(options.access));
 
   async function loadSlot(req, res, next) {
     try {
@@ -37,7 +41,15 @@ function createAdminRouter(options = {}) {
     return next();
   }
 
-  router.get('/me', (req, res) => res.json({ email: req.cmsUser.email }));
+  router.get('/me', (req, res) => res.json({ email: req.admin.email }));
+
+  router.get('/stats', async (req, res) => {
+    try {
+      return res.json(await analytics.getStats(String(req.query.range || '30d')));
+    } catch (error) {
+      return sendError(res, error);
+    }
+  });
 
   router.get('/slots', async (req, res) => {
     try {
@@ -63,7 +75,7 @@ function createAdminRouter(options = {}) {
     try {
       const { fileName, size } = req.body || {};
       return res.status(201).json(
-        ingest.createUploadSession({ slot: req.slot, fileName, size, uploadedBy: req.cmsUser.email })
+        ingest.createUploadSession({ slot: req.slot, fileName, size, uploadedBy: req.admin.email })
       );
     } catch (error) {
       return sendError(res, error);

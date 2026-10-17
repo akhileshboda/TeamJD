@@ -47,6 +47,11 @@ export default function Privacy() {
                     </li>
                   ))}
                 </ul>
+                <p style={{ marginTop: '0.75rem' }}>
+                  We also count visits to this website to understand which pages are useful. This uses no
+                  cookies and stores no IP address: only the page viewed, the date, the type of device, and
+                  the general source of the visit (for example, Instagram or a search engine).
+                </p>
               </div>
 
               <hr className="prose-divider" />

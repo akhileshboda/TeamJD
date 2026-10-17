@@ -12,6 +12,8 @@ const RATE_LIMIT_POLICIES = Object.freeze({
   genericApi: { windowMs: 5 * MINUTE, limit: 120 },
   dropboxOAuth: { windowMs: 15 * MINUTE, limit: 10 },
   adminAttempt: { windowMs: 15 * MINUTE, limit: 10 },
+  adminCodeEmail: { windowMs: 15 * MINUTE, limit: 5 },
+  pageView: { windowMs: 5 * MINUTE, limit: 120 },
   manualOperation: { windowMs: 15 * MINUTE, limit: 3 }
 });
 
@@ -85,7 +87,21 @@ const dropboxOAuthLimiter = jsonRateLimit({
 
 const adminAttemptLimiter = jsonRateLimit({
   ...RATE_LIMIT_POLICIES.adminAttempt,
-  code: 'ADMIN_RATE_LIMITED'
+  code: 'ADMIN_RATE_LIMITED',
+  message: 'Too many sign-in attempts. Wait 15 minutes and try again.'
+});
+
+// Sign-in codes per email address, so one inbox cannot be flooded from many IPs.
+const adminCodeEmailLimiter = jsonRateLimit({
+  ...RATE_LIMIT_POLICIES.adminCodeEmail,
+  keyGenerator: normalizedEmailKey,
+  code: 'ADMIN_CODE_LIMITED',
+  message: 'Too many sign-in codes for this email. Wait a few minutes and try again.'
+});
+
+const pageViewLimiter = jsonRateLimit({
+  ...RATE_LIMIT_POLICIES.pageView,
+  code: 'PAGE_VIEW_RATE_LIMITED'
 });
 
 const manualOperationLimiter = jsonRateLimit({
@@ -104,6 +120,7 @@ const manualOperationLimiter = jsonRateLimit({
 
 module.exports = {
   adminAttemptLimiter,
+  adminCodeEmailLimiter,
   clientKey,
   dropboxOAuthLimiter,
   enquiryAttemptLimiter,
@@ -111,6 +128,7 @@ module.exports = {
   enquiryGlobalLimiter,
   genericApiLimiter,
   manualOperationLimiter,
+  pageViewLimiter,
   publicAssetLimiter,
   RATE_LIMIT_POLICIES
 };

@@ -20,6 +20,8 @@ test('declares every route-family budget in milliseconds and request counts', ()
     genericApi: { windowMs: 5 * 60 * 1000, limit: 120 },
     dropboxOAuth: { windowMs: 15 * 60 * 1000, limit: 10 },
     adminAttempt: { windowMs: 15 * 60 * 1000, limit: 10 },
+    adminCodeEmail: { windowMs: 15 * 60 * 1000, limit: 5 },
+    pageView: { windowMs: 5 * 60 * 1000, limit: 120 },
     manualOperation: { windowMs: 15 * 60 * 1000, limit: 3 }
   });
 });

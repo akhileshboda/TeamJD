@@ -92,3 +92,25 @@ test('the media manager stays reachable while the public site is gated', async (
     else process.env.MAINTENANCE_MODE = previous;
   }
 });
+
+test('a signed-in admin sees the real site behind the gate; visitors do not', async () => {
+  const previous = process.env.MAINTENANCE_MODE;
+  process.env.MAINTENANCE_MODE = 'true';
+  try {
+    const app = express();
+    app.use((req, res, next) => {
+      req.session = req.get('X-Test-Admin') ? { admin: { email: 'jake@team-jd.com.au' } } : {};
+      next();
+    });
+    app.use(maintenanceMode);
+    app.get('/results', (req, res) => res.send('<html>results</html>'));
+
+    assert.equal((await request(app).get('/results')).status, 503);
+    const admin = await request(app).get('/results').set('X-Test-Admin', '1');
+    assert.equal(admin.status, 200);
+    assert.match(admin.text, /results/);
+  } finally {
+    if (previous === undefined) delete process.env.MAINTENANCE_MODE;
+    else process.env.MAINTENANCE_MODE = previous;
+  }
+});

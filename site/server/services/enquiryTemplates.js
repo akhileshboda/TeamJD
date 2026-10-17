@@ -73,4 +73,16 @@ function buildCustomerTemplate(enquiry, options) {
   };
 }
 
-module.exports = { BRAND, buildCustomerTemplate, buildInternalTemplate, escapeHtml };
+function buildSignInCodeTemplate({ code, baseUrl }) {
+  const content = `<p style="margin:0 0 16px;line-height:1.7;">Use this code to sign in to your Team JD dashboard:</p>
+<p style="margin:0 0 24px;font-size:34px;font-weight:bold;letter-spacing:8px;color:#101314;">${escapeHtml(code)}</p>
+<p style="margin:0 0 16px;line-height:1.7;">It works once and expires in 10 minutes.</p>
+<p style="margin:28px 0 0;padding-top:18px;border-top:1px solid #dce2e3;color:#697174;font-size:13px;line-height:1.6;">If you did not try to sign in, you can ignore this email. Nobody can sign in without the code.</p>`;
+
+  return {
+    html: frame({ baseUrl, preheader: `Your sign-in code is ${code}`, heading: 'Your sign-in code', content }),
+    text: `Your Team JD dashboard sign-in code is ${code}\n\nIt works once and expires in 10 minutes.\n\nIf you did not try to sign in, you can ignore this email.`
+  };
+}
+
+module.exports = { BRAND, buildCustomerTemplate, buildInternalTemplate, buildSignInCodeTemplate, escapeHtml };

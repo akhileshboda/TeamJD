@@ -1,5 +1,6 @@
 const path = require('path');
 const { sendStaticPage } = require('../utils/staticPages');
+const { getAdmin } = require('./adminAuth');
 
 const publicDir = path.join(__dirname, '..', '..', 'public');
 const MAINTENANCE_PAGE_PATH = path.join(publicDir, '503.html');
@@ -16,8 +17,8 @@ function isMaintenanceModeEnabled(env = process.env) {
   return isProductionRuntime(env);
 }
 
-// The media manager stays reachable while the public site is gated so Jake can load
-// his photos before launch. Cloudflare Access still guards both paths.
+// The dashboard stays reachable while the public site is gated so Jake can load
+// his content before launch; its API has its own sign-in.
 const EXEMPT_PREFIXES = ['/assets', '/admin', '/api/admin'];
 
 function isExemptPath(requestPath) {
@@ -39,7 +40,9 @@ function maintenanceMode(req, res, next) {
     console.log('[maintenance] gate is ACTIVE — set MAINTENANCE_MODE=false in .env and restart to disable.');
   }
 
-  if (isExemptPath(req.path)) {
+  // Signed-in admins see the real site behind the gate: dashboard previews and
+  // pre-launch checks. Needs express-session to run before this middleware.
+  if (isExemptPath(req.path) || getAdmin(req)) {
     return next();
   }
 

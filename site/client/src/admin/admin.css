@@ -1,0 +1,820 @@
+/* Team JD dashboard. Scoped under .jd-admin so nothing leaks into the public site,
+   built on the site's own tokens (globals.css :root).
+   Colour carries meaning: teal = live on the site, salmon = not live yet. */
+
+.jd-admin {
+  --jd-canvas: var(--color-bg);
+  --jd-panel: var(--color-surface);
+  --jd-raised: var(--color-surface-2);
+  --jd-line: var(--color-border);
+  --jd-line-strong: var(--color-border-light);
+  --jd-text: var(--color-text);
+  --jd-muted: #a3a3a3;
+  --jd-subtle: #6f6f6f;
+  --jd-live: var(--color-accent);
+  --jd-live-soft: rgba(22, 201, 221, 0.12);
+  --jd-pending: var(--color-hover-accent);
+  --jd-pending-soft: rgba(250, 128, 114, 0.14);
+  --jd-danger: #ff6b6b;
+  --jd-danger-soft: rgba(255, 107, 107, 0.12);
+  --jd-sidebar: 15.5rem;
+  --jd-topbar: 3.75rem;
+  --jd-radius: 0.625rem;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  color-scheme: dark;
+  background: var(--jd-canvas);
+  color: var(--jd-text);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Undo the public site's marketing type scale inside the dashboard. */
+.jd-admin h1,
+.jd-admin h2,
+.jd-admin h3,
+.jd-admin h4 {
+  font-size: inherit;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--jd-text);
+}
+.jd-admin p {
+  line-height: 1.5;
+  color: inherit;
+}
+.jd-admin :focus-visible {
+  outline: 2px solid var(--jd-live);
+  outline-offset: 2px;
+}
+.jd-admin button:disabled {
+  cursor: not-allowed;
+}
+.jd-admin button,
+.jd-admin a,
+.jd-admin input,
+.jd-admin select,
+.jd-admin textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.jd-admin-shell {
+  display: grid;
+  grid-template-columns: var(--jd-sidebar) minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.jd-admin-skip {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 60;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--jd-radius);
+  background: var(--jd-live);
+  color: #071214;
+  font-weight: 700;
+}
+.jd-admin-skip:focus {
+  top: 0.75rem;
+}
+
+.jd-admin-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: 1.25rem 0.75rem 1rem;
+  border-right: 1px solid var(--jd-line);
+  background: var(--jd-canvas);
+  overflow-y: auto;
+}
+
+.jd-admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.25rem 0.625rem 1.25rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.jd-admin-brand img {
+  width: auto;
+  height: 1.75rem;
+}
+
+.jd-admin-nav {
+  flex: 1;
+}
+.jd-admin-nav-group + .jd-admin-nav-group {
+  margin-top: 1.25rem;
+}
+.jd-admin-nav-heading {
+  padding: 0 0.625rem 0.375rem;
+  color: var(--jd-subtle);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.jd-admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0 0.625rem;
+  border-radius: 0.5rem;
+  color: var(--jd-muted);
+  font-weight: 600;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.jd-admin-nav-link:hover {
+  background: var(--jd-panel);
+  color: var(--jd-text);
+}
+.jd-admin-nav-link.active {
+  background: var(--jd-live-soft);
+  color: var(--jd-live);
+}
+
+.jd-admin-account {
+  margin-top: 1.5rem;
+  padding: 0.875rem 0.625rem 0;
+  border-top: 1px solid var(--jd-line);
+}
+.jd-admin-account-email {
+  overflow: hidden;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-admin-account-signout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--jd-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.jd-admin-account-signout:hover {
+  color: var(--jd-pending);
+}
+
+.jd-admin-scrim {
+  display: none;
+}
+
+.jd-admin-frame {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.jd-admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: var(--jd-topbar);
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--jd-line);
+  background: rgba(13, 13, 13, 0.88);
+  backdrop-filter: blur(12px);
+}
+.jd-admin-topbar-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.jd-admin-topbar .jd-admin-menu-button {
+  display: none;
+}
+
+.jd-admin-main {
+  flex: 1;
+  width: 100%;
+  max-width: 72rem;
+  padding: 2rem 1.5rem 6rem;
+}
+.jd-admin-main:focus {
+  outline: none;
+}
+
+@media (max-width: 899px) {
+  .jd-admin-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jd-admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(18rem, 85vw);
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    background: var(--jd-panel);
+  }
+  .jd-admin-shell.is-drawer-open .jd-admin-sidebar {
+    transform: translateX(0);
+  }
+  .jd-admin-shell.is-drawer-open .jd-admin-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    background: rgba(0, 0, 0, 0.6);
+  }
+  .jd-admin-topbar .jd-admin-menu-button {
+    display: inline-flex;
+    margin-left: -0.5rem;
+  }
+  .jd-admin-topbar {
+    padding: 0 max(1rem, env(safe-area-inset-right)) 0 max(1rem, env(safe-area-inset-left));
+  }
+  .jd-admin-main {
+    padding: 1.5rem max(1rem, env(safe-area-inset-right)) 6rem max(1rem, env(safe-area-inset-left));
+  }
+  .jd-admin-hide-sm {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jd-admin-sidebar {
+    transition: none;
+  }
+}
+
+/* ── Controls ──────────────────────────────────────────────────────────── */
+
+.jd-admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 0.5rem;
+  background: var(--jd-panel);
+  color: var(--jd-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.jd-admin-button:hover:not(:disabled) {
+  border-color: var(--jd-subtle);
+  background: var(--jd-raised);
+}
+.jd-admin-button:disabled {
+  opacity: 0.5;
+}
+.jd-admin-button--primary {
+  border-color: var(--jd-live);
+  background: var(--jd-live);
+  color: #071214;
+}
+.jd-admin-button--primary:hover:not(:disabled) {
+  border-color: var(--color-accent-dark);
+  background: var(--color-accent-dark);
+}
+.jd-admin-button--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--jd-muted);
+}
+.jd-admin-button--quiet:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--jd-panel);
+  color: var(--jd-text);
+}
+.jd-admin-button--danger {
+  border-color: rgba(255, 107, 107, 0.4);
+  background: transparent;
+  color: var(--jd-danger);
+}
+.jd-admin-button--danger:hover:not(:disabled) {
+  border-color: var(--jd-danger);
+  background: var(--jd-danger-soft);
+}
+.jd-admin-button--sm {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.jd-admin-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  color: var(--jd-muted);
+}
+.jd-admin-icon-button:hover {
+  background: var(--jd-panel);
+  color: var(--jd-text);
+}
+
+.jd-link-button {
+  color: var(--jd-live);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(22, 201, 221, 0.4);
+  text-underline-offset: 3px;
+}
+.jd-link-button:hover:not(:disabled) {
+  text-decoration-color: currentColor;
+}
+
+.jd-segmented {
+  display: inline-flex;
+  padding: 0.1875rem;
+  border: 1px solid var(--jd-line);
+  border-radius: 0.625rem;
+  background: var(--jd-panel);
+}
+.jd-segmented button {
+  min-height: 2.125rem;
+  padding: 0 0.875rem;
+  border-radius: 0.4375rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.jd-segmented button[aria-pressed='true'] {
+  background: var(--jd-raised);
+  color: var(--jd-text);
+}
+
+.jd-field {
+  display: grid;
+  gap: 0.375rem;
+}
+.jd-field + .jd-field {
+  margin-top: 1rem;
+}
+.jd-field-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.jd-field-hint {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-field-error {
+  margin-top: 0.5rem;
+  color: var(--jd-danger);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.jd-input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 0.5rem;
+  background: var(--jd-canvas);
+  color: var(--jd-text);
+  font: inherit;
+  font-size: 1rem; /* 16px stops iOS zooming into the field */
+}
+.jd-input::placeholder {
+  color: var(--jd-subtle);
+}
+.jd-input:focus {
+  outline: none;
+  border-color: var(--jd-live);
+  box-shadow: 0 0 0 3px var(--jd-live-soft);
+}
+.jd-input[aria-invalid='true'] {
+  border-color: var(--jd-danger);
+}
+
+.jd-admin-notice,
+.jd-admin-error {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+.jd-admin-notice {
+  border: 1px solid rgba(22, 201, 221, 0.3);
+  background: var(--jd-live-soft);
+  color: #c7f4f9;
+}
+.jd-admin-error {
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: var(--jd-danger-soft);
+  color: #ffd3d3;
+}
+
+/* ── Loading, empty ────────────────────────────────────────────────────── */
+
+.jd-admin--bare {
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1rem;
+}
+.jd-admin-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--jd-muted);
+}
+.jd-admin-spinner {
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid var(--jd-line-strong);
+  border-top-color: var(--jd-live);
+  border-radius: 50%;
+  animation: jd-spin 0.8s linear infinite;
+}
+@keyframes jd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.jd-skeleton {
+  border-radius: var(--jd-radius);
+  background: linear-gradient(90deg, var(--jd-panel) 0%, var(--jd-raised) 50%, var(--jd-panel) 100%);
+  background-size: 200% 100%;
+  animation: jd-shimmer 1.4s ease-in-out infinite;
+}
+.jd-skeleton--scoreboard {
+  height: 26rem;
+}
+@keyframes jd-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jd-skeleton,
+  .jd-admin-spinner {
+    animation: none;
+  }
+}
+
+.jd-empty {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  max-width: 34rem;
+  padding: 2.5rem 0;
+}
+.jd-empty h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+.jd-empty p {
+  color: var(--jd-muted);
+}
+.jd-empty-icon {
+  color: var(--jd-live);
+}
+.jd-empty-note {
+  padding: 0.625rem 0.875rem;
+  border: 1px dashed var(--jd-line-strong);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.jd-admin .jd-page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ── Sign in ───────────────────────────────────────────────────────────── */
+
+.jd-signin {
+  width: 100%;
+  max-width: 25rem;
+}
+.jd-signin-panel {
+  padding: 2rem 1.75rem;
+  border: 1px solid var(--jd-line);
+  border-radius: 1rem;
+  background: var(--jd-panel);
+}
+.jd-signin-logo {
+  width: auto;
+  height: 2.5rem;
+  margin-bottom: 1.75rem;
+}
+.jd-signin h1 {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.jd-signin-lede {
+  margin-bottom: 1.25rem;
+  color: var(--jd-muted);
+}
+.jd-signin-lede strong {
+  color: var(--jd-text);
+}
+.jd-signin .jd-admin-notice {
+  margin: 0.5rem 0 1rem;
+}
+.jd-signin-submit {
+  width: 100%;
+  min-height: 2.875rem;
+  margin-top: 1.25rem;
+  font-size: 0.9375rem;
+}
+.jd-input--code {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  font-variant-numeric: tabular-nums;
+}
+.jd-signin-alt {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+/* ── Home: scoreboard ──────────────────────────────────────────────────── */
+
+.jd-home-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.jd-home-body.is-refreshing {
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+.jd-scoreboard {
+  padding: 1.75rem 1.75rem 1.25rem;
+  border: 1px solid var(--jd-line);
+  border-radius: 1rem;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(22, 201, 221, 0.07), transparent 60%),
+    var(--jd-panel);
+}
+.jd-scoreboard-figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem 2.5rem;
+  margin-bottom: 1.75rem;
+}
+.jd-scoreboard-value {
+  font-size: clamp(3.5rem, 11vw, 6.5rem);
+  font-weight: 800;
+  line-height: 0.9 !important;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.jd-scoreboard-label {
+  margin-top: 0.375rem;
+  color: var(--jd-muted);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.jd-change {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.jd-change--up {
+  background: var(--jd-live-soft);
+  color: var(--jd-live);
+}
+.jd-change--down {
+  background: var(--jd-pending-soft);
+  color: var(--jd-pending);
+}
+.jd-change--neutral {
+  background: var(--jd-raised);
+  color: var(--jd-muted);
+}
+.jd-scoreboard-side {
+  display: flex;
+  gap: 2rem;
+}
+.jd-scoreboard-side dt {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.jd-scoreboard-side dd {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.jd-scoreboard-empty {
+  padding: 2.5rem 1rem;
+  border: 1px dashed var(--jd-line-strong);
+  border-radius: var(--jd-radius);
+  color: var(--jd-muted);
+  text-align: center;
+}
+
+.jd-chart {
+  margin: 0;
+}
+.jd-chart-plot {
+  position: relative;
+  height: 15rem;
+  border-radius: 0.375rem;
+  touch-action: pan-y;
+}
+.jd-chart-plot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.jd-chart-grid {
+  stroke: var(--jd-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.jd-chart-line {
+  fill: none;
+  stroke: var(--jd-live);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.jd-chart-previous {
+  fill: none;
+  stroke: var(--jd-subtle);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  vector-effect: non-scaling-stroke;
+}
+.jd-chart-cursor {
+  stroke: var(--jd-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.jd-chart-tooltip {
+  position: absolute;
+  top: 0;
+  display: grid;
+  gap: 0.125rem;
+  min-width: 9.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: 0.5rem;
+  background: var(--jd-canvas);
+  box-shadow: var(--shadow-card);
+  font-size: 0.8125rem;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.jd-chart-tooltip[data-edge='start'] {
+  transform: none;
+}
+.jd-chart-tooltip[data-edge='end'] {
+  transform: translateX(-100%);
+}
+.jd-chart-tooltip strong {
+  font-size: 1rem;
+}
+.jd-chart-tooltip-muted {
+  color: var(--jd-muted);
+}
+.jd-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.625rem;
+  color: var(--jd-subtle);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.jd-chart-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.jd-chart-legend span::before {
+  content: '';
+  width: 1.25rem;
+  border-top: 2.5px solid var(--jd-live);
+}
+.jd-chart-legend .jd-legend-previous::before {
+  border-top: 1.5px dashed var(--jd-subtle);
+}
+
+.jd-home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+@media (max-width: 719px) {
+  .jd-home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jd-scoreboard {
+    padding: 1.25rem 1rem 1rem;
+  }
+  .jd-scoreboard-side dd {
+    font-size: 1.5rem;
+  }
+  .jd-chart-plot {
+    height: 11rem;
+  }
+}
+
+.jd-panel {
+  padding: 1.25rem;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+}
+.jd-admin .jd-panel-title {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.jd-panel-empty {
+  color: var(--jd-muted);
+}
+
+.jd-ranked {
+  display: grid;
+  gap: 0.375rem;
+}
+.jd-ranked-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  overflow: hidden;
+  border-radius: 0.375rem;
+}
+.jd-ranked-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--jd-live-soft);
+}
+.jd-ranked-label,
+.jd-ranked-count {
+  position: relative;
+  font-weight: 600;
+}
+.jd-ranked-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-ranked-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.jd-footnote {
+  margin-top: 1.25rem;
+  color: var(--jd-subtle);
+  font-size: 0.8125rem;
+}

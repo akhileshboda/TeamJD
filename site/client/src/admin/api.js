@@ -1,7 +1,8 @@
-// Media-manager API client. Every error message is shown to Jake as-is, so failures that
-// never reach the server (network drop, expired Cloudflare Access session) get one too.
+// Dashboard API client. Every error message is shown to Jake as-is, so failures
+// that never reach the server get a plain-English message too.
 
-const SESSION_MESSAGE = 'Your sign-in may have expired. Reload the page to sign in again.'
+export const SIGNED_OUT_EVENT = 'jd-admin:signed-out'
+const NETWORK_MESSAGE = 'Could not reach the server. Check your connection and try again.'
 const POLL_INTERVAL_MS = 1500
 const CHUNK_RETRIES = 3
 
@@ -15,18 +16,28 @@ export async function adminRequest(path, { method = 'GET', json, body, headers }
       body: json ? JSON.stringify(json) : body,
     })
   } catch {
-    // An expired Access session redirects cross-origin, which fetch reports as a network error.
-    throw new Error(SESSION_MESSAGE)
+    throw new Error(NETWORK_MESSAGE)
   }
 
+  if (response.status === 204) return null
   const data = await response.json().catch(() => null)
-  if (!response.ok || !data) {
-    const error = new Error(data?.error || SESSION_MESSAGE)
+  if (response.status === 401 && data?.code === 'SIGNED_OUT') {
+    window.dispatchEvent(new Event(SIGNED_OUT_EVENT))
+  }
+  if (!response.ok) {
+    const error = new Error(data?.error || 'Something went wrong. Please try again.')
     error.status = response.status
+    error.fields = data?.fields
     throw error
   }
   return data
 }
+
+export const getSession = () => adminRequest('/api/admin/auth/session')
+export const requestCode = (email) => adminRequest('/api/admin/auth/code', { method: 'POST', json: { email } })
+export const verifyCode = (email, code) => adminRequest('/api/admin/auth/verify', { method: 'POST', json: { email, code } })
+export const signOut = () => adminRequest('/api/admin/auth/logout', { method: 'POST' })
+export const getStats = (range) => adminRequest(`/api/admin/stats?range=${encodeURIComponent(range)}`)
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -46,8 +57,8 @@ async function sendChunk(uploadId, index, chunk) {
   }
 }
 
-export async function uploadMedia(slotId, file, { onProgress = () => {} } = {}) {
-  const { uploadId, chunkBytes } = await adminRequest(`/api/admin/slots/${slotId}/uploads`, {
+export async function uploadMedia(startPath, file, { onProgress = () => {} } = {}) {
+  const { uploadId, chunkBytes } = await adminRequest(startPath, {
     method: 'POST',
     json: { fileName: file.name, size: file.size },
   })

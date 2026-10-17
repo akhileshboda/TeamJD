@@ -8,6 +8,8 @@ const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
 const { createAdminRouter } = require('./routes/admin');
+const { createAdminAuthRouter } = require('./routes/adminAuth');
+const { createAnalyticsRouter } = require('./routes/analytics');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { securityHeaders } = require('./middleware/securityHeaders');
@@ -54,7 +56,7 @@ const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
 const staticErrorPages = new Set(['/404.html', '/500.html', '/503.html', '/offline.html']);
-const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy', '/admin']);
+const spaRoutes = new Set(['/', '/about', '/services', '/results', '/contact', '/privacy']);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(generatedAssetsDir, { recursive: true });
@@ -132,7 +134,8 @@ function shouldServeSpaShell(req) {
     return true;
   }
 
-  return /^\/services\/[^/]+$/.test(normalizedPath);
+  // /admin and every dashboard route under it are client-side routes.
+  return /^\/services\/[^/]+$/.test(normalizedPath) || /^\/admin(\/[a-z0-9\-/]*)?$/i.test(normalizedPath);
 }
 
 function sendStaticErrorPage(res, statusCode, fileName, fallbackMessage) {
@@ -215,7 +218,8 @@ app.get('/healthz', (req, res) => {
   });
 });
 app.use(visitLogger);
-app.use(maintenanceMode);
+// Session runs before the maintenance gate so signed-in admins can see the real
+// site behind it (dashboard previews, pre-launch checks).
 app.use(
   session({
     store: new SQLiteStore({
@@ -237,9 +241,12 @@ app.use(
     }
   })
 );
+app.use(maintenanceMode);
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/enquiries', enquiriesRouter);
+app.use('/api/analytics', createAnalyticsRouter());
+app.use('/api/admin/auth', createAdminAuthRouter());
 app.use('/api/admin', createAdminRouter());
 // Known API families above have stricter independent budgets. This governs any
 // remaining or future /api route, including unknown paths.

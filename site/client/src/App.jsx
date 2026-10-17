@@ -10,19 +10,19 @@ const Results = lazy(() => import('./pages/Results'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Privacy = lazy(() => import('./pages/Privacy'))
 const NotFound = lazy(() => import('./pages/NotFound'))
-const Admin = lazy(() => import('./pages/Admin'))
+const AdminApp = lazy(() => import('./admin/AdminApp'))
 
 export default function App() {
   const loading = <div className="route-loading" role="status">Loading page&hellip;</div>
 
   return (
     <Routes>
-      {/* The media manager is Jake's tool, not a site page: no site nav, footer or funnels. */}
+      {/* Jake's dashboard is a tool, not a site page: no site nav, footer or funnels. */}
       <Route
-        path="/admin"
+        path="/admin/*"
         element={
           <Suspense fallback={loading}>
-            <Admin />
+            <AdminApp />
           </Suspense>
         }
       />
