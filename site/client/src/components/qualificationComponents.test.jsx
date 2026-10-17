@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import FindYourFitLink from './FindYourFitLink'
 import ServiceFinder from './ServiceFinder'
 import ServiceFinderBanner from './ServiceFinderBanner'

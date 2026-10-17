@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import ServiceDetailHero from './ServiceDetailHero'
 import {
   FIND_YOUR_FIT_SESSION_KEY,

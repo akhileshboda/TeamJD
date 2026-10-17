@@ -77,6 +77,8 @@ const OPERATIONS = {
     touchRecord(record, user, now);
   },
   unpublish(data, name, record, user, now) {
+    const def = collectionDef(name);
+    if (def.canHide === false) throw new CmsError(405, `A ${def.label} cannot be hidden here.`);
     record.published = null;
     record.hiddenAt = now;
     touchRecord(record, user, now);
@@ -262,7 +264,8 @@ function createCmsStore(options = {}) {
         if (record.rev !== rev) {
           throw new CmsError(409, 'This was changed in another tab or window. Reload to see the latest version.');
         }
-        record.draft = def.normalizeDraft(draft);
+        // The current draft lets a collection keep fields Jake cannot change.
+        record.draft = def.normalizeDraft(draft, record.draft);
         touchRecord(record, user, at);
         return withStatus(record);
       });
@@ -368,8 +371,8 @@ function createCmsStore(options = {}) {
       const def = collectionDef(name);
       return read((source) => {
         const data = structuredClone(source);
-        const normalized = def.normalizeDraft(draft);
         let record = id ? data.collections[name].find((item) => item.id === String(id)) : null;
+        const normalized = def.normalizeDraft(draft, record?.draft);
         if (!record) {
           const firstOrder = Math.min(1, ...data.collections[name].map((item) => item.order));
           record = { id: id ? String(id) : 'preview', order: firstOrder - 1, rev: 0 };

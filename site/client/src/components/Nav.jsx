@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import FindYourFitLink from './FindYourFitLink'
 /* R2 logo-hover reframed to the same canvas/content box as R2 logo (no size jump on swap) */
 import logoHoverNav from '../assets/logo-hover-nav.webp'
@@ -39,7 +39,7 @@ export default function Nav() {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
   const location = useLocation()
-  const { data: servicesData } = useJSON('/content/services.json')
+  const { data: servicesData } = useContent('services')
   const services = servicesData || FALLBACK_SERVICES
 
   const isServicesRoute =

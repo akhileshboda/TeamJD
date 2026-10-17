@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import ServiceVenue from './ServiceVenue'
 
 const personalTraining = services.find((service) => service.slug === 'personal-training')

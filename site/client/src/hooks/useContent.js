@@ -66,7 +66,7 @@ export function usePreviewOverride(name) {
   return overrides.get(name)
 }
 
-// Same { data, loading, error } shape as useJSON, so pages can switch over as-is.
+// Returns { data, loading, error }, like a plain fetch hook.
 export function useContent(collection) {
   const [state, setState] = useState({ data: null, loading: true, error: null })
   const override = usePreviewOverride(collection)

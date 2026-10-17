@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import {
   evaluateFinder,
   getFinderQuestions,

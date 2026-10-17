@@ -21,6 +21,8 @@ export default function RecordEditor({
   previewNote,
   renderFields,
   renderAside,
+  canHide = true,
+  canDelete = true,
 }) {
   const navigate = useNavigate()
   const [record, setRecord] = useState(null)
@@ -223,16 +225,18 @@ export default function RecordEditor({
           {renderFields({ draft, update, errors, record })}
           {renderAside?.({ draft, record })}
           <div className="jd-danger-zone">
-            {isLive && (
+            {canHide && isLive && (
               <button type="button" className="jd-admin-button" disabled={busy} onClick={() => setConfirm('unpublish')}>
                 <JourneyIcon name="eyeOff" size={16} />
                 Hide from site
               </button>
             )}
-            <button type="button" className="jd-admin-button jd-admin-button--danger" disabled={busy} onClick={() => setConfirm('delete')}>
-              <JourneyIcon name="trash" size={16} />
-              Delete {noun}
-            </button>
+            {canDelete && (
+              <button type="button" className="jd-admin-button jd-admin-button--danger" disabled={busy} onClick={() => setConfirm('delete')}>
+                <JourneyIcon name="trash" size={16} />
+                Delete {noun}
+              </button>
+            )}
           </div>
         </div>
         <div className="jd-editor-preview">

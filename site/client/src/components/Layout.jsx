@@ -3,11 +3,11 @@ import Footer from './Footer'
 import ScrollToTop from './ScrollToTop'
 import PageViewTracker from './PageViewTracker'
 import ServiceFinder from './ServiceFinder'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import { FindYourFitSessionProvider } from '../context/FindYourFitSession'
 
 export default function Layout({ children }) {
-  const { data: services, loading, error } = useJSON('/content/services.json')
+  const { data: services, loading, error } = useContent('services')
 
   return (
     <FindYourFitSessionProvider>

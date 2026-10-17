@@ -17,7 +17,6 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',
-      '/content': 'http://localhost:3000',
       // Generated image cache lives in public/assets/generated and is served by
       // Express. Without this, vite returns its SPA index.html for image URLs.
       '/assets': 'http://localhost:3000',

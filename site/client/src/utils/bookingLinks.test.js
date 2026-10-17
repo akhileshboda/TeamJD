@@ -39,7 +39,7 @@ describe('global booking entry points', () => {
   })
 
   it('keeps exactly one service-specific destination per service', () => {
-    const servicesPath = resolve(process.cwd(), '../public/content/services.json')
+    const servicesPath = resolve(process.cwd(), '../server/seed/services.json')
     const services = JSON.parse(readFileSync(servicesPath, 'utf8'))
 
     expect(services).toHaveLength(4)
@@ -49,7 +49,7 @@ describe('global booking entry points', () => {
 })
 
 function loadServices() {
-  return JSON.parse(readFileSync(resolve(process.cwd(), '../public/content/services.json'), 'utf8'))
+  return JSON.parse(readFileSync(resolve(process.cwd(), '../server/seed/services.json'), 'utf8'))
 }
 
 describe('application destinations', () => {

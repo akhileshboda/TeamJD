@@ -7,8 +7,7 @@ const path = require('path');
 // Slot ids are referenced verbatim by client components (see mediaSlots.test.js,
 // which checks the two stay in step).
 
-const ROOT = path.join(__dirname, '..', '..');
-const SERVICES_PATH = path.join(ROOT, 'public', 'content', 'services.json');
+const SEED_SERVICES = path.join(__dirname, '..', 'seed', 'services.json');
 
 const PORTRAIT = { hint: 'Portrait photo, at least 1200 × 1500 px', minWidth: 1200 };
 const LANDSCAPE = { hint: 'Landscape photo, at least 1920 × 1080 px', minWidth: 1600 };
@@ -65,13 +64,16 @@ function serviceSlots(service) {
   ];
 }
 
-async function listSlotDefinitions() {
-  const services = JSON.parse(await fs.readFile(SERVICES_PATH, 'utf8'));
-  return [...STATIC_SLOTS, ...services.flatMap(serviceSlots)];
+// `services` is the live list from the content store; the seed file stands in
+// where there is no store (tests, scripts). Slot ids and defaults come from fields
+// the dashboard locks, so both give the same spots.
+async function listSlotDefinitions(services) {
+  const list = services || JSON.parse(await fs.readFile(SEED_SERVICES, 'utf8'));
+  return [...STATIC_SLOTS, ...list.flatMap(serviceSlots)];
 }
 
-async function getSlotDefinition(slotId) {
-  return (await listSlotDefinitions()).find((slot) => slot.id === slotId) || null;
+async function getSlotDefinition(slotId, services) {
+  return (await listSlotDefinitions(services)).find((slot) => slot.id === slotId) || null;
 }
 
 module.exports = {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import ServiceBookingCard from './ServiceBookingCard'
 
 const getService = (slug) => services.find((service) => service.slug === slug)

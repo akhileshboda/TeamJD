@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useJSON } from '../../hooks/useJSON'
+import { useContent } from '../../hooks/useContent'
 import { getStats } from '../api'
 import VisitsChart from '../components/VisitsChart'
 
@@ -71,7 +71,7 @@ export default function HomeStats() {
   const range = RANGES.some((item) => item.value === searchParams.get('range')) ? searchParams.get('range') : '30d'
   const setRange = (value) => setSearchParams(value === '30d' ? {} : { range: value }, { replace: true })
   const [state, setState] = useState({ status: 'loading' })
-  const { data: services } = useJSON('/content/services.json')
+  const { data: services } = useContent('services')
 
   useEffect(() => {
     let cancelled = false

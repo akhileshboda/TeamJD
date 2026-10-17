@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import services from '../../../public/content/services.json'
+import services from '../../../server/seed/services.json'
 import { CONSULTATION_PRICING_COPY } from '../utils/servicePricing'
 import CompetitionPrepAccessGate from './CompetitionPrepAccessGate'
 import ServiceReadinessGate from './ServiceReadinessGate'

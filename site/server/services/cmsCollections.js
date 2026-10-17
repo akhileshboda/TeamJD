@@ -1,4 +1,5 @@
 const path = require('path');
+const services = require('./cmsServiceCollections');
 
 // What each dashboard collection is: how a draft is cleaned on save, what must
 // be true before it can go live, what the public site receives, how a list row
@@ -289,7 +290,9 @@ function seedTestimonials({ now, seedDir = SEED_DIR }) {
 // Public outputs the site reads, built from live records only.
 const PUBLIC_OUTPUTS = {
   results: (data, sortedLive) => sortedLive('results').map((record) => toPublicResult(record, data)),
-  slots: (data) => publicSlots(data)
+  slots: (data) => publicSlots(data),
+  services: services.publicServices,
+  faqs: services.publicFaqs
 };
 
 const COLLECTIONS = {
@@ -311,6 +314,27 @@ const COLLECTIONS = {
     usage: testimonialUsage,
     onDelete: (data, record, touch) => unlinkTestimonial(data, record.id, touch),
     seed: seedTestimonials
+  },
+  services: {
+    label: 'service',
+    publicCollection: 'services',
+    // Service ids and links are hard-coded elsewhere on the site, so the four
+    // services always exist and stay live.
+    canCreate: false,
+    canDelete: false,
+    canHide: false,
+    normalizeDraft: services.normalizeService,
+    validateForPublish: services.validateService,
+    summarize: services.summarizeService,
+    seed: (options) => services.seedServices({ ...options, seedRecord })
+  },
+  faqs: {
+    label: 'question',
+    publicCollection: 'faqs',
+    normalizeDraft: services.normalizeFaq,
+    validateForPublish: services.validateFaq,
+    summarize: services.summarizeFaq,
+    seed: (options) => services.seedFaqs({ ...options, seedRecord })
   },
   placements: {
     label: 'photo spot',

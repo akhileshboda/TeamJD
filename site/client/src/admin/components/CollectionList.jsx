@@ -84,6 +84,8 @@ export default function CollectionList({
   filters = [],
   emptyText,
   reorderHint,
+  canHide = true,
+  canDelete = true,
 }) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -248,8 +250,8 @@ export default function CollectionList({
           <p><strong>{selected.size}</strong> selected</p>
           <div className="jd-bulk-actions">
             <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('publish')}>Publish</button>
-            <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('unpublish')}>Hide</button>
-            <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--danger" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete</button>
+            {canHide && <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('unpublish')}>Hide</button>}
+            {canDelete && <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--danger" disabled={busy} onClick={() => setConfirmDelete(true)}>Delete</button>}
             <button type="button" className="jd-link-button" onClick={() => setSelected(new Set())}>Clear</button>
           </div>
         </div>

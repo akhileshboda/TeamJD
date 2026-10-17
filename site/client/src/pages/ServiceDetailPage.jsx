@@ -11,7 +11,7 @@ import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import ServiceVenue from '../components/ServiceVenue'
 import StickyBookBar from '../components/StickyBookBar'
-import { useJSON } from '../hooks/useJSON'
+import { useContent } from '../hooks/useContent'
 import { useAssets, useMedia } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { resolveServiceAction } from '../utils/bookingLinks'
@@ -24,7 +24,7 @@ const inclusionGroups = [
 
 export default function ServiceDetailPage() {
   const { slug } = useParams()
-  const { data: services } = useJSON('/content/services.json')
+  const { data: services } = useContent('services')
   const resolveAsset = useAssets()
   const media = useMedia()
   const { canViewCompetitionPrep } = useFindYourFitSession()

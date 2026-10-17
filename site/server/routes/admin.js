@@ -56,7 +56,7 @@ function createAdminRouter(options = {}) {
 
   router.get('/placements', handle(async () => {
     const [definitions, data, manifest] = await Promise.all([
-      mediaSlots.listSlotDefinitions(),
+      store.getPublic('services').then((services) => mediaSlots.listSlotDefinitions(services)),
       store.read((current) => current),
       getAssetManifest().catch(() => ({ assets: {} }))
     ]);
@@ -76,7 +76,7 @@ function createAdminRouter(options = {}) {
   }));
 
   router.put('/placements/:slotId', parseJson, handle(async (req) => {
-    const slot = await mediaSlots.getSlotDefinition(req.params.slotId);
+    const slot = await mediaSlots.getSlotDefinition(req.params.slotId, await store.getPublic('services'));
     if (!slot) throw failure(404, 'That photo spot does not exist.');
     const draft = { assetId: req.body?.assetId || null, alt: req.body?.alt || '' };
     if (draft.assetId) {

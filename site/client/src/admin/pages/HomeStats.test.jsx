@@ -3,8 +3,8 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import HomeStats, { changeLabel, pageLabel } from './HomeStats'
 
-vi.mock('../../hooks/useJSON', () => ({
-  useJSON: () => ({ data: [{ slug: 'posing-only', name: 'Posing' }], loading: false, error: null }),
+vi.mock('../../hooks/useContent', () => ({
+  useContent: () => ({ data: [{ slug: 'posing-only', name: 'Posing' }], loading: false, error: null }),
 }))
 
 function stats(overrides = {}) {

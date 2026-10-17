@@ -9,6 +9,8 @@ const ResultsSection = lazy(() => import('./sections/ResultsSection'))
 const TestimonialsSection = lazy(() => import('./sections/TestimonialsSection'))
 const PagesSection = lazy(() => import('./sections/PagesSection'))
 const MediaSection = lazy(() => import('./sections/MediaSection'))
+const ServicesSection = lazy(() => import('./sections/ServicesSection'))
+const FaqsSection = lazy(() => import('./sections/FaqsSection'))
 
 export const SECTIONS = [
   { id: 'home', path: '', label: 'Home', icon: 'home', element: HomeStats },
@@ -44,6 +46,7 @@ export const SECTIONS = [
     label: 'Services & prices',
     icon: 'tag',
     group: 'Content',
+    element: ServicesSection,
     summary: 'Update what each service includes, its prices and its booking link.',
   },
   {
@@ -52,6 +55,7 @@ export const SECTIONS = [
     label: 'FAQs',
     icon: 'help',
     group: 'Content',
+    element: FaqsSection,
     summary: 'Answer the questions people ask before they book.',
   },
   {
