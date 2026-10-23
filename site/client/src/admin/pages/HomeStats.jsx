@@ -38,28 +38,35 @@ export function changeLabel(current, previous) {
   }
 }
 
-function RankedList({ title, items, total, label }) {
+// `itemHeading` names what is ranked ("Page"); `label` what is counted ("views").
+function RankedList({ title, itemHeading, items, total, label }) {
   return (
     <section className="jd-panel">
       <h2 className="jd-panel-title">{title}</h2>
       {items.length === 0 ? (
         <p className="jd-panel-empty">Nothing yet.</p>
       ) : (
-        <ol className="jd-ranked">
-          {items.map((item) => {
-            const share = total ? item.count / total : 0
-            return (
-              <li key={item.key} className="jd-ranked-row">
-                <span className="jd-ranked-bar" style={{ width: `${Math.max(4, share * 100)}%` }} aria-hidden="true" />
-                <span className="jd-ranked-label">{item.label}</span>
-                <span className="jd-ranked-count">
-                  {number.format(item.count)}
-                  <span className="visually-hidden"> {label}</span>
-                </span>
-              </li>
-            )
-          })}
-        </ol>
+        <>
+          <p className="jd-ranked-head" aria-hidden="true">
+            <span>{itemHeading}</span>
+            <span>{label.charAt(0).toUpperCase() + label.slice(1)}</span>
+          </p>
+          <ol className="jd-ranked">
+            {items.map((item) => {
+              const share = total ? item.count / total : 0
+              return (
+                <li key={item.key} className="jd-ranked-row">
+                  <span className="jd-ranked-bar" style={{ width: `${Math.max(4, share * 100)}%` }} aria-hidden="true" />
+                  <span className="jd-ranked-label">{item.label}</span>
+                  <span className="jd-ranked-count">
+                    {number.format(item.count)}
+                    <span className="visually-hidden"> {label}</span>
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
+        </>
       )}
     </section>
   )
@@ -148,12 +155,14 @@ export default function HomeStats() {
           <div className="jd-home-grid">
             <RankedList
               title="Most viewed pages"
+              itemHeading="Page"
               label="views"
               total={stats.current.pageViews}
               items={stats.topPages.map((item) => ({ key: item.path, label: pageLabel(item.path, services || []), count: item.count }))}
             />
             <RankedList
               title="Where visitors came from"
+              itemHeading="Source"
               label="visits"
               total={stats.current.visits}
               items={stats.sources.map((item) => ({ key: item.source, label: item.source, count: item.count }))}

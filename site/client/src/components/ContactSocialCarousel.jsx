@@ -89,6 +89,8 @@ export default function ContactSocialCarousel({ posts = [] }) {
         <img
           src={post.src || resolveAsset(`/api/assets/${post.asset}`)}
           alt={duplicate ? '' : post.alt}
+          style={post.style}
+          data-cms-section={duplicate ? undefined : post.section}
           loading="lazy"
           decoding="async"
           width="1080"

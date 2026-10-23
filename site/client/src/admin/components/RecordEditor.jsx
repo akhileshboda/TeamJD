@@ -1,15 +1,40 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { applyAction, deleteItem, getItem, previewItem, saveDraft, SIGNED_IN_EVENT } from '../api'
+import { focusFirstError, PreviewSectionContext } from './fields'
 import PreviewFrame from './PreviewFrame'
-import { ConfirmDialog, StatusChip, timeAgo } from './ui'
+import { useToast } from './Toasts'
+import { ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, StatusChips, timeAgo } from './ui'
 
 const SAVE_DELAY_MS = 800
-const PREVIEW_DELAY_MS = 350
+const PREVIEW_DELAY_MS = 200
+
+const STATE_TEXT = {
+  published: 'Live.',
+  changed: 'Live, with unpublished changes.',
+  draft: 'Offline.',
+  hidden: 'Offline.',
+}
+
+// "a", "a and b", "a, b and c"
+function listPlaces(places) {
+  return places.length > 1 ? `${places.slice(0, -1).join(', ')} and ${places.at(-1)}` : places[0]
+}
+
+// Where the item appears on the site, said for its current state. The switch
+// sentence only applies to items that can be taken offline.
+function whereText(places, live, canHide) {
+  if (!places?.length) return ''
+  if (live || !canHide) return `Shows on ${listPlaces(places)}.`
+  return `Switch on Live to show it on ${listPlaces(places)}.`
+}
 
 // One record of a collection: a form on the left, the real page on the right.
-// Every change autosaves as a draft; nothing reaches the site until Publish.
+// Every change autosaves. The Live switch puts the item on the site or takes it
+// offline; while it is live, edits wait as unpublished changes until Publish
+// changes.
+// `siteLocation(draft)` lists the places on the site the item shows.
 export default function RecordEditor({
   collection,
   id,
@@ -19,22 +44,28 @@ export default function RecordEditor({
   titleOf,
   previewPath,
   previewNote,
+  siteLocation,
   renderFields,
   renderAside,
   canHide = true,
   canDelete = true,
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const toast = useToast()
+  const notify = useCallback((message) => toast({ ...message, scope: `editor:${collection}:${id}` }), [toast, collection, id])
   const [record, setRecord] = useState(null)
   const [draft, setDraft] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [saveState, setSaveState] = useState('saved')
-  const [errors, setErrors] = useState({})
-  const [banner, setBanner] = useState(null)
+  // The list's switch can send Jake here with the fields it found missing.
+  const [errors, setErrors] = useState(() => location.state?.fieldErrors || {})
   const [preview, setPreview] = useState(null)
   const [confirm, setConfirm] = useState(null)
-  const [busy, setBusy] = useState(false)
+  // The action running (publish, unpublish, discard, delete), or ''.
+  const [busy, setBusy] = useState('')
   const [mobileView, setMobileView] = useState('edit')
+  const [section, setSection] = useState(null)
 
   const revRef = useRef(0)
   const draftRef = useRef(null)
@@ -43,6 +74,14 @@ export default function RecordEditor({
   const saveTimer = useRef(null)
   const previewTimer = useRef(null)
   const formRef = useRef(null)
+  const bodyRef = useRef(null)
+
+  // A conflict (changed in another tab) can only be fixed by reloading.
+  const notifyFailure = useCallback((error) => notify({
+    tone: 'error',
+    text: error.message,
+    action: error.status === 409 ? { label: 'Reload', onClick: () => window.location.reload() } : undefined,
+  }), [notify])
 
   const refreshPreview = useCallback((nextDraft) => {
     clearTimeout(previewTimer.current)
@@ -61,6 +100,7 @@ export default function RecordEditor({
         setRecord(loaded)
         setDraft(loaded.draft)
         refreshPreview(loaded.draft)
+        requestAnimationFrame(() => focusFirstError(formRef.current))
       })
       .catch((error) => !cancelled && setLoadError(error.message))
     return () => {
@@ -89,12 +129,12 @@ export default function RecordEditor({
       dirty.current = true
       // A conflict needs a reload; anything else retries on the next edit.
       setSaveState(error.status === 409 ? 'conflict' : 'error')
-      setBanner({ tone: 'error', text: error.message, reload: error.status === 409 })
+      notifyFailure(error)
       throw error
     } finally {
       saving.current = null
     }
-  }, [collection, id])
+  }, [collection, id, notifyFailure])
 
   useEffect(() => {
     if (saveState !== 'unsaved') return undefined
@@ -141,12 +181,19 @@ export default function RecordEditor({
   const showFieldErrors = (fields) => {
     setErrors(fields)
     setMobileView('edit')
-    requestAnimationFrame(() => formRef.current?.querySelector('[aria-invalid="true"]')?.focus())
+    requestAnimationFrame(() => focusFirstError(formRef.current))
+  }
+
+  // Phones switch between the form and the preview; bring the switched-to pane
+  // to the top so the preview gets the whole screen.
+  const showMobileView = (view) => {
+    setMobileView(view)
+    requestAnimationFrame(() => bodyRef.current?.scrollIntoView({ block: 'start' }))
   }
 
   const run = async (action) => {
-    setBusy(true)
-    setBanner(null)
+    const wasLive = Boolean(record.published)
+    setBusy(action)
     try {
       await flush()
       const updated = await applyAction(collection, id, action, revRef.current)
@@ -156,26 +203,30 @@ export default function RecordEditor({
       setDraft(updated.draft)
       setErrors({})
       refreshPreview(updated.draft)
-      const messages = { publish: 'Published. It is live on the site now.', unpublish: 'Hidden from the site.', discard: 'Changes discarded.' }
-      setBanner({ tone: 'notice', text: messages[action] })
+      const messages = {
+        publish: wasLive ? 'Changes published. They are live now.' : 'Live now.',
+        unpublish: 'Offline now. Your edits are kept, and going live again publishes them.',
+        discard: 'Changes discarded. This is what is live.',
+      }
+      notify({ tone: 'notice', text: messages[action] })
     } catch (error) {
       if (error.fields) showFieldErrors(error.fields)
-      setBanner({ tone: 'error', text: error.message, reload: error.status === 409 })
+      notifyFailure(error)
     } finally {
-      setBusy(false)
+      setBusy('')
       setConfirm(null)
     }
   }
 
   const remove = async () => {
-    setBusy(true)
+    setBusy('delete')
     try {
       clearTimeout(saveTimer.current)
       await deleteItem(collection, id)
       navigate(backTo, { replace: true })
     } catch (error) {
-      setBanner({ tone: 'error', text: error.message })
-      setBusy(false)
+      notify({ tone: 'error', text: error.message })
+      setBusy('')
       setConfirm(null)
     }
   }
@@ -192,8 +243,8 @@ export default function RecordEditor({
   if (!record || !draft) return <div className="jd-skeleton jd-skeleton--editor" role="status" aria-label="Loading" />
 
   const status = saveState === 'saved' ? record.status : (record.published ? 'changed' : record.status)
-  const isLive = Boolean(record.published)
-  const hasChanges = status === 'changed' || status === 'draft' || status === 'hidden'
+  const live = isLive(status)
+  const working = Boolean(busy)
   const saveText = {
     saving: 'Saving…',
     unsaved: 'Saving…',
@@ -201,9 +252,10 @@ export default function RecordEditor({
     conflict: 'Not saved',
     saved: `Saved ${timeAgo(record.updatedAt)}`,
   }[saveState]
-  const liveText = status === 'published'
-    ? 'Everything here is live.'
-    : isLive ? 'Your changes are not live yet.' : 'Not on the site yet.'
+  // Items that cannot be taken offline (services) are always live, so they only
+  // ever need Publish changes.
+  const changesWaiting = hasUnpublishedChanges(status)
+  const showPublish = canHide ? changesWaiting : true
   const path = previewPath?.(draft, record)
 
   return (
@@ -215,77 +267,68 @@ export default function RecordEditor({
         </Link>
         <div className="jd-editor-title-row">
           <h1 className="jd-page-title">{titleOf(draft)}</h1>
-          <StatusChip status={status} />
+          <StatusChips status={status} />
         </div>
       </div>
 
-      {banner && (
-        <div className={banner.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role={banner.tone === 'error' ? 'alert' : 'status'}>
-          {banner.text}
-          {banner.reload && (
-            <button type="button" className="jd-link-button jd-banner-action" onClick={() => window.location.reload()}>
-              Reload
+      {/* Before the preview in the page order, so keyboard users reach it without
+          tabbing through the whole site in the preview. On phones it is fixed to
+          the bottom of the screen. */}
+      <div className="jd-publish-bar" role="region" aria-label="Publishing">
+        <div className="jd-publish-bar-status">
+          {canHide
+            ? <LiveSwitch on={live} busy={working} onChange={(on) => run(on ? 'publish' : 'unpublish')} />
+            : <span className={`jd-dot jd-dot--${status === 'published' ? 'live' : 'pending'}`} aria-hidden="true" />}
+          <p className="jd-publish-bar-text">
+            <strong>{STATE_TEXT[status]}</strong>
+            <span className="jd-publish-bar-where">{whereText(siteLocation?.(draft), live, canHide)}</span>
+            <span className="jd-publish-bar-save">{saveText}</span>
+          </p>
+        </div>
+        <div className="jd-publish-bar-actions">
+          {changesWaiting && (
+            <button type="button" className="jd-admin-button jd-admin-button--quiet" disabled={working} onClick={() => setConfirm('discard')}>
+              <span>Discard<span className="jd-publish-bar-long"> changes</span></span>
+            </button>
+          )}
+          {showPublish && (
+            <button
+              type="button"
+              className="jd-admin-button jd-admin-button--primary"
+              disabled={working || !changesWaiting}
+              onClick={() => run('publish')}
+            >
+              {busy === 'publish' ? 'Publishing…' : 'Publish changes'}
             </button>
           )}
         </div>
-      )}
+      </div>
 
       <div className="jd-segmented jd-editor-switch" role="group" aria-label="Show">
-        <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => setMobileView('edit')}>Edit</button>
-        <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => setMobileView('preview')}>Preview</button>
+        <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => showMobileView('edit')}>Edit</button>
+        <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => showMobileView('preview')}>Preview</button>
       </div>
 
-      {/* Before the preview in the page order, so keyboard users reach Publish
-          without tabbing through the whole site in the preview. It is fixed to the
-          bottom of the screen, so this does not move it visually. */}
-      <div className="jd-publish-bar" role="region" aria-label="Publishing">
-        <p className="jd-publish-bar-status">
-          <span className={`jd-dot jd-dot--${status === 'published' ? 'live' : 'pending'}`} aria-hidden="true" />
-          <span>
-            <strong>{liveText}</strong>
-            <span className="jd-publish-bar-save">{saveText}</span>
-          </span>
-        </p>
-        <div className="jd-publish-bar-actions">
-          {isLive && status === 'changed' && (
-            <button type="button" className="jd-admin-button jd-admin-button--quiet" disabled={busy} onClick={() => setConfirm('discard')}>
-              Discard changes
-            </button>
-          )}
-          <button
-            type="button"
-            className="jd-admin-button jd-admin-button--primary"
-            disabled={busy || !hasChanges}
-            onClick={() => run('publish')}
-          >
-            {busy ? 'Publishing…' : 'Publish'}
-          </button>
-        </div>
-      </div>
-
-      <div className={`jd-editor-body is-showing-${mobileView}`}>
+      <div ref={bodyRef} className={`jd-editor-body is-showing-${mobileView}`}>
         <div className="jd-editor-form" ref={formRef}>
-          {renderFields({ draft, update, errors, record })}
+          <PreviewSectionContext.Provider value={setSection}>
+            {renderFields({ draft, update, errors, record })}
+          </PreviewSectionContext.Provider>
           {renderAside?.({ draft, record })}
-          <div className="jd-danger-zone">
-            {canHide && isLive && (
-              <button type="button" className="jd-admin-button" disabled={busy} onClick={() => setConfirm('unpublish')}>
-                <JourneyIcon name="eyeOff" size={16} />
-                Hide from site
-              </button>
-            )}
-            {canDelete && (
-              <button type="button" className="jd-admin-button jd-admin-button--danger" disabled={busy} onClick={() => setConfirm('delete')}>
+          {canDelete && (
+            <div className="jd-danger-zone">
+              <button type="button" className="jd-admin-button jd-admin-button--danger" disabled={working} onClick={() => setConfirm('delete')}>
                 <JourneyIcon name="trash" size={16} />
                 Delete {noun}
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className="jd-editor-preview">
           <PreviewFrame
             path={path}
             collections={preview}
+            section={section}
             title="Live preview"
             note={path ? previewNote : previewNote || 'This is not shown anywhere on the site yet.'}
           />
@@ -293,19 +336,13 @@ export default function RecordEditor({
       </div>
 
       {confirm === 'discard' && (
-        <ConfirmDialog title="Discard your changes?" confirmLabel="Discard changes" tone="danger" busy={busy}
+        <ConfirmDialog title="Discard your changes?" confirmLabel="Discard changes" tone="danger" busy={working}
           onConfirm={() => run('discard')} onCancel={() => setConfirm(null)}>
           <p>This goes back to the version that is live on the site now. Your unpublished edits are lost.</p>
         </ConfirmDialog>
       )}
-      {confirm === 'unpublish' && (
-        <ConfirmDialog title={`Hide this ${noun}?`} confirmLabel="Hide from site" busy={busy}
-          onConfirm={() => run('unpublish')} onCancel={() => setConfirm(null)}>
-          <p>It comes off the site straight away. It stays here, and you can publish it again at any time.</p>
-        </ConfirmDialog>
-      )}
       {confirm === 'delete' && (
-        <ConfirmDialog title={`Delete this ${noun}?`} confirmLabel={`Delete ${noun}`} tone="danger" busy={busy}
+        <ConfirmDialog title={`Delete this ${noun}?`} confirmLabel={`Delete ${noun}`} tone="danger" busy={working}
           onConfirm={remove} onCancel={() => setConfirm(null)}>
           <p>It is removed from the site and from your dashboard. This cannot be undone.</p>
         </ConfirmDialog>

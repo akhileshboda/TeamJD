@@ -15,6 +15,7 @@ function FaqEditor() {
       titleOf={(draft) => draft.question || 'New question'}
       previewPath={() => '/'}
       previewNote="FAQs are near the bottom of the Home page."
+      siteLocation={() => ['the Home page']}
       renderFields={({ draft, update, errors }) => (
         <FormSection title="Question">
           <TextField label="Question" required value={draft.question} maxLength={300} error={errors.question}

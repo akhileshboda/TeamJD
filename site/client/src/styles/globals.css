@@ -785,6 +785,24 @@ p  { line-height: 1.7; color: var(--color-text); }
   font-size: 0.875rem;
 }
 
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+.footer-legal a {
+  color: #a3a3a3;
+  font-size: 0.875rem;
+  transition: color 150ms ease;
+}
+
+.footer-legal a:hover,
+.footer-legal a:focus-visible {
+  color: var(--color-text);
+}
+
 /* ── Hero ───────────────────────────────────────────────────── */
 .hero {
   position: relative;
@@ -1371,6 +1389,121 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .lightbox-close:focus-visible {
   outline: 2px solid var(--color-accent);
+}
+
+/* ── Auth Gate (staging sign-in overlay) ────────────────────── */
+/* Wraps the app without affecting its layout; only there to be made inert. */
+.auth-gate-site {
+  display: contents;
+}
+
+.auth-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background-color: rgba(13, 13, 13, 0.62);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+.auth-gate-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-8) var(--space-6);
+  background-color: rgba(26, 26, 26, 0.82);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+}
+
+.auth-gate-logo {
+  height: 2.6rem;
+  width: auto;
+  margin-bottom: var(--space-1);
+}
+
+.auth-gate-caption {
+  margin-top: calc(-1 * var(--space-2));
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.auth-gate-checking {
+  padding: var(--space-2) 0 var(--space-4);
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.auth-gate-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.auth-gate-field span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.auth-gate-field input {
+  width: 100%;
+  padding: 0.75rem var(--space-4);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--color-text);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.auth-gate-field input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}
+
+.auth-gate-field input:disabled {
+  opacity: 0.6;
+}
+
+/* Keep autofilled inputs on-theme (override the browser's light background). */
+.auth-gate-field input:-webkit-autofill,
+.auth-gate-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface-2) inset;
+  caret-color: var(--color-text);
+}
+
+.auth-gate-error {
+  margin-top: calc(-1 * var(--space-1));
+  color: var(--color-hover-accent);
+  font-size: 0.875rem;
+}
+
+.auth-gate-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-1);
 }
 
 /* ── Includes List ──────────────────────────────────────────── */
@@ -2172,7 +2305,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   opacity: 0.48;
   background-image: var(--pathway-bg);
   background-size: cover;
-  background-position: center center;
+  background-position: var(--pathway-bg-position, center center);
   transform: scale(1.03);
   transition: opacity var(--transition-normal), transform var(--transition-slow);
 }
@@ -4154,7 +4287,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   opacity: 0.38;
   background-image: var(--svc-card-photo);
   background-size: cover;
-  background-position: center 30%;
+  background-position: var(--svc-card-photo-position, center 30%);
   transform: scale(1.03);
   transition: opacity var(--transition-normal), transform var(--transition-slow);
   pointer-events: none;
@@ -9700,6 +9833,25 @@ p  { line-height: 1.7; color: var(--color-text); }
   text-transform: uppercase;
 }
 
+/* The asterisk is visual only: the input's `required` already tells screen readers. */
+.contact-enquiry-form .form-label--required::after {
+  content: '*';
+  content: '*' / '';
+  margin-left: 0.3em;
+  color: #ff6b5e;
+}
+
+.contact-form-required-note {
+  margin-bottom: calc(var(--space-6) * -0.5);
+  color: #868c8d;
+  font-size: 0.78rem;
+}
+
+.contact-form-required-note span {
+  color: #ff6b5e;
+  font-weight: 800;
+}
+
 .contact-enquiry-form .form-input,
 .contact-enquiry-form .form-textarea,
 .contact-enquiry-form .form-select {
@@ -10367,4 +10519,10 @@ p  { line-height: 1.7; color: var(--color-text); }
     display: none;
     animation: none;
   }
+}
+
+/* Dashboard live preview only: the part of the page Jake is editing, outlined for a moment. */
+[data-cms-focus] {
+  outline: 2px solid rgba(22, 201, 221, 0.85);
+  outline-offset: 6px;
 }

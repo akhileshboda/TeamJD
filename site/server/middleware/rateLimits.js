@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { ipKeyGenerator, rateLimit } = require('express-rate-limit');
 const { getClientIp } = require('./clientIp');
+const { getAdmin } = require('./adminAuth');
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -15,6 +16,7 @@ const RATE_LIMIT_POLICIES = Object.freeze({
   adminCodeEmail: { windowMs: 15 * MINUTE, limit: 5 },
   adminCodeEmailTotal: { windowMs: 60 * MINUTE, limit: 20 },
   pageView: { windowMs: 5 * MINUTE, limit: 120 },
+  siteLogin: { windowMs: 15 * MINUTE, limit: 10 },
   manualOperation: { windowMs: 15 * MINUTE, limit: 3 }
 });
 
@@ -71,8 +73,11 @@ const enquiryGlobalLimiter = jsonRateLimit({
   message: 'Enquiries are temporarily at capacity. Please try again later.'
 });
 
+// Signed-in admins are not counted: every dashboard preview loads a whole
+// public page, so a busy editing session would otherwise run into the limit.
 const publicAssetLimiter = jsonRateLimit({
   ...RATE_LIMIT_POLICIES.publicAsset,
+  skip: (req) => Boolean(getAdmin(req)),
   code: 'ASSET_RATE_LIMITED'
 });
 
@@ -128,6 +133,13 @@ const manualOperationLimiter = jsonRateLimit({
   message: 'Too many successful manual operations. Please wait before trying again.'
 });
 
+// The staging gate's username and password form.
+const siteLoginLimiter = jsonRateLimit({
+  ...RATE_LIMIT_POLICIES.siteLogin,
+  code: 'SITE_LOGIN_RATE_LIMITED',
+  message: 'Too many sign-in attempts. Wait 15 minutes and try again.'
+});
+
 module.exports = {
   adminAttemptLimiter,
   adminCodeEmailLimiter,
@@ -141,5 +153,6 @@ module.exports = {
   manualOperationLimiter,
   pageViewLimiter,
   publicAssetLimiter,
-  RATE_LIMIT_POLICIES
+  RATE_LIMIT_POLICIES,
+  siteLoginLimiter
 };

@@ -119,8 +119,9 @@ export const deleteMedia = (id) =>
 export const uploadToLibrary = (file, options) =>
   uploadMedia('/api/admin/media/uploads', file, options).then((job) => job.asset)
 export const getPlacements = () => adminRequest('/api/admin/placements')
-export const savePlacement = (slotId, { assetId, alt, rev }) =>
-  adminRequest(`/api/admin/placements/${encodeURIComponent(slotId)}`, { method: 'PUT', json: { assetId, alt, rev } }).then(announceChange)
+export const savePlacement = (slotId, { assetId, alt, focus, zoom, rev }) =>
+  adminRequest(`/api/admin/placements/${encodeURIComponent(slotId)}`, { method: 'PUT', json: { assetId, alt, focus, zoom, rev } })
+    .then(announceChange)
 
 export const ACCEPTED_FILES = {
   image: '.jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif',

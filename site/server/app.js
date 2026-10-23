@@ -16,6 +16,8 @@ const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
+const { siteGate } = require('./middleware/siteGate');
+const { createSiteAuthRouter } = require('./routes/siteAuth');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { genericApiLimiter } = require('./middleware/rateLimits');
 const { sendStaticPage } = require('./utils/staticPages');
@@ -222,8 +224,8 @@ app.get('/healthz', (req, res) => {
   });
 });
 app.use(visitLogger);
-// Session runs before the maintenance gate so signed-in admins can see the real
-// site behind it (dashboard previews, pre-launch checks).
+// Session runs before the staging and maintenance gates so people signed in
+// (through the gate, or as dashboard admins) see the real site behind them.
 app.use(
   session({
     store: new SQLiteStore({
@@ -245,6 +247,8 @@ app.use(
     }
   })
 );
+app.use(siteGate);
+app.use('/api/auth', createSiteAuthRouter());
 app.use(maintenanceMode);
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);

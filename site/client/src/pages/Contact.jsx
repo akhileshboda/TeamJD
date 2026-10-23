@@ -6,7 +6,7 @@ import FindYourFitLink from '../components/FindYourFitLink'
 import JourneyIcon from '../components/JourneyIcon'
 import SectionReveal from '../components/SectionReveal'
 import TurnstileWidget from '../components/TurnstileWidget'
-import { useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useMedia } from '../hooks/useAssets'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useSettings } from '../hooks/useSettings'
 
@@ -109,8 +109,8 @@ export default function Contact() {
   // Until Jake uploads his own reel, the licensed YouTube reel and its poster stay in place.
   const reel = media('contact.reel', '/api/assets/video-contact-athlete-reel-poster')
   const socialPosts = SOCIAL_POSTS.map((post, index) => {
-    const { src, alt } = media(`contact.social-${index + 1}`, `/api/assets/${post.asset}`, post.alt)
-    return { ...post, src, alt }
+    const photo = media(`contact.social-${index + 1}`, `/api/assets/${post.asset}`, post.alt)
+    return { ...post, src: photo.src, alt: photo.alt, style: framedImageStyle(photo), section: photo.slotId }
   })
   const [searchParams] = useSearchParams()
   const requestedService = searchParams.get('service')
@@ -351,9 +351,13 @@ export default function Contact() {
               aria-label="Contact Jake"
               onSubmit={handleSubmit}
             >
+              <p className="contact-form-required-note">
+                <span aria-hidden="true">*</span> Required
+              </p>
+
               <div className="form-name-grid">
                 <div className="form-group">
-                  <label className="form-label" htmlFor="contact-first">
+                  <label className="form-label form-label--required" htmlFor="contact-first">
                     First Name
                   </label>
                   <input
@@ -384,7 +388,7 @@ export default function Contact() {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="contact-email">
+                <label className="form-label form-label--required" htmlFor="contact-email">
                   Email Address
                 </label>
                 <input
@@ -421,7 +425,7 @@ export default function Contact() {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="contact-message">
+                <label className="form-label form-label--required" htmlFor="contact-message">
                   Your Message
                 </label>
                 <textarea

@@ -7,7 +7,7 @@ import ClientResultsCarousel from '../components/ClientResultsCarousel'
 import AboutProcessCarousel from '../components/AboutProcessCarousel'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
-import { useAssets, useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useAssets, useMedia } from '../hooks/useAssets'
 import { useContent } from '../hooks/useContent'
 import wnbfLogo from '../assets/wnbf.svg'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -210,8 +210,8 @@ export default function About() {
     'Jake Dedert, Pro Physique bodybuilder and fitness coach, posing in a gym',
   )
   const processImages = PROCESS_IMAGES.map((image, index) => {
-    const { src, alt } = media(`about.process-${index + 1}`, `/api/assets/${image.asset}`, image.alt)
-    return { ...image, src, alt }
+    const photo = media(`about.process-${index + 1}`, `/api/assets/${image.asset}`, image.alt)
+    return { ...image, src: photo.src, alt: photo.alt, style: framedImageStyle(photo), section: photo.slotId }
   })
   const { data: resultsLibrary } = useContent('results')
   const results = (resultsLibrary || [])
@@ -261,6 +261,7 @@ export default function About() {
                     <img
                       src={portrait.src}
                       alt={portrait.alt}
+                      style={framedImageStyle(portrait)} data-cms-section={portrait.slotId}
                       decoding="async"
                       fetchpriority="high"
                       width="600"

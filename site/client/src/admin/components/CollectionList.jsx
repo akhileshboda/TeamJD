@@ -1,54 +1,133 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Reorder, useDragControls } from 'motion/react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useResolvedPath, useSearchParams } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { bulkAction, createItem, listItems, reorderItems } from '../api'
-import { ConfirmDialog, StatusChip, timeAgo } from './ui'
+import { Chip, ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, STATUS_HELP, timeAgo } from './ui'
+import { useToast } from './Toasts'
 
 const STATUS_FILTERS = [
-  { value: '', label: 'Any status' },
-  { value: 'published', label: 'Live' },
-  { value: 'changed', label: 'Changes not live' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'hidden', label: 'Hidden' },
+  { value: 'live', label: 'Live', match: isLive, needsSwitch: true },
+  { value: 'offline', label: 'Offline', match: (status) => !isLive(status), needsSwitch: true },
+  { value: 'changes', label: 'Unpublished changes', match: hasUnpublishedChanges },
 ]
 
-const BULK_LABELS = { publish: 'Published', unpublish: 'Hidden', delete: 'Deleted' }
+const counted = (count, noun) => `${count} ${count === 1 ? noun : `${noun}s`}`
 
-function bulkMessage(action, outcome, rows) {
+// Each bulk action applies only to the chosen rows it makes sense for (Go
+// live to offline ones, and so on), and is offered only when there are some.
+const BULK_ACTIONS = [
+  { key: 'goLive', label: 'Go live', server: 'publish', needsSwitch: true, applies: (row) => !isLive(row.status),
+    done: (count, noun) => `${counted(count, noun)} ${count === 1 ? 'is' : 'are'} live now.` },
+  { key: 'publishChanges', label: 'Publish changes', server: 'publish', applies: (row) => hasUnpublishedChanges(row.status),
+    done: (count, noun) => `Published the changes to ${counted(count, noun)}.` },
+  { key: 'takeOffline', label: 'Take offline', server: 'unpublish', needsSwitch: true, confirm: true, applies: (row) => isLive(row.status),
+    done: (count, noun) => `${counted(count, noun)} ${count === 1 ? 'is' : 'are'} offline now.` },
+  { key: 'delete', label: 'Delete', server: 'delete', needsDelete: true, confirm: true, applies: () => true,
+    done: (count, noun) => `Deleted ${counted(count, noun)}.` },
+]
+
+const failureReason = (failure) => (failure.fields ? Object.values(failure.fields).join(' ') : failure.error)
+
+function bulkMessage(action, outcome, rows, noun) {
   const title = (id) => rows.find((row) => row.id === id)?.title || 'An item'
   const parts = []
-  if (outcome.done.length) parts.push(`${BULK_LABELS[action]} ${outcome.done.length}.`)
+  if (outcome.done.length) parts.push(action.done(outcome.done.length, noun))
   if (outcome.failed.length) {
-    parts.push(`${outcome.failed.length} could not change: ${outcome.failed.map((item) => `${title(item.id)} (${item.error})`).join('; ')}`)
+    parts.push(`${outcome.failed.length} could not change: ${outcome.failed.map((item) => `${title(item.id)} (${failureReason(item)})`).join('; ')}`)
   }
   return { tone: outcome.failed.length ? 'error' : 'notice', text: parts.join(' ') }
 }
 
-function Row({ row, columns, selected, onSelect, reordering, onMove, onGrab, index, total }) {
+// A refused Go live lists what is missing, and offers the editor with those
+// fields already marked. Toasts show outside this page's routes, so the link
+// is absolute.
+function switchMessage(row, on, outcome, base) {
+  const failure = outcome.failed[0]
+  if (!failure) {
+    return { tone: 'notice', text: on ? `“${row.title}” is live.` : `“${row.title}” is offline. Switch it back on any time.` }
+  }
+  return {
+    tone: 'error',
+    text: on ? `“${row.title}” cannot go live yet. ${failureReason(failure)}` : `“${row.title}” could not be taken offline. ${failure.error}`,
+    action: { label: 'Open it', to: `${base}/${row.id}`, state: { fieldErrors: failure.fields } },
+  }
+}
+
+const capitalise = (word) => word.charAt(0).toUpperCase() + word.slice(1)
+
+// Column labels for the rows below. Each cell reuses its row cell's class, so
+// widths and the columns hidden on small screens always match.
+function HeaderRow({ noun, columns, showThumb, canHide, reordering, allSelected, onToggleAll }) {
+  return (
+    <div className="jd-row jd-row--head" role="row">
+      {reordering ? (
+        <span className="jd-row-grip" role="columnheader"><span className="visually-hidden">Drag</span></span>
+      ) : (
+        <span role="columnheader" className="jd-row-select">
+          <label className="jd-row-check-hit">
+            <input type="checkbox" className="jd-row-check" checked={allSelected} onChange={(event) => onToggleAll(event.target.checked)}
+              aria-label="Select all" />
+          </label>
+        </span>
+      )}
+      {showThumb && <span className="jd-row-thumb" role="columnheader"><span className="visually-hidden">Photo</span></span>}
+      <span className="jd-row-main" role="columnheader">{capitalise(noun)}</span>
+      {columns.map((column) => <span key={column.key} className="jd-row-cell" role="columnheader">{column.label}</span>)}
+      {canHide && <span className="jd-row-switch" role="columnheader">Live</span>}
+      <span className="jd-row-status" role="columnheader">Changes</span>
+      {reordering
+        ? <span className="jd-row-move" role="columnheader">Move</span>
+        : <span className="jd-row-updated" role="columnheader">Updated</span>}
+    </div>
+  )
+}
+
+function StatusHelp({ canHide }) {
+  return (
+    <details className="jd-status-help">
+      <summary>What Live, Offline and Unpublished changes mean</summary>
+      <dl>
+        {STATUS_HELP.filter((entry) => canHide || entry.chip !== 'offline').map((entry) => (
+          <div key={entry.chip}>
+            <dt><Chip kind={entry.chip} /></dt>
+            <dd>{entry.text}</dd>
+          </div>
+        ))}
+      </dl>
+      <p>Edits save automatically as you type. Nobody sees them until they are published.</p>
+    </details>
+  )
+}
+
+// `live` is the Live switch's state and handler, or null where items cannot be
+// taken offline (services).
+function Row({ row, columns, selected, onSelect, live, reordering, onMove, onGrab, index, total }) {
   return (
     <>
       {reordering ? (
         // Dragging starts only from the grip, so the rest of the row still scrolls
         // the page on a phone. The arrow buttons are the keyboard alternative.
-        <span className="jd-row-grip" aria-hidden="true" onPointerDown={onGrab}><JourneyIcon name="grip" size={18} /></span>
+        <span className="jd-row-grip" role="cell" onPointerDown={onGrab}><JourneyIcon name="grip" size={18} /></span>
       ) : (
-        <label className="jd-row-check-hit">
-          <input
-            type="checkbox"
-            className="jd-row-check"
-            checked={selected}
-            onChange={(event) => onSelect(row.id, event.target.checked)}
-            aria-label={`Select ${row.title}`}
-          />
-        </label>
+        <span className="jd-row-select" role="cell">
+          <label className="jd-row-check-hit">
+            <input
+              type="checkbox"
+              className="jd-row-check"
+              checked={selected}
+              onChange={(event) => onSelect(row.id, event.target.checked)}
+              aria-label={`Select ${row.title}`}
+            />
+          </label>
+        </span>
       )}
       {'thumbnail' in row && (
-        <span className="jd-row-thumb">
+        <span className="jd-row-thumb" role="cell">
           {row.thumbnail ? <img src={row.thumbnail} alt="" loading="lazy" width="48" height="48" /> : <JourneyIcon name="image" size={18} />}
         </span>
       )}
-      <span className="jd-row-main">
+      <span className="jd-row-main" role="cell">
         {reordering ? (
           <span className="jd-row-title">{row.title}</span>
         ) : (
@@ -57,11 +136,20 @@ function Row({ row, columns, selected, onSelect, reordering, onMove, onGrab, ind
         {row.subtitle && <span className="jd-row-subtitle">{row.subtitle}</span>}
       </span>
       {columns.map((column) => (
-        <span key={column.key} className="jd-row-cell" data-label={column.label}>{column.render(row)}</span>
+        <span key={column.key} className="jd-row-cell" role="cell">{column.render(row)}</span>
       ))}
-      <span className="jd-row-status"><StatusChip status={row.status} /></span>
+      {live && (
+        <span className="jd-row-switch" role="cell">
+          <LiveSwitch on={isLive(row.status)} busy={live.busy} label={`Live: ${row.title}`} hideLabel onChange={live.onChange} />
+        </span>
+      )}
+      <span className="jd-row-status" role="cell">
+        {hasUnpublishedChanges(row.status)
+          ? <Chip kind="changes" />
+          : <span className="jd-row-none"><span aria-hidden="true">—</span><span className="visually-hidden">None</span></span>}
+      </span>
       {reordering ? (
-        <span className="jd-row-move">
+        <span className="jd-row-move" role="cell">
           <button type="button" className="jd-admin-icon-button" data-move-row={row.id} data-dir="-1" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={`Move ${row.title} up`}>
             <JourneyIcon name="chevronDown" size={18} className="jd-flip" />
           </button>
@@ -70,7 +158,7 @@ function Row({ row, columns, selected, onSelect, reordering, onMove, onGrab, ind
           </button>
         </span>
       ) : (
-        <span className="jd-row-updated">{timeAgo(row.updatedAt)}</span>
+        <span className="jd-row-updated" role="cell">{timeAgo(row.updatedAt)}</span>
       )}
     </>
   )
@@ -79,7 +167,7 @@ function Row({ row, columns, selected, onSelect, reordering, onMove, onGrab, ind
 function ReorderRow({ row, ...rest }) {
   const controls = useDragControls()
   return (
-    <Reorder.Item value={row} className="jd-row" dragListener={false} dragControls={controls}>
+    <Reorder.Item value={row} className="jd-row" role="row" dragListener={false} dragControls={controls}>
       <Row row={row} reordering onGrab={(event) => controls.start(event)} {...rest} />
     </Reorder.Item>
   )
@@ -101,14 +189,17 @@ export default function CollectionList({
   canDelete = true,
 }) {
   const navigate = useNavigate()
+  const toast = useToast()
+  const base = useResolvedPath('.').pathname.replace(/\/$/, '')
+  const notify = useCallback((message) => toast({ ...message, scope: `list:${collection}` }), [toast, collection])
   const [params, setParams] = useSearchParams()
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(() => new Set())
   const [reordering, setReordering] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [banner, setBanner] = useState(null)
   const [confirmBulk, setConfirmBulk] = useState(null)
+  const [switching, setSwitching] = useState(null)
   const orderTimer = useRef(null)
   const pendingOrder = useRef(null)
 
@@ -136,7 +227,8 @@ export default function CollectionList({
   }, [load, sendOrder])
 
   const query = params.get('q') || ''
-  const statusFilter = params.get('status') || ''
+  const statusFilters = STATUS_FILTERS.filter((option) => canHide || !option.needsSwitch)
+  const statusFilter = statusFilters.find((option) => option.value === params.get('status'))
   const setParam = (key, value) => {
     const next = new URLSearchParams(params)
     if (value) next.set(key, value)
@@ -148,7 +240,7 @@ export default function CollectionList({
     if (!rows) return []
     const needle = query.trim().toLowerCase()
     return rows.filter((row) => (
-      (!statusFilter || row.status === statusFilter)
+      (!statusFilter || statusFilter.match(row.status))
       && filters.every((filter) => !params.get(filter.key) || filter.match(row, params.get(filter.key)))
       && (!needle || `${row.title} ${row.subtitle || ''}`.toLowerCase().includes(needle))
     ))
@@ -166,29 +258,50 @@ export default function CollectionList({
   const allVisibleSelected = visible.length > 0 && chosen.length === visible.length
   const toggleAll = (checked) => setSelected(checked ? new Set(visible.map((row) => row.id)) : new Set())
 
+  const bulkActions = BULK_ACTIONS
+    .filter((action) => (canHide || !action.needsSwitch) && (canDelete || !action.needsDelete))
+    .map((action) => ({ ...action, rows: chosen.filter(action.applies) }))
+    .filter((action) => action.rows.length > 0)
+
   const runBulk = async (action) => {
     setBusy(true)
     try {
-      const outcome = await bulkAction(collection, action, chosen.map((row) => row.id))
-      setBanner(bulkMessage(action, outcome, rows))
+      const outcome = await bulkAction(collection, action.server, action.rows.map((row) => row.id))
+      notify(bulkMessage(action, outcome, rows, noun))
       setSelected(new Set())
       await load()
     } catch (failure) {
-      setBanner({ tone: 'error', text: failure.message })
+      notify({ tone: 'error', text: failure.message })
     } finally {
       setBusy(false)
       setConfirmBulk(null)
     }
   }
 
+  // One row's Live switch. It uses the bulk endpoint, which needs no revision
+  // and reports missing fields per item.
+  const switchRow = async (row, on) => {
+    setSwitching(row.id)
+    try {
+      const outcome = await bulkAction(collection, on ? 'publish' : 'unpublish', [row.id])
+      notify(switchMessage(row, on, outcome, base))
+      await load()
+    } catch (failure) {
+      notify({ tone: 'error', text: failure.message })
+    } finally {
+      setSwitching(null)
+    }
+  }
+  const liveSwitch = (row) => (canHide ? { busy: switching === row.id, onChange: (on) => switchRow(row, on) } : null)
+
   const saveOrder = (next) => {
     clearTimeout(orderTimer.current)
     pendingOrder.current = next.map((row) => row.id)
     orderTimer.current = setTimeout(() => {
       sendOrder()
-        .then(() => setBanner({ tone: 'notice', text: 'New order saved. It is live on the site.' }))
+        .then(() => notify({ tone: 'notice', text: 'New order saved. It is live now.' }))
         .catch((failure) => {
-          setBanner({ tone: 'error', text: failure.message })
+          notify({ tone: 'error', text: failure.message })
           load()
         })
     }, 600)
@@ -217,12 +330,13 @@ export default function CollectionList({
       const created = await createItem(collection, newDraft)
       navigate(created.id)
     } catch (failure) {
-      setBanner({ tone: 'error', text: failure.message })
+      notify({ tone: 'error', text: failure.message })
       setBusy(false)
     }
   }
 
-  const filtersActive = Boolean(query || statusFilter || filters.some((filter) => params.get(filter.key)))
+  const header = { noun, columns, canHide, showThumb: Boolean(rows?.some((row) => 'thumbnail' in row)) }
+  const filtersActive = Boolean(query || params.get('status') || filters.some((filter) => params.get(filter.key)))
 
   return (
     <div className="jd-list-page">
@@ -246,11 +360,6 @@ export default function CollectionList({
         </div>
       </div>
 
-      {banner && (
-        <div className={banner.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role={banner.tone === 'error' ? 'alert' : 'status'}>
-          {banner.text}
-        </div>
-      )}
       {error && <p className="jd-admin-error" role="alert">{error}</p>}
 
       {reordering ? (
@@ -265,8 +374,9 @@ export default function CollectionList({
           </label>
           <label>
             <span className="visually-hidden">Status</span>
-            <select className="jd-input jd-select" value={statusFilter} onChange={(event) => setParam('status', event.target.value)}>
-              {STATUS_FILTERS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            <select className="jd-input jd-select" value={statusFilter?.value || ''} onChange={(event) => setParam('status', event.target.value)}>
+              <option value="">Any status</option>
+              {statusFilters.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </label>
           {filters.map((filter) => (
@@ -280,14 +390,19 @@ export default function CollectionList({
           ))}
         </div>
       )}
+      {rows && rows.length > 0 && <StatusHelp canHide={canHide} />}
 
       {!reordering && chosen.length > 0 && (
         <div className="jd-bulk-bar" role="region" aria-label="Selected items">
           <p><strong>{chosen.length}</strong> selected</p>
           <div className="jd-bulk-actions">
-            <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => runBulk('publish')}>Publish</button>
-            {canHide && <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => setConfirmBulk('unpublish')}>Hide</button>}
-            {canDelete && <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--danger" disabled={busy} onClick={() => setConfirmBulk('delete')}>Delete</button>}
+            {bulkActions.map((action) => (
+              <button key={action.key} type="button" disabled={busy}
+                className={`jd-admin-button jd-admin-button--sm${action.key === 'delete' ? ' jd-admin-button--danger' : ''}`}
+                onClick={() => (action.confirm ? setConfirmBulk(action) : runBulk(action))}>
+                {action.label}{action.rows.length < chosen.length ? ` (${action.rows.length})` : ''}
+              </button>
+            ))}
             <button type="button" className="jd-link-button" onClick={() => setSelected(new Set())}>Clear</button>
           </div>
         </div>
@@ -303,50 +418,52 @@ export default function CollectionList({
 
       {rows && rows.length > 0 && !reordering && (
         <>
-          <div className="jd-list-meta">
-            <label className="jd-select-all">
-              <input type="checkbox" checked={allVisibleSelected} onChange={(event) => toggleAll(event.target.checked)} />
-              Select all {visible.length}
-            </label>
-            <span>{visible.length === rows.length ? `${rows.length} ${rows.length === 1 ? noun : `${noun}s`}` : `${visible.length} of ${rows.length}`}</span>
-          </div>
+          <p className="jd-list-meta">
+            {visible.length === rows.length ? `${rows.length} ${rows.length === 1 ? noun : `${noun}s`}` : `${visible.length} of ${rows.length}`}
+          </p>
           {visible.length === 0 ? (
             <div className="jd-empty jd-empty--inline">
               <p>Nothing matches these filters.</p>
               {filtersActive && <button type="button" className="jd-link-button" onClick={() => setParams({}, { replace: true })}>Clear filters</button>}
             </div>
           ) : (
-            <ul className="jd-rows">
-              {visible.map((row) => (
-                <li key={row.id} className={`jd-row${selected.has(row.id) ? ' is-selected' : ''}`}>
-                  <Row row={row} columns={columns} selected={selected.has(row.id)} onSelect={selectRow} />
-                </li>
-              ))}
-            </ul>
+            <div className="jd-table" role="table" aria-label={title}>
+              <HeaderRow {...header} allSelected={allVisibleSelected} onToggleAll={toggleAll} />
+              <ul className="jd-rows" role="rowgroup">
+                {visible.map((row) => (
+                  <li key={row.id} role="row" className={`jd-row${selected.has(row.id) ? ' is-selected' : ''}`}>
+                    <Row row={row} columns={columns} selected={selected.has(row.id)} onSelect={selectRow} live={liveSwitch(row)} />
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </>
       )}
 
       {rows && reordering && (
-        <Reorder.Group axis="y" values={rows} onReorder={reorder} className="jd-rows jd-rows--reorder">
-          {rows.map((row, index) => (
-            <ReorderRow key={row.id} row={row} columns={columns} onMove={move} index={index} total={rows.length} />
-          ))}
-        </Reorder.Group>
+        <div className="jd-table" role="table" aria-label={`${title}, in site order`}>
+          <HeaderRow {...header} reordering />
+          <Reorder.Group axis="y" values={rows} onReorder={reorder} className="jd-rows jd-rows--reorder" role="rowgroup">
+            {rows.map((row, index) => (
+              <ReorderRow key={row.id} row={row} columns={columns} live={liveSwitch(row)} onMove={move} index={index} total={rows.length} />
+            ))}
+          </Reorder.Group>
+        </div>
       )}
 
       {confirmBulk && (
         <ConfirmDialog
-          title={`${confirmBulk === 'delete' ? 'Delete' : 'Hide'} ${chosen.length} ${chosen.length === 1 ? noun : `${noun}s`}?`}
-          confirmLabel={confirmBulk === 'delete' ? 'Delete' : 'Hide from site'}
-          tone={confirmBulk === 'delete' ? 'danger' : 'primary'}
+          title={`${confirmBulk.key === 'delete' ? 'Delete' : 'Take'} ${counted(confirmBulk.rows.length, noun)}${confirmBulk.key === 'delete' ? '' : ' offline'}?`}
+          confirmLabel={confirmBulk.label}
+          tone={confirmBulk.key === 'delete' ? 'danger' : 'primary'}
           busy={busy}
           onConfirm={() => runBulk(confirmBulk)}
           onCancel={() => setConfirmBulk(null)}
         >
-          <p>{confirmBulk === 'delete'
+          <p>{confirmBulk.key === 'delete'
             ? 'They are removed from the site and from your dashboard. This cannot be undone.'
-            : 'They come off the site straight away. They stay here, and you can publish them again at any time.'}</p>
+            : 'They come off the site straight away. They stay here, and you can switch them back on at any time.'}</p>
         </ConfirmDialog>
       )}
     </div>

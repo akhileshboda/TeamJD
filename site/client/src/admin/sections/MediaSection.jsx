@@ -6,6 +6,7 @@ import { adminLinkFor } from '../links'
 import { TextField } from '../components/fields'
 import MediaUploader from '../components/MediaUploader'
 import { MediaThumb } from '../components/MediaPicker'
+import { useToast } from '../components/Toasts'
 import { ConfirmDialog, timeAgo } from '../components/ui'
 
 const FILTERS = [
@@ -22,7 +23,8 @@ function sizeLabel(bytes) {
 
 function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
   const [alt, setAlt] = useState(asset.alt)
-  const [message, setMessage] = useState(null)
+  const toast = useToast()
+  const notify = (message) => toast({ ...message, scope: 'media' })
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
   const headingRef = useRef(null)
@@ -42,16 +44,15 @@ function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
 
   useEffect(() => {
     setAlt(asset.alt)
-    setMessage(null)
   }, [asset.id, asset.alt])
 
   const saveAlt = async () => {
     setBusy(true)
     try {
       onChanged(await updateMedia(asset.id, alt))
-      setMessage({ tone: 'notice', text: 'Description saved.' })
+      notify({ tone: 'notice', text: 'Description saved.' })
     } catch (error) {
-      setMessage({ tone: 'error', text: error.message })
+      notify({ tone: 'error', text: error.message })
     } finally {
       setBusy(false)
     }
@@ -63,7 +64,7 @@ function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
       await deleteMedia(asset.id)
       onDeleted(asset.id)
     } catch (error) {
-      setMessage({ tone: 'error', text: error.message })
+      notify({ tone: 'error', text: error.message })
       setBusy(false)
       setConfirming(false)
     }
@@ -88,10 +89,9 @@ function AssetDetail({ asset, onChanged, onDeleted, onClose }) {
         <div><dt>Added</dt><dd>{timeAgo(asset.uploadedAt)}{asset.uploadedBy ? ` by ${asset.uploadedBy}` : ''}</dd></div>
         {asset.backup === 'failed' && <div><dt>Backup</dt><dd>The Dropbox copy failed. The file is still safe online.</dd></div>}
       </dl>
-      {message && <p className={message.tone === 'error' ? 'jd-admin-error' : 'jd-admin-notice'} role="status">{message.text}</p>}
       {asset.kind === 'image' && (
         <div className="jd-asset-alt">
-          <TextField label="Description" hint="Filled in for you when you choose this photo for a page spot."
+          <TextField label="Description" hint="Filled in for you when you choose this photo for a page."
             value={alt} maxLength={300} onChange={setAlt} />
           <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy || alt === asset.alt} onClick={saveAlt}>
             Save description
@@ -165,7 +165,7 @@ export default function MediaSection() {
       <div className="jd-list-head">
         <div>
           <h1 className="jd-page-title">Media library</h1>
-          <p className="jd-page-lede">Every photo and video you have uploaded. Choose them for page spots and results.</p>
+          <p className="jd-page-lede">Every photo and video you have uploaded. Choose them for your pages and results.</p>
         </div>
       </div>
 

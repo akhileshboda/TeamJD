@@ -22,6 +22,7 @@ export default function ResultMedia({
   const style = {
     '--result-focus-x': `${presentation.focusX}%`,
     '--result-focus-y': `${presentation.focusY}%`,
+    '--result-zoom': presentation.zoom,
   }
 
   return (

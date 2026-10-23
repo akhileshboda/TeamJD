@@ -3,6 +3,9 @@ import JourneyIcon from '../../components/JourneyIcon'
 import { ACCEPTED_FILES, uploadToLibrary } from '../api'
 
 const KIND_WORDS = { image: 'photos', video: 'videos' }
+// Like the dashboard's toasts: a finished upload clears itself, a failed one
+// stays until closed.
+const DONE_MS = 5000
 
 function describeKinds(kinds) {
   return kinds.map((kind) => KIND_WORDS[kind]).join(' or ')
@@ -16,6 +19,7 @@ export default function MediaUploader({ kinds = ['image', 'video'], multiple = t
   const [dragging, setDragging] = useState(false)
 
   const setItem = (key, patch) => setQueue((items) => items.map((item) => (item.key === key ? { ...item, ...patch } : item)))
+  const removeItem = (key) => setQueue((items) => items.filter((item) => item.key !== key))
 
   const uploadAll = async (files) => {
     const items = [...files].map((file, index) => ({ key: `${Date.now()}-${index}-${file.name}`, file, name: file.name, state: 'waiting' }))
@@ -29,6 +33,7 @@ export default function MediaUploader({ kinds = ['image', 'video'], multiple = t
             : { progress: Math.round(fraction * 100) }),
         })
         setItem(item.key, { state: 'done' })
+        setTimeout(() => removeItem(item.key), DONE_MS)
         onUploaded?.(asset)
       } catch (error) {
         setItem(item.key, { state: 'failed', error: error.message })
@@ -89,6 +94,11 @@ export default function MediaUploader({ kinds = ['image', 'video'], multiple = t
                 {item.state === 'done' && 'Added to your library'}
                 {item.state === 'failed' && item.error}
               </span>
+              {item.state === 'failed' && (
+                <button type="button" className="jd-toast-close" aria-label={`Close the message about ${item.name}`} onClick={() => removeItem(item.key)}>
+                  <JourneyIcon name="close" size={16} />
+                </button>
+              )}
               {item.state === 'uploading' && (
                 <span className="jd-upload-bar" style={{ width: `${item.progress || 0}%` }}
                   role="progressbar" aria-label={`Uploading ${item.name}`} aria-valuenow={item.progress || 0} aria-valuemin={0} aria-valuemax={100} />

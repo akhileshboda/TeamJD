@@ -23,6 +23,7 @@ test('declares every route-family budget in milliseconds and request counts', ()
     adminCodeEmail: { windowMs: 15 * 60 * 1000, limit: 5 },
     adminCodeEmailTotal: { windowMs: 60 * 60 * 1000, limit: 20 },
     pageView: { windowMs: 5 * 60 * 1000, limit: 120 },
+    siteLogin: { windowMs: 15 * 60 * 1000, limit: 10 },
     manualOperation: { windowMs: 15 * 60 * 1000, limit: 3 }
   });
 });
@@ -46,20 +47,33 @@ test('successful manual operations are capped with standard RateLimit and Retry-
   assert.ok(limited.headers['retry-after']);
 });
 
+// One listening server for the whole run: supertest given a bare app starts a
+// new server per request, and hundreds of those occasionally drop a connection.
+async function withServer(app, run) {
+  const server = app.listen(0);
+  try {
+    await run(request(server));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
 async function assertFamilyBoundary({ middleware, limit, code, ip }) {
   const app = express();
   app.get('/limited', middleware, (_req, res) => res.json({ ok: true }));
 
-  for (let index = 0; index < limit; index += 1) {
-    const response = await request(app).get('/limited').set('CF-Connecting-IP', ip);
-    assert.equal(response.status, 200);
-  }
+  await withServer(app, async (client) => {
+    for (let index = 0; index < limit; index += 1) {
+      const response = await client.get('/limited').set('CF-Connecting-IP', ip);
+      assert.equal(response.status, 200);
+    }
 
-  const limited = await request(app).get('/limited').set('CF-Connecting-IP', ip);
-  assert.equal(limited.status, 429);
-  assert.equal(limited.body.error.code, code);
-  assert.ok(limited.headers.ratelimit);
-  assert.ok(limited.headers['retry-after']);
+    const limited = await client.get('/limited').set('CF-Connecting-IP', ip);
+    assert.equal(limited.status, 429);
+    assert.equal(limited.body.error.code, code);
+    assert.ok(limited.headers.ratelimit);
+    assert.ok(limited.headers['retry-after']);
+  });
 }
 
 test('public assets, generic API, OAuth, and admin attempts enforce independent boundaries', async () => {
@@ -87,6 +101,28 @@ test('public assets, generic API, OAuth, and admin attempts enforce independent 
     code: 'ADMIN_RATE_LIMITED',
     ip: '203.0.113.104'
   });
+});
+
+test('signed-in admins are not limited on public assets, so dashboard previews keep loading', async () => {
+  const previous = process.env.CMS_ADMIN_EMAILS;
+  process.env.CMS_ADMIN_EMAILS = 'jake@team-jd.com.au';
+  try {
+    const app = express();
+    app.use((req, res, next) => {
+      req.session = { admin: { email: 'jake@team-jd.com.au' } };
+      next();
+    });
+    app.get('/asset', publicAssetLimiter, (req, res) => res.json({ ok: true }));
+    await withServer(app, async (client) => {
+      for (let index = 0; index < 305; index += 1) {
+        const response = await client.get('/asset').set('CF-Connecting-IP', '203.0.113.150');
+        assert.equal(response.status, 200);
+      }
+    });
+  } finally {
+    if (previous === undefined) delete process.env.CMS_ADMIN_EMAILS;
+    else process.env.CMS_ADMIN_EMAILS = previous;
+  }
 });
 
 test('failed manual operations do not consume the successful-operation budget', async () => {

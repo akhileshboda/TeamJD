@@ -18,7 +18,7 @@ const countStatuses = (rows) => rows.reduce((counts, { status }) => {
   return counts;
 }, {});
 
-test('a new store seeds 6 live client results, 114 hidden stock results and linked testimonials', async () => {
+test('a new store seeds 6 live client results with their testimonials, and 114 hidden stock results', async () => {
   const { store, storePath } = await tempStore();
   const results = await store.list('results');
   assert.equal(results.length, 120);
@@ -26,13 +26,12 @@ test('a new store seeds 6 live client results, 114 hidden stock results and link
   assert.equal(results[0].title, 'ANB champion with stage-ready control');
   assert.match(results[0].thumbnail, /client-posing-1/);
 
-  const testimonials = await store.list('testimonials');
-  assert.deepEqual(countStatuses(testimonials), { published: 6, hidden: 5 });
-  const linked = await store.get('testimonials', 't-1');
-  assert.deepEqual(linked.usage.map((use) => use.id), ['1']);
+  const first = await store.get('results', '1');
+  assert.equal(first.draft.testimonial.quote, ORIGINAL_RESULTS[0].testimonial.quote);
 
   const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
-  assert.equal(onDisk.schemaVersion, 1);
+  assert.equal(onDisk.schemaVersion, 2);
+  assert.equal(onDisk.collections.testimonials, undefined);
   assert.deepEqual(onDisk.media, []);
 });
 
@@ -40,7 +39,13 @@ test('public results are the original client records, apart from string ids and 
   const { store } = await tempStore();
   const expected = ORIGINAL_RESULTS
     .filter((item) => item.kind === 'client')
-    .map((item) => ({ ...item, id: String(item.id), tags: [...new Set(item.tags)] }));
+    .map((item) => ({
+      ...item,
+      id: String(item.id),
+      // Every framed photo now also says how far it is zoomed in (1 = not at all).
+      ...(item.presentation && { presentation: { ...item.presentation, zoom: 1 } }),
+      tags: [...new Set(item.tags)]
+    }));
   // Key order matters too: the site and its tests read this exact JSON before.
   assert.equal(JSON.stringify(await store.getPublic('results')), JSON.stringify(expected));
   await assert.rejects(store.getPublic('testimonials'), { statusCode: 404 });
@@ -48,10 +53,10 @@ test('public results are the original client records, apart from string ids and 
 
 test('an existing store is never re-seeded, but a missing collection is', async () => {
   const { storePath } = await tempStore();
-  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 1, collections: { results: [] }, media: [] }));
+  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 2, collections: { results: [] }, media: [] }));
   const store = createCmsStore({ storePath, backup: null });
   assert.equal((await store.list('results')).length, 0);
-  assert.equal((await store.list('testimonials')).length, 11);
+  assert.ok((await store.list('faqs')).length > 0);
 });
 
 test('a draft edit stays off the site until it is published, and discard reverts it', async () => {
@@ -76,6 +81,18 @@ test('a draft edit stays off the site until it is published, and discard reverts
   assert.equal(published.status, 'published');
   assert.equal((await store.getPublic('results'))[0].caption, 'New caption');
   assert.deepEqual(await store.pending(), []);
+});
+
+test('unpublished changes leave out offline items, so publishing them all never puts one live', async () => {
+  const { store } = await tempStore();
+  await store.create('results', { caption: 'Still offline' }, 'jake@example.com');
+  const hidden = await store.get('results', 'reference-competition-01');
+  await store.saveDraft('results', hidden.id, { draft: { ...hidden.draft, caption: 'Edited while offline' }, rev: hidden.rev });
+  assert.deepEqual(await store.pending(), []);
+
+  await store.saveDraft('placements', 'about.portrait', { draft: { assetId: null, alt: 'Jake' }, rev: 0 }, 'jake', { label: 'Main portrait', page: 'About' });
+  assert.deepEqual((await store.pending()).map((item) => [item.collection, item.id]), [['placements', 'about.portrait']]);
+  await assert.rejects(store.apply('placements', 'about.portrait', 'unpublish'), { statusCode: 405 });
 });
 
 test('a save from a stale tab is refused', async () => {
@@ -129,16 +146,58 @@ test('new items go to the top and reordering goes live immediately', async () =>
   await assert.rejects(store.reorder('results', reordered.slice(1)), { statusCode: 409 });
 });
 
-test('a hidden testimonial leaves its result; deleting it unlinks it everywhere', async () => {
+test('a testimonial is part of its result: it goes live with it, and must be complete', async () => {
   const { store } = await tempStore();
-  await store.apply('testimonials', 't-1', 'unpublish');
-  assert.equal((await store.getPublic('results'))[0].testimonial, undefined);
+  const record = await store.get('results', '2');
+  const saved = await store.saveDraft('results', '2', { draft: { ...record.draft, testimonial: { quote: '', author: 'Sam' } }, rev: record.rev });
+  await assert.rejects(store.apply('results', '2', 'publish'), (error) => {
+    assert.deepEqual(Object.keys(error.fields), ['testimonial.quote']);
+    return true;
+  });
+  await store.saveDraft('results', '2', { draft: { ...record.draft, testimonial: null }, rev: saved.rev });
+  await store.apply('results', '2', 'publish');
+  assert.equal((await store.getPublic('results')).find((item) => item.id === '2').testimonial, undefined);
+});
 
-  await store.apply('testimonials', 't-1', 'delete');
-  const result = await store.get('results', '1');
-  assert.equal(result.draft.testimonialId, null);
-  assert.equal(result.published.testimonialId, null);
-  assert.equal(result.status, 'published');
+test('a store from before keeps each linked testimonial inside its result', async () => {
+  const { storePath } = await tempStore();
+  const version = (testimonialId) => ({ caption: 'Stage', alt: 'On stage', image: { src: 'https://x/a.webp' }, testimonialId });
+  const record = (id, draft, published) => ({ id, order: 1, draft, published, rev: 1, hiddenAt: null });
+  await fs.writeFile(storePath, JSON.stringify({
+    schemaVersion: 1,
+    media: [],
+    collections: {
+      results: [
+        record('1', version('t-1'), version('t-1')),
+        record('2', version('t-2'), version(null))
+      ],
+      testimonials: [
+        record('t-1', { quote: 'Live words', author: 'Sam' }, { quote: 'Live words', author: 'Sam' }),
+        record('t-2', { quote: 'Draft words', author: 'Ali' }, null),
+        record('legacy-1', { quote: 'Never shown', author: 'Client' }, null)
+      ]
+    }
+  }));
+  const store = createCmsStore({ storePath, backup: null });
+  const [first, second] = [await store.get('results', '1'), await store.get('results', '2')];
+  assert.equal(first.published.testimonial.quote, 'Live words');
+  assert.equal(first.status, 'published');
+  assert.equal(second.draft.testimonial.quote, 'Draft words');
+  assert.equal(second.published.testimonial, null);
+  assert.equal(second.draft.testimonialId, undefined);
+
+  const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
+  assert.equal(onDisk.schemaVersion, 2);
+  assert.equal(onDisk.collections.testimonials, undefined);
+});
+
+test('photo spots and results keep where a photo is framed, within limits', async () => {
+  const { store } = await tempStore();
+  const record = await store.get('results', '1');
+  const saved = await store.saveDraft('results', '1', {
+    draft: { ...record.draft, presentation: { fit: 'cover', focus: { x: 140, y: 20 }, zoom: 7 } }, rev: record.rev
+  });
+  assert.deepEqual(saved.draft.presentation, { fit: 'cover', focus: { x: 100, y: 20 }, zoom: 3 });
 });
 
 test('bulk actions run in one write and report items that could not change', async () => {
@@ -165,7 +224,7 @@ test('preview shows the public list as if the draft were live, without saving it
   const hidden = await store.preview('results', 'reference-competition-01', (await store.get('results', 'reference-competition-01')).draft);
   assert.ok(hidden.results.some((item) => item.id === 'reference-competition-01'));
 
-  const quote = await store.preview('testimonials', 't-2', { quote: 'New words', author: 'Sam' });
+  const quote = await store.preview('results', '2', { ...record.draft, testimonial: { quote: 'New words', author: 'Sam' } });
   assert.equal(quote.results.find((item) => item.id === '2').testimonial.quote, 'New words');
 
   const fresh = await store.preview('results', null, { caption: 'Brand new', alt: 'x', image: { src: 'https://x/y.webp' } });
@@ -174,9 +233,9 @@ test('preview shows the public list as if the draft were live, without saving it
 
 test('concurrent writes are serialised and all land', async () => {
   const { store, storePath } = await tempStore();
-  await Promise.all(Array.from({ length: 10 }, (_, index) => store.create('testimonials', { quote: `Quote ${index}` })));
+  await Promise.all(Array.from({ length: 10 }, (_, index) => store.create('results', { caption: `Result ${index}` })));
   const fresh = createCmsStore({ storePath, backup: null });
-  assert.equal((await fresh.list('testimonials')).length, 21);
+  assert.equal((await fresh.list('results')).length, 130);
 });
 
 test('every write schedules a backup of the whole store', async () => {

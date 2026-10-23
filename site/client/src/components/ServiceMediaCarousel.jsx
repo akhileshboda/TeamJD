@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
-import { useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useMedia } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 
 const AUTOPLAY_INTERVAL_MS = 5200
@@ -71,6 +71,7 @@ export default function ServiceMediaCarousel({ service }) {
             <img
               src={image.src}
               alt={image.alt}
+              style={framedImageStyle(image)} data-cms-section={image.slotId}
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
             />

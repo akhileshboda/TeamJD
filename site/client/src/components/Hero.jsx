@@ -129,7 +129,7 @@ export default function Hero() {
   }, [])
 
   return (
-    <section className="hero" aria-label="Hero">
+    <section className="hero" aria-label="Hero" data-cms-section="home.hero-video">
       <div
         className="hero-bg"
         style={{ backgroundImage: `url('${heroPosterUrl}')` }}

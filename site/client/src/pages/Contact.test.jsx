@@ -28,6 +28,7 @@ vi.mock('../hooks/useSettings', async () => {
 vi.mock('../hooks/useAssets', () => ({
   useAssets: () => (assetPath) => assetPath,
   useMedia: () => (slotId, assetPath, alt = '') => ({ src: assetPath, alt, poster: '', replaced: false, ready: true }),
+  framedImageStyle: () => undefined,
 }))
 
 vi.mock('../components/TurnstileWidget', async () => {
@@ -104,6 +105,14 @@ describe('Contact page route chooser', () => {
     expect(screen.getByLabelText('Last Name')).not.toBeRequired()
     expect(screen.getByLabelText('Email Address')).toBeRequired()
     expect(screen.getByLabelText('Your Message')).toBeRequired()
+
+    const requiredLabels = [...form.querySelectorAll('.form-label--required')]
+    expect(requiredLabels.map((label) => label.textContent.trim())).toEqual([
+      'First Name',
+      'Email Address',
+      'Your Message',
+    ])
+    expect(form.querySelector('.contact-form-required-note')).toHaveTextContent('* Required')
 
     const serviceSelect = screen.getByLabelText('Interested In')
     expect(within(serviceSelect).getByRole('option', { name: 'Competition Preparation' })).toBeInTheDocument()

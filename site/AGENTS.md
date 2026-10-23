@@ -141,11 +141,19 @@ There is no lint/format tooling and no CI configured. Don't invent an
 ## Non-obvious behavior worth knowing before touching it
 
 - **`MAINTENANCE_MODE`** (`server/middleware/maintenanceMode.js`): explicit
-  `MAINTENANCE_MODE=true/false` always wins; unset, it defaults to **on**
+  `MAINTENANCE_MODE=true/false` always wins (and the dashboard's Settings >
+  Site visibility over that); unset, it defaults to **on**
   whenever `NODE_ENV=production` and `APP_ENV !== 'staging'`, and off
-  otherwise. `/healthz` and `/assets*` are always exempt. This is separate
+  otherwise. `/healthz`, `/assets*` and the dashboard are always exempt. This is separate
   from the static `503.html` reverse-proxy fallback — see README's
   "in-app gate vs. process-down page" explanation before changing either.
+- **Staging gate** (`server/middleware/siteGate.js`, `server/routes/siteAuth.js`,
+  `client/src/components/AuthGate.jsx`): a username/password screen from the
+  `SITE_AUTH_*` accounts. Unset `SITE_AUTH_ENABLED`, it is on only when
+  `APP_ENV=staging`. Pages still load (so React can show the sign-in), but
+  every `/api` route except `/api/auth` and `/api/admin` answers 401 until
+  signed in; dashboard admins pass. Never default it on for production, whose
+  `.env` has no accounts.
 - **`NODE_ENV=production` is set on both the production *and* staging PM2
   apps** (staging needs it for secure cookies) — `APP_ENV=staging` is the
   actual environment discriminator. Don't branch on `NODE_ENV` alone.

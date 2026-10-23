@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import MediaPicker from './components/MediaPicker'
 import PagesSection, { pageKeyOf } from './sections/PagesSection'
 import { adminLinkFor } from './links'
+import { ToastProvider } from './components/Toasts'
 
 const json = (body, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }))
 
@@ -43,17 +44,43 @@ describe('pages', () => {
     vi.stubGlobal('fetch', vi.fn(() => json({ slots })))
     render(
       <MemoryRouter initialEntries={['/admin/pages']}>
-        <Routes><Route path="/admin/pages/*" element={<PagesSection />} /></Routes>
+        <ToastProvider><Routes><Route path="/admin/pages/*" element={<PagesSection />} /></Routes></ToastProvider>
       </MemoryRouter>,
     )
     const about = await screen.findByRole('link', { name: /About/ })
-    expect(within(about).getByText('1 not live')).toBeInTheDocument()
+    expect(within(about).getByText('1 unpublished')).toBeInTheDocument()
     fireEvent.click(about)
 
     expect(await screen.findByRole('heading', { name: 'About' })).toBeInTheDocument()
-    expect(screen.getByText(/2000 px wide; at least 2400 px/)).toBeInTheDocument()
-    expect(screen.getByText('1 change on this page not live yet.')).toBeInTheDocument()
+    expect(screen.getByText(/2000 px wide, so it may look soft/)).toBeInTheDocument()
+    expect(screen.getByText('1 unpublished change on this page.')).toBeInTheDocument()
     await waitFor(() => expect(document.querySelector('.jd-preview iframe')).toHaveAttribute('src', '/about?cmsPreview=1'))
+  })
+})
+
+describe('page spots', () => {
+  it('saves where a chosen photo is cropped, after a pause', async () => {
+    const slot = {
+      id: 'about.portrait', page: 'About', pagePath: '/about', kind: 'image', label: 'Main portrait', aspect: '3 / 4', minWidth: 1200,
+      builtInUrl: 'https://cdn/jake.webp', draftAsset: photo, liveAsset: null,
+      record: { rev: 4, status: 'draft', draft: { assetId: 'p1', alt: 'Stage photo', focus: { x: 50, y: 50 }, zoom: 1 }, published: null },
+    }
+    const puts = []
+    vi.stubGlobal('fetch', vi.fn((url, init = {}) => {
+      if (init.method === 'PUT') {
+        puts.push(JSON.parse(init.body))
+        return json({ ...slot.record, rev: 5 })
+      }
+      return json({ slots: [slot] })
+    }))
+    render(
+      <MemoryRouter initialEntries={['/admin/pages/about']}>
+        <ToastProvider><Routes><Route path="/admin/pages/*" element={<PagesSection />} /></Routes></ToastProvider>
+      </MemoryRouter>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Adjust crop' }))
+    fireEvent.keyDown(screen.getByRole('group', { name: 'Main portrait: crop' }), { key: 'ArrowLeft' })
+    await waitFor(() => expect(puts).toEqual([{ assetId: 'p1', alt: 'Stage photo', focus: { x: 48, y: 50 }, zoom: 1, rev: 4 }]), { timeout: 3000 })
   })
 })
 

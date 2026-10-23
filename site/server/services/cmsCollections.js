@@ -29,6 +29,20 @@ function percent(value) {
   return Number.isFinite(number) ? Math.min(100, Math.max(0, Math.round(number))) : 50;
 }
 
+// Where a photo sits in a frame it is cropped to fill: the point that always stays
+// in view (percent across and down) and how far it is zoomed in. Frames change
+// shape between phone and desktop, so a point plus zoom suits any photo better
+// than a fixed crop box.
+const MAX_ZOOM = 3;
+
+function framing(input = {}) {
+  const zoom = Number(input.zoom);
+  return {
+    focus: { x: percent(input.focus?.x), y: percent(input.focus?.y) },
+    zoom: Number.isFinite(zoom) ? Math.min(MAX_ZOOM, Math.max(1, Math.round(zoom * 100) / 100)) : 1
+  };
+}
+
 function list(value, max) {
   return Array.isArray(value) ? value.slice(0, max) : [];
 }
@@ -54,16 +68,13 @@ function normalizeResult(input = {}) {
     featured: Boolean(input.featured),
     image: { assetId: text(image.assetId, 80) || null, src: text(image.src, 1000) },
     presentation: presentation
-      ? {
-          fit: oneOf(presentation.fit, RESULT_FITS, 'contain'),
-          focus: { x: percent(presentation.focus?.x), y: percent(presentation.focus?.y) }
-        }
+      ? { fit: oneOf(presentation.fit, RESULT_FITS, 'contain'), ...framing(presentation) }
       : null,
     name: text(input.name, 160),
     location: text(input.location, 120),
     duration: text(input.duration, 60),
     summary: text(input.summary, 1200),
-    testimonialId: text(input.testimonialId, 80) || null,
+    testimonial: input.testimonial ? normalizeTestimonial(input.testimonial) : null,
     stats: list(input.stats, 6)
       .map((stat) => {
         const out = { label: text(stat?.label, 40), value: text(stat?.value, 40) };
@@ -91,6 +102,10 @@ function validateResult(draft, data) {
   } else if (!draft.image.src) {
     errors.image = 'Choose a photo.';
   }
+  if (draft.testimonial) {
+    if (!draft.testimonial.quote) errors['testimonial.quote'] = 'Add the quote, or turn the testimonial off.';
+    if (!draft.testimonial.author) errors['testimonial.author'] = 'Say who it is from. A first name or "Competition client" is fine.';
+  }
   return errors;
 }
 
@@ -116,9 +131,7 @@ function toPublicResult(record, data) {
   for (const field of ['name', 'location', 'duration', 'summary']) {
     if (version[field]) out[field] = version[field];
   }
-  const testimonial = version.testimonialId
-    && (data.collections.testimonials || []).find((item) => item.id === version.testimonialId);
-  if (testimonial?.published) out.testimonial = toPublicTestimonial(testimonial);
+  if (version.testimonial) out.testimonial = { ...version.testimonial };
   if (version.stats.length) out.stats = version.stats;
   out.tags = version.tags;
   out.order = record.order;
@@ -138,6 +151,7 @@ function summarizeResult(record, data) {
 }
 
 // ── Testimonials ─────────────────────────────────────────────────────────────
+// A testimonial is part of the result it belongs to (result.testimonial).
 
 function normalizeTestimonial(input = {}) {
   return {
@@ -148,45 +162,25 @@ function normalizeTestimonial(input = {}) {
   };
 }
 
-function validateTestimonial(draft) {
-  return requireFields(draft, {
-    quote: 'Add the quote.',
-    author: 'Say who it is from. A first name or "Competition client" is fine.'
-  });
-}
-
-function toPublicTestimonial(record) {
-  const { quote, author, service, result } = record.published;
-  return { quote, author, service, result };
-}
-
-// Results that show this testimonial (draft or live).
-function testimonialUsage(data, record) {
-  return (data.collections.results || [])
-    .filter((result) => [result.draft, result.published].some((version) => version?.testimonialId === record.id))
-    .map((result) => ({ collection: 'results', id: result.id, title: summarizeResult(result, data).title }));
-}
-
-function unlinkTestimonial(data, testimonialId, touch) {
+// Schema 2 (2026-10-20): stores from before kept testimonials as their own
+// collection, linked from results by testimonialId. Each version of a result
+// takes the matching version of its testimonial (a testimonial that was never
+// published stays off the live result); unlinked ones were never on the site
+// and are dropped.
+function foldTestimonialsIntoResults(data) {
+  const testimonials = data.collections.testimonials;
+  if (!testimonials) return false;
+  const byId = new Map(testimonials.map((record) => [record.id, record]));
   for (const result of data.collections.results || []) {
-    let changed = false;
-    for (const version of [result.draft, result.published]) {
-      if (version?.testimonialId === testimonialId) {
-        version.testimonialId = null;
-        changed = true;
-      }
+    for (const key of ['draft', 'published']) {
+      const version = result[key];
+      if (!version) continue;
+      const linked = version.testimonialId && byId.get(version.testimonialId);
+      result[key] = normalizeResult({ ...version, testimonial: linked?.[key] || null });
     }
-    if (changed) touch(result);
   }
-}
-
-function summarizeTestimonial(record) {
-  const { quote, author, result } = record.draft;
-  return {
-    title: author || 'Unnamed client',
-    subtitle: quote.length > 90 ? `${quote.slice(0, 89).trimEnd()}…` : quote,
-    result
-  };
+  delete data.collections.testimonials;
+  return true;
 }
 
 // ── Placements ───────────────────────────────────────────────────────────────
@@ -194,7 +188,7 @@ function summarizeTestimonial(record) {
 // assetId null means "use the site's built-in photo or video".
 
 function normalizePlacement(input = {}) {
-  return { assetId: text(input.assetId, 80) || null, alt: text(input.alt, 300) };
+  return { assetId: text(input.assetId, 80) || null, alt: text(input.alt, 300), ...framing(input) };
 }
 
 function validatePlacement(draft, data) {
@@ -219,7 +213,8 @@ function publicSlots(data) {
   for (const record of data.collections.placements || []) {
     const asset = record.published?.assetId && findAsset(data, record.published.assetId);
     if (!asset) continue;
-    slots[record.id] = { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl || null, alt: record.published.alt };
+    const { alt, focus, zoom } = normalizePlacement(record.published);
+    slots[record.id] = { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl || null, alt, focus, zoom };
   }
   return slots;
 }
@@ -244,8 +239,7 @@ function mediaUsage(data, assetId) {
 // ── Seed ─────────────────────────────────────────────────────────────────────
 // A brand-new store starts from the JSON files the site used to serve. Real
 // client results go live; stock "representative" images arrive hidden so Jake
-// can delete or replace them. Testimonials embedded in results become their own
-// records, linked back to the result.
+// can delete or replace them. Testimonials stay inside their result.
 
 function seedRecord({ id, order, draft, live, now }) {
   return {
@@ -269,23 +263,9 @@ function readSeed(seedDir, file) {
 function seedResults({ now, seedDir = SEED_DIR }) {
   return readSeed(seedDir, 'results-library.json').map((item) => {
     const id = String(item.id);
-    const draft = normalizeResult({
-      ...item,
-      image: { src: item.src },
-      testimonialId: item.testimonial ? `t-${id}` : null
-    });
+    const draft = normalizeResult({ ...item, image: { src: item.src } });
     return seedRecord({ id, order: item.order, draft, live: item.kind === 'client', now });
   });
-}
-
-function seedTestimonials({ now, seedDir = SEED_DIR }) {
-  const linked = readSeed(seedDir, 'results-library.json')
-    .filter((item) => item.testimonial)
-    .map((item) => ({ id: `t-${item.id}`, draft: normalizeTestimonial(item.testimonial), live: true }));
-  // Never shown on the site before; kept hidden in case Jake wants them.
-  const unused = readSeed(seedDir, 'testimonials.json')
-    .map((item) => ({ id: `legacy-${item.id}`, draft: normalizeTestimonial(item), live: false }));
-  return [...linked, ...unused].map((item, index) => seedRecord({ ...item, order: index + 1, now }));
 }
 
 // Public outputs the site reads, built from live records only.
@@ -305,17 +285,6 @@ const COLLECTIONS = {
     validateForPublish: validateResult,
     summarize: summarizeResult,
     seed: seedResults
-  },
-  testimonials: {
-    label: 'testimonial',
-    // Testimonials appear on the site inside their result's story.
-    publicCollection: 'results',
-    normalizeDraft: normalizeTestimonial,
-    validateForPublish: validateTestimonial,
-    summarize: summarizeTestimonial,
-    usage: testimonialUsage,
-    onDelete: (data, record, touch) => unlinkTestimonial(data, record.id, touch),
-    seed: seedTestimonials
   },
   services: {
     label: 'service',
@@ -339,12 +308,14 @@ const COLLECTIONS = {
     seed: (options) => services.seedFaqs({ ...options, seedRecord })
   },
   placements: {
-    label: 'photo spot',
+    label: 'page image',
     publicCollection: 'slots',
-    // Records appear the first time Jake picks something for a slot.
+    // Records appear the first time Jake picks something for a slot. A page
+    // always shows an image, so one is never taken offline, only replaced.
     createOnSave: true,
     canCreate: false,
     canDelete: false,
+    canHide: false,
     normalizeDraft: normalizePlacement,
     validateForPublish: validatePlacement,
     summarize: summarizePlacement,
@@ -355,12 +326,12 @@ const COLLECTIONS = {
 module.exports = {
   COLLECTIONS,
   PUBLIC_OUTPUTS,
+  foldTestimonialsIntoResults,
   mediaUsage,
   RESULT_CATEGORIES,
   RESULT_KINDS,
   SEED_DIR,
   normalizeResult,
-  normalizeTestimonial,
   seedRecord,
   text
 };

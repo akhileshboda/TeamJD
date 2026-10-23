@@ -58,8 +58,10 @@ test('photo spots: choose a library photo as a draft, publish it, and the site g
   assert.equal(portrait.page, 'About');
   assert.equal(portrait.pagePath, '/about');
   assert.equal(portrait.record, null);
+  assert.equal(portrait.aspect, '3 / 4');
 
-  const chosen = await write('put', '/api/admin/placements/about.portrait').send({ assetId: 'p1', alt: 'Jake on stage', rev: 0 });
+  const chosen = await write('put', '/api/admin/placements/about.portrait')
+    .send({ assetId: 'p1', alt: 'Jake on stage', focus: { x: 30, y: 20 }, zoom: 1.5, rev: 0 });
   assert.equal(chosen.status, 200);
   assert.equal(chosen.body.status, 'draft');
   assert.deepEqual(await store.getPublic('slots'), {});
@@ -76,7 +78,9 @@ test('photo spots: choose a library photo as a draft, publish it, and the site g
   const published = await write('post', '/api/admin/collections/placements/about.portrait/publish');
   assert.equal(published.status, 200);
   assert.deepEqual(await store.getPublic('slots'), {
-    'about.portrait': { kind: 'image', url: 'https://cdn.example/cms/test/p1.webp', posterUrl: null, alt: 'Jake on stage' }
+    'about.portrait': {
+      kind: 'image', url: 'https://cdn.example/cms/test/p1.webp', posterUrl: null, alt: 'Jake on stage', focus: { x: 30, y: 20 }, zoom: 1.5
+    }
   });
 
   const pending = await request(app).get('/api/admin/pending');

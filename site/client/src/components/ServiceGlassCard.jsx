@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'motion/react'
-import { useAssets, useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useAssets, useMedia } from '../hooks/useAssets'
 
 export default function ServiceGlassCard({ service }) {
   const resolveAsset = useAssets()
   const shouldReduce = useReducedMotion()
 
-  const heroSrc = useMedia()(`services.${service.slug}.hero`, service.hero_image).src
+  const hero = useMedia()(`services.${service.slug}.hero`, service.hero_image)
+  const heroSrc = hero.src
   const fallbackIcon = service.includes?.[0]?.icon || ''
 
   const MotionLink = shouldReduce ? Link : motion.create(Link)
@@ -35,6 +36,7 @@ export default function ServiceGlassCard({ service }) {
           <img
             src={heroSrc}
             alt=""
+            style={framedImageStyle(hero)} data-cms-section={hero.slotId}
             aria-hidden="true"
             loading="lazy"
             decoding="async"

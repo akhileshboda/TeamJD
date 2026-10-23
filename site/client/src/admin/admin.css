@@ -17,8 +17,9 @@
   --jd-pending-soft: rgba(250, 128, 114, 0.14);
   --jd-danger: #ff6b6b;
   --jd-danger-soft: rgba(255, 107, 107, 0.12);
-  --jd-sidebar: 15.5rem;
-  --jd-topbar: 3.75rem;
+  --jd-sidebar: 14rem;
+  --jd-topbar: 3.25rem;
+  --jd-publishbar: 4rem;
   --jd-radius: 0.625rem;
 
   min-height: 100vh;
@@ -27,7 +28,7 @@
   background: var(--jd-canvas);
   color: var(--jd-text);
   font-family: var(--font-sans);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -134,7 +135,7 @@ html:has(.jd-admin) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 2.5rem;
+  min-height: 2.25rem;
   padding: 0 0.625rem;
   border-radius: 0.5rem;
   color: var(--jd-muted);
@@ -218,8 +219,11 @@ html:has(.jd-admin) {
 .jd-admin-main {
   flex: 1;
   width: 100%;
-  max-width: 72rem;
-  padding: 2rem 1.5rem 6rem;
+  padding: 1.5rem 1.5rem 6rem;
+}
+/* Editors bring their own bottom space (see Editor). */
+.jd-admin-main:has(.jd-editor) {
+  padding-bottom: 0;
 }
 .jd-admin-main:focus {
   outline: none;
@@ -387,7 +391,7 @@ html:has(.jd-admin) {
 }
 .jd-field-hint {
   color: var(--jd-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 .jd-field-error {
   margin-top: 0.5rem;
@@ -397,14 +401,22 @@ html:has(.jd-admin) {
 }
 .jd-input {
   width: 100%;
-  min-height: 2.75rem;
-  padding: 0.5rem 0.75rem;
+  min-height: 2.375rem;
+  padding: 0.4375rem 0.75rem;
   border: 1px solid var(--jd-line-strong);
   border-radius: 0.5rem;
   background: var(--jd-canvas);
   color: var(--jd-text);
   font: inherit;
-  font-size: 1rem; /* 16px stops iOS zooming into the field */
+  font-size: 0.875rem;
+}
+/* On touch screens: 16px text stops iOS zooming into the field, and a 44px box
+   is easy to tap. */
+@media (pointer: coarse) {
+  .jd-input {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
 }
 .jd-input::placeholder {
   color: var(--jd-subtle);
@@ -500,7 +512,7 @@ html:has(.jd-admin) {
 }
 
 .jd-admin .jd-page-title {
-  font-size: 1.75rem;
+  font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -517,10 +529,15 @@ html:has(.jd-admin) {
   border-radius: 1rem;
   background: var(--jd-panel);
 }
+.jd-signin-logo-link {
+  display: inline-block;
+  margin-bottom: 1.75rem;
+  border-radius: 0.25rem;
+}
 .jd-signin-logo {
+  display: block;
   width: auto;
   height: 2.5rem;
-  margin-bottom: 1.75rem;
 }
 .jd-signin h1 {
   margin-bottom: 0.5rem;
@@ -775,6 +792,17 @@ html:has(.jd-admin) {
   color: var(--jd-muted);
 }
 
+.jd-ranked-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.375rem;
+  padding: 0 0.75rem 0.375rem;
+  border-bottom: 1px solid var(--jd-line);
+  color: var(--jd-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
 .jd-ranked {
   display: grid;
   gap: 0.375rem;
@@ -887,12 +915,12 @@ html:has(.jd-admin) {
   box-shadow: var(--shadow-modal);
 }
 .jd-pending-title {
-  margin-bottom: 0.75rem;
   font-weight: 700;
 }
-.jd-pending-panel .jd-admin-notice,
-.jd-pending-panel .jd-admin-error {
-  margin-bottom: 0.75rem;
+.jd-pending-note {
+  margin: 0.125rem 0 0.75rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
 }
 .jd-pending-list {
   display: grid;
@@ -1010,28 +1038,56 @@ html:has(.jd-admin) {
 }
 
 .jd-list-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0 0.875rem 0.5rem;
+  margin-bottom: 0.5rem;
   color: var(--jd-muted);
   font-size: 0.8125rem;
 }
-.jd-select-all {
+
+/* What each status chip means, folded away under the list tools. */
+.jd-status-help {
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+}
+.jd-status-help summary {
   display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
+  min-height: 2rem;
+  color: var(--jd-muted);
+  font-weight: 600;
   cursor: pointer;
 }
-
-.jd-rows {
+.jd-status-help summary:hover {
+  color: var(--jd-text);
+}
+.jd-status-help dl {
   display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.jd-status-help dl > div {
+  display: contents;
+}
+.jd-status-help dd {
+  color: var(--jd-muted);
+}
+.jd-status-help p {
+  color: var(--jd-subtle);
+}
+
+.jd-table {
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   overflow: hidden;
   background: var(--jd-panel);
 }
+.jd-rows {
+  display: grid;
+}
 .jd-row {
+  /* Where the title starts, for cells that wrap under it on phones. */
+  --jd-row-indent: 2rem;
   position: relative;
   display: flex;
   align-items: center;
@@ -1040,15 +1096,42 @@ html:has(.jd-admin) {
   padding: 0.625rem 0.875rem;
   background: var(--jd-panel);
 }
+.jd-row:has(.jd-row-thumb) {
+  --jd-row-indent: 5.875rem;
+}
 .jd-row + .jd-row {
   border-top: 1px solid var(--jd-line);
 }
-.jd-row:hover,
+.jd-rows > .jd-row:hover,
 .jd-row.is-selected {
   background: #1f1f1f;
 }
-.jd-row-check,
-.jd-select-all input {
+.jd-row--head {
+  min-height: 2.75rem;
+  padding-block: 0.25rem;
+  border-bottom: 1px solid var(--jd-line);
+  background: var(--jd-raised);
+  color: var(--jd-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.jd-row--head .jd-row-cell,
+.jd-row--head .jd-row-updated {
+  color: inherit;
+  font-size: inherit;
+}
+.jd-row--head .jd-row-thumb {
+  height: auto;
+  background: none;
+}
+.jd-row--head .jd-row-grip {
+  cursor: default;
+}
+.jd-row-select {
+  display: flex;
+  flex: none;
+}
+.jd-row-check {
   width: 1.125rem;
   height: 1.125rem;
   accent-color: var(--jd-live);
@@ -1117,9 +1200,19 @@ html:has(.jd-admin) {
   color: var(--jd-muted);
   font-size: 0.875rem;
 }
+.jd-row-switch {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  width: 4rem;
+}
 .jd-row-status {
   flex: none;
-  width: 9.5rem;
+  width: 10.5rem;
+}
+.jd-row-none {
+  color: var(--jd-subtle);
 }
 .jd-row-updated {
   flex: none;
@@ -1145,6 +1238,8 @@ html:has(.jd-admin) {
 .jd-row-move {
   display: flex;
   flex: none;
+  justify-content: flex-end;
+  width: 5.5rem;
 }
 .jd-flip {
   transform: rotate(180deg);
@@ -1155,9 +1250,6 @@ html:has(.jd-admin) {
   .jd-row-updated {
     display: none;
   }
-  .jd-row-status {
-    width: auto;
-  }
 }
 @media (max-width: 559px) {
   .jd-row {
@@ -1167,8 +1259,17 @@ html:has(.jd-admin) {
   .jd-row-main {
     flex-basis: calc(100% - 7.5rem);
   }
+  /* The switch and status wrap under the title, lined up with it. */
+  .jd-row-switch,
   .jd-row-status {
-    margin-left: calc(1.125rem + 3rem + 1.75rem);
+    margin-left: var(--jd-row-indent);
+  }
+  .jd-row-switch + .jd-row-status {
+    margin-left: 0;
+  }
+  .jd-row--head .jd-row-switch,
+  .jd-row--head .jd-row-status {
+    display: none;
   }
   .jd-list-head-actions {
     width: 100%;
@@ -1196,7 +1297,7 @@ html:has(.jd-admin) {
 /* ── Editor ────────────────────────────────────────────────────────────── */
 
 .jd-editor {
-  padding-bottom: 5rem;
+  padding-bottom: 1.5rem;
 }
 .jd-back {
   display: inline-flex;
@@ -1217,69 +1318,161 @@ html:has(.jd-admin) {
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
-.jd-editor > .jd-admin-notice,
-.jd-editor > .jd-admin-error {
-  margin-bottom: 1rem;
-}
-.jd-banner-action {
-  margin-left: 0.75rem;
-}
 .jd-editor-switch {
   display: none;
   margin-bottom: 1rem;
 }
 .jd-editor-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+  /* The preview gets the larger share; the form stops growing at 34rem. */
+  grid-template-columns: minmax(18rem, 2fr) minmax(22rem, 3fr);
   align-items: start;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 .jd-editor-form {
   display: grid;
-  gap: 1rem;
+  align-content: start;
+  gap: 0.75rem;
   min-width: 0;
+  max-width: 34rem;
 }
 .jd-editor-preview {
   position: sticky;
   top: calc(var(--jd-topbar) + 1rem);
+  height: calc(100dvh - var(--jd-topbar) - var(--jd-publishbar) - 2rem);
+  min-height: 24rem;
 }
-@media (max-width: 1099px) {
+
+/* Laptops and wider: the editor is a workspace exactly as tall as the screen.
+   The header and status bar stay put, only the form scrolls, and the preview
+   fills the rest of the height, so all of it is always in view. */
+@media (min-width: 1000px) and (min-height: 600px) {
+  .jd-admin-main:has(.jd-editor) {
+    display: flex;
+    flex-direction: column;
+    /* Not flex: 1, whose basis would override the height and grow with the form. */
+    flex: none;
+    height: calc(100dvh - var(--jd-topbar));
+    min-height: 0;
+  }
+  .jd-editor {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .jd-editor-body {
+    flex: 1;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 0;
+  }
+  /* A little inner space keeps focus rings from being clipped by the scroll. */
+  .jd-editor-form {
+    margin-left: -0.25rem;
+    padding: 0.25rem 0.75rem 1rem 0.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .jd-editor-preview {
+    position: static;
+    height: auto;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 999px) {
   .jd-editor-switch {
     display: inline-flex;
   }
   .jd-editor-body {
     grid-template-columns: minmax(0, 1fr);
+    scroll-margin-top: calc(var(--jd-topbar) + 3.75rem);
   }
   .jd-editor-body.is-showing-edit .jd-editor-preview,
   .jd-editor-body.is-showing-preview .jd-editor-form {
     display: none;
   }
-  .jd-editor-preview {
+  .jd-editor-form {
+    max-width: none;
+  }
+  .jd-editor:has(.is-showing-edit) {
+    padding-bottom: calc(var(--jd-publishbar) + 1.5rem);
+  }
+  .jd-preview-note {
+    display: none;
+  }
+
+  /* Preview on a phone or tablet: the editor is exactly as tall as the screen,
+     the status bar sits at its foot instead of floating, and the preview takes
+     everything in between. Nothing to scroll. */
+  .jd-admin-main:has(.jd-editor-body.is-showing-preview) {
+    display: flex;
+    flex-direction: column;
+    /* Not flex: 1, whose basis would override the height and grow with the form. */
+    flex: none;
+    height: calc(100dvh - var(--jd-topbar));
+    min-height: 0;
+    padding-top: 0.75rem;
+  }
+  .jd-editor:has(.is-showing-preview) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+  .jd-editor:has(.is-showing-preview) .jd-editor-head {
+    display: none;
+  }
+  .jd-editor-body.is-showing-preview {
+    flex: 1;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    min-height: 0;
+  }
+  .jd-editor-body.is-showing-preview .jd-editor-preview {
     position: static;
+    height: auto;
+    min-height: 0;
+  }
+  .jd-editor:has(.is-showing-preview) .jd-publish-bar {
+    position: static;
+    order: 1;
+    min-height: 0;
+    margin: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--jd-line);
+    border-radius: var(--jd-radius);
+    background: var(--jd-panel);
   }
 }
 
 .jd-form-section {
-  padding: 1.25rem;
+  padding: 1rem;
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
 .jd-form-section-head {
-  margin-bottom: 1rem;
+  margin-bottom: 0.875rem;
 }
 .jd-admin .jd-form-section-head h2 {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
-.jd-form-section-head p {
+.jd-form-section-head p,
+.jd-form-section-description {
   margin-top: 0.25rem;
   color: var(--jd-muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 .jd-form-section-body {
   display: grid;
-  gap: 1rem;
+  gap: 0.875rem;
 }
 .jd-form-section-body > .jd-field + .jd-field {
   margin-top: 0;
@@ -1294,9 +1487,24 @@ html:has(.jd-admin) {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.jd-field-required {
-  color: var(--jd-subtle);
-  font-weight: 500;
+.jd-required-tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid rgba(250, 128, 114, 0.45);
+  border-radius: 999px;
+  color: var(--jd-pending);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: 0.0625rem;
+}
+.jd-form-note {
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+}
+.jd-form-note .jd-required-tag {
+  margin: 0 0.125rem;
 }
 .jd-field-count {
   justify-self: end;
@@ -1383,6 +1591,61 @@ html:has(.jd-admin) {
   cursor: pointer;
 }
 
+/* The on-site switch: the same look as a form toggle, as a button so it can
+   wait for the server before it flips. */
+.jd-site-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--jd-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.jd-site-switch-track {
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--jd-line-strong);
+  transition: background-color var(--transition-fast);
+}
+.jd-site-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: var(--jd-text);
+  transition: transform var(--transition-fast);
+}
+.jd-site-switch.is-on .jd-site-switch-track {
+  background: var(--jd-live);
+}
+.jd-site-switch.is-on .jd-site-switch-track::after {
+  transform: translateX(1rem);
+}
+.jd-site-switch-label {
+  white-space: nowrap;
+}
+.jd-site-switch.is-busy {
+  cursor: progress;
+  opacity: 0.6;
+}
+.jd-site-switch:focus-visible {
+  outline: none;
+}
+.jd-site-switch:focus-visible .jd-site-switch-track {
+  box-shadow: 0 0 0 3px var(--jd-live-soft), 0 0 0 1px var(--jd-live);
+}
+
 .jd-photo-field {
   display: grid;
   gap: 0.875rem;
@@ -1391,35 +1654,16 @@ html:has(.jd-admin) {
   display: grid;
   place-items: center;
   max-width: 22rem;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1;
   overflow: hidden;
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: #070707;
 }
-.jd-photo-pick {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.jd-photo-pick:enabled {
-  cursor: crosshair;
-}
-.jd-photo-pick img {
+.jd-photo-frame img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-.jd-focus-dot {
-  position: absolute;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 3px solid var(--jd-live);
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.55);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
 }
 .jd-photo-missing {
   color: var(--jd-muted);
@@ -1444,31 +1688,53 @@ html:has(.jd-admin) {
 /* ── Preview ───────────────────────────────────────────────────────────── */
 
 .jd-preview {
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.75rem;
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
 .jd-preview-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.625rem;
+}
+.jd-preview-heading {
+  min-width: 0;
 }
 .jd-preview-title {
   font-weight: 700;
 }
 .jd-preview-note {
-  margin-bottom: 0.75rem;
+  overflow: hidden;
   color: var(--jd-muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-preview-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 .jd-preview-stage {
   position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
   overflow: hidden;
   border-radius: 0.5rem;
   background: var(--jd-canvas);
+}
+.jd-preview-device {
+  flex: none;
+  overflow: hidden;
 }
 .jd-preview-stage iframe {
   display: block;
@@ -1476,50 +1742,219 @@ html:has(.jd-admin) {
   transform-origin: top left;
   background: var(--jd-canvas);
 }
+/* Full screen: the same preview (no reload) laid over the whole dashboard. */
+.jd-preview.is-expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--jd-canvas);
+}
 
-/* ── Publish bar ───────────────────────────────────────────────────────── */
+/* ── Status bar (on the site, save state, Publish changes) ─────────────── */
 
 .jd-publish-bar {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: var(--jd-sidebar);
-  z-index: 25;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1rem;
-  padding: 0.75rem 1.5rem calc(0.75rem + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--jd-line-strong);
-  background: rgba(20, 20, 20, 0.96);
-  backdrop-filter: blur(12px);
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
 }
 .jd-publish-bar-status {
   display: flex;
+  flex: 1;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.875rem;
   min-width: 0;
 }
-.jd-publish-bar-status > span:last-child {
-  display: grid;
+.jd-publish-bar-text {
+  min-width: 0;
+  font-size: 0.8125rem;
+}
+.jd-publish-bar-text strong {
+  display: block;
+  font-size: 0.875rem;
+}
+.jd-publish-bar-where {
+  color: var(--jd-muted);
+}
+.jd-publish-bar-where:not(:empty) {
+  margin-right: 0.75rem;
 }
 .jd-publish-bar-save {
-  color: var(--jd-muted);
-  font-size: 0.8125rem;
+  color: var(--jd-subtle);
 }
 .jd-publish-bar-actions {
   display: flex;
   gap: 0.5rem;
 }
+
+/* Phones, tablets and very short screens: the bar is fixed to the bottom of
+   the screen, so Publish is always within reach while the form scrolls. */
+@media (max-width: 999px), (max-height: 599px) {
+  .jd-publish-bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: var(--jd-sidebar);
+    z-index: 25;
+    min-height: var(--jd-publishbar);
+    margin: 0;
+    padding: 0.5rem 1.5rem calc(0.5rem + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--jd-line-strong);
+    border-radius: 0;
+    background: rgba(20, 20, 20, 0.96);
+    backdrop-filter: blur(12px);
+  }
+  .jd-editor {
+    padding-bottom: calc(var(--jd-publishbar) + 1.5rem);
+  }
+  .jd-publish-bar-where {
+    display: none;
+  }
+}
 @media (max-width: 899px) {
   .jd-publish-bar {
     left: 0;
-    padding-inline: 1rem;
+    padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
   }
   .jd-publish-bar-actions {
-    flex: 1;
     justify-content: flex-end;
+  }
+}
+/* Phones: the buttons get a row of their own, sharing it equally. The
+   preview's own title repeats the Preview tab, so it gives way to the page. */
+@media (max-width: 559px) {
+  .jd-preview:not(.is-expanded) .jd-preview-heading {
+    display: none;
+  }
+  .jd-preview:not(.is-expanded) .jd-preview-head {
+    justify-content: flex-end;
+  }
+  .jd-publish-bar-status {
+    flex-basis: 100%;
+  }
+  .jd-publish-bar-actions:not(:empty) {
+    flex: 1 1 100%;
+  }
+  .jd-publish-bar-actions .jd-admin-button {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 0.75rem;
+  }
+  .jd-publish-bar-long {
+    display: none;
+  }
+  .jd-publish-bar-text strong {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ── Toasts ────────────────────────────────────────────────────────────── */
+
+/* Under the top bar, on the right, so they never cover the publish bar or
+   push the page down. */
+.jd-toasts {
+  position: fixed;
+  top: calc(var(--jd-topbar) + 0.75rem);
+  right: 1.5rem;
+  z-index: 60;
+  display: grid;
+  gap: 0.5rem;
+  width: min(26rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+.jd-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 0.5rem 0.75rem 0.875rem;
+  border: 1px solid rgba(22, 201, 221, 0.35);
+  border-radius: 0.625rem;
+  background: #10292c;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  color: #dff8fb;
+  font-size: 0.875rem;
+  pointer-events: auto;
+  animation: jd-toast-in 160ms ease-out;
+}
+.jd-toast--error {
+  border-color: rgba(255, 107, 107, 0.45);
+  background: #2e1717;
+  color: #ffe1e1;
+}
+.jd-toast-icon {
+  flex: none;
+  margin-top: 0.0625rem;
+  color: var(--jd-live);
+}
+.jd-toast--error .jd-toast-icon {
+  color: var(--jd-danger);
+}
+.jd-toast-text {
+  flex: 1;
+  min-width: 0;
+}
+.jd-toast-action {
+  margin-left: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.jd-toast-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.25rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+.jd-toast-close:hover {
+  opacity: 1;
+}
+@keyframes jd-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jd-toast {
+    animation: none;
+  }
+}
+@media (max-width: 899px) {
+  .jd-toasts {
+    right: max(1rem, env(safe-area-inset-right));
+    left: max(1rem, env(safe-area-inset-left));
+    width: auto;
+  }
+}
+@media (pointer: coarse) {
+  .jd-toast-close {
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: -0.625rem -0.25rem -0.625rem 0;
   }
 }
 
@@ -1843,11 +2278,14 @@ html:has(.jd-admin) {
 
 .jd-page-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  /* auto-fit: the cards always span the row, with no empty columns at the end. */
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   gap: 1rem;
 }
 .jd-page-card {
   display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
   overflow: hidden;
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
@@ -1997,27 +2435,193 @@ html:has(.jd-admin) {
 }
 
 /* Side-by-side fields line up on their inputs even when only some have hints. */
-.jd-field-row,
-.jd-rows-field-cells {
+.jd-field-row {
   align-items: end;
+}
+/* Cells of a row start level, and a growing field (a title beside its
+   description) fills the row's height. */
+.jd-rows-field-cells {
+  align-items: stretch;
+}
+.jd-rows-field-cells > .jd-field + .jd-field,
+.jd-field-row > .jd-field + .jd-field {
+  margin-top: 0;
+}
+.jd-field--grow {
+  display: flex;
+  flex-direction: column;
+}
+.jd-field--grow > .jd-input--multiline {
+  flex: 1;
+  min-height: 5rem;
 }
 
 /* ── Settings ──────────────────────────────────────────────────────────── */
 
-.jd-settings {
+.jd-settings-head {
+  margin-bottom: 1.25rem;
+}
+/* The menu of settings beside the chosen page. */
+.jd-settings-layout {
+  display: grid;
+  grid-template-columns: 18rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+}
+.jd-settings-menu {
+  position: sticky;
+  top: calc(var(--jd-topbar) + 1.5rem);
+}
+.jd-settings-menu ul {
+  overflow: hidden;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+}
+.jd-settings-menu li + li {
+  border-top: 1px solid var(--jd-line);
+}
+.jd-settings-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.75rem;
+  padding: 0.625rem 1rem;
+  border-left: 3px solid transparent;
+}
+.jd-settings-link:hover {
+  background: #1f1f1f;
+}
+.jd-settings-link-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.jd-settings-link-text strong {
+  font-size: 0.875rem;
+}
+.jd-settings-link-text span {
+  overflow: hidden;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-settings-link-arrow {
+  flex: none;
+  color: var(--jd-subtle);
+}
+.jd-settings-panel {
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
+  background: var(--jd-panel);
+}
+.jd-settings-back {
+  display: none;
+}
+.jd-settings-panel-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.jd-settings-panel-lede {
+  max-width: 40rem;
+  margin: 0.25rem 0 1.25rem;
+  color: var(--jd-muted);
+  font-size: 0.875rem;
+}
+/* Forms keep a readable width; Search listings uses the room for previews. */
+.jd-settings-fields {
   display: grid;
   gap: 1rem;
-  max-width: 48rem;
+  max-width: 44rem;
 }
-.jd-settings .jd-list-head {
-  margin-bottom: 0.25rem;
+.jd-settings-panel.is-wide .jd-settings-fields {
+  max-width: none;
 }
+/* Shows only with something to save, and stays in view while the page scrolls. */
+.jd-save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1.5rem -1.5rem -1.5rem;
+  padding: 0.75rem 1.5rem calc(0.75rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--jd-line-strong);
+  border-radius: 0 0 var(--jd-radius) var(--jd-radius);
+  background: rgba(20, 20, 20, 0.96);
+  backdrop-filter: blur(12px);
+}
+.jd-save-bar p {
+  font-weight: 700;
+}
+.jd-save-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (min-width: 900px) {
+  .jd-settings-link-arrow {
+    display: none;
+  }
+  .jd-settings-link[aria-current='page'] {
+    border-left-color: var(--jd-live);
+    background: var(--jd-live-soft);
+  }
+}
+/* Phones and portrait tablets: the menu is its own screen; each page has a
+   way back to it. */
+@media (max-width: 899px) {
+  .jd-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jd-settings-menu {
+    position: static;
+  }
+  .jd-settings:not(.is-panel) .jd-settings-panel,
+  .jd-settings.is-panel .jd-settings-menu,
+  .jd-settings.is-panel .jd-settings-head {
+    display: none;
+  }
+  .jd-settings-back {
+    display: inline-flex;
+  }
+  .jd-settings-panel {
+    padding: 1rem;
+  }
+  .jd-save-bar {
+    margin: 1rem -1rem -1rem;
+    padding-inline: 1rem;
+  }
+  .jd-save-bar-actions {
+    flex: 1;
+    justify-content: flex-end;
+  }
+}
+
 .jd-seo-page {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
   border: 1px solid var(--jd-line);
   border-radius: 0.5rem;
+}
+.jd-seo-page-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+/* Wide screens put each page's Google preview beside its boxes. */
+@media (min-width: 1280px) {
+  .jd-seo-page {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.25rem;
+  }
 }
 .jd-seo-page legend {
   padding: 0 0.375rem;
@@ -2081,4 +2685,228 @@ html:has(.jd-admin) {
 .jd-pending-panel:focus,
 .jd-asset-detail-head .jd-panel-title:focus {
   outline: none;
+}
+
+/* ── Collapsible form sections (Services) ────────────────────────────── */
+
+.jd-form-section--collapsible {
+  padding: 0;
+}
+.jd-form-section--collapsible > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--jd-radius);
+  cursor: pointer;
+  list-style: none;
+}
+.jd-form-section--collapsible > summary::-webkit-details-marker {
+  display: none;
+}
+.jd-form-section--collapsible > summary:hover {
+  background: var(--jd-raised);
+}
+.jd-form-section--collapsible > summary:focus-visible {
+  outline: 2px solid var(--jd-live);
+  outline-offset: -2px;
+}
+.jd-form-section-heading {
+  display: grid;
+  flex: 1;
+  gap: 0.125rem;
+  min-width: 0;
+}
+.jd-form-section-summary {
+  overflow: hidden;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.jd-form-section--collapsible[open] .jd-form-section-summary {
+  display: none;
+}
+.jd-form-section-chevron {
+  flex: none;
+  color: var(--jd-muted);
+  transition: transform var(--transition-fast);
+}
+.jd-form-section--collapsible[open] .jd-form-section-chevron {
+  transform: rotate(180deg);
+}
+.jd-form-section--collapsible > .jd-form-section-body {
+  padding: 0 1rem 1rem;
+}
+.jd-form-section--collapsible[open] > summary {
+  border-radius: var(--jd-radius) var(--jd-radius) 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jd-form-section-chevron {
+    transition: none;
+  }
+}
+
+/* ── Photo framing (crop by dragging and zooming) ──────────────────────── */
+
+.jd-framer {
+  display: grid;
+  gap: 0.5rem;
+}
+.jd-framer-frame {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  overflow: hidden;
+  border: 1px solid var(--jd-line-strong);
+  border-radius: var(--jd-radius);
+  background: #070707;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.jd-framer-frame:active {
+  cursor: grabbing;
+}
+.jd-framer-frame:focus-visible {
+  outline: 2px solid var(--jd-live);
+  outline-offset: 2px;
+}
+.jd-framer-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.jd-framer-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 22rem;
+}
+.jd-framer-zoom {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.625rem;
+}
+.jd-framer-zoom input {
+  flex: 1;
+  min-height: 2.75rem;
+  accent-color: var(--jd-live);
+}
+.jd-thumb--spot {
+  width: 100%;
+}
+
+/* ── Sidebar as an icon rail ───────────────────────────────────────────── */
+
+.jd-admin-shell.is-rail {
+  --jd-sidebar: 4.25rem;
+}
+.jd-admin-rail-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  color: var(--jd-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.jd-admin-rail-toggle:hover {
+  color: var(--jd-text);
+}
+.is-rail .jd-admin-sidebar {
+  padding-inline: 0.5rem;
+}
+.is-rail .jd-admin-brand,
+.is-rail .jd-admin-nav-link,
+.is-rail .jd-admin-account-signout,
+.is-rail .jd-admin-rail-toggle {
+  justify-content: center;
+  padding-inline: 0;
+}
+.is-rail .jd-admin-account {
+  display: grid;
+  justify-items: center;
+  padding-inline: 0;
+}
+.is-rail .jd-admin-account-signout,
+.is-rail .jd-admin-rail-toggle {
+  width: 2.75rem;
+  min-height: 2.75rem;
+  margin-top: 0.25rem;
+  border-radius: 0.5rem;
+}
+.is-rail .jd-admin-account-signout:hover,
+.is-rail .jd-admin-rail-toggle:hover {
+  background: var(--jd-panel);
+}
+.is-rail .jd-admin-brand img {
+  width: 2.5rem;
+  height: auto;
+}
+.is-rail .jd-admin-nav-heading {
+  height: 1px;
+  margin: 0 0.5rem 0.5rem;
+  overflow: hidden;
+  padding: 0;
+  background: var(--jd-line);
+  color: transparent;
+}
+/* Labels stay for screen readers; the rail shows icons, with tooltips. */
+.is-rail .jd-admin-nav-link span,
+.is-rail .jd-admin-brand span,
+.is-rail .jd-admin-account-email,
+.is-rail .jd-admin-account-signout span,
+.is-rail .jd-admin-rail-toggle span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Touch screens (phones, tablets) ───────────────────────────────────── */
+/* Everything Jake taps is at least 44px tall; mouse users keep the denser UI. */
+
+@media (pointer: coarse) {
+  .jd-admin-button,
+  .jd-admin-button--sm,
+  .jd-segmented button,
+  .jd-pending-button,
+  .jd-admin-nav-link {
+    min-height: 2.75rem;
+  }
+  .jd-admin-icon-button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .jd-back,
+  .jd-admin-account-signout,
+  .jd-admin-rail-toggle,
+  .jd-link-button {
+    min-height: 2.75rem;
+    align-items: center;
+  }
+  .jd-link-button {
+    display: inline-flex;
+  }
+  .jd-back {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* On phones and portrait tablets the Edit / Preview switch stays reachable
+   while scrolling a long form. */
+@media (max-width: 999px) {
+  .jd-editor-switch {
+    position: sticky;
+    top: calc(var(--jd-topbar) + 0.5rem);
+    z-index: 15;
+    box-shadow: 0 0 0 0.5rem var(--jd-canvas);
+  }
 }

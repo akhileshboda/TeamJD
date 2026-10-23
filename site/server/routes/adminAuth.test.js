@@ -9,6 +9,10 @@ const { createCodeStore, MAX_ATTEMPTS, MAX_TOTAL_ATTEMPTS, SESSION_MAX_AGE_MS } 
 
 const env = { NODE_ENV: 'production', CMS_ADMIN_EMAILS: 'Jake@Team-JD.com.au, akhil@example.com' };
 let ipCounter = 10;
+// Each test's app listens once for the whole file: supertest given a bare app
+// starts and stops a server per request, which now and then drops a connection.
+const servers = [];
+test.after(() => Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve)))));
 
 function buildApp({ now, appEnv = env } = {}) {
   const sent = [];
@@ -23,7 +27,9 @@ function buildApp({ now, appEnv = env } = {}) {
   app.get('/api/admin/me', requireAdmin({ env: appEnv }), (req, res) => res.json({ email: req.admin.email }));
   // Each test gets its own client IP so the shared rate limiters stay out of the way.
   const ip = `203.0.113.${ipCounter += 1}`;
-  const agent = request.agent(app);
+  const server = app.listen(0);
+  servers.push(server);
+  const agent = request.agent(server);
   const postFrom = (from, url, body) => agent.post(url).set('Sec-Fetch-Site', 'same-origin').set('CF-Connecting-IP', from).send(body);
   const post = (url, body) => postFrom(ip, url, body);
   const otherIp = () => `198.51.100.${ipCounter += 1}`;

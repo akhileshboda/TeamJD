@@ -58,7 +58,9 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
 
   const panel = (
     <div className="jd-signin-panel">
-      <img className="jd-signin-logo" src="/api/assets/logo" alt="Team JD" width="132" height="42" />
+      <a className="jd-signin-logo-link" href="/">
+        <img className="jd-signin-logo" src="/api/assets/logo" alt="Team JD" width="132" height="42" />
+      </a>
       <h1 id={titleId}>Sign in to your dashboard</h1>
 
       {message && <p className="jd-admin-notice" role="status">{message}</p>}
@@ -80,6 +82,14 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              onKeyDown={(event) => {
+                // Browser autofill can eat the first Enter press (it accepts a
+                // suggestion instead of submitting), so submit explicitly.
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  event.currentTarget.form.requestSubmit()
+                }
+              }}
               aria-invalid={Boolean(error) || undefined}
               aria-describedby={error ? 'jd-signin-error' : undefined}
             />
@@ -108,6 +118,12 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
               required
               value={code}
               onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  event.currentTarget.form.requestSubmit()
+                }
+              }}
               aria-invalid={Boolean(error) || undefined}
               aria-describedby={error ? 'jd-signin-error' : undefined}
             />

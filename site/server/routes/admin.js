@@ -108,13 +108,14 @@ function createAdminRouter(options = {}) {
 
   router.put('/placements/:slotId', parseJson, handle(async (req) => {
     const slot = await mediaSlots.getSlotDefinition(req.params.slotId, await store.getPublic('services'));
-    if (!slot) throw failure(404, 'That photo spot does not exist.');
-    const draft = { assetId: req.body?.assetId || null, alt: req.body?.alt || '' };
+    if (!slot) throw failure(404, 'That image is no longer on the page.');
+    const { assetId, alt, focus, zoom } = req.body || {};
+    const draft = { assetId: assetId || null, alt: alt || '', focus, zoom };
     if (draft.assetId) {
       const media = await store.read((data) => data.media);
       const asset = media.find((item) => item.id === draft.assetId);
       if (!asset) throw failure(404, 'That file is no longer in the media library.');
-      if (asset.kind !== slot.kind) throw failure(400, slot.kind === 'video' ? 'This spot needs a video.' : 'This spot needs a photo.');
+      if (asset.kind !== slot.kind) throw failure(400, slot.kind === 'video' ? 'This place on the page needs a video.' : 'This place on the page needs a photo.');
     }
     return store.saveDraft('placements', slot.id, { draft, rev: req.body?.rev }, req.admin.email, { label: slot.label, page: slot.page });
   }));

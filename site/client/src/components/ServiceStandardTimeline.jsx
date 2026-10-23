@@ -13,7 +13,7 @@ export default function ServiceStandardTimeline({ service }) {
   })
 
   return (
-    <section className="service-standard" aria-labelledby="service-standard-title">
+    <section className="service-standard" aria-labelledby="service-standard-title" data-cms-section="expect federations">
       <SectionReveal>
         <div className="service-standard-heading">
           <div className="service-standard-mark" aria-hidden="true">

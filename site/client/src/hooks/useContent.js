@@ -6,6 +6,9 @@ import { useEffect, useReducer, useState } from 'react'
 // Inside the dashboard's live preview (any URL with ?cmsPreview) the editor posts
 // draft versions of collections into this window, and they replace the published
 // data until the preview closes. Messages are accepted from this origin only.
+// A message can also name the part of the page being edited (`section`, matched
+// against data-cms-section attributes), which is scrolled into view and briefly
+// outlined, so Jake sees what he is changing without hunting for it.
 
 export const PREVIEW_MESSAGE = 'jd-cms-preview'
 export const PREVIEW_READY = 'jd-cms-preview-ready'
@@ -15,8 +18,29 @@ const cache = new Map()
 const overrides = new Map()
 const listeners = new Set()
 
-function isPreviewWindow() {
+export function isPreviewWindow() {
   return typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('cmsPreview')
+}
+
+const HIGHLIGHT_MS = 1600
+let shownSection = null
+
+// Scrolls only when the section changes (or the dashboard asks again because the
+// preview just came into view), so typing never fights Jake scrolling around the
+// preview himself. Waits two frames for the new content to render, and does
+// nothing while the preview is hidden (no layout to scroll).
+function showSection(section, again = false) {
+  if (!section || (section === shownSection && !again)) return
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const target = document.querySelector(`[data-cms-section~="${CSS.escape(section)}"]`)
+    if (!target || !target.getClientRects().length || !window.innerHeight) return
+    shownSection = section
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const fits = target.getBoundingClientRect().height < window.innerHeight * 0.8
+    target.scrollIntoView({ block: fits ? 'center' : 'start', behavior: smooth ? 'smooth' : 'auto' })
+    target.setAttribute('data-cms-focus', '')
+    setTimeout(() => target.removeAttribute('data-cms-focus'), HIGHLIGHT_MS)
+  }))
 }
 
 if (isPreviewWindow()) {
@@ -24,6 +48,7 @@ if (isPreviewWindow()) {
     if (event.origin !== window.location.origin || event.data?.type !== PREVIEW_MESSAGE) return
     for (const [collection, items] of Object.entries(event.data.collections || {})) overrides.set(collection, items)
     listeners.forEach((notify) => notify())
+    showSection(event.data.section, event.data.reveal)
   })
   window.parent?.postMessage({ type: PREVIEW_READY }, window.location.origin)
 }

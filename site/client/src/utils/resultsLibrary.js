@@ -62,11 +62,13 @@ export function getResultPresentation(result) {
   const fit = presentation.fit === 'cover' ? 'cover' : 'contain'
   const focusX = clampFocus(presentation.focus?.x)
   const focusY = clampFocus(presentation.focus?.y)
+  const zoom = fit === 'cover' && Number(presentation.zoom) > 1 ? Math.min(3, Number(presentation.zoom)) : 1
 
   return {
     fit,
     focusX,
     focusY,
+    zoom,
     objectPosition: `${focusX}% ${focusY}%`,
   }
 }

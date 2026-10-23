@@ -106,6 +106,9 @@ export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
       src: replaced.url,
       poster: replaced.posterUrl || '',
       alt: replaced.alt || fallbackAlt,
+      focus: replaced.focus || null,
+      zoom: replaced.zoom || 1,
+      slotId,
       replaced: true,
       ready: true,
     }
@@ -114,9 +117,27 @@ export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
     src: resolveAsset(fallbackPath, manifest),
     poster: '',
     alt: fallbackAlt,
+    slotId,
     replaced: false,
     ready: Boolean(manifest),
   }
+}
+
+// How Jake framed a photo he chose for a spot: the point that stays in view and
+// how far it is zoomed. For an <img> that fills its frame (object-fit: cover);
+// frames clip their photo, so the zoom never spills out. Built-in photos keep
+// their own CSS.
+export function framedImageStyle(media) {
+  if (!media?.focus) return undefined
+  const position = `${media.focus.x}% ${media.focus.y}%`
+  return media.zoom > 1
+    ? { objectPosition: position, transform: `scale(${media.zoom})`, transformOrigin: position }
+    : { objectPosition: position }
+}
+
+// The same for a photo used as a CSS background, which can only be positioned.
+export function framedBackgroundPosition(media) {
+  return media?.focus ? `${media.focus.x}% ${media.focus.y}%` : undefined
 }
 
 export function useMedia() {

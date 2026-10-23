@@ -83,7 +83,7 @@ export default function ContactMediaReel({ youtubeId, videoSrc, poster, credit, 
   }, [])
 
   return (
-    <figure className="contact-media-reel" data-video-enabled={canPlayVideo ? 'true' : 'false'}>
+    <figure className="contact-media-reel" data-video-enabled={canPlayVideo ? 'true' : 'false'} data-cms-section="contact.reel">
       <img
         className="contact-media-reel-poster"
         src={poster}

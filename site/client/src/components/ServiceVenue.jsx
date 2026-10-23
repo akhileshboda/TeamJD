@@ -1,4 +1,4 @@
-import { useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useMedia } from '../hooks/useAssets'
 
 export default function ServiceVenue({ venue, slug }) {
   const media = useMedia()
@@ -6,7 +6,7 @@ export default function ServiceVenue({ venue, slug }) {
   if (!venue) return null
 
   return (
-    <section className="service-venue" aria-labelledby="service-venue-title">
+    <section className="service-venue" aria-labelledby="service-venue-title" data-cms-section="venue">
       <div className="service-venue-copy">
         <span className="eyebrow">Training location</span>
         <h2 id="service-venue-title">Train at {venue.name}.</h2>
@@ -19,7 +19,7 @@ export default function ServiceVenue({ venue, slug }) {
           const photo = media(`services.${slug}.venue-${index + 1}`, image.asset, image.alt)
           return (
             <figure key={image.asset}>
-              <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" />
+              <img src={photo.src} alt={photo.alt} style={framedImageStyle(photo)} data-cms-section={photo.slotId} loading="lazy" decoding="async" />
             </figure>
           )
         })}

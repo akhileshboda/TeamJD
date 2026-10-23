@@ -199,6 +199,8 @@
     }
     .credibility .sep { color: var(--accent); opacity: 0.6; }
     .note { margin: 0; color: var(--subtle); font-size: 13px; line-height: 1.6; text-align: center; }
+    .note-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+    .note-link:hover, .note-link:focus-visible { color: #f0f0f0; }
 
     @media (max-width: 820px) {
       .shell { gap: 28px; padding: 28px 0; }
@@ -291,7 +293,7 @@
       <span>All Major Federations</span>
     </p>
 
-    <p class="note">Error code: 503. This page is safe for proxies to serve during upstream failures.</p>
+    <p class="note">Error code: 503. This page is safe for proxies to serve during upstream failures. <a class="note-link" href="/admin">Admin login</a></p>
   </main>
 </body>
 </html>

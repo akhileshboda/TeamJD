@@ -5,7 +5,6 @@ import { lazy } from 'react'
 
 const HomeStats = lazy(() => import('./pages/HomeStats'))
 const ResultsSection = lazy(() => import('./sections/ResultsSection'))
-const TestimonialsSection = lazy(() => import('./sections/TestimonialsSection'))
 const PagesSection = lazy(() => import('./sections/PagesSection'))
 const MediaSection = lazy(() => import('./sections/MediaSection'))
 const ServicesSection = lazy(() => import('./sections/ServicesSection'))
@@ -28,14 +27,6 @@ export const SECTIONS = [
     icon: 'trophy',
     group: 'Content',
     element: ResultsSection,
-  },
-  {
-    id: 'testimonials',
-    path: 'testimonials',
-    label: 'Testimonials',
-    icon: 'quote',
-    group: 'Content',
-    element: TestimonialsSection,
   },
   {
     id: 'services',

@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
-import { useMedia } from '../hooks/useAssets'
+import { framedImageStyle, useMedia } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 import ServicePricingConversion from './ServicePricingConversion'
 import CompetitionPrepBookingAction from './CompetitionPrepBookingAction'
@@ -23,7 +23,8 @@ export default function ServiceDetailHero({ service, services = [] }) {
   const sectionRef = useRef(null)
   const action = resolveServiceAction(service)
   const shouldReduce = useReducedMotion()
-  const { src: heroSrc, alt: heroAlt } = useMedia()(`services.${service.slug}.hero`, service.hero_image, service.hero_alt)
+  const hero = useMedia()(`services.${service.slug}.hero`, service.hero_image, service.hero_alt)
+  const { src: heroSrc, alt: heroAlt } = hero
   const heroFacts = service.facts ?? []
 
   const { scrollYProgress } = useScroll({
@@ -37,6 +38,7 @@ export default function ServiceDetailHero({ service, services = [] }) {
   return (
     <section
       ref={sectionRef}
+      data-cms-section="card prices facts photos"
       className="service-journey-hero"
       aria-labelledby="service-journey-title"
     >
@@ -151,7 +153,7 @@ export default function ServiceDetailHero({ service, services = [] }) {
           >
             <div className="service-journey-ring" aria-hidden="true" />
             <div className="service-journey-image-frame">
-              <img src={heroSrc} alt={heroAlt} decoding="async" fetchpriority="high" />
+              <img src={heroSrc} alt={heroAlt} style={framedImageStyle(hero)} data-cms-section={hero.slotId} decoding="async" fetchpriority="high" />
               {/* The plate that sat here captioned the image with expectation_title,
                   which is the heading of the Team JD Standard section one scroll below.
                   The section owns that line; the hero no longer pre-empts it. */}

@@ -2,16 +2,59 @@ import { useEffect, useId, useRef } from 'react'
 
 // Small shared pieces of the dashboard UI.
 
-export const STATUS = {
-  published: { label: 'Live', tone: 'live' },
-  changed: { label: 'Changes not live', tone: 'pending' },
-  draft: { label: 'Draft', tone: 'pending' },
-  hidden: { label: 'Hidden', tone: 'muted' },
+// The dashboard's two words for an item, used the same way everywhere:
+//   Live / Offline         whether it is on the site (the Live switch).
+//   Unpublished changes    edits saved on a live item that the site does not
+//                          show yet (Publish changes / Discard changes).
+// The server's statuses map onto them: published and changed are live, draft
+// and hidden are offline, changed has unpublished changes.
+export const isLive = (status) => status === 'published' || status === 'changed'
+export const hasUnpublishedChanges = (status) => status === 'changed'
+
+export const STATUS_HELP = [
+  { chip: 'live', text: 'On the site. Switch it off to take it offline.' },
+  { chip: 'offline', text: 'Not on the site. Switch it on when it is ready to go live.' },
+  { chip: 'changes', text: 'Live, but your latest edits are not on the site yet. Open it and press Publish changes.' },
+]
+
+const CHIPS = {
+  live: { label: 'Live', tone: 'live' },
+  offline: { label: 'Offline', tone: 'muted' },
+  changes: { label: 'Unpublished changes', tone: 'pending' },
 }
 
-export function StatusChip({ status }) {
-  const info = STATUS[status] || STATUS.draft
-  return <span className={`jd-chip jd-chip--${info.tone}`}>{info.label}</span>
+export function Chip({ kind }) {
+  const { label, tone } = CHIPS[kind]
+  return <span className={`jd-chip jd-chip--${tone}`}>{label}</span>
+}
+
+// Live or Offline, plus Unpublished changes when there are some.
+export function StatusChips({ status }) {
+  return (
+    <>
+      <Chip kind={isLive(status) ? 'live' : 'offline'} />
+      {hasUnpublishedChanges(status) && <Chip kind="changes" />}
+    </>
+  )
+}
+
+// The Live switch: whether an item is on the public site. A button rather
+// than a checkbox, so a refused switch-on (missing fields) simply stays off.
+// While busy it ignores presses but keeps focus, unlike a disabled button.
+export function LiveSwitch({ on, busy = false, label = 'Live', hideLabel = false, onChange }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-disabled={busy || undefined}
+      className={`jd-site-switch${on ? ' is-on' : ''}${busy ? ' is-busy' : ''}`}
+      onClick={() => !busy && onChange(!on)}
+    >
+      <span className="jd-site-switch-track" aria-hidden="true" />
+      <span className={hideLabel ? 'visually-hidden' : 'jd-site-switch-label'}>{label}</span>
+    </button>
+  )
 }
 
 const relative = new Intl.RelativeTimeFormat('en-AU', { numeric: 'auto' })

@@ -1,15 +1,21 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
 import JourneyIcon from '../../components/JourneyIcon'
 
 // Form fields for the dashboard editors. Each takes the field's value, an
 // onChange(value) callback and an optional error from the server's validation.
 
-function Field({ label, hint, error, required, children, id }) {
+// Shown beside anything that must be filled in before it can go live. Inputs
+// also carry aria-required, so screen readers hear it once.
+export function RequiredTag() {
+  return <span className="jd-required-tag" aria-hidden="true">Required</span>
+}
+
+function Field({ label, hint, error, required, grow = false, children, id }) {
   return (
-    <div className="jd-field">
+    <div className={`jd-field${grow ? ' jd-field--grow' : ''}`}>
       <label className="jd-field-label" htmlFor={id}>
         {label}
-        {required && <span className="jd-field-required"> (required to go live)</span>}
+        {required && <RequiredTag />}
       </label>
       {hint && <p className="jd-field-hint" id={`${id}-hint`}>{hint}</p>}
       {children}
@@ -22,17 +28,20 @@ function describedBy(id, hint, error) {
   return [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined
 }
 
-export function TextField({ label, hint, error, required, value, onChange, maxLength, multiline = false, rows = 4, ...rest }) {
+// `grow` makes a multiline field fill the height of its row, so side-by-side
+// fields (a title beside its description) stay the same height.
+export function TextField({ label, hint, error, required, value, onChange, maxLength, multiline = false, rows = 4, grow = false, ...rest }) {
   const id = useId()
   const Input = multiline ? 'textarea' : 'input'
   return (
-    <Field label={label} hint={hint} error={error} required={required} id={id}>
+    <Field label={label} hint={hint} error={error} required={required} grow={grow} id={id}>
       <Input
         id={id}
         className={`jd-input${multiline ? ' jd-input--multiline' : ''}`}
         value={value ?? ''}
         maxLength={maxLength}
         rows={multiline ? rows : undefined}
+        aria-required={required || undefined}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={describedBy(id, hint, error)}
         onChange={(event) => onChange(event.target.value)}
@@ -131,16 +140,59 @@ export function TagsField({ label, hint, value, onChange }) {
   )
 }
 
-export function FormSection({ title, description, children }) {
-  return (
-    <section className="jd-form-section">
-      <div className="jd-form-section-head">
-        <h2>{title}</h2>
-        {description && <p>{description}</p>}
-      </div>
-      <div className="jd-form-section-body">{children}</div>
-    </section>
+// Lets a form section tell the live preview which part of the page it edits
+// (`section`, matched to data-cms-section on the public page). RecordEditor and
+// the Pages editor provide it.
+export const PreviewSectionContext = createContext(null)
+
+// A card of related fields. `collapsible` ones fold away to their title and a
+// one-line `summary`, so long editors (Services, Settings) are not one long wall.
+// Native <details>: the fields stay in the page while folded, so a publish error
+// inside can still be found, opened and focused.
+export function FormSection({ title, description, summary, section, required = false, collapsible = false, defaultOpen = true, children }) {
+  const showSection = useContext(PreviewSectionContext)
+  const reveal = section && showSection ? () => showSection(section) : undefined
+  const heading = (
+    <>
+      <h2>{title}{required && <RequiredTag />}</h2>
+      {description && <p>{description}</p>}
+    </>
   )
+
+  if (!collapsible) {
+    return (
+      <section className="jd-form-section" onFocusCapture={reveal}>
+        <div className="jd-form-section-head">{heading}</div>
+        <div className="jd-form-section-body">{children}</div>
+      </section>
+    )
+  }
+  return (
+    <details className="jd-form-section jd-form-section--collapsible" open={defaultOpen} onFocusCapture={reveal}
+      onToggle={(event) => event.currentTarget.open && reveal?.()}>
+      <summary className="jd-form-section-head">
+        <span className="jd-form-section-heading">
+          <h2>{title}{required && <RequiredTag />}</h2>
+          {summary && <span className="jd-form-section-summary">{summary}</span>}
+        </span>
+        <JourneyIcon name="chevronDown" size={18} className="jd-form-section-chevron" />
+      </summary>
+      <div className="jd-form-section-body">
+        {description && <p className="jd-form-section-description">{description}</p>}
+        {children}
+      </div>
+    </details>
+  )
+}
+
+// Opens any folded section holding a field with an error, then focuses the first.
+export function focusFirstError(container) {
+  const invalid = [...(container?.querySelectorAll('[aria-invalid="true"]') || [])]
+  for (const field of invalid) {
+    const folded = field.closest('details')
+    if (folded) folded.open = true
+  }
+  invalid[0]?.focus()
 }
 
 function moveItem(list, index, delta) {
@@ -252,6 +304,7 @@ export function RowsField({ label, hint, rows, onChange, columns, noun = 'row', 
                   hint={index === 0 ? column.hint : undefined}
                   value={row[column.key] || ''}
                   multiline={column.multiline}
+                  grow={column.multiline}
                   rows={3}
                   maxLength={column.maxLength}
                   error={errors[`${errorPrefix}.${index}.${column.key}`]}

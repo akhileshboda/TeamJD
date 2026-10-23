@@ -9,7 +9,7 @@ import FindYourFitLink from '../components/FindYourFitLink'
 
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
 import { useContent } from '../hooks/useContent'
-import { useMedia } from '../hooks/useAssets'
+import { framedBackgroundPosition, framedImageStyle, useMedia } from '../hooks/useAssets'
 import { usePageMeta } from '../hooks/usePageMeta'
 
 
@@ -113,10 +113,10 @@ export default function Home() {
                 const service = servicesById.get(pathway.id)
                 const serviceName = service?.name || pathway.fallbackName
                 const serviceSlug = service?.slug || pathway.fallbackSlug
-                const backgroundSrc = media(
+                const background = media(
                   `services.${serviceSlug}.hero`,
                   service?.hero_image || pathway.fallbackImage,
-                ).src
+                )
 
                 return (
                   <StaggerItem key={pathway.id}>
@@ -127,7 +127,11 @@ export default function Home() {
                       data-analytics-event="service_discovery"
                       data-analytics-location="home_service_pathways"
                       data-analytics-id={pathway.id}
-                      style={{ '--pathway-bg': `url("${backgroundSrc}")` }}
+                      data-cms-section={background.slotId}
+                      style={{
+                        '--pathway-bg': `url("${background.src}")`,
+                        '--pathway-bg-position': framedBackgroundPosition(background),
+                      }}
                       {...pathwayMotion}
                     >
                       <span className="home-service-pathway-number">
@@ -231,11 +235,13 @@ export default function Home() {
                       decoding="async"
                       width="600"
                       height="800"
+                      data-cms-section={aboutPhoto.slotId}
                       style={{
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
                         objectPosition: 'center top',
+                        ...framedImageStyle(aboutPhoto),
                       }}
                     />
                   </div>
@@ -279,7 +285,7 @@ export default function Home() {
         </section>
 
         {/* FAQ */}
-        <section className="section home-section home-faq" aria-labelledby="faq-heading">
+        <section className="section home-section home-faq" aria-labelledby="faq-heading" data-cms-section="faqs">
           <div className="container">
             <SectionReveal>
               <div className="section-header">

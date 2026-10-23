@@ -1,8 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { ListField, RowsField, TagsField } from './components/fields'
+import { focusFirstError, FormSection, ListField, RowsField, TagsField, TextField } from './components/fields'
 
 afterEach(() => cleanup())
+
+describe('form sections', () => {
+  it('fold away to a summary, and open again to show a field that needs fixing', () => {
+    render(
+      <div data-testid="form">
+        <FormSection title="Prices" collapsible defaultOpen={false} summary="2 prices, from $85">
+          <TextField label="Price" value="" error="Add a price." onChange={() => {}} />
+        </FormSection>
+      </div>,
+    )
+    const section = screen.getByText('2 prices, from $85').closest('details')
+    expect(section.open).toBe(false)
+    focusFirstError(screen.getByTestId('form'))
+    expect(section.open).toBe(true)
+    expect(screen.getByLabelText(/^Price/)).toHaveFocus()
+  })
+})
 
 describe('list fields', () => {
   it('adds, edits, moves and removes items', () => {

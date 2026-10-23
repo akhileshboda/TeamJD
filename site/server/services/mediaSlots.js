@@ -9,9 +9,14 @@ const path = require('path');
 
 const SEED_SERVICES = path.join(__dirname, '..', 'seed', 'services.json');
 
-const PORTRAIT = { hint: 'Portrait photo, at least 1200 × 1500 px', minWidth: 1200 };
-const LANDSCAPE = { hint: 'Landscape photo, at least 1920 × 1080 px', minWidth: 1600 };
-const SQUARE = { hint: 'Square or portrait photo, at least 1000 px wide', minWidth: 1000 };
+// `aspect` is the spot's usual shape on the site (it changes a little between
+// phone and desktop). Any photo works: the dashboard shows it cropped to this
+// shape and Jake drags it to choose what stays in view. `minWidth` only drives
+// a "may look soft" note.
+const ANY_PHOTO = 'Any photo works. Drag it to choose what stays in view.';
+const PORTRAIT = { hint: ANY_PHOTO, aspect: '3 / 4', minWidth: 1200 };
+const LANDSCAPE = { hint: ANY_PHOTO, aspect: '16 / 9', minWidth: 1600 };
+const SQUARE = { hint: ANY_PHOTO, aspect: '4 / 5', minWidth: 1000 };
 const REEL = { hint: 'Video up to 3 minutes. It plays muted, so sound is removed.' };
 
 const CONTACT_SOCIAL = [
@@ -58,7 +63,7 @@ function serviceSlots(service) {
   return [
     slot('hero', 'Main photo (also used on the Home and Services cards)', service.hero_image, PORTRAIT),
     slot('body', 'Supporting photo', service.body_image, PORTRAIT),
-    slot('banner', 'Wide banner photo', service.banner_image, { hint: 'Wide landscape photo, at least 2400 × 1000 px', minWidth: 2000 }),
+    slot('banner', 'Wide banner photo', service.banner_image, { hint: ANY_PHOTO, aspect: '12 / 5', minWidth: 2000 }),
     ...[1, 2, 3, 4, 5].map((n) => slot(`gallery-${n}`, `Gallery photo ${n}`, gallery[n - 1], LANDSCAPE)),
     ...venue.map((image, index) => slot(`venue-${index + 1}`, `Venue photo ${index + 1}`, image.asset, LANDSCAPE))
   ];

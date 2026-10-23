@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
 import { RESULT_CATEGORY_LABELS } from '../../utils/resultsLibrary'
-import { listItems } from '../api'
 import CollectionList from '../components/CollectionList'
 import { ChoiceField, FormSection, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
+import ImageFramer, { DEFAULT_FRAMING } from '../components/ImageFramer'
 import MediaPicker from '../components/MediaPicker'
 import RecordEditor from '../components/RecordEditor'
 
@@ -29,78 +29,84 @@ const COLUMNS = [
   { key: 'kind', label: 'Type', render: (row) => (row.kind === 'client' ? 'Client' : 'Representative') },
 ]
 
-const NUDGE = { ArrowLeft: [-5, 0], ArrowRight: [5, 0], ArrowUp: [0, -5], ArrowDown: [0, 5] }
-const clamp = (value) => Math.min(100, Math.max(0, Math.round(value)))
+const NO_TESTIMONIAL = { quote: '', author: '', service: '', result: '' }
 
-// How far the photo sits in from each edge of its frame, as fractions, when it
-// is shown whole (object-fit: contain) and so may have bars at the sides.
-function letterbox(img) {
-  const imageRatio = img.naturalWidth / img.naturalHeight
-  const frameRatio = img.clientWidth / img.clientHeight
-  return imageRatio > frameRatio
-    ? { x: 0, y: (1 - frameRatio / imageRatio) / 2 }
-    : { x: (1 - imageRatio / frameRatio) / 2, y: 0 }
-}
+// Every live result is on the Results page and in the Home page gallery; About
+// shows only featured client results (pages/About.jsx).
+const resultPlaces = (draft) => [
+  'the Results page',
+  'the Home page gallery',
+  ...(draft.kind === 'client' && draft.featured ? ['the About page'] : []),
+]
 
-// Where the photo sits inside its frame when it is cropped to fill it. Click the
-// photo, or use the arrow keys, to move the point that always stays in view.
-function FocusPicker({ src, presentation, onChange }) {
-  const [inset, setInset] = useState({ x: 0, y: 0 })
-  const fill = presentation?.fit === 'cover'
-  const focus = presentation?.focus || { x: 50, y: 50 }
-  const set = (next) => onChange({ fit: fill ? 'cover' : 'contain', focus, ...next })
-
-  const pick = (event) => {
-    if (event.detail === 0) return // Enter or Space: the arrow keys do this instead
-    const box = event.currentTarget.getBoundingClientRect()
-    const across = (event.clientX - box.left) / box.width
-    const down = (event.clientY - box.top) / box.height
-    set({ focus: {
-      x: clamp(((across - inset.x) / (1 - 2 * inset.x)) * 100),
-      y: clamp(((down - inset.y) / (1 - 2 * inset.y)) * 100),
-    } })
-  }
-
-  const nudge = (event) => {
-    const step = NUDGE[event.key]
-    if (!step) return
-    event.preventDefault()
-    set({ focus: { x: clamp(focus.x + step[0]), y: clamp(focus.y + step[1]) } })
-  }
-
-  const dot = {
-    left: `${(inset.x + (focus.x / 100) * (1 - 2 * inset.x)) * 100}%`,
-    top: `${(inset.y + (focus.y / 100) * (1 - 2 * inset.y)) * 100}%`,
-  }
+// On the Results page each photo sits in a square. "Fill the frame" crops it to
+// the square (Jake drags and zooms to choose the crop); off, the whole photo shows.
+function PhotoFraming({ draft, update }) {
+  const fill = draft.presentation?.fit === 'cover'
+  const framing = { focus: draft.presentation?.focus, zoom: draft.presentation?.zoom }
+  if (!draft.image.src) return <p className="jd-photo-missing">No photo yet.</p>
 
   return (
     <div className="jd-photo-field">
-      <div className="jd-photo-frame">
-        {src ? (
-          <button type="button" className="jd-photo-pick" onClick={fill ? pick : undefined} onKeyDown={fill ? nudge : undefined} disabled={!fill}
-            aria-label={fill ? `Point that stays in view: ${focus.x}% across, ${focus.y}% down. Click the photo or use the arrow keys to move it.` : 'Photo'}>
-            <img src={src} alt="" onLoad={(event) => setInset(letterbox(event.currentTarget))} />
-            {fill && <span className="jd-focus-dot" style={dot} aria-hidden="true" />}
-          </button>
-        ) : (
-          <p className="jd-photo-missing">No photo yet.</p>
-        )}
-      </div>
       <ToggleField
         label="Fill the frame"
-        hint={fill ? 'Click the photo, or use the arrow keys, to choose the part that always stays in view.' : 'Off: the whole photo shows, with space around it if needed.'}
+        hint={fill ? 'The photo fills its square on the Results page. Drag it and zoom to crop it.' : 'Off: the whole photo shows, with space around it if needed.'}
         checked={fill}
-        onChange={(checked) => set({ fit: checked ? 'cover' : 'contain' })}
+        onChange={(checked) => update({ presentation: { ...DEFAULT_FRAMING, ...draft.presentation, fit: checked ? 'cover' : 'contain' } })}
       />
+      {fill ? (
+        <ImageFramer src={draft.image.src} aspect="1 / 1" label="Result photo" value={framing}
+          onChange={(next) => update({ presentation: { fit: 'cover', ...next } })} />
+      ) : (
+        <div className="jd-photo-frame"><img src={draft.image.src} alt="" /></div>
+      )}
     </div>
   )
 }
 
-function ResultFields({ draft, update, errors, testimonials }) {
+// A quote from the client, shown inside the result's story. Switching it off
+// and on again in the same visit brings back what was typed.
+function TestimonialFields({ draft, update, errors }) {
+  const kept = useRef(draft.testimonial)
+  const testimonial = draft.testimonial
+  const set = (patch) => update({ testimonial: { ...testimonial, ...patch } })
+
+  return (
+    <FormSection title="Testimonial" description="A quote from this client, shown when someone opens the result.">
+      <ToggleField
+        label="Add a testimonial"
+        checked={Boolean(testimonial)}
+        onChange={(on) => {
+          if (!on) kept.current = testimonial
+          update({ testimonial: on ? kept.current || NO_TESTIMONIAL : null })
+        }}
+      />
+      {testimonial && (
+        <>
+          <TextField label="Quote" required multiline rows={4} value={testimonial.quote} maxLength={1200}
+            error={errors['testimonial.quote']} onChange={(quote) => set({ quote })} />
+          <TextField label="From" required hint="A first name, or something like Competition client." value={testimonial.author}
+            maxLength={120} error={errors['testimonial.author']} onChange={(author) => set({ author })} />
+          <div className="jd-field-row">
+            <TextField label="Service" hint="For example: Posing" value={testimonial.service} maxLength={120}
+              onChange={(service) => set({ service })} />
+            <TextField label="Outcome" hint="For example: First show, top 3" value={testimonial.result} maxLength={120}
+              onChange={(result) => set({ result })} />
+          </div>
+        </>
+      )}
+    </FormSection>
+  )
+}
+
+function ResultFields({ draft, update, errors }) {
   const [picking, setPicking] = useState(false)
   return (
     <>
-      <FormSection title="Photo" description="The image people see on the Results page and in the result's story.">
+      <p className="jd-form-note">
+        Fields marked <span className="jd-required-tag">Required</span> must be filled in before this result can go live.
+      </p>
+      <FormSection title="Photo" required description="The image people see on the Results page and in the result's story.">
         <div className="jd-spot-actions">
           <button type="button" className="jd-admin-button jd-admin-button--sm" onClick={() => setPicking(true)}>
             {draft.image.src ? 'Change photo' : 'Choose photo'}
@@ -118,12 +124,8 @@ function ResultFields({ draft, update, errors, testimonials }) {
             }}
           />
         )}
-        <FocusPicker
-          src={draft.image.src}
-          presentation={draft.presentation}
-          onChange={(presentation) => update({ presentation })}
-        />
-        {errors.image && <p className="jd-field-error">{errors.image}</p>}
+        <PhotoFraming draft={draft} update={update} />
+        {errors.image && <p className="jd-field-error" role="alert">{errors.image}</p>}
         <TextField
           label="Photo description"
           required
@@ -142,9 +144,15 @@ function ResultFields({ draft, update, errors, testimonials }) {
           onChange={(name) => update({ name })} />
         <SelectField label="Category" value={draft.category} options={CATEGORY_OPTIONS} onChange={(category) => update({ category })} />
         <ChoiceField label="Type" value={draft.kind} options={KIND_OPTIONS} onChange={(kind) => update({ kind })} />
-        <ToggleField label="Show on the About page" hint="Featured results appear in the About page's client results." checked={draft.featured}
-          onChange={(featured) => update({ featured })} />
+        {draft.kind === 'client' ? (
+          <ToggleField label="Feature on the About page" hint="Also shows this result in the About page's client results." checked={draft.featured}
+            onChange={(featured) => update({ featured })} />
+        ) : (
+          <p className="jd-field-hint">Only client results can be featured on the About page.</p>
+        )}
       </FormSection>
+
+      <TestimonialFields draft={draft} update={update} errors={errors} />
 
       <FormSection title="Story" description="Optional detail shown when the result is opened.">
         <div className="jd-field-row">
@@ -155,13 +163,6 @@ function ResultFields({ draft, update, errors, testimonials }) {
         </div>
         <TextField label="What happened" multiline rows={5} value={draft.summary} maxLength={1200}
           onChange={(summary) => update({ summary })} />
-        <SelectField
-          label="Testimonial"
-          hint="Add or edit quotes in Testimonials."
-          value={draft.testimonialId || ''}
-          options={[{ value: '', label: 'None' }, ...testimonials.map((item) => ({ value: item.id, label: `${item.title}: ${item.subtitle}` }))]}
-          onChange={(testimonialId) => update({ testimonialId: testimonialId || null })}
-        />
         <TagsField label="Search words" hint="Separate with commas. Helps people find this with the Results page search."
           value={draft.tags} onChange={(tags) => update({ tags })} />
       </FormSection>
@@ -171,12 +172,6 @@ function ResultFields({ draft, update, errors, testimonials }) {
 
 function ResultEditor() {
   const { id } = useParams()
-  const [testimonials, setTestimonials] = useState([])
-
-  useEffect(() => {
-    listItems('testimonials').then(setTestimonials).catch(() => setTestimonials([]))
-  }, [])
-
   return (
     <RecordEditor
       collection="results"
@@ -187,7 +182,8 @@ function ResultEditor() {
       titleOf={(draft) => draft.name || draft.caption || 'New result'}
       previewPath={(draft, record) => `/results?view=${encodeURIComponent(record.id)}`}
       previewNote="The Results page with this result open."
-      renderFields={(props) => <ResultFields {...props} testimonials={testimonials} />}
+      siteLocation={resultPlaces}
+      renderFields={(props) => <ResultFields {...props} />}
     />
   )
 }
@@ -201,7 +197,7 @@ export default function ResultsSection() {
           <CollectionList
             collection="results"
             title="Results"
-            description="Your clients' results. Live ones appear on the Results page, and featured ones on About and Home."
+            description="Your clients' results. Results that are on the site show on the Results page and in the Home page gallery. Featured client results also show on About."
             noun="result"
             newDraft={{ kind: 'client', category: 'competition' }}
             columns={COLUMNS}

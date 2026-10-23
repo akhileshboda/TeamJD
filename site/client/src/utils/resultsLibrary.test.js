@@ -46,6 +46,7 @@ describe('Canonical results library data', () => {
       fit: 'contain',
       focusX: 50,
       focusY: 50,
+      zoom: 1,
       objectPosition: '50% 50%',
     })
 
@@ -53,11 +54,13 @@ describe('Canonical results library data', () => {
       presentation: {
         fit: 'cover',
         focus: { x: -12, y: 145 },
+        zoom: 9,
       },
     })).toEqual({
       fit: 'cover',
       focusX: 0,
       focusY: 100,
+      zoom: 3,
       objectPosition: '0% 100%',
     })
 
@@ -70,6 +73,7 @@ describe('Canonical results library data', () => {
       fit: 'contain',
       focusX: 50,
       focusY: 50,
+      zoom: 1,
       objectPosition: '50% 50%',
     })
   })

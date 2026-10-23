@@ -45,6 +45,12 @@
   --result-media-fit: cover;
 }
 
+/* Jake's crop: zoomed in around the point he chose to keep in view. */
+.result-media[data-fit="cover"] .result-media-foreground {
+  transform: scale(var(--result-zoom, 1));
+  transform-origin: var(--result-focus-x, 50%) var(--result-focus-y, 50%);
+}
+
 .result-media[data-fit="contain"] {
   --result-media-fit: contain;
 }

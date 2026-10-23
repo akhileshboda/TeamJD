@@ -94,12 +94,12 @@ describe('dashboard shell', () => {
   })
 
   it('deep links open their section', async () => {
-    renderAt('/admin/testimonials', (url) => (url === '/api/admin/collections/testimonials'
+    renderAt('/admin/faqs', (url) => (url === '/api/admin/collections/faqs'
       ? json({ items: [] })
       : signedIn(url)))
-    expect(await screen.findByRole('heading', { name: 'Testimonials' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'FAQs' })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
-    expect(within(nav).getByRole('link', { name: 'Testimonials' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'FAQs' })).toHaveAttribute('aria-current', 'page')
   })
 
   it('every section in the registry has a page', () => {

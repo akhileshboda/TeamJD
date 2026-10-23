@@ -85,12 +85,10 @@ export default function Footer() {
           <p className="footer-copyright">
             &copy; {year} Jake Dedert &mdash; Team JD. All rights reserved.
           </p>
-          <Link
-            to="/privacy"
-            style={{ color: '#a3a3a3', fontSize: '0.875rem', transition: 'color 150ms ease' }}
-          >
-            Privacy Policy
-          </Link>
+          <nav className="footer-legal" aria-label="Legal and admin">
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/admin">Admin login</Link>
+          </nav>
         </div>
       </div>
     </footer>

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, mediaUsage } = require('./cmsCollections');
+const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, foldTestimonialsIntoResults, mediaUsage } = require('./cmsCollections');
 const { normalizeSection, withDefaults } = require('./cmsSettings');
 
 // The dashboard's content store: one JSON file holding every collection.
@@ -11,14 +11,14 @@ const { normalizeSection, withDefaults } = require('./cmsSettings');
 //           updatedBy, publishedAt, hiddenAt }
 //
 // Jake edits `draft`; the public site only ever sees `published`. `rev` goes up
-// on every write to a record so an edit from a stale tab is refused (409).
+// whenever a draft changes, so an edit from a stale tab is refused (409).
 // `order` sits outside draft/published: reordering goes live immediately.
 //
 // Writes are serialised and atomic (tmp file + rename). data/ lives only on the
 // VM, so every change also schedules a Dropbox backup.
 
 const STORE_PATH = process.env.CMS_DATA_PATH || path.join(__dirname, '..', '..', 'data', 'cms.json');
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const BACKUP_DELAY_MS = 10 * 1000;
 
 class CmsError extends Error {
@@ -181,6 +181,11 @@ function createCmsStore(options = {}) {
     data.collections ??= {};
     data.media ??= [];
     data.settings ??= {};
+    if (foldTestimonialsIntoResults(data)) changed = true;
+    if (data.schemaVersion !== SCHEMA_VERSION) {
+      data.schemaVersion = SCHEMA_VERSION;
+      changed = true;
+    }
     for (const [name, def] of Object.entries(COLLECTIONS)) {
       if (!Array.isArray(data.collections[name])) {
         data.collections[name] = def.seed({ now: now(), seedDir });
@@ -336,10 +341,16 @@ function createCmsStore(options = {}) {
       });
     },
 
-    // Everything saved but not live, across collections.
+    // Unpublished changes across collections: edits to live items, and new
+    // drafts where there is no offline state to keep them in (page images).
+    // An offline result or FAQ only goes live by switching it on, so "Publish
+    // all" never puts one on the site.
     pending() {
       return read((data) => Object.keys(COLLECTIONS).flatMap((name) => sortedByOrder(data.collections[name])
-        .filter((record) => ['changed', 'draft'].includes(statusOf(record)))
+        .filter((record) => {
+          const status = statusOf(record);
+          return status === 'changed' || (status === 'draft' && COLLECTIONS[name].canHide === false);
+        })
         .map((record) => ({ collection: name, ...summaryRow(data, name, record) }))));
     },
 

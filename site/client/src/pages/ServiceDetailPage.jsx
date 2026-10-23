@@ -11,8 +11,8 @@ import ServiceReadinessGate from '../components/ServiceReadinessGate'
 import ServiceStandardTimeline from '../components/ServiceStandardTimeline'
 import ServiceVenue from '../components/ServiceVenue'
 import StickyBookBar from '../components/StickyBookBar'
-import { useContent } from '../hooks/useContent'
-import { useAssets, useMedia } from '../hooks/useAssets'
+import { isPreviewWindow, useContent } from '../hooks/useContent'
+import { framedBackgroundPosition, framedImageStyle, useAssets, useMedia } from '../hooks/useAssets'
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { resolveServiceAction } from '../utils/bookingLinks'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -51,7 +51,8 @@ export default function ServiceDetailPage() {
   const service = services.find((candidate) => candidate.slug === slug)
   if (!service) return <Navigate to="/services" replace />
 
-  if (service.application_required && !canViewCompetitionPrep) {
+  // The dashboard preview always shows the page itself, never the checkpoint.
+  if (service.application_required && !canViewCompetitionPrep && !isPreviewWindow()) {
     return <CompetitionPrepAccessGate service={service} services={services} />
   }
 
@@ -83,7 +84,7 @@ export default function ServiceDetailPage() {
         <div className="service-journey-drift service-journey-drift--two" aria-hidden="true" />
         <div className="container service-journey-container">
           <SectionReveal inView={false}>
-            <section className="service-intro-section" aria-labelledby="service-intro-title">
+            <section className="service-intro-section" aria-labelledby="service-intro-title" data-cms-section="about">
               <div className="service-intro-copy">
                 <span className="eyebrow">Know What You Are Choosing</span>
                 <h2 id="service-intro-title">The right service starts with the right expectation.</h2>
@@ -96,7 +97,7 @@ export default function ServiceDetailPage() {
 
           <ServiceStandardTimeline service={service} />
 
-          <section className="service-inclusions-section" aria-labelledby="service-inclusions-title">
+          <section className="service-inclusions-section" aria-labelledby="service-inclusions-title" data-cms-section="included">
             <SectionReveal>
               <div className="service-section-heading">
                 <div>
@@ -149,9 +150,13 @@ export default function ServiceDetailPage() {
                               }`}
                               style={
                                 index === 0
-                                  ? { '--svc-card-photo': `url("${bodyImageSrc}")` }
+                                  ? {
+                                      '--svc-card-photo': `url("${bodyImageSrc}")`,
+                                      '--svc-card-photo-position': framedBackgroundPosition(bodyImage),
+                                    }
                                   : undefined
                               }
+                              data-cms-section={index === 0 ? bodyImage.slotId : undefined}
                             >
                               <div className="service-inclusion-number" aria-hidden="true">
                                 {String(index + 1).padStart(2, '0')}
@@ -181,6 +186,7 @@ export default function ServiceDetailPage() {
                 <img
                   src={bannerImage.src}
                   alt={bannerImage.alt}
+                  style={framedImageStyle(bannerImage)} data-cms-section={bannerImage.slotId}
                   loading="lazy"
                   decoding="async"
                 />
@@ -194,7 +200,7 @@ export default function ServiceDetailPage() {
           </section>
 
           <SectionReveal>
-            <ScrollChromeSection className="service-content-block service-content-block--fit" aria-labelledby="service-fit-title">
+            <ScrollChromeSection className="service-content-block service-content-block--fit" aria-labelledby="service-fit-title" data-cms-section="who">
               <div className="service-content-block-heading">
                 <span aria-hidden="true">03</span>
                 <div>

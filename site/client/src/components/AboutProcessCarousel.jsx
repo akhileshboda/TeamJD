@@ -53,6 +53,8 @@ export default function AboutProcessCarousel({ images = [], caption }) {
             <img
               src={image.src || resolveAsset(`/api/assets/${image.asset}`)}
               alt={index === activeIndex ? image.alt : ''}
+              style={image.style}
+              data-cms-section={image.section}
               loading={index === 0 ? 'eager' : 'lazy'}
               decoding="async"
               width="640"

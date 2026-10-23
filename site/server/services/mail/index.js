@@ -14,6 +14,14 @@ function enquiryRecipientOverride() {
   return cleanHeaderValue(getCmsStore().cachedSettings()?.enquiries?.sendTo);
 }
 
+// Footer social links: the dashboard's contact settings, else the defaults.
+function socialLinks() {
+  const { getCmsStore } = require('../cmsStore');
+  const { DEFAULT_SETTINGS } = require('../cmsSettings');
+  const contact = getCmsStore().cachedSettings()?.contact || DEFAULT_SETTINGS.contact;
+  return { instagramUrl: contact.instagramUrl, facebookUrl: contact.facebookUrl };
+}
+
 function getMailConfig() {
   const override = enquiryRecipientOverride();
   return {
@@ -56,8 +64,9 @@ async function deliverEnquiry(enquiry, dependencies = {}) {
   }
 
   const timestamp = dependencies.timestamp || new Date();
-  const internal = buildInternalTemplate(enquiry, { baseUrl: config.baseUrl, timestamp });
-  const customer = buildCustomerTemplate(enquiry, { baseUrl: config.baseUrl });
+  const templateOptions = { baseUrl: config.baseUrl, timestamp, social: socialLinks() };
+  const internal = buildInternalTemplate(enquiry, templateOptions);
+  const customer = buildCustomerTemplate(enquiry, templateOptions);
   const messages = [
     {
       from: config.from,

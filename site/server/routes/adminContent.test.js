@@ -76,7 +76,8 @@ test('bulk hide, reorder and delete', async () => {
   assert.equal(reordered.status, 200);
   assert.deepEqual((await request(app).get('/api/content/results')).body.map((item) => item.id), ['6', '5', '4', '3']);
 
-  const removed = await write('delete', '/api/admin/collections/testimonials/t-3');
+  const removed = await write('delete', '/api/admin/collections/results/3');
   assert.equal(removed.status, 200);
-  assert.equal((await request(app).get('/api/content/results')).body.find((item) => item.id === '3').testimonial, undefined);
+  assert.equal((await request(app).get('/api/content/results')).body.some((item) => item.id === '3'), false);
+  assert.equal((await request(app).get('/api/admin/collections/testimonials')).status, 404);
 });
