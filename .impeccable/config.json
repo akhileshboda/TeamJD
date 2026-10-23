@@ -1,0 +1,44 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          "site/public/503.html"
+        ],
+        "createdAt": "2026-10-23T09:16:49.747Z",
+        "reason": "status-pill is a functional HTTP-status indicator (Site Maintenance/Server Error/etc.), not marketing eyebrow fluff; mirrors the already-reviewed fix/outage-pages baseline's plain status line, just styled as a pill"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          "site/public/500.html"
+        ],
+        "createdAt": "2026-10-23T09:16:49.769Z",
+        "reason": "same status-pill pattern as 503.html; functional status indicator, not decorative eyebrow"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          "site/public/404.html"
+        ],
+        "createdAt": "2026-10-23T09:16:49.789Z",
+        "reason": "same status-pill pattern; functional status indicator, not decorative eyebrow"
+      },
+      {
+        "rule": "hero-eyebrow-chip",
+        "value": "*",
+        "files": [
+          "site/public/offline.html"
+        ],
+        "createdAt": "2026-10-23T09:16:49.809Z",
+        "reason": "same status-pill pattern; functional status indicator, not decorative eyebrow"
+      }
+    ]
+  }
+}
