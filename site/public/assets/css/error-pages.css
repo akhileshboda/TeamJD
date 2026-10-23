@@ -239,9 +239,4 @@ h1 {
     from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .status-dot { animation: pulse 2.4s ease-in-out infinite; }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.35; }
-  }
 }
