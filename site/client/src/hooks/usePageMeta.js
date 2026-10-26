@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { PAGE_META } from '../content/siteDefaults'
 import { useSettings } from './useSettings'
 
-export const SITE_URL = 'https://team-jd.com.au'
+const FALLBACK_SITE_URL = 'https://team-jd.com.au'
 export const SITE_NAME = 'Team JD'
 const DEFAULT_TITLE = 'Team JD | Jake Dedert Fitness Coaching'
 
@@ -14,6 +14,13 @@ function setTag(selector, create, value) {
     document.head.appendChild(el)
   }
   el.setAttribute(el.tagName === 'LINK' ? 'href' : 'content', value)
+}
+
+// The server writes this site's own address into every page, so staging
+// canonicals point at staging and production's at production.
+export function getSiteUrl() {
+  const served = document.head.querySelector('meta[name="teamjd:site-url"]')?.getAttribute('content')
+  return (served || FALLBACK_SITE_URL).replace(/\/+$/, '')
 }
 
 const meta = (attr, key) => () => {
@@ -37,7 +44,7 @@ export function usePageMeta({ page, title: givenTitle, description: givenDescrip
 
   useEffect(() => {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE
-    const url = `${SITE_URL}${pathname === '/' ? '/' : pathname.replace(/\/+$/, '')}`
+    const url = `${getSiteUrl()}${pathname === '/' ? '/' : pathname.replace(/\/+$/, '')}`
 
     document.title = fullTitle
     setTag('link[rel="canonical"]', () => Object.assign(document.createElement('link'), { rel: 'canonical' }), url)
@@ -47,6 +54,11 @@ export function usePageMeta({ page, title: givenTitle, description: givenDescrip
       setTag('meta[name="description"]', meta('name', 'description'), description)
       setTag('meta[property="og:description"]', meta('property', 'og:description'), description)
     }
-    setTag('meta[name="robots"]', meta('name', 'robots'), noindex ? 'noindex' : 'index, follow')
+    setTag('meta[name="twitter:title"]', meta('name', 'twitter:title'), fullTitle)
+    if (description) setTag('meta[name="twitter:description"]', meta('name', 'twitter:description'), description)
+    // Staging's server-set noindex is locked: no page may reopen it.
+    const robots = document.head.querySelector('meta[name="robots"]')
+    const keepServerTag = robots?.hasAttribute('data-locked') || (!noindex && /^index\b/.test(robots?.getAttribute('content') || ''))
+    if (!keepServerTag) setTag('meta[name="robots"]', meta('name', 'robots'), noindex ? 'noindex' : 'index, follow')
   }, [title, description, noindex, pathname])
 }

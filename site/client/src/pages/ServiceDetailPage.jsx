@@ -1,4 +1,5 @@
-import { Navigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import NotFound from './NotFound'
 import CompetitionPrepAccessGate from '../components/CompetitionPrepAccessGate'
 import JourneyIcon from '../components/JourneyIcon'
 import ScrollChromeSection from '../components/ScrollChromeSection'
@@ -29,7 +30,13 @@ export default function ServiceDetailPage() {
   const media = useMedia()
   const { canViewCompetitionPrep } = useFindYourFitSession()
   const metaService = services?.find((candidate) => candidate.slug === slug)
-  usePageMeta({ title: metaService?.name, description: metaService?.short_description })
+  // An unknown slug is a real 404 (the server answers 404 too), not a redirect.
+  const missing = Boolean(services) && !metaService
+  usePageMeta({
+    title: missing ? 'Page Not Found' : metaService?.name,
+    description: metaService?.short_description,
+    noindex: missing,
+  })
 
   if (!services) {
     return (
@@ -49,7 +56,7 @@ export default function ServiceDetailPage() {
   }
 
   const service = services.find((candidate) => candidate.slug === slug)
-  if (!service) return <Navigate to="/services" replace />
+  if (!service) return <NotFound />
 
   // The dashboard preview always shows the page itself, never the checkpoint.
   if (service.application_required && !canViewCompetitionPrep && !isPreviewWindow()) {

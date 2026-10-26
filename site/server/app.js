@@ -14,6 +14,7 @@ const { createContentRouter } = require('./routes/content');
 const { getCmsStore } = require('./services/cmsStore');
 const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
+const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
@@ -58,6 +59,8 @@ const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '127.0.0.1';
 const listenHost = host === 'localhost' ? '127.0.0.1' : host;
 const publicBaseUrl = (process.env.PUBLIC_BASE_URL || 'https://team-jd.com.au').replace(/\/+$/, '');
+// APP_ENV, not NODE_ENV, tells staging apart: both run with NODE_ENV=production.
+const isStaging = process.env.APP_ENV === 'staging';
 const publicDir = path.join(__dirname, '..', 'public');
 const dataDir = path.join(__dirname, '..', 'data');
 const generatedAssetsDir = path.join(publicDir, 'assets', 'generated');
@@ -275,6 +278,34 @@ app.get('/sitemap.xml', async (req, res, next) => {
     return next(error);
   }
 });
+// Live content for crawler-facing output. A store hiccup degrades to the built-in
+// words rather than failing the page.
+async function loadSeoData() {
+  const store = getCmsStore();
+  const [services, faqs] = await Promise.all([
+    store.getPublic('services').catch(() => []),
+    store.getPublic('faqs').catch(() => [])
+  ]);
+  return { services, faqs, settings: store.cachedSettings() };
+}
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').set('Cache-Control', 'public, max-age=3600');
+  return res.send(buildRobotsTxt({ baseUrl: publicBaseUrl, staging: isStaging }));
+});
+
+for (const [route, full] of [['/llms.txt', false], ['/llms-full.txt', true]]) {
+  app.get(route, async (req, res, next) => {
+    try {
+      const data = await loadSeoData();
+      res.type('text/plain; charset=utf-8').set('Cache-Control', 'public, max-age=3600');
+      return res.send(buildLlmsTxt({ baseUrl: publicBaseUrl, full, ...data }));
+    } catch (error) {
+      return next(error);
+    }
+  });
+}
+
 app.use(serveManifestBackedHtml);
 app.use(
   '/assets/generated',
@@ -288,11 +319,43 @@ app.use(express.static(publicDir));
 
 // Serve built React app (production)
 const distDir = path.join(__dirname, '..', 'dist');
-app.use(express.static(distDir));
-app.get('*', (req, res, next) => {
+// index: false so '/' goes through the handler below, which writes each page's
+// own head tags into the built shell.
+app.use(express.static(distDir, { index: false }));
+
+// Absolute URL for a share image: the asset's real (R2) address when the manifest
+// has it, otherwise the manifest-backed redirect on this site.
+async function shareImageUrl(assetKey) {
+  const manifest = await getAssetManifest().catch(() => null);
+  const url = manifest?.assets?.[assetKey]?.url;
+  if (url) return new URL(url, publicBaseUrl).toString();
+  return `${publicBaseUrl}/api/assets/${assetKey}`;
+}
+
+app.get('*', async (req, res, next) => {
   const distIndex = path.join(distDir, 'index.html');
   if (!fs.existsSync(distIndex) || !shouldServeSpaShell(req)) return next();
-  res.sendFile(distIndex);
+
+  try {
+    const [shell, data] = await Promise.all([fs.promises.readFile(distIndex, 'utf8'), loadSeoData()]);
+    const route = resolveRoute({
+      pathname: req.path,
+      baseUrl: publicBaseUrl,
+      staging: isStaging,
+      ...data
+    });
+    if (!route) return res.sendFile(distIndex);
+
+    const imageUrl = await shareImageUrl(route.service?.hero_image || 'jake-hero');
+    res.status(route.status).set('Cache-Control', 'no-cache');
+    if (route.noindex) res.set('X-Robots-Tag', 'noindex, nofollow');
+    res.type('text/html; charset=utf-8');
+    return res.send(req.method === 'HEAD' ? '' : applyRouteToShell(shell, route, { baseUrl: publicBaseUrl, imageUrl }));
+  } catch (error) {
+    // The page still works without the per-route tags.
+    console.error(`SEO shell failed for ${req.path}:`, error);
+    return res.sendFile(distIndex);
+  }
 });
 
 app.use((error, req, res, next) => {
