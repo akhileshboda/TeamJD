@@ -34,7 +34,7 @@ describe('dashboard sign-in', () => {
       if (url === '/api/admin/auth/code') return json({ ok: true })
       if (url === '/api/admin/auth/verify') {
         const body = JSON.parse(init.body)
-        return body.code === '123456' ? json({ email: body.email }) : json({ error: 'That code is not right.' }, 401)
+        return body.code === '12345678' ? json({ email: body.email }) : json({ error: 'That code is not right.' }, 401)
       }
       return json({}, 404)
     })
@@ -42,13 +42,13 @@ describe('dashboard sign-in', () => {
     fireEvent.change(await screen.findByLabelText('Email'), { target: { value: 'jake@team-jd.com.au' } })
     fireEvent.click(screen.getByRole('button', { name: 'Email me a code' }))
 
-    const code = await screen.findByLabelText('6-digit code')
-    fireEvent.change(code, { target: { value: '999999' } })
+    const code = await screen.findByLabelText('8-digit code')
+    fireEvent.change(code, { target: { value: '99999999' } })
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('That code is not right.')
 
-    fireEvent.change(code, { target: { value: '12a3456' } })
-    expect(code).toHaveValue('123456')
+    fireEvent.change(code, { target: { value: '12a345678' } })
+    expect(code).toHaveValue('12345678')
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('heading', { name: 'Stats home' })).toBeInTheDocument()
     expect(screen.getByText('jake@team-jd.com.au')).toBeInTheDocument()
@@ -71,7 +71,7 @@ describe('session expiry', () => {
     expect(within(dialog).getByLabelText('Email')).toHaveValue('jake@team-jd.com.au')
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Email me a code' }))
-    fireEvent.change(await within(dialog).findByLabelText('6-digit code'), { target: { value: '123456' } })
+    fireEvent.change(await within(dialog).findByLabelText('8-digit code'), { target: { value: '12345678' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(page).toBeInTheDocument()

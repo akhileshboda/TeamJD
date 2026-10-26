@@ -81,7 +81,7 @@ The rate-limit stores are process-local by design because each environment runs 
 1. Add to each environment's `.env`, then restart with `--update-env`:
 
    ```env
-   CMS_ADMIN_EMAILS=jake@team-jd.com.au,akboda00@gmail.com
+   CMS_ADMIN_EMAILS=owner@example.com,developer@example.com
    ```
 
    Sign-in codes are sent through the enquiry Resend settings (`ENQUIRY_MAIL_PROVIDER`, `RESEND_API_KEY`, `ENQUIRY_EMAIL_FROM`); no other setup is needed. Never set `CMS_DEV_BYPASS` on the VM (it is ignored in production anyway). If a Cloudflare Access application from the old media manager exists for `/admin`, delete it: the dashboard has its own sign-in page.

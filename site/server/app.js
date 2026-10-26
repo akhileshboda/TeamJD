@@ -15,7 +15,6 @@ const { getCmsStore } = require('./services/cmsStore');
 const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
-const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
 const { createSiteAuthRouter } = require('./routes/siteAuth');
@@ -47,6 +46,11 @@ for (const envVar of requiredAuthEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`Missing required auth environment variable: ${envVar}`);
   }
+}
+
+const syncToken = process.env.ASSET_SYNC_ADMIN_TOKEN;
+if (syncToken && syncToken.length < 32) {
+  console.warn('[security] ASSET_SYNC_ADMIN_TOKEN is shorter than 32 characters. Replace it with `openssl rand -hex 24`.');
 }
 
 const app = express();
@@ -226,7 +230,6 @@ app.get('/healthz', (req, res) => {
     }
   });
 });
-app.use(visitLogger);
 // Session runs before the staging and maintenance gates so people signed in
 // (through the gate, or as dashboard admins) see the real site behind them.
 app.use(

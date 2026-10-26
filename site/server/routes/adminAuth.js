@@ -51,6 +51,7 @@ function createAdminAuthRouter(options = {}) {
         expired: 'That code has expired. Ask for a new one.',
         locked: 'Too many wrong codes from this device. Wait 10 minutes, then ask for a new code.'
       };
+      if (result === 'locked') console.warn(`[admin-auth] sign-in locked for ${email} from ${getClientIp(req)}`);
       return res.status(401).json({ error: messages[result] || 'That code is not right. Check the latest email, or ask for a new code.' });
     }
 
@@ -59,6 +60,7 @@ function createAdminAuthRouter(options = {}) {
       if (error) return next(error);
       req.session.admin = { email, signedInAt: new Date().toISOString() };
       req.session.cookie.maxAge = auth.SESSION_MAX_AGE_MS;
+      console.log(`[admin-auth] signed in ${email} from ${getClientIp(req)}`);
       return req.session.save((saveError) => (saveError ? next(saveError) : res.json({ email })));
     });
   });
