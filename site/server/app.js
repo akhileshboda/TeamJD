@@ -15,6 +15,7 @@ const { getCmsStore } = require('./services/cmsStore');
 const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
+const { requestCounter, startCapacityMonitor } = require('./services/capacityMonitor');
 const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
@@ -226,6 +227,7 @@ app.get('/healthz', (req, res) => {
     }
   });
 });
+app.use(requestCounter);
 app.use(visitLogger);
 // Session runs before the staging and maintenance gates so people signed in
 // (through the gate, or as dashboard admins) see the real site behind them.
@@ -418,6 +420,7 @@ async function startServer() {
   });
 
   startAssetPoller();
+  startCapacityMonitor();
   setImmediate(() => {
     runStartupAssetSync().catch((error) => {
       console.error('Failed to run startup asset sync:', error);

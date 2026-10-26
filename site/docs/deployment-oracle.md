@@ -100,6 +100,26 @@ The rate-limit stores are process-local by design because each environment runs 
 
 Library uploads live in R2 under `cms/<environment>/` (`R2_CMS_PREFIX`), outside the sync's `R2_ASSET_PREFIX`. Staging and production share the bucket and Dropbox account but use different folders. `data/cms.json` and `data/analytics/` are runtime state like `data/asset-manifest.json`: deploys keep them.
 
+### Capacity alert setup
+
+The production process samples host CPU, host RAM (`MemAvailable`), Node event-loop lag (p99) and Node memory (against the 300 MB PM2 cap) every 30 seconds. When any one stays above 80% in at least 8 of the last 10 samples (about 5 minutes) it emails `CAPACITY_ALERT_TO` through the enquiry Resend settings, at most once every 6 hours, then sends one recovery email after a calm window. That is the signal to scale the VM. The cooldown survives restarts (`data/capacity-alert-state.json`). Staging never runs it, because both environments share the host.
+
+1. Add to the production `.env`, then restart with `--update-env`:
+
+   ```env
+   CAPACITY_ALERT_TO=you@example.com
+   ```
+
+   Optional tuning (defaults in `.env.example`): `CAPACITY_ALERT_THRESHOLD`, `CAPACITY_ALERT_COOLDOWN_HOURS`, `CAPACITY_EVENT_LOOP_MAX_MS`, `CAPACITY_RSS_LIMIT_MB`, `CAPACITY_MONITOR_ENABLED`. Keep `CAPACITY_RSS_LIMIT_MB` equal to `max_memory_restart` in `ecosystem.config.cjs`.
+2. Check it after every deploy. From the app directory (`/var/www/teamjd`):
+
+   ```bash
+   npm run capacity:test -- --env production   # staging: /var/www/teamjd-staging, --env staging
+   ```
+
+   One `[TEST] Capacity report` email arrives with the live `/healthz` result, host and monitor readings, and PASS/FAIL lines. It still sends when the site is down (subject says `DOWN`) and exits non-zero only if the email could not be sent. It never touches the alert cooldown. `--env` supplies the `APP_ENV` and `PORT` that PM2 sets but an SSH shell does not (without it the command checks port 3000). Add `--env-file <path>` to use a different `.env`.
+3. Limits: this process cannot email if the app or VM is completely down. Add a free external uptime check on `https://team-jd.com.au/healthz` for that.
+
 ## Deploy
 
 Install and test locally before deployment:
