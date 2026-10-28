@@ -3,16 +3,17 @@ import { lazy } from 'react'
 // The dashboard's sections. This list drives both the sidebar and the routes, so a
 // new section is one entry here plus its page component.
 
-const HomeStats = lazy(() => import('./pages/HomeStats'))
+const Home = lazy(() => import('./pages/Home'))
 const ResultsSection = lazy(() => import('./sections/ResultsSection'))
 const PagesSection = lazy(() => import('./sections/PagesSection'))
 const MediaSection = lazy(() => import('./sections/MediaSection'))
 const ServicesSection = lazy(() => import('./sections/ServicesSection'))
 const FaqsSection = lazy(() => import('./sections/FaqsSection'))
+const ChangelogSection = lazy(() => import('./sections/ChangelogSection'))
 const SettingsSection = lazy(() => import('./sections/SettingsSection'))
 
 export const SECTIONS = [
-  { id: 'home', path: '', label: 'Home', icon: 'home', element: HomeStats },
+  { id: 'home', path: '', label: 'Home', icon: 'home', element: Home },
   {
     id: 'pages',
     path: 'pages',
@@ -51,6 +52,14 @@ export const SECTIONS = [
     icon: 'image',
     group: 'Content',
     element: MediaSection,
+  },
+  {
+    id: 'changelog',
+    path: 'changelog',
+    label: 'Change log',
+    icon: 'spark',
+    group: 'Site',
+    element: ChangelogSection,
   },
   {
     id: 'settings',
