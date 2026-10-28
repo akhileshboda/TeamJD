@@ -11,7 +11,7 @@ const { createCmsStore } = require('../services/cmsStore');
 
 const devEnv = { NODE_ENV: 'development', CMS_DEV_BYPASS: 'true' };
 
-async function buildApp(env = devEnv) {
+async function buildApp(env = devEnv, extra = {}) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'admin-route-'));
   const store = createCmsStore({ storePath: path.join(dir, 'cms.json'), backup: null });
   const removed = [];
@@ -20,7 +20,8 @@ async function buildApp(env = devEnv) {
     access: { env },
     analytics: createAnalytics({ dataDir: dir }),
     store,
-    removeFiles: async (asset) => removed.push(asset.id)
+    removeFiles: async (asset) => removed.push(asset.id),
+    ...extra
   }));
   const write = (method, url) => request(app)[method](url).set('Sec-Fetch-Site', 'same-origin');
   return { app, store, write, removed };
@@ -119,4 +120,21 @@ test('uploads are refused clearly for unsupported files', async () => {
   const heic = await write('post', '/api/admin/media/uploads').send({ fileName: 'IMG_1.HEIC', size: 100 });
   assert.equal(heic.status, 415);
   assert.match(heic.body.error, /HEIC/);
+});
+
+test('the changelog is for signed-in admins only and comes back newest first', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'admin-changelog-'));
+  const changelogPath = path.join(dir, 'changelog.json');
+  await fs.writeFile(changelogPath, JSON.stringify([
+    { date: '2026-10-01', text: 'Older update' },
+    { date: '2026-10-20', text: 'Newer update' }
+  ]));
+
+  const { app: production } = await buildApp({ NODE_ENV: 'production', CMS_DEV_BYPASS: 'true' }, { changelogPath });
+  assert.equal((await request(production).get('/api/admin/changelog')).status, 401);
+
+  const { app } = await buildApp(devEnv, { changelogPath });
+  const res = await request(app).get('/api/admin/changelog');
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body.entries.map((entry) => entry.text), ['Newer update', 'Older update']);
 });
