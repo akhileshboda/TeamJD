@@ -126,6 +126,31 @@ curl -fsS http://127.0.0.1:3000/healthz
 curl -fsS http://127.0.0.1:3002/healthz
 ```
 
+## External uptime monitoring
+
+The in-process capacity alert cannot email when the app, PM2, the Cloudflare tunnel, or the VM is down, so an external service watches both public `/healthz` endpoints.
+
+| Item | Value |
+| --- | --- |
+| Service | UptimeRobot, free plan |
+| Interval | 5 minutes (worst-case detection is about 5 minutes plus alert delivery) |
+| Monitor type | HTTP(s) keyword, alert when the keyword does not exist |
+| Keyword | `"status":"ok"` |
+| Production URL | `https://team-jd.com.au/healthz` |
+| Staging URL | `https://jake-preview.team-jd.com.au/healthz` |
+| Alerts | Email on down and on recovery to `akboda00@gmail.com` |
+
+`/healthz` answers 200 through Cloudflare even in maintenance mode or behind the staging password gate, so a gated site does not raise a false alert. An `unavailable` response (HTTP 503, assets not ready) lacks the keyword and does alert. Alerts come from UptimeRobot, not Resend, so one failure cannot silence both.
+
+To pause or edit a monitor, sign in to the UptimeRobot dashboard, open the monitor, and choose Pause or Edit. Pause the relevant monitor before planned downtime. To also alert Jake, add his address as an alert contact and attach it to the monitors. If a monitor shows Down while `curl` from outside reads 200, check whether Cloudflare is challenging the probe and skip bot rules for `/healthz`.
+
+To test alerting, stop and start staging only, never production:
+
+```bash
+pm2 stop jake-staging
+pm2 start jake-staging
+```
+
 ## Rollback
 
 On the development machine, check out the previously tested commit or tag, reinstall both lockfiles, rerun both test suites, and execute the deployment command for only the affected environment. Redeployment preserves that environment's `.env` and runtime state. Public routing rollback remains a separate Cloudflare operation.
