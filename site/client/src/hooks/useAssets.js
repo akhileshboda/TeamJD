@@ -108,6 +108,8 @@ export function resolveMedia(slotId, manifest, fallbackPath, fallbackAlt = '') {
       alt: replaced.alt || fallbackAlt,
       focus: replaced.focus || null,
       zoom: replaced.zoom || 1,
+      // A video's chosen loop, { start, end } in seconds; null plays it all.
+      trim: replaced.trim || null,
       slotId,
       replaced: true,
       ready: true,

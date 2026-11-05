@@ -323,7 +323,8 @@ async function processVideo({ session, id, prefix, storage }) {
       url: getPublicR2Url(videoKey),
       posterUrl: getPublicR2Url(posterKey),
       width, height,
-      duration: Math.round(duration),
+      // To a tenth, rounded down, so a chosen loop end never runs past the last frame.
+      duration: Math.floor(duration * 10) / 10,
       bytes: size,
       originalBytes: session.size,
       r2Keys: [videoKey, posterKey],

@@ -187,8 +187,36 @@ function foldTestimonialsIntoResults(data) {
 // One record per media slot (mediaSlots.js) Jake has touched, keyed by slot id.
 // assetId null means "use the site's built-in photo or video".
 
+// The part of a video that loops on the page, in seconds (to a tenth). Only the
+// start and end are kept; the file itself is never re-encoded.
+const MIN_TRIM_SECONDS = 2;
+const tenth = (value) => Math.round(value * 10) / 10;
+
+function trimRange(input) {
+  if (!input || typeof input !== 'object') return null;
+  const start = Number(input.start);
+  const end = Number(input.end);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+  return { start: tenth(start), end: tenth(end) };
+}
+
 function normalizePlacement(input = {}) {
-  return { assetId: text(input.assetId, 80) || null, alt: text(input.alt, 300), ...framing(input) };
+  return { assetId: text(input.assetId, 80) || null, alt: text(input.alt, 300), ...framing(input), trim: trimRange(input.trim) };
+}
+
+function seconds(value) {
+  const whole = Math.round(value);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}
+
+function validateTrim(trim, asset) {
+  if (!trim) return null;
+  if (trim.start < 0 || trim.end <= trim.start) return 'The end of the loop needs to come after the start.';
+  if (Number.isFinite(asset.duration) && trim.end > asset.duration) {
+    return `This video is only ${seconds(asset.duration)} long. Move the end of the loop back.`;
+  }
+  if (tenth(trim.end - trim.start) < MIN_TRIM_SECONDS) return `The loop needs to be at least ${MIN_TRIM_SECONDS} seconds long.`;
+  return null;
 }
 
 function validatePlacement(draft, data) {
@@ -196,7 +224,8 @@ function validatePlacement(draft, data) {
   const asset = findAsset(data, draft.assetId);
   if (!asset) return { assetId: 'That file is no longer in the media library. Choose another.' };
   if (asset.kind === 'image' && !draft.alt) return { alt: 'Describe the photo before it goes live.' };
-  return {};
+  const trimError = asset.kind === 'video' ? validateTrim(draft.trim, asset) : null;
+  return trimError ? { trim: trimError } : {};
 }
 
 function summarizePlacement(record, data) {
@@ -213,8 +242,12 @@ function publicSlots(data) {
   for (const record of data.collections.placements || []) {
     const asset = record.published?.assetId && findAsset(data, record.published.assetId);
     if (!asset) continue;
-    const { alt, focus, zoom } = normalizePlacement(record.published);
-    slots[record.id] = { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl || null, alt, focus, zoom };
+    const { alt, focus, zoom, trim } = normalizePlacement(record.published);
+    slots[record.id] = {
+      kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl || null, alt, focus, zoom,
+      // Only a video plays, so only a video has a part that loops.
+      trim: asset.kind === 'video' ? trim : null
+    };
   }
   return slots;
 }
