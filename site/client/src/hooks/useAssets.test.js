@@ -46,6 +46,12 @@ describe('resolveMedia', () => {
     })
   })
 
+  it("passes on the part of a video Jake chose to loop, or null for all of it", () => {
+    const trimmed = { ...withSlots, slots: { 'contact.reel': { ...withSlots.slots['contact.reel'], trim: { start: 2, end: 8.5 } } } }
+    expect(resolveMedia('contact.reel', trimmed, 'logo').trim).toEqual({ start: 2, end: 8.5 })
+    expect(resolveMedia('contact.reel', withSlots, 'logo').trim).toBeNull()
+  })
+
   it('falls back to the built-in asset for untouched slots and before the manifest loads', () => {
     expect(resolveMedia('home.about-photo', withSlots, 'logo', 'Alt')).toMatchObject({
       src: 'https://cdn.example/logo.webp',

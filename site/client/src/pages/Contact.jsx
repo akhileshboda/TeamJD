@@ -283,7 +283,7 @@ export default function Contact() {
 
           <SectionReveal className="contact-services-media" delay={0.05}>
             {reel.replaced ? (
-              <ContactMediaReel videoSrc={reel.src} poster={reel.poster} />
+              <ContactMediaReel videoSrc={reel.src} poster={reel.poster} style={framedImageStyle(reel)} trim={reel.trim} />
             ) : (
               <ContactMediaReel
                 youtubeId="GbQomqb28os"

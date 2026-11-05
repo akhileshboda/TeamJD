@@ -8,16 +8,16 @@ const clampZoom = (value) => Math.min(MAX_ZOOM, Math.max(1, Math.round(value * 1
 export const DEFAULT_FRAMING = { focus: { x: 50, y: 50 }, zoom: 1 }
 
 // The same CSS the public site uses (hooks/useAssets.js framedImageStyle), so
-// what Jake sees here is how the photo is cropped on the page.
-function framedStyle({ focus, zoom }) {
+// what Jake sees here is how the photo or video is cropped on the page.
+export function framedStyle({ focus, zoom }) {
   const position = `${focus.x}% ${focus.y}%`
   return { objectPosition: position, transform: `scale(${zoom})`, transformOrigin: position }
 }
 
-// Crop a photo to its frame by dragging it and zooming in. The frame shows the
-// spot's shape; any photo works, whatever its own shape. Keyboard: arrow keys
-// move it, + and - zoom.
-export default function ImageFramer({ src, value, onChange, aspect = '3 / 4', label = 'Photo' }) {
+// Crop a photo (or, with `video`, a looping video) to its frame by dragging it
+// and zooming in. The frame shows the spot's shape; any file works, whatever its
+// own shape. Keyboard: arrow keys move it, + and - zoom.
+export default function ImageFramer({ src, poster, video = false, value, onChange, aspect = '3 / 4', label = 'Photo' }) {
   const framing = { ...DEFAULT_FRAMING, ...value, focus: { ...DEFAULT_FRAMING.focus, ...value?.focus } }
   const frameRef = useRef(null)
   const drag = useRef(null)
@@ -73,10 +73,12 @@ export default function ImageFramer({ src, value, onChange, aspect = '3 / 4', la
         onPointerCancel={endDrag}
         onKeyDown={onKeyDown}
       >
-        <img src={src} alt="" draggable={false} style={framedStyle(framing)} />
+        {video
+          ? <video src={src} poster={poster} muted loop autoPlay playsInline aria-hidden="true" style={framedStyle(framing)} />
+          : <img src={src} alt="" draggable={false} style={framedStyle(framing)} />}
       </div>
       <p id={hintId} className="jd-field-hint">
-        Drag the photo to choose what stays in view. On a keyboard, use the arrow keys, and + or − to zoom.
+        Drag the {video ? 'video' : 'photo'} to choose what stays in view. On a keyboard, use the arrow keys, and + or − to zoom.
       </p>
       <div className="jd-framer-controls">
         <label className="jd-framer-zoom">

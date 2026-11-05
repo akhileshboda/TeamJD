@@ -90,6 +90,52 @@ describe('ContactMediaReel', () => {
     expect(screen.queryByText(/Film:/)).not.toBeInTheDocument()
   })
 
+  it("frames Jake's reel and its poster the way he cropped it", () => {
+    const style = { objectPosition: '20% 70%', transform: 'scale(1.4)', transformOrigin: '20% 70%' }
+    const { container } = render(
+      <ContactMediaReel videoSrc="https://cdn.example/reel.mp4" poster="https://cdn.example/reel.webp" style={style} />,
+    )
+
+    for (const element of [container.querySelector('video'), container.querySelector('.contact-media-reel-poster')]) {
+      expect(element.style.objectPosition).toBe('20% 70%')
+      expect(element.style.transform).toBe('scale(1.4)')
+    }
+  })
+
+  it('leaves the built-in reel to its own CSS framing', () => {
+    const { container } = render(<ContactMediaReel {...defaultProps} />)
+    expect(container.querySelector('.contact-media-reel-poster').getAttribute('style')).toBeNull()
+  })
+
+  it('loops only the part of the reel Jake chose', () => {
+    const { container } = render(
+      <ContactMediaReel videoSrc="https://cdn.example/reel.mp4" poster="https://cdn.example/reel.webp" trim={{ start: 4, end: 9.5 }} />,
+    )
+    const video = container.querySelector('video')
+    expect(video).toHaveAttribute('src', 'https://cdn.example/reel.mp4#t=4')
+    expect(video).not.toHaveAttribute('loop')
+
+    let time = 0
+    Object.defineProperty(video, 'currentTime', { configurable: true, get: () => time, set: (value) => { time = value } })
+    const play = vi.spyOn(video, 'play').mockResolvedValue()
+
+    fireEvent.loadedMetadata(video)
+    expect(time).toBe(4)
+
+    time = 7
+    fireEvent.timeUpdate(video)
+    expect(time).toBe(7)
+
+    time = 9.6
+    fireEvent.timeUpdate(video)
+    expect(time).toBe(4)
+
+    time = 10
+    fireEvent.ended(video)
+    expect(time).toBe(4)
+    expect(play).toHaveBeenCalled()
+  })
+
   it('includes a subtle secure credit link to the original upload', () => {
     render(<ContactMediaReel {...defaultProps} />)
 

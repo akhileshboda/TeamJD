@@ -3,9 +3,10 @@ import { Link, Route, Routes, useParams } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { applyAction, bulkAction, getPlacements, savePlacement } from '../api'
 import { TextField } from '../components/fields'
-import ImageFramer, { DEFAULT_FRAMING } from '../components/ImageFramer'
+import ImageFramer, { DEFAULT_FRAMING, framedStyle } from '../components/ImageFramer'
 import MediaPicker, { MediaThumb } from '../components/MediaPicker'
 import PreviewFrame from '../components/PreviewFrame'
+import VideoTrimmer from '../components/VideoTrimmer'
 import { useToast } from '../components/Toasts'
 import { Chip } from '../components/ui'
 
@@ -31,14 +32,17 @@ function groupByPage(slots) {
 function spotPreview(slot) {
   const asset = slot.record?.draft.assetId ? slot.draftAsset : null
   if (!asset) return null
-  const { alt, focus, zoom } = slot.record.draft
-  return { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl, alt, focus, zoom }
+  const { alt, focus, zoom, trim } = slot.record.draft
+  return { kind: asset.kind, url: asset.url, posterUrl: asset.posterUrl, alt, focus, zoom, trim: trim || null }
 }
 
-// The parts of a spot Jake adjusts in place (description and crop); they save
-// after a pause rather than on every keystroke or drag.
+// The parts of a spot Jake adjusts in place (description, crop and, for a
+// video, the part that loops); they save after a pause rather than on every
+// keystroke or drag.
 function adjustable(draft) {
-  return { alt: draft?.alt || '', focus: draft?.focus || DEFAULT_FRAMING.focus, zoom: draft?.zoom || 1 }
+  return {
+    alt: draft?.alt || '', focus: draft?.focus || DEFAULT_FRAMING.focus, zoom: draft?.zoom || 1, trim: draft?.trim || null
+  }
 }
 
 function spotStatus(slot) {
@@ -86,16 +90,16 @@ function PageList({ pages }) {
 
 function SpotThumb({ slot, showing, framing }) {
   const style = { aspectRatio: slot.aspect || '4 / 3' }
-  if (showing?.kind === 'image') {
-    const position = `${framing.focus.x}% ${framing.focus.y}%`
+  if (showing) {
+    const video = showing.kind === 'video'
+    if (video && !showing.posterUrl) return <MediaThumb asset={showing} size="fill" />
     return (
       <span className="jd-thumb jd-thumb--spot" style={style}>
-        <img src={showing.url} alt="" loading="lazy"
-          style={{ objectPosition: position, transform: `scale(${framing.zoom})`, transformOrigin: position }} />
+        <img src={video ? showing.posterUrl : showing.url} alt="" loading="lazy" style={framedStyle(framing)} />
+        {video && <span className="jd-thumb-badge">Video</span>}
       </span>
     )
   }
-  if (showing) return <MediaThumb asset={showing} size="fill" />
   return (
     <span className="jd-thumb jd-thumb--spot" style={style}>
       {slot.builtInUrl ? <img src={slot.builtInUrl} alt="" loading="lazy" /> : <JourneyIcon name="image" size={18} />}
@@ -114,6 +118,9 @@ function Spot({ slot, onChange, scheduleSave, cancelPending, onFocusSpot, onPrev
   const versions = useRef({ made: 0, saved: 0 })
   const showing = draft.assetId ? slot.draftAsset : null
   const status = spotStatus(slot)
+  // A video spot can be cropped and trimmed only where the page frames it to a
+  // shape (the Contact reel); the Home background video does not use either yet.
+  const croppable = Boolean(showing) && (showing.kind === 'image' || Boolean(slot.aspect))
   const small = showing?.kind === 'image' && slot.minWidth && showing.width < slot.minWidth
   const serverKey = JSON.stringify(adjustable(draft))
 
@@ -159,7 +166,7 @@ function Spot({ slot, onChange, scheduleSave, cancelPending, onFocusSpot, onPrev
           <button type="button" className="jd-admin-button jd-admin-button--sm" disabled={busy} onClick={() => setPicking(true)}>
             {slot.kind === 'video' ? 'Choose video' : 'Choose photo'}
           </button>
-          {showing?.kind === 'image' && (
+          {croppable && (
             <button type="button" className="jd-admin-button jd-admin-button--sm" aria-expanded={cropping}
               onClick={() => setCropping(!cropping)}>
               {cropping ? 'Done cropping' : 'Adjust crop'}
@@ -178,9 +185,13 @@ function Spot({ slot, onChange, scheduleSave, cancelPending, onFocusSpot, onPrev
             </button>
           )}
         </div>
-        {cropping && showing?.kind === 'image' && (
-          <ImageFramer src={showing.url} aspect={slot.aspect} label={slot.label}
-            value={{ focus: local.focus, zoom: local.zoom }} onChange={(framing) => adjust(framing)} />
+        {cropping && croppable && (
+          <ImageFramer video={showing.kind === 'video'} src={showing.url} poster={showing.posterUrl} aspect={slot.aspect}
+            label={slot.label} value={{ focus: local.focus, zoom: local.zoom }} onChange={(framing) => adjust(framing)} />
+        )}
+        {cropping && croppable && showing.kind === 'video' && (
+          <VideoTrimmer src={showing.url} poster={showing.posterUrl} duration={showing.duration} label={slot.label}
+            value={local.trim} onChange={(trim) => adjust({ trim })} />
         )}
         {showing?.kind === 'image' && (
           <TextField label="Description" required value={local.alt} maxLength={300} onChange={(alt) => adjust({ alt })}
