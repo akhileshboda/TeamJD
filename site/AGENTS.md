@@ -196,3 +196,13 @@ There is no lint/format tooling and no CI configured. Don't invent an
 - **`whileInView` stagger animations** (`SectionReveal.jsx`) can render
   invisible if placed above the fold and mounted before async data
   resolves — mount the stagger container only once data is loaded.
+
+## Dashboard changelog — required for user-facing changes
+
+Every change Jake or a site visitor would notice ships with a new entry in
+`server/content/changelog.json` (shown on the dashboard Home under What's new
+and at `/admin/changelog`). Add it at the top, newest first, as
+`{ "date": "YYYY-MM-DD", "text": "..." }`, in the same commit as the change.
+Write it in plain, non-technical words (no "server", file or code names); start
+dashboard features with `Dashboard: `. Skip it only for internal-only work
+(tests, docs, refactors, tooling).
