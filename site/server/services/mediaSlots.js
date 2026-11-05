@@ -17,7 +17,7 @@ const ANY_PHOTO = 'Any photo works. Drag it to choose what stays in view.';
 const PORTRAIT = { hint: ANY_PHOTO, aspect: '3 / 4', minWidth: 1200 };
 const LANDSCAPE = { hint: ANY_PHOTO, aspect: '16 / 9', minWidth: 1600 };
 const SQUARE = { hint: ANY_PHOTO, aspect: '4 / 5', minWidth: 1000 };
-const REEL = { hint: 'Video up to 3 minutes. It plays muted, so sound is removed.' };
+const REEL = { hint: 'Any video works, up to 3 minutes. It plays muted. Drag it to frame it, and choose the part that loops.', aspect: '21 / 7' };
 
 const CONTACT_SOCIAL = [
   ['Stage work', 'gallery-social-facebook-stage-2022'],

@@ -79,12 +79,72 @@ test('photo spots: choose a library photo as a draft, publish it, and the site g
   assert.equal(published.status, 200);
   assert.deepEqual(await store.getPublic('slots'), {
     'about.portrait': {
-      kind: 'image', url: 'https://cdn.example/cms/test/p1.webp', posterUrl: null, alt: 'Jake on stage', focus: { x: 30, y: 20 }, zoom: 1.5
+      kind: 'image', url: 'https://cdn.example/cms/test/p1.webp', posterUrl: null, alt: 'Jake on stage', focus: { x: 30, y: 20 }, zoom: 1.5,
+      trim: null
     }
   });
 
   const pending = await request(app).get('/api/admin/pending');
   assert.deepEqual(pending.body.items.map((item) => item.title), ['“Meet Jake” photo']);
+});
+
+const clip = (id, extra = {}) => ({
+  ...photo(id), kind: 'video', url: `https://cdn.example/cms/test/${id}.mp4`, posterUrl: `https://cdn.example/cms/test/${id}-poster.jpg`,
+  duration: 20, ...extra
+});
+
+test('the Contact reel is framed to its shape and can loop just part of the video', async () => {
+  const { app, store, write } = await buildApp();
+  await store.addMedia(clip('v1'));
+
+  const listed = await request(app).get('/api/admin/placements');
+  const reel = listed.body.slots.find((slot) => slot.id === 'contact.reel');
+  assert.equal(reel.aspect, '21 / 7');
+  assert.match(reel.hint, /part that loops/);
+
+  const publish = () => write('post', '/api/admin/collections/placements/contact.reel/publish');
+  const choose = async (body) => {
+    const { body: current } = await request(app).get('/api/admin/placements');
+    const rev = current.slots.find((slot) => slot.id === 'contact.reel').record?.rev ?? 0;
+    return write('put', '/api/admin/placements/contact.reel').send({ assetId: 'v1', focus: { x: 40, y: 60 }, zoom: 1.2, rev, ...body });
+  };
+
+  // Seconds are kept to a tenth.
+  const saved = await choose({ trim: { start: 2.04, end: 9.96 } });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.body.draft.trim, { start: 2, end: 10 });
+
+  for (const [trim, message] of [
+    [{ start: 5, end: 6 }, /at least 2 seconds/],
+    [{ start: 8, end: 4 }, /after the start/],
+    [{ start: -1, end: 4 }, /after the start/],
+    [{ start: 10, end: 25 }, /only 0:20 long/]
+  ]) {
+    await choose({ trim });
+    const refused = await publish();
+    assert.equal(refused.status, 422, JSON.stringify(trim));
+    assert.match(refused.body.fields.trim, message);
+    assert.doesNotMatch(refused.body.fields.trim, /server/i);
+  }
+
+  await choose({ trim: { start: 3, end: 12.5 } });
+  assert.equal((await publish()).status, 200);
+  assert.deepEqual((await store.getPublic('slots'))['contact.reel'], {
+    kind: 'video', url: 'https://cdn.example/cms/test/v1.mp4', posterUrl: 'https://cdn.example/cms/test/v1-poster.jpg',
+    alt: '', focus: { x: 40, y: 60 }, zoom: 1.2, trim: { start: 3, end: 12.5 }
+  });
+
+  // No trim, or one that is not a pair of numbers, plays the whole video.
+  assert.equal((await choose({ trim: { start: 'soon', end: 4 } })).body.draft.trim, null);
+  assert.equal((await choose({})).body.draft.trim, null);
+});
+
+test('a trim sent with a photo is dropped', async () => {
+  const { store, write } = await buildApp();
+  await store.addMedia(photo('p1'));
+  const saved = await write('put', '/api/admin/placements/about.portrait')
+    .send({ assetId: 'p1', alt: 'Jake', trim: { start: 1, end: 5 }, rev: 0 });
+  assert.equal(saved.body.draft.trim, null);
 });
 
 test('photo spots refuse the wrong kind of file and unknown spots', async () => {

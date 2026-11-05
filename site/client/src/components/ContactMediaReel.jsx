@@ -1,5 +1,6 @@
 import { useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
+import { loopProps, loopSrc } from '../utils/videoLoop'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 640px)'
 const YOUTUBE_EMBED_ORIGIN = 'https://www.youtube-nocookie.com'
@@ -14,7 +15,9 @@ function getSaveDataEnabled() {
   return Boolean(navigator.connection?.saveData)
 }
 
-export default function ContactMediaReel({ youtubeId, videoSrc, poster, credit, creditHref }) {
+// `style` frames an uploaded reel (and its poster) the way Jake cropped it in the
+// dashboard; `trim` ({ start, end } in seconds) is the part of it that loops.
+export default function ContactMediaReel({ youtubeId, videoSrc, poster, credit, creditHref, style, trim }) {
   const shouldReduceMotion = useReducedMotion()
   const embedRef = useRef(null)
   const [isMobile, setIsMobile] = useState(getInitialMobileState)
@@ -93,16 +96,18 @@ export default function ContactMediaReel({ youtubeId, videoSrc, poster, credit, 
         decoding="async"
         width="1080"
         height="1920"
+        style={style}
       />
 
       {canPlayVideo && videoSrc && (
         <video
           className="contact-media-reel-video"
-          src={videoSrc}
+          src={loopSrc(videoSrc, trim)}
           poster={poster}
+          style={style}
           autoPlay
           muted
-          loop
+          {...loopProps(trim)}
           playsInline
           preload="metadata"
           aria-hidden="true"

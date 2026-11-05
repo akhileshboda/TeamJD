@@ -80,7 +80,89 @@ describe('page spots', () => {
     )
     fireEvent.click(await screen.findByRole('button', { name: 'Adjust crop' }))
     fireEvent.keyDown(screen.getByRole('group', { name: 'Main portrait: crop' }), { key: 'ArrowLeft' })
-    await waitFor(() => expect(puts).toEqual([{ assetId: 'p1', alt: 'Stage photo', focus: { x: 48, y: 50 }, zoom: 1, rev: 4 }]), { timeout: 3000 })
+    await waitFor(() => expect(puts).toEqual([{ assetId: 'p1', alt: 'Stage photo', focus: { x: 48, y: 50 }, zoom: 1, trim: null, rev: 4 }]), { timeout: 3000 })
+  })
+})
+
+describe('video spots', () => {
+  const reelSlot = {
+    id: 'contact.reel', page: 'Contact', pagePath: '/contact', kind: 'video', label: 'Video reel', aspect: '21 / 7',
+    hint: 'Any video works', builtInUrl: null, draftAsset: { ...video, duration: 20 }, liveAsset: null,
+    record: { rev: 2, status: 'draft', draft: { assetId: 'v1', alt: '', focus: { x: 50, y: 50 }, zoom: 1, trim: null }, published: null },
+  }
+
+  function renderReel(slot) {
+    const puts = []
+    vi.stubGlobal('fetch', vi.fn((url, init = {}) => {
+      if (init.method === 'PUT') {
+        puts.push(JSON.parse(init.body))
+        return json({ ...slot.record, rev: 3 })
+      }
+      return json({ slots: [slot] })
+    }))
+    render(
+      <MemoryRouter initialEntries={['/admin/pages/contact']}>
+        <ToastProvider><Routes><Route path="/admin/pages/*" element={<PagesSection />} /></Routes></ToastProvider>
+      </MemoryRouter>,
+    )
+    return puts
+  }
+
+  it('frames the reel poster in its thumbnail and offers Adjust crop', async () => {
+    renderReel({ ...reelSlot, record: { ...reelSlot.record, draft: { ...reelSlot.record.draft, focus: { x: 20, y: 70 }, zoom: 1.5 } } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Adjust crop' }))
+
+    const thumb = document.querySelector('.jd-spot-media img')
+    expect(thumb).toHaveAttribute('src', video.posterUrl)
+    expect(thumb.style.objectPosition).toBe('20% 70%')
+    expect(thumb.style.transform).toBe('scale(1.5)')
+
+    const frame = screen.getByRole('group', { name: 'Video reel: crop' })
+    const framed = frame.querySelector('video')
+    expect(framed).toHaveAttribute('src', video.url)
+    expect(framed.muted).toBe(true)
+    expect(framed).toHaveAttribute('loop')
+    expect(framed.style.transform).toBe('scale(1.5)')
+    expect(screen.getByText(/Drag the video/)).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Video reel: part that loops' })).toBeInTheDocument()
+  })
+
+  it('shows a new loop in the preview at once, saves it after a pause, and keeps it at least 2 seconds', async () => {
+    const puts = renderReel(reelSlot)
+    fireEvent.click(await screen.findByRole('button', { name: 'Adjust crop' }))
+    const iframe = await waitFor(() => {
+      const element = document.querySelector('.jd-preview iframe')
+      expect(element).not.toBeNull()
+      return element
+    })
+    const posted = vi.spyOn(iframe.contentWindow, 'postMessage')
+
+    const start = screen.getByRole('slider', { name: 'Loop starts at' })
+    const end = screen.getByRole('slider', { name: 'Loop ends at' })
+    expect(start).toHaveAttribute('aria-valuetext', '0:00')
+    expect(end).toHaveAttribute('aria-valuetext', '0:20')
+
+    fireEvent.change(end, { target: { value: '12' } })
+    fireEvent.change(start, { target: { value: '11' } })
+
+    await waitFor(() => {
+      const last = posted.mock.calls.at(-1)?.[0]
+      expect(last?.collections.slots['contact.reel'].trim).toEqual({ start: 10, end: 12 })
+    })
+    expect(start).toHaveAttribute('aria-valuetext', '0:10')
+    expect(puts).toEqual([])
+    await waitFor(() => expect(puts).toEqual([
+      { assetId: 'v1', alt: '', focus: { x: 50, y: 50 }, zoom: 1, trim: { start: 10, end: 12 }, rev: 2 },
+    ]), { timeout: 3000 })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset the loop to the whole video' }))
+    await waitFor(() => expect(puts.at(-1)?.trim).toBeNull(), { timeout: 3000 })
+  })
+
+  it('offers no crop for a video spot the page does not frame', async () => {
+    renderReel({ ...reelSlot, id: 'contact.other-video', aspect: undefined })
+    await screen.findByRole('button', { name: 'Choose video' })
+    expect(screen.queryByRole('button', { name: 'Adjust crop' })).toBeNull()
   })
 })
 
