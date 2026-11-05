@@ -170,6 +170,21 @@ curl -fsS http://127.0.0.1:3000/healthz
 curl -fsS http://127.0.0.1:3002/healthz
 ```
 
+## Going live / getting indexed
+
+Until launch, production is deliberately not indexed: the maintenance gate answers every public route, `/sitemap.xml` and the app's `/robots.txt` included, with 503, `Retry-After: 3600` and the noindex "under construction" page. The only robots.txt crawlers can reach is Cloudflare's managed one. Signed-in admins bypass the gate, so check from a logged-out client.
+
+At launch, set Dashboard → Settings → Site visibility to "Your site". It overrides `MAINTENANCE_MODE=true` in `.env`; no restart is needed. Then check:
+
+```bash
+curl -sI -A Googlebot https://team-jd.com.au/                              # 200, no X-Robots-Tag
+curl -s  -A Googlebot https://team-jd.com.au/ | grep -i 'name="robots"'    # index, follow, max-image-preview:large
+curl -sI https://team-jd.com.au/sitemap.xml                                 # 200, application/xml
+curl -s  https://team-jd.com.au/robots.txt                                  # must include Sitemap: https://team-jd.com.au/sitemap.xml
+```
+
+If Cloudflare replaces the app's robots.txt rather than prepending its managed block, the `Sitemap:` line is lost: turn off "Managed robots.txt" in Cloudflare or add the line there. Then, in Google Search Console, add a Domain property for `team-jd.com.au` (verify with the DNS TXT record in Cloudflare), submit `https://team-jd.com.au/sitemap.xml`, and use URL Inspection → Request indexing on `/`. Optionally, set up a Google Business Profile for local search.
+
 ## Rollback
 
 On the development machine, check out the previously tested commit or tag, reinstall both lockfiles, rerun both test suites, and execute the deployment command for only the affected environment. Redeployment preserves that environment's `.env` and runtime state. Public routing rollback remains a separate Cloudflare operation.
