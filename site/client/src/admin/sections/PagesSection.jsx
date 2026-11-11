@@ -56,7 +56,7 @@ const isUnpublished = (slot) => ['changed', 'draft'].includes(spotStatus(slot))
 
 function PageList({ pages }) {
   return (
-    <div>
+    <div className="jd-page-index">
       <div className="jd-list-head">
         <div>
           <h1 className="jd-page-title">Pages</h1>

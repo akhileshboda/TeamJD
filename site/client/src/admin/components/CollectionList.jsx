@@ -403,7 +403,7 @@ export default function CollectionList({
                 {action.label}{action.rows.length < chosen.length ? ` (${action.rows.length})` : ''}
               </button>
             ))}
-            <button type="button" className="jd-link-button" onClick={() => setSelected(new Set())}>Clear</button>
+            <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" onClick={() => setSelected(new Set())}>Clear</button>
           </div>
         </div>
       )}

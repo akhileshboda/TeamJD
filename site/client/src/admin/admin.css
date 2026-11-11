@@ -369,6 +369,12 @@ html:has(.jd-bulk-bar) {
   padding: 0 0.75rem;
   font-size: 0.8125rem;
 }
+/* A toggle that is switched on (Reorder / Done reordering) keeps the standard
+   button and just looks pressed in: a brighter edge on the raised surface. */
+.jd-admin-button[aria-pressed='true'] {
+  border-color: var(--jd-subtle);
+  background: var(--jd-raised);
+}
 
 .jd-admin-icon-button {
   display: inline-flex;
@@ -379,9 +385,15 @@ html:has(.jd-bulk-bar) {
   border-radius: 0.5rem;
   color: var(--jd-muted);
 }
-.jd-admin-icon-button:hover {
+.jd-admin-icon-button:hover:not(:disabled) {
   background: var(--jd-panel);
   color: var(--jd-text);
+}
+/* A move arrow at the top or bottom of a list can't be pressed: it fades back
+   and ignores the pointer, so it never reads as the live control beside it. */
+.jd-admin-icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .jd-link-button {
@@ -1144,13 +1156,41 @@ html:has(.jd-bulk-bar) {
 .jd-status-help summary {
   display: inline-flex;
   align-items: center;
+  gap: 0.25rem;
   min-height: 2rem;
   color: var(--jd-muted);
   font-weight: 600;
   cursor: pointer;
+  list-style: none;
+}
+.jd-status-help summary::-webkit-details-marker {
+  display: none;
+}
+/* display: inline-flex drops the browser's triangle, so draw a chevron that
+   points right when closed and down when open. */
+.jd-status-help summary::before {
+  content: '';
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--transition-fast);
+}
+.jd-status-help[open] > summary::before {
+  transform: rotate(90deg);
+}
+.jd-status-help[open] > summary {
+  color: var(--jd-text);
 }
 .jd-status-help summary:hover {
   color: var(--jd-text);
+}
+.jd-status-help summary:focus-visible {
+  border-radius: var(--jd-radius-sm);
+  outline: 2px solid var(--jd-live);
+  outline-offset: 2px;
 }
 .jd-status-help dl {
   display: grid;
@@ -1179,8 +1219,6 @@ html:has(.jd-bulk-bar) {
   display: grid;
 }
 .jd-row {
-  /* Where the title starts, for cells that wrap under it on phones. */
-  --jd-row-indent: 2rem;
   position: relative;
   display: flex;
   align-items: center;
@@ -1188,9 +1226,6 @@ html:has(.jd-bulk-bar) {
   min-height: 4rem;
   padding: 0.75rem 1rem;
   background: var(--jd-panel);
-}
-.jd-row:has(.jd-row-thumb) {
-  --jd-row-indent: 5.875rem;
 }
 .jd-row + .jd-row {
   border-top: 1px solid var(--jd-line);
@@ -1360,20 +1395,76 @@ html:has(.jd-bulk-bar) {
   }
 }
 @media (max-width: 559px) {
+  /* A two-line grid. Line 1: grip or checkbox, photo, title and subtitle. Line 2:
+     Live switch, "Unpublished changes" (only when there are some) and the move
+     arrows, starting under the title. The leading columns size to their content
+     (grip, photo), so line 2 lines up with the title however wide they are. */
   .jd-row {
-    flex-wrap: wrap;
-    row-gap: 0.25rem;
+    display: grid;
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0;
+    min-height: 0;
+    padding-block: 0.5rem;
   }
-  .jd-row-main {
-    flex-basis: calc(100% - 7.5rem);
+  .jd-row > .jd-row-select,
+  .jd-row > .jd-row-grip {
+    grid-column: 1;
+    grid-row: 1;
   }
-  /* The switch and status wrap under the title, lined up with it. */
-  .jd-row-switch,
-  .jd-row-status {
-    margin-left: var(--jd-row-indent);
+  /* The photo spans both lines, so its height never adds to the row's. */
+  .jd-row > .jd-row-thumb {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: 0.75rem;
   }
-  .jd-row-switch + .jd-row-status {
-    margin-left: 0;
+  .jd-row > .jd-row-main {
+    grid-column: 3 / -1;
+    grid-row: 1;
+    margin-left: 0.75rem;
+    line-height: 1.3;
+  }
+  .jd-row > .jd-row-switch {
+    grid-column: 3;
+    grid-row: 2;
+    width: auto;
+    margin: 0 0 -0.5rem 0.75rem;
+  }
+  .jd-row > .jd-row-status {
+    grid-column: 4;
+    grid-row: 2;
+    width: auto;
+    margin-left: 0.5rem;
+  }
+  /* Nothing to say about a row without unpublished changes, so no dash. */
+  .jd-row > .jd-row-status:has(.jd-row-none) {
+    display: none;
+  }
+  .jd-row > .jd-row-move {
+    grid-column: 5;
+    grid-row: 2;
+    width: auto;
+    margin-block: 0 -0.5rem;
+  }
+  /* The column labels sit on one line: the label, and Move over the arrows. */
+  .jd-row.jd-row--head {
+    min-height: 0;
+    padding-block: 0.5rem;
+  }
+  .jd-row--head > .jd-row-thumb {
+    grid-row: 1;
+  }
+  .jd-row--head > .jd-row-main {
+    grid-column: 3 / 5;
+  }
+  .jd-row--head > .jd-row-move {
+    grid-column: 5;
+    grid-row: 1;
+    justify-content: center;
+    margin-block: 0;
   }
   .jd-row--head .jd-row-switch,
   .jd-row--head .jd-row-status {
@@ -2401,11 +2492,25 @@ html:has(.jd-bulk-bar) {
 
 /* ── Pages ─────────────────────────────────────────────────────────────── */
 
+/* The cards wrap in rows and each row's cards share its full width, so a short
+   last row (7 pages: 4 + 3) is stretched instead of leaving gaps or one orphan.
+   The number per row follows the width of the page area, not the window. */
+.jd-page-index {
+  container-type: inline-size;
+}
 .jd-page-cards {
-  display: grid;
-  /* auto-fit: the cards always span the row, with no empty columns at the end. */
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
+}
+.jd-page-cards > li {
+  flex: 1 1 calc(50% - 0.75rem);
+  min-width: 0;
+}
+@container (min-width: 44rem) {
+  .jd-page-cards > li {
+    flex-basis: calc(25% - 1rem);
+  }
 }
 .jd-page-card {
   display: grid;
@@ -2421,7 +2526,8 @@ html:has(.jd-bulk-bar) {
   border-color: var(--jd-live);
 }
 .jd-page-card-image {
-  aspect-ratio: 16 / 9;
+  /* One height for every card, so the stretched last row lines up with the rest. */
+  height: 8rem;
   overflow: hidden;
   background: var(--jd-raised);
 }
@@ -2439,6 +2545,29 @@ html:has(.jd-bulk-bar) {
 .jd-page-card-body > span:not(.jd-chip) {
   color: var(--jd-muted);
   font-size: 0.8125rem;
+}
+/* One column: a compact card with the photo beside the text, not above it. */
+@container (max-width: 29.99rem) {
+  .jd-page-cards > li {
+    flex-basis: 100%;
+  }
+  .jd-page-card {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    grid-template-rows: none;
+    min-height: 5.5rem;
+  }
+  .jd-page-card-image {
+    position: relative;
+    height: auto;
+  }
+  .jd-page-card-image img {
+    position: absolute;
+    inset: 0;
+  }
+  .jd-page-card-body {
+    align-content: center;
+    padding: 0.75rem 1rem;
+  }
 }
 
 .jd-spots {
