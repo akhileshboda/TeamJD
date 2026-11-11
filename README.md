@@ -1,53 +1,53 @@
 # Team JD
 
-A custom website and no-code dashboard for competition-prep coach Jake Dedert, built so his leads stop going cold.
+A custom website and content management platform for Jake Dedert, a competition preparation coach, designed to qualify prospective clients and ensure that no enquiry is lost.
 
-![Jake's dashboard: editing a service with a live preview of the public page](docs/case-study/dashboard-service-editor.png)
+![The client dashboard: editing a service with a live preview of the public page](docs/case-study/dashboard-service-editor.png)
 
 **[Read the full case study →](docs/case-study.md)**
 
 | | |
 |---|---|
 | **Client** | Jake Dedert, Team JD (Adelaide) |
-| **Role** | Solo: requirements, design, full-stack build, hosting, docs |
-| **When** | Interview July 2025 · build February to October 2026 |
-| **Stack** | React + Vite, Node + Express, Cloudflare (Tunnel, R2, Turnstile), Resend, PM2 on Oracle Cloud |
-| **Tests** | 435 (176 server, 259 client) |
+| **Role** | Sole consultant: requirements, design, full-stack development, hosting, documentation |
+| **Timeline** | Requirements interview July 2025; build February to October 2026 |
+| **Technology** | React and Vite; Node and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on Oracle Cloud |
+| **Testing** | 435 automated tests (176 server, 259 client) |
 
-## The problem
+## Problem
 
-In the requirements interview, Jake described a lead flow that leaked at every step:
+The requirements interview identified several points at which the client's enquiry process was losing prospective clients:
 
-- For six months his replies to applicants went to junk folders, and almost nobody noticed.
-- His booking link let people schedule a call without filling in his application, so he'd get on calls with no idea who the person was.
-- While he was overseas, four applications sat unseen for 4–5 days. Two of those people signed with other coaches.
+- For six months, replies to applicants were filtered into junk folders without the client's knowledge.
+- The booking link allowed prospective clients to schedule a consultation without completing the application, so the client often joined calls with no background on the caller.
+- While the client was overseas, four applications went unseen for four to five days, and two of those applicants engaged other coaches in the meantime.
 
-His old website, in his words, "could disappear tomorrow and it would have zero impact on the business."
+The client described the previous website as one that "could disappear tomorrow and it would have zero impact on the business."
 
-## What I built
+## Solution
 
-- **Find Your Fit**, a short questionnaire that points visitors to the right service, plus a gate that sends Competition Prep applicants through Jake's application form before they can take a spot in his calendar.
-- **Email that arrives**: enquiries sent from a verified domain with SPF and DKIM, with Turnstile and layered rate limits to keep spam out.
-- **A dashboard Jake runs himself**: photos, results, services, prices, FAQs and site settings, with drafts, publishing and a live preview. Sign-in is a six-digit email code, so there's no password to forget.
-- **A media pipeline** that turns phone uploads and Dropbox drops into WebP and H.264 on Cloudflare R2.
-- **Search and AI-crawler output** rendered on the server for a React app, fed from the same content Jake edits.
-- **A plain-English changelog** inside the dashboard, so Jake can see what changed and when.
+- **Find Your Fit:** a short questionnaire that directs visitors to the most suitable service, together with a gate that routes Competition Preparation applicants through the client's application form before they can book a consultation.
+- **Reliable email delivery:** enquiries are sent from a verified domain with SPF and DKIM records, protected by Cloudflare Turnstile and layered rate limits.
+- **Client administration dashboard:** management of photographs, results, services, prices, FAQs and site settings, with draft and publish workflows and a live preview. Sign-in uses a six-digit email code, so no password is required.
+- **Media pipeline:** phone uploads and Dropbox files are converted to WebP and H.264 and served from Cloudflare R2.
+- **Search and AI-crawler support:** metadata and structured data are rendered on the server for the React application, generated from the same content the client edits.
+- **Client-facing changelog:** a plain-language record of changes, displayed within the dashboard.
 
-The original plan was a WordPress site; as AI-assisted development matured, we pivoted to a custom React build. The [case study](docs/case-study.md) covers that pivot, the decisions and trade-offs, how the work was run, and what I'd do differently.
+The project was originally scoped as a WordPress site. As AI-assisted development matured, it pivoted to a custom React application. The [case study](docs/case-study.md) sets out the rationale for that pivot, the principal design decisions, the delivery approach, the outcomes and the lessons learned.
 
 ## Repository
 
-| Path | What's there |
+| Path | Contents |
 |---|---|
-| [`site/`](site) | The application. [`site/README.md`](site/README.md) covers local setup, architecture, deployment and the guide for Jake. |
+| [`site/`](site) | The application. [`site/README.md`](site/README.md) documents local setup, architecture, deployment and the client guide. |
 | [`docs/`](docs) | The case study, project charter, Gantt chart and setup notes |
-| [`requirements/`](requirements) | Transcript of the requirements interview |
+| [`requirements/`](requirements) | Requirements interview transcript |
 
-To run it locally:
+To run the application locally:
 
 ```bash
 cd site
 npm install
-cp .env.example .env   # fill in the values you need
+cp .env.example .env   # populate the required values
 npm run dev
 ```

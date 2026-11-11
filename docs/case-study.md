@@ -1,89 +1,89 @@
-# Team JD: a website and dashboard for a competition-prep coach
+# Team JD: Website and Content Management Platform for a Competition Preparation Coach
 
-![The Competition Preparation editor in Jake's dashboard, with the form on the left and a live preview of the public page on the right](case-study/dashboard-service-editor.png)
-*Jake edits a service on the left and sees the real public page update on the right. Nothing reaches visitors until he presses Publish changes.*
+![The Competition Preparation editor in the client dashboard, with the editing form on the left and a live preview of the public page on the right](case-study/dashboard-service-editor.png)
+*Figure 1. The service editor. Changes appear in the live preview immediately but are not visible to the public until they are published.*
 
 | | |
 |---|---|
-| **Client** | Jake Dedert, Team JD (competition prep and body-composition coach, Adelaide) |
-| **My role** | Solo: requirements, design, front end, back end, hosting, documentation |
-| **Timeline** | Requirements interview July 2025 · build February to October 2026 |
-| **Stack** | React 18 + Vite, Node 22 + Express, Cloudflare (Tunnel, R2, Turnstile), Resend, PM2 on an Oracle Cloud VM |
-| **Scale** | 106 commits · 435 automated tests · 31 plain-English changelog entries |
-| **Site** | [team-jd.com.au](https://team-jd.com.au) |
+| **Client** | Jake Dedert, Team JD (competition preparation and body-composition coaching, Adelaide) |
+| **Role** | Sole consultant: requirements analysis, design, front-end and back-end development, hosting, documentation |
+| **Timeline** | Requirements interview July 2025; build February to October 2026 |
+| **Technology** | React 18 and Vite; Node 22 and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on an Oracle Cloud virtual machine |
+| **Scale** | 106 commits; 435 automated tests; 31 client-facing changelog entries |
+| **Website** | [team-jd.com.au](https://team-jd.com.au) |
 
 ---
 
-## TL;DR
+## Executive summary
 
-Jake's leads were going cold. For six months his replies to applicants landed in junk folders, people booked calls without filling in his application, and while he was travelling two of four new applicants signed with other coaches before he saw their forms. His old website, in his words, "could disappear tomorrow and it would have zero impact on the business."
+Team JD was losing prospective clients at several points in its enquiry process. For six months, replies to applicants were filtered into junk folders. Prospective clients could book consultation calls without completing the application form. On one occasion, four applications went unseen for four to five days while the client was overseas, and two of those applicants engaged other coaches in the meantime. The client described the existing website as one that "could disappear tomorrow and it would have zero impact on the business."
 
-I built him a custom site that qualifies visitors before they book, sends email that actually arrives, and comes with a dashboard where he can change photos, prices, results and settings himself without touching code. The original plan was a WordPress site. As AI-assisted development matured, we pivoted to a custom React and Express build, and this write-up covers what that made possible, the decisions behind it and what I'd change.
+This project delivered a custom website that qualifies visitors before they book, sends enquiry email reliably, and gives the client a dashboard for managing photographs, prices, client results and site settings without technical assistance. The project was originally scoped as a WordPress site. As AI-assisted development matured, the project pivoted to a custom React and Express application. This report sets out the rationale for that pivot, the principal design decisions, the outcomes measured against the original success criteria, and the lessons learned.
 
 ---
 
 ## 1. Client and context
 
-Jake coaches bodybuilders and people chasing serious body-composition change. He holds pro-level certifications across several federations, and most of his clients find him through referrals or Instagram. He runs four services: Competition Preparation, Online Coaching, Personal Training ($85 solo, $75 per person for pairs) and Posing ($120).
+Jake Dedert coaches competitive bodybuilders and clients seeking significant changes in body composition. He holds professional-level certifications across several bodybuilding federations, and most of his clients come to him through referrals and Instagram. Team JD offers four services: Competition Preparation, Online Coaching, Personal Training ($85 per session, or $75 per person for paired sessions) and Posing ($120).
 
-He wanted to grow past referrals. Specifically, he named a market he wasn't reaching:
+The client wished to grow beyond referrals and identified a specific market he was not reaching:
 
 > "Probably females aged 25–49 who want body composition changes. That less 'Instagrammy' crowd. People who aren't on social media, not into bodybuilding, but still want coaching."
 
-That audience doesn't scroll his Instagram, so a site that ranks, explains the services clearly and makes the next step obvious mattered more for them than for his existing followers.
+Because this audience is unlikely to discover the business through Instagram, a website that is discoverable through search, explains each service clearly and presents an obvious next step was more important for this group than for the existing following.
 
-## 2. The problem
+## 2. Problem statement
 
-I ran a recorded requirements interview with Jake on 14 July 2025 ([transcript](../requirements/initial-requirements-gathering-transcript.pdf)). Four problems came out of it, and every major feature traces back to one of them.
+A recorded requirements interview was conducted with the client on 14 July 2025 ([transcript](../requirements/initial-requirements-gathering-transcript.pdf)). It identified four problems, and each major feature of the delivered system addresses at least one of them.
 
-**Replies vanished.** "I discovered for six months, my reply emails were going to people's junk folders. My lead email had two links, so spam filters caught it." Applicants never saw his follow-ups.
+**Undelivered replies.** "I discovered for six months, my reply emails were going to people's junk folders. My lead email had two links, so spam filters caught it." Applicants did not receive the client's follow-up correspondence.
 
-**Calls with strangers.** His Typeform linked to Calendly, and "Typeform lets people book a call without completing the app. I get on a call and I don't know who they are, what they want." Some bookings were overseas sales pitches.
+**Unqualified consultation calls.** The client's Typeform application linked to Calendly, but "Typeform lets people book a call without completing the app. I get on a call and I don't know who they are, what they want." Some of these bookings were unsolicited sales approaches from overseas.
 
-**Slow notifications cost clients.** "When I was in Vietnam, I got four applications, didn't see them for 4–5 days, and by then two had signed with other coaches."
+**Delayed notifications.** "When I was in Vietnam, I got four applications, didn't see them for 4–5 days, and by then two had signed with other coaches."
 
-**The website did nothing.** His Instagram bio linked straight to an application form; he'd taken the old site out entirely because nobody found it unless they were "deliberately Googling me and scrolling down 15 results." People also assumed he only coached bodybuilders.
+**An ineffective website.** The client's Instagram profile linked directly to an application form, and the previous website had been taken offline because it could only be found by "deliberately Googling me and scrolling down 15 results." Prospective clients also tended to assume that he coached only bodybuilders.
 
-He also wanted to keep Typeform and Calendly, which he already used and mostly liked. So the brief wasn't "replace his tools". It was "put a front door in front of them that filters, explains and doesn't drop anything."
+The client wished to continue using Typeform and Calendly. The brief was therefore not to replace his existing tools, but to place a website in front of them that would qualify visitors, explain the services and ensure that no enquiry was lost.
 
-## 3. Goals and how success was defined
+## 3. Objectives and success criteria
 
-My project charter ([PDF](Project%20Proposal%20%26%20Charter%20%28Draft%29.pdf)) set these criteria up front:
+The project charter ([PDF](Project%20Proposal%20%26%20Charter%20%28Draft%29.pdf)) defined the following success criteria:
 
-- A responsive site live on his domain
-- 15% more enquiries in the first month after launch
-- At least five testimonials and a visible certification badge
-- Mobile PageSpeed score of 80 or more
-- WCAG 2.1 AA on the main pages
-- Jake able to update a service or testimonial himself after a handover session, backed by a written admin guide
-- A case study (this document)
+- A responsive website deployed to the client's domain
+- A 15% increase in enquiries within the first month after launch
+- At least five client testimonials and a visible certification badge
+- A mobile PageSpeed Insights score of 80 or higher
+- WCAG 2.1 AA conformance on the primary pages
+- The client able to update a service or testimonial independently following a handover session, supported by a written administration guide
+- A published case study (this document)
 
-Section 9 scores the project against each one, including the ones I can't claim yet.
+Section 9 assesses the project against each criterion, including those that cannot yet be evaluated.
 
 ## 4. Constraints
 
-I was working alone and part-time, alongside study. The work was in-kind, with pay to be discussed after handover, so hosting had to stay close to free. Jake isn't technical and is often away at competitions or overseas, which meant anything he had to maintain needed to work from his phone and couldn't depend on me being around. And his content (120 client result photos, competition videos, testimonials) lived in a Dropbox folder that he kept adding to.
+The project was delivered by a single consultant working part-time alongside study. It was delivered in-kind, with remuneration to be discussed after handover, so hosting costs needed to remain minimal. The client is not technically trained and frequently travels for competitions, so any system he maintains had to be usable from a phone and could not depend on the consultant's availability. In addition, the site's media library (including 120 client result images, competition footage and testimonials) was held in a Dropbox folder to which the client added material on an ongoing basis.
 
-## 5. The pivot: from WordPress to a custom React build
+## 5. The pivot from WordPress to a custom React application
 
-The charter planned a WordPress site, with Figma wireframes first, three one-week sprints, and "custom plugin development or advanced backend functionality" explicitly out of scope. For a solo, part-time project in mid-2025 that was the sensible call; a hand-built web app was more than one person could responsibly take on and then maintain.
+The charter proposed a WordPress site, preceded by Figma wireframes and delivered over three one-week sprints. It explicitly placed "custom plugin development or advanced backend functionality" out of scope. For a solo, part-time engagement in mid-2025 this was the appropriate decision; a bespoke web application would have exceeded what a single developer could responsibly build and maintain.
 
-Then AI-assisted development changed what one developer could ship. Coding agents that work through a well-specified ticket, write tests alongside the code and refactor across a whole codebase turned a custom React and Express app from a stretch into a practical option. So Jake and I pivoted.
+The subsequent maturing of AI-assisted development changed that assessment. Coding agents capable of implementing a well-specified ticket, writing tests alongside the code and refactoring across an entire codebase made a custom React and Express application a practical option for a single developer. The client and I therefore agreed to pivot to a custom build.
 
-The interview is why the pivot was worth it. Jake's costliest problems sat *between* his tools: an application that could be skipped, replies that landed in junk, notifications he didn't see. That's exactly the backend work the WordPress plan had ruled out. With a custom build we could own the funnel and the email path directly, and design a dashboard around the four things Jake actually edits instead of handing him a general-purpose CMS and a training session.
+The requirements interview supported this decision. The client's most costly problems occurred *between* his existing tools: an application step that could be bypassed, replies that were filtered as spam, and notifications that were not seen. These were precisely the areas of back-end work that the WordPress plan had excluded. A custom build allowed the project to control the enquiry funnel and the email path directly, and to design an administration dashboard around the four types of content the client actually maintains, rather than providing a general-purpose content management system that would require training.
 
-It also changed my role. I spent less effort typing code and more on writing precise tickets, making product calls and reviewing what the agents produced (section 10). The Figma stage was the one casualty: with iteration in code this fast, I designed in the browser instead.
+The pivot also changed the nature of my role. Less of the effort went into writing code by hand, and more into specifying tickets precisely, making product decisions and reviewing the output of the AI agents (see Section 10). The Figma wireframing stage was not carried forward; because iteration in code was now rapid, design work took place directly in the browser.
 
-## 6. Architecture
+## 6. System architecture
 
 ```mermaid
 flowchart LR
   V[Visitor] --> CF[Cloudflare<br/>DNS, edge rate limit, Tunnel]
-  J[Jake on /admin] --> CF
+  J[Client on /admin] --> CF
   CF --> X
 
   subgraph VM[Oracle Cloud VM, PM2]
-    X[Express app<br/>production + staging]
+    X[Express application<br/>production + staging]
     S[(cms.json<br/>draft + published)]
     A[(analytics/*.jsonl<br/>cookie-less)]
     X --> S
@@ -98,113 +98,114 @@ flowchart LR
   V -->|Competition Prep applications| T[Typeform]
   V -->|other bookings| C[Calendly]
 ```
+*Figure 2. System architecture.*
 
-The React app is a single-page app, but Express renders the head tags, structured data and a text summary for every route so search engines and AI crawlers get real content. Media never goes through the VM on its way to visitors: photos become WebP (up to 2400 px), videos become H.264 with a poster frame, and both are served from R2.
+The front end is a React single-page application. To ensure that search engines and AI crawlers receive meaningful content, the Express server renders the document head, structured data (JSON-LD) and a plain-text summary for every route. Media is not served through the virtual machine: images are converted to WebP (maximum width 2,400 px) and videos to H.264 with a poster frame, and both are delivered from Cloudflare R2.
 
-## 7. Key decisions
+## 7. Key design decisions
 
-| Decision | Alternative I rejected | Why |
+| Decision | Alternative considered | Rationale |
 |---|---|---|
-| Custom React + Express app | WordPress with plugins (the original plan) | AI-assisted development made a custom build practical for one developer. The core problems were in the lead flow and email path, which plugins would have papered over, and a custom build let me design an admin UI around Jake's four content types. |
-| Content in one JSON file with draft and published copies, backed up to Dropbox | A database (Postgres, SQLite) | One editor, a few hundred records. A file is easy to inspect, back up and restore ("copy it back and restart"), and keeps the VM simple. |
-| Six-digit email codes for dashboard sign-in, with an allowlist | Passwords | Jake won't remember another password. Codes expire in 10 minutes; five wrong tries lock that device, and 25 across all devices cancel every code, so nobody elsewhere can lock him out. |
-| Hosting on an Oracle VM behind a Cloudflare Tunnel | GitHub Pages, then a Raspberry Pi at home | Pages couldn't run a server. The Pi worked for staging and production but tied uptime to a home connection. The Oracle VM is cheap and always on, and with the tunnel the app only listens on localhost. |
-| Find Your Fit as a client-side funnel | Server-enforced gating | It's a lead-qualification step, not a security boundary, and I documented it that way. The real filter is Jake reviewing each Typeform application. |
-| Server-rendered SEO and an `llms.txt` file for a React SPA | Full server-side rendering or a static-site rewrite | Rendering the head, JSON-LD and a `<noscript>` summary per route was enough for crawlers, and it reads from the same content store, so a price change in the dashboard reaches Google too. |
-| Cookie-less visit stats | Google Analytics | Jake only needs visits, top pages and where people came from. No cookie banner, no IP or user agent stored, and bots and admins excluded. |
+| Custom React and Express application | WordPress with plugins (the original plan) | AI-assisted development made a custom build practical for a single developer. The client's core problems lay in the enquiry flow and email delivery, which plugins would not have resolved, and a custom build allowed the administration interface to be designed around the client's four content types. |
+| Content stored in a single JSON file with draft and published versions, backed up to Dropbox | A relational database (PostgreSQL or SQLite) | The system has one editor and a few hundred records. A single file is straightforward to inspect, back up and restore, and keeps the server configuration simple. |
+| Passwordless sign-in using six-digit email codes and an allowlist | Password authentication | Removes the need for the client to manage another password. Codes expire after 10 minutes; five incorrect attempts lock the device concerned, and 25 across all devices invalidate every outstanding code, so a third party cannot lock the client out. |
+| Hosting on an Oracle Cloud virtual machine behind a Cloudflare Tunnel | GitHub Pages; subsequently a Raspberry Pi | GitHub Pages cannot run a server. The Raspberry Pi supported staging and production but made availability dependent on a residential connection. The virtual machine is low-cost and continuously available, and with the tunnel the application listens only on the loopback interface. |
+| Find Your Fit implemented as a client-side qualification step | Server-enforced gating | The questionnaire is a lead-qualification aid rather than a security control, and is documented as such. The definitive screening step is the client's review of each Typeform application. |
+| Server-rendered metadata and an `llms.txt` file for the single-page application | Full server-side rendering or a static-site rewrite | Rendering the head, JSON-LD and a `<noscript>` summary for each route met crawler requirements at much lower cost. Because this output is generated from the same content store, price changes made in the dashboard are reflected in search results. |
+| Cookie-less visit statistics | Google Analytics | The client requires only visit counts, popular pages and traffic sources. The chosen approach requires no cookie consent banner, stores no IP addresses or user-agent strings, and excludes bots and signed-in administrators. |
 
-## 8. From problem to feature
+## 8. Solution: mapping problems to features
 
 ![The Services page, with the Find Your Fit prompt above the service cards](case-study/services-find-your-fit.png)
-*Find Your Fit sits above the service list: four to six questions that point a visitor to the right service before they book anything.*
+*Figure 3. The Services page. The Find Your Fit questionnaire (four to six questions) directs visitors to the most suitable service before they book.*
 
-**Calls with strangers → Find Your Fit and the Typeform gate.** Find Your Fit is a short branching questionnaire. Competition Prep, Jake's highest-touch service, asks visitors to complete it before they see the service page, and its apply button goes to Jake's Typeform application rather than straight to his calendar. As the changelog puts it for Jake: "only applicants take a spot in his calendar."
+**Unqualified consultation calls: Find Your Fit and the application gate.** Find Your Fit is a short branching questionnaire. For Competition Preparation, the client's most intensive service, visitors are asked to complete it before viewing the service page, and the application button directs them to the client's Typeform application rather than directly to his calendar. As a result, only applicants can reserve time in the client's calendar.
 
 ![The Competition Preparation checkpoint asking visitors to complete Find Your Fit first](case-study/comp-prep-gate.png)
-*The checkpoint is a nudge, not a wall: "View Competition Preparation anyway" is right there. The application is the real filter.*
+*Figure 4. The Competition Preparation checkpoint. Visitors may proceed without completing the questionnaire; the application itself remains the definitive screening step.*
 
-**Replies in junk folders → a sending domain set up properly.** Enquiries go out through Resend from a subdomain with SPF and DKIM verified. Each enquiry sends Jake a notification and the visitor a confirmation in one batch. To keep the form from becoming a spam relay, Cloudflare Turnstile checks humans, and there are three layers of limits: 5 attempts per IP per 15 minutes, 3 per email address per day (the address is hashed with HMAC rather than stored), and 40 enquiries a day across the whole site.
+**Undelivered replies: a correctly configured sending domain.** Enquiries are sent through Resend from a dedicated subdomain with verified SPF and DKIM records. Each enquiry generates a notification to the client and a confirmation to the visitor in a single batch. To prevent abuse of the form, Cloudflare Turnstile verifies that the sender is human, and three layers of rate limiting apply: five attempts per IP address per 15 minutes, three per email address per day (with addresses stored only as HMAC hashes), and 40 enquiries per day across the site.
 
-**Slow notifications → enquiries in his inbox, and an inbox he can change.** Enquiries arrive as email straight away instead of waiting to be found in Typeform. The destination address is a dashboard setting, so Jake can point it at whatever he checks most without asking me.
+**Delayed notifications: immediate email delivery to a configurable address.** Enquiries are delivered by email as soon as they are submitted, rather than waiting to be noticed in Typeform. The destination address is a dashboard setting, so the client can direct enquiries to whichever inbox he monitors most closely.
 
-**A website that did nothing → pages that explain and rank.** Each service has its own page with pricing that adapts to phones, and a Results library of client transformations opens each story in a full-screen viewer. Every route gets its own title, description and structured data, and the sitemap is built from the live services.
+**An ineffective website: discoverable, informative service pages.** Each service has a dedicated page with pricing optimised for mobile devices, and a Results library presents client transformations in a full-screen viewer. Every route has its own title, description and structured data, and the sitemap is generated from the live service data.
 
-**Me as a bottleneck → the dashboard.** This wasn't in Jake's list of pain points; it came from the charter's handover goal and from realising every photo swap would otherwise be a message to me.
+**Dependence on the consultant: the administration dashboard.** This requirement did not arise from the interview. It followed from the charter's handover objective, and from the recognition that every content change would otherwise require the consultant's involvement.
 
-![The dashboard home with the latest changelog entries and visit stats](case-study/dashboard-home.png)
-*Dashboard home on a local copy, so the counts are zero. The "What's new" panel is the changelog, written for Jake rather than for developers.*
+![The dashboard home page showing recent changelog entries and visit statistics](case-study/dashboard-home.png)
+*Figure 5. The dashboard home page, shown on a local development copy (visit counts are therefore zero). The "What's new" panel displays the changelog, written for the client rather than for developers.*
 
-The dashboard covers:
+The dashboard provides the following functions:
 
-- **Pages.** Every photo and video spot on the site can be swapped. Photos store a focus point and zoom instead of a fixed crop, because the same spot is a different shape on a phone and on a desktop.
-- **Results, Services & prices, FAQs.** Edits autosave as drafts and go live only on Publish. A Live switch takes an item on or off the site.
-- **Media library.** Uploads from a phone in 32 MB chunks, converted automatically, with each file showing where it's used. Files in use can't be deleted.
-- **Settings.** Site visibility (the under-construction page), contact and social links, where enquiries go, search listings and booking links. These apply as soon as they're saved.
-- **Live preview.** The real public page sits in a frame beside the form and scrolls to whichever section is being edited.
+- **Pages.** Every photograph and video position on the site can be replaced. Images store a focal point and zoom level rather than a fixed crop, because the same position has different proportions on mobile and desktop layouts.
+- **Results, Services & prices, and FAQs.** Edits are saved automatically as drafts and are published only on request. A Live control adds an item to, or removes it from, the public site.
+- **Media library.** Supports uploads from a phone in 32 MB chunks with automatic conversion, and shows where each file is used. Files in use cannot be deleted.
+- **Settings.** Controls site visibility (the under-construction page), contact and social media links, the enquiry destination address, search listing text and booking links. Changes take effect as soon as they are saved.
+- **Live preview.** Displays the public page alongside the editing form and scrolls to the section being edited.
 
 ![The Services & prices list in the dashboard](case-study/dashboard-services.png)
-*Four services, their prices and their state in one table. Services can be edited but not added or removed, because their IDs are wired into the contact form, Find Your Fit and the footer.*
+*Figure 6. The Services & prices list. Services can be edited but not added or removed, because their identifiers are referenced by the contact form, Find Your Fit and the site footer.*
 
-## 9. Outcome
+## 9. Outcomes
 
-The site is built and deployed to production on the Oracle VM. It's currently behind its own under-construction page, which is one of the dashboard settings, so Jake controls when it goes public. I don't have traffic or enquiry numbers yet, and I'd rather say so than invent them.
+The website has been built and deployed to the production server. It is currently held behind its under-construction page, which is controlled from the dashboard, so the timing of the public launch rests with the client. Traffic and enquiry data are not yet available, and the assessment below reflects this.
 
 | Charter criterion | Status |
 |---|---|
-| Responsive site live on the domain | **Deployed**; public launch is Jake's switch to flip |
-| +15% enquiries in the first month | **Not measured**: no baseline was recorded, and the site hasn't launched publicly |
-| 5+ testimonials, certification badge | **Met**: six client testimonials with their results, and federation logos on About |
-| Mobile PageSpeed 80+ | **Not measured** yet |
-| WCAG 2.1 AA | **Partly**: a September audit fixed hard-to-spot links and content overflowing on phones, but there's been no formal AA audit |
-| Jake can update content himself, with a guide | **Met** for the tooling and the plain-English guide in [`site/README.md`](../site/README.md); the dashboard went through one round of Jake's feedback on 23 October |
-| Case study published | This document |
+| Responsive website deployed to the domain | **Deployed.** Public launch is controlled by the client. |
+| 15% increase in enquiries in the first month | **Not yet measurable.** No pre-launch baseline was recorded, and the site has not yet launched publicly. |
+| Five or more testimonials and a certification badge | **Met.** Six client testimonials accompany their results, and federation logos appear on the About page. |
+| Mobile PageSpeed score of 80 or higher | **Not yet measured.** |
+| WCAG 2.1 AA conformance | **Partially met.** A site audit in September 2026 resolved link-visibility and mobile overflow issues; a formal AA audit has not been conducted. |
+| Independent content management, supported by a guide | **Met.** The dashboard and a plain-language guide ([`site/README.md`](../site/README.md)) are complete, and the dashboard was revised following the client's review on 23 October 2026. |
+| Published case study | **Met** (this document). |
 
-On the engineering side, the repo has 435 automated tests: 176 on the server (Node's test runner and supertest) and 259 on the client (Vitest and Testing Library). They cover sign-in lockouts, rate limits, the email path, the content store, deploy scripts and the main UI flows. A separate staging copy runs on the same VM behind a password screen. Each deploy uploads to a fresh directory, promotes it, restarts the process and has to pass a `/healthz` check before PM2 saves its state.
+The codebase includes 435 automated tests: 176 server-side tests (Node's built-in test runner and supertest) and 259 client-side tests (Vitest and Testing Library). They cover sign-in lockouts, rate limiting, the email path, the content store, the deployment scripts and the principal user interface flows. A separate staging environment runs on the same server behind a password-protected gate. Each deployment is uploaded to a fresh directory, promoted, restarted, and must pass a `/healthz` health check before the process manager records its state.
 
-## 10. How I worked
+## 10. Delivery approach
 
-Every piece of work started as a Notion ticket with acceptance criteria and a testing plan written *before* implementation, and finished with a completion report. That rule lives in [`site/AGENTS.md`](../site/AGENTS.md), because I used AI coding agents for much of the implementation. The file is how I kept them honest: they couldn't quietly weaken a criterion to match what they'd built, and I reviewed and tested what they produced. My job shifted towards writing precise tickets, making the product decisions and checking the work, which suits a solo project where I'm the only reviewer.
+Each unit of work began as a Notion ticket containing measurable acceptance criteria and a testing strategy, both written *before* implementation, and concluded with a completion report. This policy is recorded in [`site/AGENTS.md`](../site/AGENTS.md), since AI coding agents carried out much of the implementation. The policy prevented acceptance criteria from being weakened after the fact to match the delivered work, and all agent output was reviewed and tested before acceptance. My responsibilities accordingly centred on specification, product decisions and verification, an arrangement well suited to a project with a single reviewer.
 
-From August I worked in feature branches, and the last two changes went through pull requests. The dashboard was built across six planned milestones (sign-in and stats, the content store, media, services and FAQs, settings, launch hardening), then revised after Jake's first review, which simplified the wording, merged testimonials into results and added in-place photo cropping.
+From August 2026, work proceeded on feature branches, and the final two changes were merged through pull requests. The dashboard was delivered in six planned milestones (sign-in and statistics, the content store, media management, services and FAQs, settings, and launch hardening) and was then revised following the client's first review. That revision simplified the interface wording, merged testimonials into results and introduced in-place image cropping.
 
-The changelog came out of the same review. Jake had no easy way to see what had changed between visits, so the dashboard now opens with dated, plain-English entries going back to February.
+The changelog originated in the same review. The client had no convenient way to see what had changed between visits, so the dashboard now opens with dated, plain-language entries covering the project from February 2026 onwards.
 
-## 11. What I'd do differently
+## 11. Lessons learned
 
-**Record a baseline before building.** The charter's headline metric was a 15% rise in enquiries, and I never wrote down how many enquiries Jake got before. I can't prove that number now, whatever happens after launch.
+**Record a baseline before development begins.** The charter's primary metric was a 15% increase in enquiries, but the pre-project enquiry volume was never recorded. That criterion therefore cannot be evaluated conclusively, regardless of post-launch performance.
 
-**Revise the charter when the plan changes.** We agreed the pivot from WordPress to a custom build, but the charter never got a v2. A written revision of scope and success criteria would have made the scorecard in section 9 cleaner.
+**Revise the charter when the plan changes.** The pivot from WordPress to a custom build was agreed with the client, but the charter was not formally revised. A second version setting out the revised scope and success criteria would have produced a clearer basis for the assessment in Section 9.
 
-**Set up CI on day one.** There's no CI and no linter. The tests are good, but they only run when I run them, and running them on Windows for this write-up turned up four deploy-script tests that fail on Windows paths and one dashboard test that fails only in the full run. CI would have caught both on the day they appeared.
+**Establish continuous integration from the outset.** The project has no continuous integration pipeline or linter. The test suite is comprehensive but runs only when invoked manually. Running it on Windows during the preparation of this report revealed four deployment-script tests that fail due to Windows path handling, and one dashboard test that fails only when the full suite is run. Continuous integration would have identified both issues when they were introduced.
 
-**Don't skip low-fidelity design.** Designing in code was fast for me but slow for feedback; Jake only reacted to finished screens, so some rework (the first dashboard review) could have happened on paper.
+**Retain a low-fidelity design stage.** Designing directly in code was efficient for development but delayed client feedback, since the client responded only to finished screens. Some of the rework from the first dashboard review could have been identified earlier through wireframes.
 
-**Close loose ends before calling it done.** The seeded Competition Prep Typeform link is still a placeholder ID that has to be set in Settings before launch, and visit stats in `data/analytics/` aren't backed up.
+**Resolve outstanding items before handover.** The seeded Competition Preparation application link still contains a placeholder identifier that must be configured in Settings before launch, and the visit statistics in `data/analytics/` are not included in the backup routine.
 
 ## 12. Timeline
 
-| When | What happened |
+| Date | Milestone |
 |---|---|
-| 14 Jul 2025 | Requirements interview; charter and Gantt chart for a WordPress build |
-| Feb 2026 | Rebuild starts as a static site on GitHub Pages |
-| Apr–May 2026 | Move to Express, Dropbox integration, React + Vite front end |
-| Jun–Jul 2026 | New Home, About, Services and Contact; branded error pages; Dropbox→R2 media pipeline; staging and production on a Raspberry Pi |
-| 19–22 Jul 2026 | Migration to Oracle Cloud |
-| Jul–Aug 2026 | Results library, Find Your Fit, enquiry email fixed, maintenance mode, pricing |
-| Aug–Sep 2026 | Typeform gate for Competition Prep, full site audit fixes |
-| 18 Oct 2026 | Dashboard milestones 1–6 |
-| 23 Oct 2026 | Dashboard changes from Jake's first review; redesigned outage pages |
-| 25–27 Oct 2026 | Search and AI-crawler output; changelog |
+| 14 July 2025 | Requirements interview; charter and Gantt chart prepared for a WordPress build |
+| February 2026 | Rebuild begins as a static site on GitHub Pages |
+| April–May 2026 | Migration to Express; Dropbox integration; React and Vite front end |
+| June–July 2026 | Redesigned Home, About, Services and Contact pages; branded error pages; Dropbox-to-R2 media pipeline; staging and production on a Raspberry Pi |
+| 19–22 July 2026 | Migration to Oracle Cloud |
+| July–August 2026 | Results library, Find Your Fit, enquiry email delivery resolved, maintenance mode, pricing |
+| August–September 2026 | Application gate for Competition Preparation; site audit remediation |
+| 18 October 2026 | Dashboard milestones 1–6 |
+| 23 October 2026 | Dashboard revisions following client review; redesigned outage pages |
+| 25–27 October 2026 | Search engine and AI-crawler output; changelog |
 
-## Appendix: stack and repo map
+## Appendix: technology stack and repository structure
 
-**Front end:** React 18, React Router 6, Vite 6, Tailwind CSS 3, Motion. Tests: Vitest, jsdom, Testing Library.
-**Back end:** Node 22, Express 4, express-session with a SQLite session store, express-rate-limit, node-cron, sharp, ffmpeg, AWS S3 SDK (for R2), Dropbox SDK. Tests: `node:test`, supertest.
-**Infrastructure:** Oracle Cloud VM, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend.
+**Front end:** React 18, React Router 6, Vite 6, Tailwind CSS 3, Motion. Testing: Vitest, jsdom, Testing Library.
+**Back end:** Node 22, Express 4, express-session with a SQLite session store, express-rate-limit, node-cron, sharp, ffmpeg, AWS S3 SDK (for R2), Dropbox SDK. Testing: `node:test`, supertest.
+**Infrastructure:** Oracle Cloud virtual machine, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend.
 
 | Path | Contents |
 |---|---|
-| [`site/`](../site) | The application; its [README](../site/README.md) covers setup, the asset pipeline and the guide for Jake |
-| [`site/docs/`](../site/docs) | Deployment and media provenance |
-| [`docs/`](.) | Charter, Gantt chart, R2 setup, this case study |
-| [`requirements/`](../requirements) | Interview transcript |
+| [`site/`](../site) | The application. Its [README](../site/README.md) documents setup, the asset pipeline and the client guide. |
+| [`site/docs/`](../site/docs) | Deployment and media provenance documentation |
+| [`docs/`](.) | Project charter, Gantt chart, R2 setup notes and this case study |
+| [`requirements/`](../requirements) | Requirements interview transcript |
