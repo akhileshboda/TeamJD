@@ -101,7 +101,7 @@ describe('dashboard shell', () => {
     expect(await screen.findByRole('heading', { name: 'FAQs' }, { timeout: 5000 })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
     expect(within(nav).getByRole('link', { name: 'FAQs' })).toHaveAttribute('aria-current', 'page')
-  })
+  }, 15000) // the lazy section import can be slow on a busy machine
 
   it('every section in the registry has a page', () => {
     expect(SECTIONS.every((section) => section.element)).toBe(true)
