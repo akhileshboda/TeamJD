@@ -38,17 +38,17 @@ html:has(.jd-admin) {
   scroll-padding: calc(var(--jd-topbar, 3.75rem) + 1rem) 0 6rem;
 }
 
-/* Undo the public site's marketing type scale inside the dashboard. */
-.jd-admin h1,
-.jd-admin h2,
-.jd-admin h3,
-.jd-admin h4 {
+/* Undo the public site's marketing type scale inside the dashboard.
+   :where() keeps these at one-class specificity: they still beat the public site's
+   bare h1/p rules, but any component class declared below wins, so component
+   colours and sizes apply without prefixes or !important. */
+.jd-admin :where(h1, h2, h3, h4) {
   font-size: inherit;
   line-height: 1.25;
   letter-spacing: -0.01em;
   color: var(--jd-text);
 }
-.jd-admin p {
+.jd-admin :where(p) {
   line-height: 1.5;
   color: inherit;
 }
@@ -511,7 +511,7 @@ html:has(.jd-admin) {
   color: var(--jd-muted);
 }
 
-.jd-admin .jd-page-title {
+.jd-page-title {
   font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -608,7 +608,7 @@ html:has(.jd-admin) {
 .jd-scoreboard-value {
   font-size: clamp(3.5rem, 11vw, 6.5rem);
   font-weight: 800;
-  line-height: 0.9 !important;
+  line-height: 0.9;
   letter-spacing: -0.05em;
   font-variant-numeric: tabular-nums;
 }
@@ -783,7 +783,7 @@ html:has(.jd-admin) {
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
-.jd-admin .jd-panel-title {
+.jd-panel-title {
   margin-bottom: 1rem;
   font-size: 1rem;
   font-weight: 700;
@@ -1457,7 +1457,7 @@ html:has(.jd-admin) {
 .jd-form-section-head {
   margin-bottom: 0.875rem;
 }
-.jd-admin .jd-form-section-head h2 {
+.jd-form-section-head h2 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1977,7 +1977,7 @@ html:has(.jd-admin) {
   background: var(--jd-panel);
   box-shadow: var(--shadow-modal);
 }
-.jd-admin .jd-dialog-title {
+.jd-dialog-title {
   margin-bottom: 0.5rem;
   font-size: 1.25rem;
   font-weight: 800;
@@ -2949,7 +2949,7 @@ html:has(.jd-admin) {
 .jd-whatsnew {
   margin-bottom: 1.5rem;
 }
-.jd-admin .jd-panel-head {
+.jd-panel-head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -2957,7 +2957,7 @@ html:has(.jd-admin) {
   gap: 0.25rem 1rem;
   margin-bottom: 0.875rem;
 }
-.jd-admin .jd-panel-head .jd-panel-title {
+.jd-panel-head .jd-panel-title {
   margin-bottom: 0;
 }
 .jd-whatsnew-all {
