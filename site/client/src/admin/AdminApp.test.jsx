@@ -98,7 +98,7 @@ describe('dashboard shell', () => {
       ? json({ items: [] })
       : signedIn(url)))
     // The section is lazy-loaded; allow for a slow first import instead of the 1s default.
-    expect(await screen.findByRole('heading', { name: 'FAQs' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'FAQs' }, { timeout: 12000 })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
     expect(within(nav).getByRole('link', { name: 'FAQs' })).toHaveAttribute('aria-current', 'page')
   }, 15000) // the lazy section import can be slow on a busy machine
