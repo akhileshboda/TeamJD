@@ -1,13 +1,13 @@
 # Team JD: Website and Content Management Platform for a Competition Preparation Coach
 
-![The Competition Preparation editor in the client dashboard, with the editing form on the left and a live preview of the public page on the right](case-study/dashboard-service-editor.png)
-*Figure 1. The service editor. Changes appear in the live preview immediately but are not visible to the public until they are published.*
+![The Competition Preparation editor in the client dashboard, with the form on the left and a live preview of the public page on the right](case-study/service-editor.png)
+*Figure 1. The service editor in the client dashboard. Changes appear in the live preview immediately but are not visible to the public until they are published.*
 
 | | |
 |---|---|
 | **Client** | Jake Dedert, Team JD (competition preparation and body-composition coaching, Adelaide) |
 | **Role** | Sole consultant: requirements analysis, design, front-end and back-end development, hosting, documentation |
-| **Timeline** | Requirements interview July 2025; build February to October 2026 |
+| **Timeline** | Requirements interview July 2025; build February to October 2026; production deployment November 2026 |
 | **Technology** | React 18 and Vite; Node 22 and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on an Oracle Cloud virtual machine |
 | **Scale** | 114 commits; 469 automated tests; 32 client-facing changelog entries |
 | **Website** | [team-jd.com.au](https://team-jd.com.au) |
@@ -48,7 +48,7 @@ The client wished to continue using Typeform and Calendly. The brief was therefo
 
 ## 3. Objectives and success criteria
 
-The project charter ([PDF](Project%20Proposal%20%26%20Charter%20%28Draft%29.pdf)) defined the following success criteria:
+The [project charter](Project%20Proposal%20%26%20Charter%20%28Draft%29.pdf) defined the following success criteria:
 
 - A responsive website deployed to the client's domain
 - A 15% increase in enquiries within the first month after launch
@@ -78,29 +78,26 @@ The pivot also changed the nature of my role. Less of the effort went into writi
 
 ```mermaid
 flowchart LR
-  V[Visitor] --> CF[Cloudflare<br/>DNS, edge rate limit, Tunnel]
-  J[Client on /admin] --> CF
+  C[Client<br/>admin dashboard] --> CF[Cloudflare<br/>DNS and Tunnel<br/>Turnstile, edge rate limit]
+  V[Visitor<br/>public website] --> CF
   CF --> X
 
   subgraph VM[Oracle Cloud VM, PM2]
-    X[Express application<br/>production + staging]
-    S[(cms.json<br/>draft + published)]
-    A[(analytics/*.jsonl<br/>cookie-less)]
+    X[Express app<br/>production and staging]
+    S[(Content store<br/>draft and published)]
+    A[(Visit statistics<br/>cookie-less, monthly)]
     X --> S
-    X --> A
   end
 
-  X -->|enquiries, sign-in codes| R[Resend<br/>SPF/DKIM verified]
-  X -->|uploads, processed media| R2[(Cloudflare R2)]
-  X -->|backup ~10s after each change| D[(Dropbox)]
-  D -->|/latest folder, synced every 15 min| X
-  V -->|photos and video| R2
-  V -->|Competition Prep applications| T[Typeform]
-  V -->|other bookings| C[Calendly]
+  X -->|enquiry email| R[Resend]
+  X -->|photos and video| R2[(Cloudflare R2)]
+  S <-->|backup, photo sync| D[(Dropbox)]
+  V -->|Comp Prep applications| T[Typeform]
+  V -->|other service bookings| K[Calendly]
 ```
 *Figure 2. System architecture.*
 
-The front end is a React single-page application. To ensure that search engines and AI crawlers receive meaningful content, the Express server renders the document head, structured data (JSON-LD) and a plain-text summary for every route. Media is not served through the virtual machine: images are converted to WebP (maximum width 2,400 px) and videos to H.264 with a poster frame, and both are delivered from Cloudflare R2.
+The front end is a React single-page application served by one Express server on an Oracle Cloud virtual machine, reached only through a Cloudflare Tunnel. To ensure that search engines and AI crawlers receive meaningful content, the server renders the document head, structured data (JSON-LD) and a plain-text summary for every route. Media does not pass through the server: images are converted to WebP (maximum width 2,400 px) and videos to H.264 with a poster frame, and visitors' browsers load both directly from Cloudflare R2. Competition Preparation applications go to Typeform and other bookings to Calendly, the client's existing tools.
 
 ## 7. Key design decisions
 
@@ -116,26 +113,45 @@ The front end is a React single-page application. To ensure that search engines 
 
 ## 8. Solution: mapping problems to features
 
-![The Services page, with the Find Your Fit prompt above the service cards](case-study/services-find-your-fit.png)
-*Figure 3. The Services page. The Find Your Fit questionnaire (four to six questions) directs visitors to the most suitable service before they book.*
+Each of the four problems in Section 2 maps to a specific part of the delivered system. A fifth component, the administration dashboard, addresses the charter's handover objective.
 
-**Unqualified consultation calls: Find Your Fit and the application gate.** Find Your Fit is a short branching questionnaire. For Competition Preparation, the client's most intensive service, visitors are asked to complete it before viewing the service page, and the application button directs them to the client's Typeform application rather than directly to his calendar. As a result, only applicants can reserve time in the client's calendar.
+### Unqualified consultation calls: Find Your Fit and the application gate
 
-![The Competition Preparation checkpoint asking visitors to complete Find Your Fit first](case-study/comp-prep-gate.png)
-*Figure 4. The Competition Preparation checkpoint. Visitors may proceed without completing the questionnaire; the application itself remains the definitive screening step.*
+Find Your Fit is a short branching questionnaire of four to six questions that directs visitors to the most suitable service. For Competition Preparation, the client's most intensive service, visitors are asked to complete it before viewing the service page, and the application button directs them to the client's Typeform application rather than directly to his calendar. As a result, only applicants can reserve time in the client's calendar.
 
-**Undelivered replies: a correctly configured sending domain.** Enquiries are sent through Resend from a dedicated subdomain with verified SPF and DKIM records. Each enquiry generates a notification to the client and a confirmation to the visitor in a single batch. To prevent abuse of the form, Cloudflare Turnstile verifies that the sender is human, and three layers of rate limiting apply: five attempts per IP address per 15 minutes, three per email address per day (with addresses stored only as HMAC hashes), and 40 enquiries per day across the site.
+![The Services page, with the Find Your Fit prompt above the four service cards](case-study/services-find-your-fit.png)
+*Figure 3. The Services page. The Find Your Fit prompt sits above the four service cards, so visitors are offered guidance before they choose.*
 
-**Delayed notifications: immediate email delivery to a configurable address.** Enquiries are delivered by email as soon as they are submitted, rather than waiting to be noticed in Typeform. The destination address is a dashboard setting, so the client can direct enquiries to whichever inbox he monitors most closely.
+![The first Find Your Fit question, with Prepare to compete on stage selected](case-study/find-your-fit-question.png)
+*Figure 4. A Find Your Fit question. Answers determine which service is recommended at the end of the questionnaire.*
 
-**An ineffective website: discoverable, informative service pages.** Each service has a dedicated page with pricing optimised for mobile devices, and a Results library presents client transformations in a full-screen viewer. Every route has its own title, description and structured data, and the sitemap is generated from the live service data.
+![The Competition Preparation checkpoint asking visitors to complete Find Your Fit first](case-study/comp-prep-checkpoint.png)
+*Figure 5. The Competition Preparation checkpoint. Visitors may proceed without completing the questionnaire; the application itself remains the definitive screening step.*
 
-**Dependence on the consultant: the administration dashboard.** This requirement did not arise from the interview. It followed from the charter's handover objective, and from the recognition that every content change would otherwise require the consultant's involvement.
+### Undelivered replies: a correctly configured sending domain
 
-![The dashboard home page showing recent changelog entries and visit statistics](case-study/dashboard-home.png)
-*Figure 5. The dashboard home page, shown on a local development copy (visit counts are therefore zero). The "What's new" panel displays the changelog, written for the client rather than for developers.*
+Enquiries are sent through Resend from a dedicated subdomain with verified SPF and DKIM records. Each enquiry generates a notification to the client and a confirmation to the visitor in a single batch. To prevent abuse of the form, Cloudflare Turnstile verifies that the sender is human, and three layers of rate limiting apply: five attempts per IP address per 15 minutes, three per email address per day (with addresses stored only as HMAC hashes), and 40 enquiries per day across the site.
 
-The dashboard provides the following functions:
+![The enquiry form on the Contact page, with the Cloudflare Turnstile check passed](case-study/contact-enquiry-form.png)
+*Figure 6. The enquiry form on the Contact page, protected by Cloudflare Turnstile.*
+
+### Delayed notifications: immediate email delivery to a configurable address
+
+Enquiries are delivered by email as soon as they are submitted, rather than waiting to be noticed in Typeform. The destination address is a dashboard setting, so the client can direct enquiries to whichever inbox he monitors most closely.
+
+![The Where enquiries go setting in the dashboard](case-study/settings-enquiries.png)
+*Figure 7. The enquiry destination setting in the dashboard. A change takes effect as soon as it is saved.*
+
+### An ineffective website: discoverable, informative pages
+
+Each service has a dedicated page with pricing optimised for mobile devices, and a Results library presents client transformations in a full-screen viewer. Every route has its own title, description and structured data, and the sitemap is generated from the live service data.
+
+![The Results library with search, sort and category filters above client result photos](case-study/results-library.png)
+*Figure 8. The Results library, which can be searched and filtered by service.*
+
+### Dependence on the consultant: the administration dashboard
+
+This requirement did not arise from the interview. It followed from the charter's handover objective, and from the recognition that every content change would otherwise require the consultant's involvement. The dashboard provides the following functions:
 
 - **Pages.** Every photograph and video position on the site can be replaced. Images store a focal point and zoom level rather than a fixed crop, because the same position has different proportions on mobile and desktop layouts.
 - **Results, Services & prices, and FAQs.** Edits are saved automatically as drafts and are published only on request. A Live control adds an item to, or removes it from, the public site.
@@ -144,12 +160,15 @@ The dashboard provides the following functions:
 - **Settings.** Controls site visibility (the under-construction page), contact and social media links, the enquiry destination address, search listing text and booking links. Changes take effect as soon as they are saved.
 - **Live preview.** Displays the public page alongside the editing form and scrolls to the section being edited.
 
-![The Services & prices list in the dashboard](case-study/dashboard-services.png)
-*Figure 6. The Services & prices list. Services can be edited but not added or removed, because their identifiers are referenced by the contact form, Find Your Fit and the site footer.*
+![Adjusting the crop of the Meet Jake photo, with the live preview of the Home page beside it](case-study/photo-framing.png)
+*Figure 9. Photo framing in the Pages editor. The client sets a focal point and zoom once, and the photo adapts to each layout.*
+
+![Framing and trimming the Contact page video reel, with zoom and loop controls](case-study/reel-trim.png)
+*Figure 10. Trimming the Contact page video. Only the selected section loops on the live site.*
 
 ## 9. Outcomes
 
-The website was deployed to production on 5 November 2026. It is deliberately held behind its under-construction page until launch: every public route returns HTTP 503 with a `noindex` directive, so search engines do not index the site prematurely. The client controls the launch from the dashboard's Site visibility setting, and the go-live checks and Google Search Console steps are documented in [`site/docs/deployment-oracle.md`](../site/docs/deployment-oracle.md). Traffic and enquiry data are not yet available, and the assessment below reflects this.
+The website was deployed to production on 5 November 2026. It is deliberately held behind its under-construction page until launch: every public route returns HTTP 503 with a `noindex` directive, so search engines do not index the site prematurely. The client controls the launch from the dashboard's Site visibility setting, and the go-live checks and Google Search Console steps are documented in the [deployment guide](../site/docs/deployment-oracle.md). Traffic and enquiry data are not yet available, and the assessment below reflects this.
 
 | Charter criterion | Status |
 |---|---|
@@ -158,7 +177,7 @@ The website was deployed to production on 5 November 2026. It is deliberately he
 | Five or more testimonials and a certification badge | **Met.** Six client testimonials accompany their results, and federation logos appear on the About page. |
 | Mobile PageSpeed score of 80 or higher | **Not yet measured.** |
 | WCAG 2.1 AA conformance | **Partially met.** A site audit in September 2026 resolved link-visibility and mobile overflow issues; a formal AA audit has not been conducted. |
-| Independent content management, supported by a guide | **Met.** The dashboard and a plain-language guide ([`site/README.md`](../site/README.md)) are complete, and the dashboard was revised following the client's review on 23 October 2026. |
+| Independent content management, supported by a guide | **Met.** The dashboard and a plain-language guide ([site README](../site/README.md)) are complete, and the dashboard was revised following the client's review on 23 October 2026. |
 | Published case study | **Met** (this document). |
 
 The codebase includes 469 automated tests: 203 server-side tests (Node's built-in test runner and supertest) and 266 client-side tests (Vitest and Testing Library). They cover sign-in lockouts, rate limiting, the email path, the content store, the deployment scripts and the principal user interface flows. A separate staging environment runs on the same server behind a password-protected gate. Each deployment is uploaded to a fresh directory, promoted, restarted, and must pass a `/healthz` health check before the process manager records its state.
@@ -167,11 +186,14 @@ The production server is also monitored for capacity. Every 30 seconds, an in-pr
 
 ## 10. Delivery approach
 
-Each unit of work began as a Notion ticket containing measurable acceptance criteria and a testing strategy, both written *before* implementation, and concluded with a completion report. This policy is recorded in [`site/AGENTS.md`](../site/AGENTS.md), since AI coding agents carried out much of the implementation. The policy prevented acceptance criteria from being weakened after the fact to match the delivered work, and all agent output was reviewed and tested before acceptance. My responsibilities accordingly centred on specification, product decisions and verification, an arrangement well suited to a project with a single reviewer.
+Each unit of work began as a Notion ticket containing measurable acceptance criteria and a testing strategy, both written *before* implementation, and concluded with a completion report. This policy is recorded in the repository's [agent guidance](../site/AGENTS.md), since AI coding agents carried out much of the implementation. The policy prevented acceptance criteria from being weakened after the fact to match the delivered work, and all agent output was reviewed and tested before acceptance. My responsibilities accordingly centred on specification, product decisions and verification, an arrangement well suited to a project with a single reviewer.
 
-From August 2026, work proceeded on feature branches, and the final two changes were merged through pull requests. The dashboard was delivered in six planned milestones (sign-in and statistics, the content store, media management, services and FAQs, settings, and launch hardening) and was then revised following the client's first review. That revision simplified the interface wording, merged testimonials into results and introduced in-place image cropping.
+From August 2026, work proceeded on feature branches, and the final changes were merged through pull requests. The dashboard was delivered in six planned milestones (sign-in and statistics, the content store, media management, services and FAQs, settings, and launch hardening) and was then revised following the client's first review. That revision simplified the interface wording, merged testimonials into results and introduced in-place image cropping.
 
 The changelog originated in the same review. The client had no convenient way to see what had changed between visits, so the dashboard now opens with dated, plain-language entries covering the project from February 2026 onwards. Adding an entry is now a mandatory part of any change that the client or a visitor would notice, and the entry must be committed together with the change itself.
+
+![The dashboard changelog, listing dated plain-language updates](case-study/changelog.png)
+*Figure 11. The changelog as the client sees it, written in plain language rather than technical terms.*
 
 ## 11. Lessons learned
 
@@ -183,29 +205,31 @@ The changelog originated in the same review. The client had no convenient way to
 
 **Retain a low-fidelity design stage.** Designing directly in code was efficient for development but delayed client feedback, since the client responded only to finished screens. Some of the rework from the first dashboard review could have been identified earlier through wireframes.
 
-**Resolve outstanding items before handover.** The seeded Competition Preparation application link still contains a placeholder identifier that must be configured in Settings before launch, and the visit statistics in `data/analytics/` are not included in the backup routine.
+**Resolve outstanding items before handover.** The seeded Competition Preparation application link still contains a placeholder identifier that must be configured in Settings before launch, and the visit statistics are not included in the backup routine.
 
 ## 12. Timeline
 
 | Date | Milestone |
 |---|---|
-| 14 July 2025 | Requirements interview; charter and Gantt chart prepared for a WordPress build |
-| February 2026 | Rebuild begins as a static site on GitHub Pages |
-| April–May 2026 | Migration to Express; Dropbox integration; React and Vite front end |
-| June–July 2026 | Redesigned Home, About, Services and Contact pages; branded error pages; Dropbox-to-R2 media pipeline; staging and production on a Raspberry Pi |
-| 19–22 July 2026 | Migration to Oracle Cloud |
-| July–August 2026 | Results library, Find Your Fit, enquiry email delivery resolved, maintenance mode, pricing |
-| August–September 2026 | Application gate for Competition Preparation; site audit remediation |
-| 18 October 2026 | Dashboard milestones 1–6 |
-| 23 October 2026 | Dashboard revisions following client review; redesigned outage pages |
-| 25–27 October 2026 | Search engine and AI-crawler output; changelog; server capacity monitoring and alerts |
 | 5 November 2026 | Contact video framing and trimming; production deployment; go-live and indexing procedure documented |
+| 25–27 October 2026 | Search engine and AI-crawler output; changelog; server capacity monitoring and alerts |
+| 23 October 2026 | Dashboard revisions following client review; redesigned outage pages |
+| 18 October 2026 | Dashboard milestones 1–6 |
+| August–September 2026 | Application gate for Competition Preparation; site audit remediation |
+| July–August 2026 | Results library, Find Your Fit, enquiry email delivery resolved, maintenance mode, pricing |
+| 19–22 July 2026 | Migration to Oracle Cloud |
+| June–July 2026 | Redesigned Home, About, Services and Contact pages; branded error pages; Dropbox-to-R2 media pipeline; staging and production on a Raspberry Pi |
+| April–May 2026 | Migration to Express; Dropbox integration; React and Vite front end |
+| February 2026 | Rebuild begins as a static site on GitHub Pages |
+| 14 July 2025 | Requirements interview; charter and Gantt chart prepared for a WordPress build |
 
 ## Appendix: technology stack and repository structure
 
-**Front end:** React 18, React Router 6, Vite 6, Tailwind CSS 3, Motion. Testing: Vitest, jsdom, Testing Library.
-**Back end:** Node 22, Express 4, express-session with a SQLite session store, express-rate-limit, node-cron, sharp, ffmpeg, AWS S3 SDK (for R2), Dropbox SDK. Testing: `node:test`, supertest.
-**Infrastructure:** Oracle Cloud virtual machine, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend.
+| Layer | Technologies |
+|---|---|
+| Front end | React 18, React Router 6, Vite 6, Tailwind CSS 3, Motion; tested with Vitest, jsdom and Testing Library |
+| Back end | Node 22, Express 4, express-session with a SQLite session store, express-rate-limit, node-cron, sharp, ffmpeg, AWS S3 SDK (for R2), Dropbox SDK; tested with `node:test` and supertest |
+| Infrastructure | Oracle Cloud virtual machine, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend |
 
 | Path | Contents |
 |---|---|
