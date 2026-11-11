@@ -79,3 +79,28 @@ The public Instagram profile returned “Profile isn’t available” when check
 - Accessed: 22 July 2026
 - Transformations: source JPEGs optimized to WebP by the Team JD asset pipeline; presentation uses non-destructive CSS crops
 - Placement: `/contact`, looping “Follow the Work” carousel
+
+## Instagram import (11 November 2026)
+
+### Jake and client competition photos
+
+Captured logged-out from the 12 most recent posts on Jake's public Instagram profile ([@jake_dedert_teamjd_coaching](https://www.instagram.com/jake_dedert_teamjd_coaching/)). Most are collaboration posts co-published with the client's own account. Images were taken from the public embed view at the largest size Instagram served (1080–1536px; one 3024px original). 13 frames were left out: unrelated or blurry shots, small crowd line-ups, and a photographer's watermarked promo poster. Reel and video slides were skipped. Not yet placed on any page.
+
+- Permission basis: media published on, or co-published with, Jake's Team JD Coaching Instagram. Akhil (site owner) confirmed on 11 November 2026 that Jake has his clients' consent for website use.
+- Photographer credit: most stage shots appear to be event or freelance photography (ICN South Australia / Nationals). Client consent does not cover photographer copyright; confirm a credit or licence with Jake before featuring them prominently.
+- Accessed: 11 November 2026
+- Transformations: source JPEGs re-encoded to WebP (quality 82, max width 2400px) with the Team JD asset optimiser; no crops or edits.
+- Storage: R2 prefix `imports/instagram/2026-11-11/`. This sits outside `site-assets/` on purpose so `npm run rebuild-assets` does not purge it. The files are not in the asset manifest. Key naming: `jake-…` frames include Jake; `client-…` frames are clients only.
+
+| Source post | Account | Published | Frames kept | R2 keys |
+| --- | --- | --- | --- | --- |
+| [DLeKELayUP1](https://www.instagram.com/p/DLeKELayUP1/) | @jake_dedert_teamjd_coaching | 28 June 2025 | 7 | `jake-teamjd-2025-06-28-01.webp`, `client-teamjd-2025-06-28-02.webp`, `jake-teamjd-2025-06-28-03.webp`, `client-teamjd-2025-06-28-04.webp`, `client-teamjd-2025-06-28-05.webp`, `client-teamjd-2025-06-28-06.webp`, `client-teamjd-2025-06-28-07.webp` |
+| [DetPSabknZp](https://www.instagram.com/p/DetPSabknZp/) | @its.bmitch | 19 October 2026 | 4 | `client-its-bmitch-2026-10-19-01.webp`, `client-its-bmitch-2026-10-19-02.webp`, `client-its-bmitch-2026-10-19-03.webp`, `client-its-bmitch-2026-10-19-07.webp` |
+| [DejQYwKnUI4](https://www.instagram.com/p/DejQYwKnUI4/) | @sezthebezt | 16 October 2026 | 3 | `client-sezthebezt-2026-10-16-01.webp`, `client-sezthebezt-2026-10-16-02.webp`, `client-sezthebezt-2026-10-16-04.webp` |
+| [DejMVx3lK4H](https://www.instagram.com/p/DejMVx3lK4H/) | @gabidollar | 16 October 2026 | 6 | `client-gabidollar-2026-10-16-01.webp`, `client-gabidollar-2026-10-16-02.webp`, `client-gabidollar-2026-10-16-03.webp`, `client-gabidollar-2026-10-16-04.webp`, `client-gabidollar-2026-10-16-05.webp`, `client-gabidollar-2026-10-16-06.webp` |
+| [DeVlqe7EvM5](https://www.instagram.com/p/DeVlqe7EvM5/) | @ethan___lifts | 10 October 2026 | 2 | `jake-with-ethan-lifts-2026-10-10-01.webp`, `jake-with-ethan-lifts-2026-10-10-02.webp` |
+| [DePiHkOE5Tw](https://www.instagram.com/p/DePiHkOE5Tw/) | @sezthebezt | 8 October 2026 | 5 | `client-sezthebezt-2026-10-08-01.webp`, `client-sezthebezt-2026-10-08-02.webp`, `client-sezthebezt-2026-10-08-03.webp`, `client-sezthebezt-2026-10-08-04.webp`, `client-sezthebezt-2026-10-08-05.webp` |
+| [DeOV3QLnRHr](https://www.instagram.com/p/DeOV3QLnRHr/) | @gabidollarfit | 7 October 2026 | 7 | `client-gabidollarfit-2026-10-07-01.webp`, `jake-with-gabidollarfit-2026-10-07-02.webp`, `client-gabidollarfit-2026-10-07-03.webp`, `client-gabidollarfit-2026-10-07-04.webp`, `client-gabidollarfit-2026-10-07-06.webp`, `client-gabidollarfit-2026-10-07-07.webp`, `client-gabidollarfit-2026-10-07-08.webp` |
+| [DeGkFsdEnCU](https://www.instagram.com/p/DeGkFsdEnCU/) | @ethan___lifts | 4 October 2026 | 4 | `client-ethan-lifts-2026-10-04-01.webp`, `client-ethan-lifts-2026-10-04-02.webp`, `client-ethan-lifts-2026-10-04-03.webp`, `client-ethan-lifts-2026-10-04-04.webp` |
+| [DSe32dEic0c](https://www.instagram.com/p/DSe32dEic0c/) | @rachelaccadia | 20 December 2025 | 10 | `jake-with-rachelaccadia-2025-12-20-01.webp`, `client-rachelaccadia-2025-12-20-02.webp`, `client-rachelaccadia-2025-12-20-03.webp`, `client-rachelaccadia-2025-12-20-04.webp`, `client-rachelaccadia-2025-12-20-05.webp`, `client-rachelaccadia-2025-12-20-07.webp`, `client-rachelaccadia-2025-12-20-08.webp`, `client-rachelaccadia-2025-12-20-09.webp`, `client-rachelaccadia-2025-12-20-10.webp`, `client-rachelaccadia-2025-12-20-11.webp` |
+| [DPBobfZEu8s](https://www.instagram.com/p/DPBobfZEu8s/) | @jake_dedert_teamjd_coaching | 25 September 2025 | 4 | `jake-teamjd-2025-09-25-01.webp`, `client-teamjd-2025-09-25-02.webp`, `client-teamjd-2025-09-25-03.webp`, `client-teamjd-2025-09-25-04.webp` |
