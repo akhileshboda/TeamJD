@@ -8,6 +8,60 @@
    Theme: Dark athletic — near-black + cyan accent
    ============================================================ */
 
+/* Manrope arrives from Google Fonts a moment after the page draws. Until then text
+   uses Arial, scaled per weight to Manrope's widths and line metrics (ascent 1.066,
+   descent 0.3), so the swap doesn't rewrap lines or move the page. Weights 600+
+   name Arial Bold explicitly: asked for 800, Windows would pick Arial Black. */
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 400;
+  src: local('Arial'), local('ArialMT');
+  size-adjust: 103.3%;
+  ascent-override: 103.19%;
+  descent-override: 29.04%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 500;
+  src: local('Arial'), local('ArialMT');
+  size-adjust: 105.1%;
+  ascent-override: 101.43%;
+  descent-override: 28.54%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 600;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 99.4%;
+  ascent-override: 107.24%;
+  descent-override: 30.18%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 700;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 101.1%;
+  ascent-override: 105.44%;
+  descent-override: 29.67%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 800;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 102.8%;
+  ascent-override: 103.70%;
+  descent-override: 29.18%;
+  line-gap-override: 0%;
+}
+
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Colors */
@@ -29,7 +83,7 @@
   --color-white:        #ffffff;
 
   /* Typography */
-  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Manrope', 'Manrope Fallback', system-ui, -apple-system, sans-serif;
 
   /* Spacing scale */
   --space-1:  0.25rem;
@@ -3251,20 +3305,11 @@ p  { line-height: 1.7; color: var(--color-text); }
   initial-value: 0deg;
 }
 
-.service-route-loading {
-  min-height: 65vh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-24) var(--container-pad);
-  color: #b8b8b8;
-}
-
-.service-skeleton-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(16rem, 0.92fr);
-  align-items: center;
-  gap: clamp(3rem, 7vw, 7rem);
-  width: min(100%, 76rem);
+/* Service page placeholder: the real hero's section, container and grid, filling
+   the screen so nothing below it shows (and moves) when the hero arrives. */
+.service-journey-hero.service-journey-hero--loading {
+  min-height: 100svh;
+  background: linear-gradient(180deg, #0b0c0d 0%, var(--color-bg) 100%);
 }
 
 .service-skeleton-copy {
@@ -3309,19 +3354,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-skeleton-frame {
-  aspect-ratio: 4 / 5;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: clamp(1.25rem, 3vw, 2.25rem);
-}
-
-@media (max-width: 900px) {
-  .service-skeleton-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .service-skeleton-frame {
-    aspect-ratio: 4 / 3;
-  }
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6976,7 +7009,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .route-loading {
-  min-height: calc(100vh - 4.5rem);
+  /* Fills the screen while a page loads (the footer waits with the page). */
+  min-height: 100svh;
   display: grid;
   place-items: center;
   padding: var(--space-20) var(--container-pad);

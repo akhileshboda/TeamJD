@@ -57,20 +57,43 @@ export function contentUrl(collection) {
   return `/api/content/${collection}`
 }
 
-function loadCollection(collection) {
+function freshEntry(collection) {
   const entry = cache.get(collection)
-  if (entry && Date.now() - entry.at < CACHE_MS) return entry.promise
-  const promise = fetch(contentUrl(collection))
+  return entry && Date.now() - entry.at < CACHE_MS ? entry : null
+}
+
+function loadCollection(collection) {
+  const fresh = freshEntry(collection)
+  if (fresh) return fresh.promise
+  const entry = { at: Date.now(), promise: null, data: undefined }
+  entry.promise = fetch(contentUrl(collection))
     .then((response) => {
       if (!response.ok) throw new Error(`Failed to fetch ${collection}: ${response.status}`)
       return response.json()
+    })
+    .then((data) => {
+      entry.data = data
+      return data
     })
     .catch((error) => {
       cache.delete(collection)
       throw error
     })
-  cache.set(collection, { at: Date.now(), promise })
-  return promise
+  cache.set(collection, entry)
+  return entry.promise
+}
+
+// Starts loading collections ahead of the component that needs them. Pages are
+// loaded together with their content (see App.jsx), so they render complete on
+// the first paint instead of swapping a placeholder for the real layout. Never
+// rejects: a failed request leaves the page to show its own error state.
+export function preloadContent(...collections) {
+  return Promise.all(collections.map((collection) => loadCollection(collection).catch(() => null)))
+}
+
+function initialState(collection) {
+  const data = freshEntry(collection)?.data
+  return data === undefined ? { data: null, loading: true, error: null } : { data, loading: false, error: null }
 }
 
 export function clearContentCache() {
@@ -93,13 +116,14 @@ export function usePreviewOverride(name) {
 
 // Returns { data, loading, error }, like a plain fetch hook.
 export function useContent(collection) {
-  const [state, setState] = useState({ data: null, loading: true, error: null })
+  // Content that has already arrived is used on the first render, with no loading flash.
+  const [state, setState] = useState(() => initialState(collection))
   const override = usePreviewOverride(collection)
 
   useEffect(() => {
     let cancelled = false
     loadCollection(collection)
-      .then((data) => !cancelled && setState({ data, loading: false, error: null }))
+      .then((data) => !cancelled && setState((prev) => (prev.data === data && !prev.loading ? prev : { data, loading: false, error: null })))
       .catch((error) => !cancelled && setState({ data: null, loading: false, error }))
     return () => {
       cancelled = true

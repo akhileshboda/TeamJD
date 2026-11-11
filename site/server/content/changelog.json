@@ -1,4 +1,5 @@
 [
+  { "date": "2026-11-11", "text": "Pages no longer jump around while they load: service pages appear in place, the footer waits for the page, and the text no longer reshuffles when the site font arrives." },
   { "date": "2026-11-05", "text": "Dashboard: the Contact page's \"In the work\" video can now be swapped for any video, then framed and trimmed so only the part you choose loops, with a live preview as you adjust it." },
   { "date": "2026-10-27", "text": "Added this changelog, so it's easy to see what's new." },
   { "date": "2026-10-25", "text": "Improved how the site shows up on Google and AI assistants, with the right title, description and prices for each page." },
