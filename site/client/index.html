@@ -31,6 +31,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   </noscript>
   <script>
+    // Apply the visitor's saved "Reduce motion" choice before first paint (see motion/MotionPreference.jsx).
+    try {
+      var jdMotion = window.localStorage.getItem('jd-motion')
+      var jdSystemReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (jdMotion === 'reduce' || (jdMotion !== 'full' && jdSystemReduced)) {
+        document.documentElement.setAttribute('data-motion', 'reduced')
+      }
+    } catch (error) {}
+
     if (window.location.pathname === '/about') {
       const aboutHeroPreload = document.createElement('link')
       aboutHeroPreload.rel = 'preload'

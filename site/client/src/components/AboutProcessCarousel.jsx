@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useReducedMotion } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 import { useAssets } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 import { framedImageStyle, useAssets, useMedia } from '../hooks/useAssets'
 
 export default function ServiceGlassCard({ service }) {

@@ -1,10 +1,5 @@
-import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-} from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 import {
   useCallback,
   useEffect,

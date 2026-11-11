@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 
 export default function FAQItem({ faq, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
