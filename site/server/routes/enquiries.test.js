@@ -54,8 +54,8 @@ test('public configuration exposes only availability and the Turnstile site key'
     ENQUIRY_MAIL_PROVIDER: 'resend',
     RESEND_API_KEY: 'secret-resend-key',
     ENQUIRY_EMAIL_FROM: 'Team JD <enquiries@send.team-jd.com.au>',
-    ENQUIRY_NOTIFICATION_TO: 'akhileshboda@outlook.com',
-    ENQUIRY_REPLY_TO: 'akhileshboda@outlook.com',
+    ENQUIRY_NOTIFICATION_TO: 'enquiries@example.com',
+    ENQUIRY_REPLY_TO: 'enquiries@example.com',
     TURNSTILE_SITE_KEY: 'public-site-key',
     TURNSTILE_SECRET_KEY: 'secret-turnstile-key'
   });
