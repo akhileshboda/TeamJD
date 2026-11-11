@@ -405,8 +405,12 @@ html:has(.jd-bulk-bar) {
   border-color: var(--jd-subtle);
   background: var(--jd-raised);
 }
+/* Nothing to press: a flat, muted button with a faint edge and grey text, so it
+   differs from the live ones by more than how transparent it is. */
 .jd-admin-button:disabled {
-  opacity: 0.5;
+  border-color: var(--jd-line);
+  background: transparent;
+  color: var(--jd-subtle);
 }
 .jd-admin-button--primary {
   border-color: var(--jd-live);
@@ -472,7 +476,8 @@ html:has(.jd-bulk-bar) {
 /* A move arrow at the top or bottom of a list can't be pressed: it fades back
    and ignores the pointer, so it never reads as the live control beside it. */
 .jd-admin-icon-button:disabled {
-  opacity: 0.35;
+  color: var(--jd-subtle);
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -486,6 +491,10 @@ html:has(.jd-bulk-bar) {
 }
 .jd-link-button:hover:not(:disabled) {
   text-decoration-color: currentColor;
+}
+.jd-link-button:disabled {
+  color: var(--jd-subtle);
+  text-decoration: none;
 }
 
 .jd-segmented {
@@ -1110,6 +1119,9 @@ html:has(.jd-bulk-bar) {
 }
 .jd-pending-list a {
   overflow: hidden;
+  /* A 24px+ tap area without moving anything: padding the row already has room for. */
+  margin-block: -0.375rem;
+  padding-block: 0.375rem;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1595,6 +1607,7 @@ html:has(.jd-bulk-bar) {
   padding-bottom: 1.5rem;
 }
 .jd-back {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1605,6 +1618,15 @@ html:has(.jd-bulk-bar) {
 }
 .jd-back:hover {
   color: var(--jd-text);
+}
+/* Tap areas of at least 24px for links that stand alone (an invisible box around
+   the text, so nothing moves). Links inside a sentence are exempt. */
+.jd-back::after,
+.jd-whatsnew-all::after,
+.jd-toast-action::after {
+  content: '';
+  position: absolute;
+  inset: -0.25rem -0.5rem;
 }
 .jd-editor-title-row {
   display: flex;
@@ -2223,6 +2245,7 @@ html:has(.jd-bulk-bar) {
   min-width: 0;
 }
 .jd-toast-action {
+  position: relative;
   margin-left: 0.5rem;
   padding: 0;
   border: 0;
@@ -2383,13 +2406,17 @@ html:has(.jd-bulk-bar) {
   color: #ffd3d3;
   text-align: right;
 }
+/* Full width, scaled from the left: a transform is cheap to animate and is easy to
+   switch off, unlike a changing width. */
 .jd-upload-bar {
   position: absolute;
   bottom: 0;
   left: 0;
+  width: 100%;
   height: 2px;
   background: var(--jd-live);
-  transition: width var(--transition-fast);
+  transform-origin: left center;
+  transition: transform var(--transition-fast);
 }
 
 .jd-thumb {
@@ -3142,11 +3169,13 @@ html:has(.jd-bulk-bar) {
 }
 .jd-booking-links span {
   display: grid;
-  gap: 0.125rem;
+  gap: 0;
   min-width: 0;
 }
 .jd-booking-links a:not(.jd-admin-button) {
   overflow: hidden;
+  /* A 24px line box, so each URL is at least that tall to tap. */
+  line-height: 1.5rem;
   color: var(--jd-muted);
   font-size: 0.8125rem;
   text-overflow: ellipsis;
@@ -3389,6 +3418,18 @@ html:has(.jd-bulk-bar) {
   .jd-back {
     margin-bottom: 0.25rem;
   }
+  /* Standalone links: a 44px tap area around the text. */
+  .jd-whatsnew-all::after,
+  .jd-toast-action::after {
+    inset: -0.75rem -0.5rem;
+  }
+  .jd-pending-list li {
+    min-height: 2.75rem;
+  }
+  .jd-pending-list a {
+    margin-block: -0.6875rem;
+    padding-block: 0.6875rem;
+  }
 }
 
 /* On phones and portrait tablets the Edit / Preview switch stays reachable
@@ -3456,6 +3497,7 @@ html:has(.jd-bulk-bar) {
   margin-bottom: 0;
 }
 .jd-whatsnew-all {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -3509,5 +3551,32 @@ html:has(.jd-bulk-bar) {
   .jd-changelog-entry {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.25rem;
+  }
+}
+
+/* ── Numbers that change ───────────────────────────────────────────────── */
+/* Equal-width digits, so a count changing doesn't shift the text beside it. */
+
+.jd-chart-tooltip,
+.jd-row-updated,
+.jd-list-meta,
+.jd-pending-button,
+.jd-media-tile-use,
+.jd-whatsnew-all {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+/* For people whose device asks for less motion: nothing in the dashboard slides,
+   fades or spins. Switches and the upload bar jump to their new state. */
+
+@media (prefers-reduced-motion: reduce) {
+  .jd-admin,
+  .jd-admin *,
+  .jd-admin *::before,
+  .jd-admin *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }

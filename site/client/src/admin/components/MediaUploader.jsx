@@ -100,7 +100,7 @@ export default function MediaUploader({ kinds = ['image', 'video'], multiple = t
                 </button>
               )}
               {item.state === 'uploading' && (
-                <span className="jd-upload-bar" style={{ width: `${item.progress || 0}%` }}
+                <span className="jd-upload-bar" style={{ transform: `scaleX(${(item.progress || 0) / 100})` }}
                   role="progressbar" aria-label={`Uploading ${item.name}`} aria-valuenow={item.progress || 0} aria-valuemin={0} aria-valuemax={100} />
               )}
             </li>

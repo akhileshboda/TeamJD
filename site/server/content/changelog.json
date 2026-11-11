@@ -1,4 +1,5 @@
 [
+  { "date": "2026-11-11", "text": "Dashboard: small links like Back and View all are easier to tap on a phone, numbers no longer jiggle as they change, and if your device is set to reduce motion the dashboard keeps still." },
   { "date": "2026-11-11", "text": "Dashboard: Home is tidier. The latest updates sit right under the page title, everything is evenly spaced, the page no longer jumps around while it loads, wide screens use the full width, and if the visit numbers can't load there is now a Try again button." },
   { "date": "2026-11-11", "text": "Dashboard: lists are tidier on phones, especially when reordering FAQs, and buttons that can't be used now look it. The Pages overview fills its rows evenly, and the Live, Offline and Unpublished changes help has an arrow so it looks clickable." },
   { "date": "2026-11-11", "text": "Dashboard: long answers and descriptions now grow as you type instead of being cut off, Publish changes is always shown (greyed out until there is something to publish), the phone menu has a close button, and the menu, Settings, Media and page-not-found screens are tidied so everything lines up." },

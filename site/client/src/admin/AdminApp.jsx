@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
+import { MotionConfig } from 'motion/react'
 import { Route, Routes } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { getSession, SIGNED_IN_EVENT, SIGNED_OUT_EVENT, signOut } from './api'
@@ -89,19 +90,22 @@ export default function AdminApp() {
 
   return (
     <div key="app" className="jd-admin">
-      <AdminShell email={session.email} onSignOut={handleSignOut} inert={session.expired}>
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            {SECTIONS.map((section) => {
-              const element = <section.element />
-              return section.path
-                ? <Route key={section.id} path={`${section.path}/*`} element={element} />
-                : <Route key={section.id} index element={element} />
-            })}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </AdminShell>
+      {/* "user": a device set to reduce motion gets no list-reordering animation. */}
+      <MotionConfig reducedMotion="user">
+        <AdminShell email={session.email} onSignOut={handleSignOut} inert={session.expired}>
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              {SECTIONS.map((section) => {
+                const element = <section.element />
+                return section.path
+                  ? <Route key={section.id} path={`${section.path}/*`} element={element} />
+                  : <Route key={section.id} index element={element} />
+              })}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </AdminShell>
+      </MotionConfig>
       {session.expired && (
         <SignIn
           dialog

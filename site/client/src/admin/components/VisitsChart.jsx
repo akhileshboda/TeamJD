@@ -5,6 +5,8 @@ const HEIGHT = 260
 
 const shortDate = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const longDate = new Intl.DateTimeFormat('en-AU', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })
+// The same grouping as the scoreboard above (1,234).
+const number = new Intl.NumberFormat('en-AU')
 const asDate = (day) => new Date(`${day}T00:00:00Z`)
 
 function linePath(points) {
@@ -90,9 +92,9 @@ export default function VisitsChart({ daily }) {
             style={{ left: `${(active / Math.max(1, daily.length - 1)) * 100}%` }}
             data-edge={active < daily.length * 0.2 ? 'start' : active > daily.length * 0.8 ? 'end' : undefined}
           >
-            <strong>{activeDay.visits} {activeDay.visits === 1 ? 'visit' : 'visits'}</strong>
+            <strong>{number.format(activeDay.visits)} {activeDay.visits === 1 ? 'visit' : 'visits'}</strong>
             <span>{longDate.format(asDate(activeDay.date))}</span>
-            <span className="jd-chart-tooltip-muted">Period before: {activeDay.previousVisits}</span>
+            <span className="jd-chart-tooltip-muted">Period before: {number.format(activeDay.previousVisits)}</span>
           </div>
         )}
       </div>
@@ -103,7 +105,7 @@ export default function VisitsChart({ daily }) {
       </div>
       <figcaption id="jd-chart-caption" className="visually-hidden">
         Daily visits from {longDate.format(asDate(daily[0].date))} to {longDate.format(asDate(daily.at(-1).date))}:{' '}
-        {daily.map((day) => `${shortDate.format(asDate(day.date))} ${day.visits}`).join(', ')}.
+        {daily.map((day) => `${shortDate.format(asDate(day.date))} ${number.format(day.visits)}`).join(', ')}.
       </figcaption>
     </figure>
   )
