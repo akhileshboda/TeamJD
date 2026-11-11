@@ -20,6 +20,10 @@
   --jd-sidebar: 14rem;
   --jd-topbar: 3.25rem;
   --jd-publishbar: 4rem;
+  /* One metric for every item in the sidebar: nav links, Sign out, Collapse. */
+  --jd-nav-item-h: 2.25rem;
+  --jd-nav-item-pad: var(--space-3);
+  --jd-nav-item-gap: var(--space-3);
   /* One radius and one card inset for every dashboard surface, on the site's shared
      scale (globals.css :root). Cards in the narrow editor column use the small inset. */
   --jd-radius: var(--radius-lg);
@@ -54,6 +58,8 @@
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.5;
+  /* Long words and addresses wrap instead of pushing a card past the screen. */
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -143,6 +149,14 @@ html:has(.jd-bulk-bar) {
   overflow-y: auto;
 }
 
+/* On a wide screen the head is transparent (the brand sits straight in the
+   sidebar); in the phone and tablet drawer it is the drawer's header. */
+.jd-admin-sidebar-head {
+  display: contents;
+}
+.jd-admin-sidebar .jd-admin-drawer-close {
+  display: none;
+}
 .jd-admin-brand {
   display: flex;
   align-items: center;
@@ -172,9 +186,9 @@ html:has(.jd-bulk-bar) {
 .jd-admin-nav-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-height: 2.25rem;
-  padding: 0 0.75rem;
+  gap: var(--jd-nav-item-gap);
+  min-height: var(--jd-nav-item-h);
+  padding: 0 var(--jd-nav-item-pad);
   border-radius: 0.5rem;
   color: var(--jd-muted);
   font-weight: 600;
@@ -191,24 +205,38 @@ html:has(.jd-bulk-bar) {
 
 .jd-admin-account {
   margin-top: 1.5rem;
-  padding: 1rem 0.75rem 0;
+  padding: 1rem 0 0;
   border-top: 1px solid var(--jd-line);
 }
 .jd-admin-account-email {
   overflow: hidden;
+  margin-bottom: 0.25rem;
+  padding-inline: var(--jd-nav-item-pad);
   color: var(--jd-muted);
   font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.jd-admin-account-signout {
-  display: inline-flex;
+/* Sign out and Collapse menu are sidebar items like the nav links: same height,
+   inset, icon size and icon-to-label gap, so their labels line up with the nav. */
+.jd-admin-account-signout,
+.jd-admin-rail-toggle {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  color: var(--jd-text);
-  font-size: 0.8125rem;
+  gap: var(--jd-nav-item-gap);
+  width: 100%;
+  min-height: var(--jd-nav-item-h);
+  padding: 0 var(--jd-nav-item-pad);
+  border-radius: 0.5rem;
+  color: var(--jd-muted);
   font-weight: 600;
+  text-align: left;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+.jd-admin-account-signout:hover,
+.jd-admin-rail-toggle:hover {
+  background: var(--jd-panel);
+  color: var(--jd-text);
 }
 .jd-admin-account-signout:hover {
   color: var(--jd-pending);
@@ -250,6 +278,11 @@ html:has(.jd-bulk-bar) {
   align-items: center;
   gap: 0.5rem;
 }
+/* The quiet button's own inset would hold "View site" 16px inside the content's
+   right edge; pull it out so its label ends on that edge. */
+.jd-admin-topbar-actions .jd-admin-button--quiet {
+  margin-right: calc(-1 * var(--jd-card-pad-sm));
+}
 .jd-admin-topbar .jd-admin-menu-button {
   display: none;
 }
@@ -283,6 +316,29 @@ html:has(.jd-bulk-bar) {
   .jd-admin-shell.is-drawer-open .jd-admin-sidebar {
     transform: translateX(0);
   }
+  /* The drawer covers the top bar, so its header is the same height and has its
+     own close button, mirrored on the menu button's side. */
+  .jd-admin-sidebar {
+    padding-top: 0;
+  }
+  .jd-admin-sidebar-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--jd-topbar);
+    margin: 0 -0.75rem 0.75rem;
+    padding: 0 0.5rem 0 0.75rem;
+    border-bottom: 1px solid var(--jd-line);
+  }
+  /* The whole header height is the link's tap target. */
+  .jd-admin-sidebar-head .jd-admin-brand {
+    align-self: stretch;
+    padding-block: 0;
+  }
+  .jd-admin-sidebar .jd-admin-drawer-close {
+    display: inline-flex;
+  }
   .jd-admin-shell.is-drawer-open .jd-admin-scrim {
     position: fixed;
     inset: 0;
@@ -302,6 +358,22 @@ html:has(.jd-bulk-bar) {
   }
   .jd-admin-hide-sm {
     display: none;
+  }
+  /* View site is icon-only here: the same box as the menu button on the other
+     side, so both icons sit the same distance from their edge. */
+  .jd-admin-topbar-actions .jd-admin-button--quiet {
+    width: 2.5rem;
+    margin-right: -0.5rem;
+    padding: 0;
+  }
+  .jd-admin-topbar-actions .jd-admin-button--quiet svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+@media (max-width: 899px) and (pointer: coarse) {
+  .jd-admin-topbar-actions .jd-admin-button--quiet {
+    width: 2.75rem;
   }
 }
 
@@ -344,6 +416,14 @@ html:has(.jd-bulk-bar) {
 .jd-admin-button--primary:hover:not(:disabled) {
   border-color: var(--color-accent-dark);
   background: var(--color-accent-dark);
+}
+/* Nothing to press: a grey fill and border, so a full-width teal block on a phone
+   never reads as active (teal means live). */
+.jd-admin-button--primary:disabled {
+  border-color: var(--jd-line-strong);
+  background: var(--jd-raised);
+  color: var(--jd-subtle);
+  opacity: 1;
 }
 .jd-admin-button--quiet {
   border-color: transparent;
@@ -557,11 +637,13 @@ html:has(.jd-bulk-bar) {
   justify-items: start;
   gap: 0.75rem;
   max-width: 34rem;
-  padding: 2.5rem 0;
 }
+/* A page-level message (could not open, not found) uses the page title, so it sits
+   where every other page's title does. */
 .jd-empty h1 {
-  font-size: 1.75rem;
+  font-size: 1.375rem;
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 .jd-empty p {
   color: var(--jd-muted);
@@ -980,10 +1062,11 @@ html:has(.jd-bulk-bar) {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: 2.25rem;
+  /* The height and corners of the buttons beside it in the top bar. */
+  min-height: 2.5rem;
   padding: 0 0.75rem;
   border: 1px solid var(--jd-line-strong);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   color: var(--jd-muted);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -1047,12 +1130,14 @@ html:has(.jd-bulk-bar) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--jd-section-gap);
 }
 .jd-page-lede {
   max-width: 40rem;
   margin-top: 0.5rem;
   color: var(--jd-muted);
+  /* No single word left alone on the last line. */
+  text-wrap: pretty;
 }
 .jd-list-head-actions {
   display: flex;
@@ -1077,6 +1162,17 @@ html:has(.jd-bulk-bar) {
 }
 .jd-list-tools .jd-select {
   min-width: 9rem;
+}
+/* A two-option sort is a small control, not a stretched bar. */
+.jd-list-tools > label.jd-list-sort {
+  flex: none;
+  width: 10rem;
+}
+@media (max-width: 559px) {
+  .jd-list-tools > label.jd-list-sort {
+    flex: 1 1 100%;
+    width: auto;
+  }
 }
 .jd-search {
   position: relative;
@@ -1515,7 +1611,14 @@ html:has(.jd-bulk-bar) {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  min-width: 0;
+  margin-bottom: var(--jd-section-gap);
+}
+/* A long title Jake typed breaks wherever it has to, instead of running off a
+   narrow screen. */
+.jd-editor-title-row .jd-page-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .jd-editor-switch,
 .jd-editor-switch-band {
@@ -1721,10 +1824,17 @@ html:has(.jd-bulk-bar) {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
+/* Grows with what is typed (the field itself, plus a fallback in fields.jsx for
+   browsers without field-sizing), between a sensible minimum and maximum. */
 .jd-input--multiline {
+  field-sizing: content;
   min-height: 7rem;
+  max-height: 24rem;
   line-height: 1.55;
   resize: vertical;
+}
+.jd-list-field-items .jd-input--multiline {
+  min-height: 5rem;
 }
 
 .jd-choice {
@@ -2225,6 +2335,9 @@ html:has(.jd-bulk-bar) {
   border-color: var(--jd-live);
   background: var(--jd-live-soft);
 }
+.jd-dropzone svg {
+  flex: none;
+}
 .jd-dropzone span {
   display: grid;
   gap: 0.125rem;
@@ -2365,7 +2478,12 @@ html:has(.jd-bulk-bar) {
   white-space: nowrap;
 }
 .jd-picker-empty {
-  padding: 1rem 0;
+  padding: 0;
+}
+/* The picker's own grid gap spaces the footer; the dialog's extra top margin only
+   left a dead band above it. */
+.jd-picker .jd-dialog-actions {
+  margin-top: 0;
 }
 .jd-skeleton--picker {
   height: 12rem;
@@ -2375,14 +2493,32 @@ html:has(.jd-bulk-bar) {
 
 .jd-media-page {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--jd-stack-gap);
 }
+/* The page's own gap sits between its blocks; top up to the shared header gap. */
 .jd-media-page .jd-list-head {
-  margin-bottom: 0;
+  margin-bottom: calc(var(--jd-section-gap) - var(--jd-stack-gap));
 }
+/* Four options in one row that never wraps: on a phone it scrolls sideways. */
 .jd-media-filter {
   justify-self: start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.jd-media-filter::-webkit-scrollbar {
+  display: none;
+}
+.jd-media-filter button {
+  flex: none;
+  white-space: nowrap;
+}
+@media (max-width: 559px) {
+  .jd-media-filter button {
+    padding-inline: 0.75rem;
+  }
 }
 .jd-media-layout {
   display: grid;
@@ -2773,8 +2909,10 @@ html:has(.jd-bulk-bar) {
   }
 }
 .jd-rows-field-cells > .jd-field + .jd-field,
-.jd-field-row > .jd-field + .jd-field {
-  margin-top: 0;
+.jd-field-row > .jd-field + .jd-field,
+.jd-settings-fields > .jd-field + .jd-field,
+.jd-seo-page-fields > .jd-field + .jd-field {
+  margin-top: 0; /* these are grids with their own gap */
 }
 .jd-field--grow {
   display: flex;
@@ -2788,7 +2926,7 @@ html:has(.jd-bulk-bar) {
 /* ── Settings ──────────────────────────────────────────────────────────── */
 
 .jd-settings-head {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--jd-section-gap);
 }
 /* The menu of settings beside the chosen page. */
 .jd-settings-layout {
@@ -2815,8 +2953,9 @@ html:has(.jd-bulk-bar) {
   align-items: center;
   gap: 0.75rem;
   min-height: 3.75rem;
-  padding: 0.75rem 1rem;
-  border-left: 3px solid transparent;
+  /* The same inset as the panel beside it and every other card. The current page's
+     marker is drawn inside the edge, so it does not shift the text. */
+  padding: 0.75rem var(--jd-card-pad);
 }
 .jd-settings-link:hover {
   background: #1f1f1f;
@@ -2859,15 +2998,13 @@ html:has(.jd-bulk-bar) {
   margin: 0.25rem 0 1.25rem;
   color: var(--jd-muted);
   font-size: 0.875rem;
+  text-wrap: pretty;
 }
-/* Forms keep a readable width; Search listings uses the room for previews. */
+/* Fields use the panel's width; the jd-form container puts side-by-side ones
+   two-up when there is room. */
 .jd-settings-fields {
   display: grid;
   gap: 1rem;
-  max-width: 44rem;
-}
-.jd-settings-panel.is-wide .jd-settings-fields {
-  max-width: none;
 }
 /* Shows only with something to save, and stays in view while the page scrolls. */
 .jd-save-bar {
@@ -2899,7 +3036,7 @@ html:has(.jd-bulk-bar) {
     display: none;
   }
   .jd-settings-link[aria-current='page'] {
-    border-left-color: var(--jd-live);
+    box-shadow: inset 3px 0 0 var(--jd-live);
     background: var(--jd-live-soft);
   }
 }
@@ -2921,7 +3058,10 @@ html:has(.jd-bulk-bar) {
     display: inline-flex;
   }
   .jd-settings-panel {
-    padding: 1rem;
+    padding: var(--jd-card-pad-sm);
+  }
+  .jd-settings-link {
+    padding-inline: var(--jd-card-pad-sm);
   }
   .jd-save-bar {
     margin: 1rem -1rem -1rem;
@@ -2952,7 +3092,10 @@ html:has(.jd-bulk-bar) {
     gap: 1.25rem;
   }
 }
+/* The legend's text lines up with the labels inside; its padding only opens a gap
+   in the border, so it is pulled back by the same amount. */
 .jd-seo-page legend {
+  margin-inline: -0.5rem;
   padding: 0 0.5rem;
 }
 .jd-search-preview {
@@ -3168,18 +3311,6 @@ html:has(.jd-bulk-bar) {
 .jd-admin-shell.is-rail {
   --jd-sidebar: 4.25rem;
 }
-.jd-admin-rail-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  color: var(--jd-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-.jd-admin-rail-toggle:hover {
-  color: var(--jd-text);
-}
 .is-rail .jd-admin-sidebar {
   padding-inline: 0.5rem;
 }
@@ -3195,16 +3326,14 @@ html:has(.jd-bulk-bar) {
   justify-items: center;
   padding-inline: 0;
 }
+/* In the rail every item is the same box: the nav links, Sign out and Expand. */
 .is-rail .jd-admin-account-signout,
 .is-rail .jd-admin-rail-toggle {
-  width: 2.75rem;
-  min-height: 2.75rem;
-  margin-top: 0.25rem;
-  border-radius: 0.5rem;
+  width: 100%;
 }
-.is-rail .jd-admin-account-signout:hover,
-.is-rail .jd-admin-rail-toggle:hover {
-  background: var(--jd-panel);
+/* Group dividers sit midway between the groups. */
+.is-rail .jd-admin-nav-group + .jd-admin-nav-group {
+  margin-top: 0.5rem;
 }
 .is-rail .jd-admin-brand img {
   width: 2.5rem;

@@ -127,4 +127,15 @@ describe('dashboard shell', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(open).toHaveAttribute('aria-expanded', 'false')
   })
+
+  it('closes the phone menu from its own close button and hands focus back to the menu button', async () => {
+    renderAt('/admin', signedIn)
+    const open = await screen.findByRole('button', { name: 'Open menu' })
+    fireEvent.click(open)
+    expect(open).toHaveAttribute('aria-expanded', 'true')
+    // One labelled close button: the scrim behind the drawer is pointer-only.
+    fireEvent.click(screen.getByRole('button', { name: 'Close menu' }))
+    expect(open).toHaveAttribute('aria-expanded', 'false')
+    expect(open).toHaveFocus()
+  })
 })

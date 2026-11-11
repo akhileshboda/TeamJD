@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import JourneyIcon from '../../components/JourneyIcon'
 
 // Form fields for the dashboard editors. Each takes the field's value, an
@@ -24,6 +24,26 @@ function Field({ label, hint, error, required, grow = false, children, id }) {
   )
 }
 
+// Long-text boxes grow with what is typed, so nothing is cut off mid-sentence.
+// CSS `field-sizing: content` does it where supported; this does the same by
+// hand for browsers without it (the CSS min and max heights still apply).
+const SUPPORTS_FIELD_SIZING = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('field-sizing', 'content')
+
+function useAutosize(ref, value, active) {
+  useLayoutEffect(() => {
+    const box = ref.current
+    if (!active || SUPPORTS_FIELD_SIZING || !box) return undefined
+    const fit = () => {
+      box.style.height = 'auto'
+      if (box.scrollHeight) box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`
+    }
+    fit()
+    // A narrower or wider form re-wraps the text.
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [ref, value, active])
+}
+
 function describedBy(id, hint, error) {
   return [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined
 }
@@ -32,10 +52,13 @@ function describedBy(id, hint, error) {
 // fields (a title beside its description) stay the same height.
 export function TextField({ label, hint, error, required, value, onChange, maxLength, multiline = false, rows = 4, grow = false, ...rest }) {
   const id = useId()
+  const inputRef = useRef(null)
+  useAutosize(inputRef, value, multiline)
   const Input = multiline ? 'textarea' : 'input'
   return (
     <Field label={label} hint={hint} error={error} required={required} grow={grow} id={id}>
       <Input
+        ref={inputRef}
         id={id}
         className={`jd-input${multiline ? ' jd-input--multiline' : ''}`}
         value={value ?? ''}
@@ -51,6 +74,16 @@ export function TextField({ label, hint, error, required, value, onChange, maxLe
         <span className="jd-field-count" aria-hidden="true">{(value || '').length} / {maxLength}</span>
       )}
     </Field>
+  )
+}
+
+// One line at the top of a form whose fields can be Required, said the same way
+// in every editor. `children` finishes the sentence ("before it can go live").
+export function RequiredNote({ children = 'before it can go live' }) {
+  return (
+    <p className="jd-form-note">
+      Fields marked <RequiredTag /> must be filled in {children}.
+    </p>
   )
 }
 

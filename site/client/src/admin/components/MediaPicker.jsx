@@ -63,7 +63,7 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
         <label className="jd-search jd-picker-search">
           <JourneyIcon name="search" size={16} />
           <span className="visually-hidden">Search the library</span>
-          <input className="jd-input" type="search" placeholder="Search by file name or description" value={query}
+          <input className="jd-input" type="search" placeholder="Search…" value={query}
             spellCheck={false} onChange={(event) => setQuery(event.target.value)} />
         </label>
 
@@ -75,21 +75,23 @@ export default function MediaPicker({ kind, title, currentId, onPick, onClose })
           </p>
         )}
 
-        <div className="jd-picker-grid" role="group" aria-label="Library">
-          {visible.map((asset) => (
-            <button
-              key={asset.id}
-              type="button"
-              aria-pressed={selected === asset.id}
-              className={`jd-picker-tile${selected === asset.id ? ' is-selected' : ''}`}
-              onClick={() => setSelected(asset.id)}
-              onDoubleClick={() => onPick(asset)}
-            >
-              <MediaThumb asset={asset} size="fill" />
-              <span className="jd-picker-name">{asset.alt || asset.originalName}</span>
-            </button>
-          ))}
-        </div>
+        {visible.length > 0 && (
+          <div className="jd-picker-grid" role="group" aria-label="Library">
+            {visible.map((asset) => (
+              <button
+                key={asset.id}
+                type="button"
+                aria-pressed={selected === asset.id}
+                className={`jd-picker-tile${selected === asset.id ? ' is-selected' : ''}`}
+                onClick={() => setSelected(asset.id)}
+                onDoubleClick={() => onPick(asset)}
+              >
+                <MediaThumb asset={asset} size="fill" />
+                <span className="jd-picker-name">{asset.alt || asset.originalName}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="jd-dialog-actions">
           <button type="button" className="jd-admin-button" onClick={onClose}>Cancel</button>
