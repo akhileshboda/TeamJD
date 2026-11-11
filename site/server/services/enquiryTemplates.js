@@ -46,10 +46,11 @@ function isHttpsUrl(value) {
   }
 }
 
-// The first block of the UUID is enough for a person to quote back; the full
-// ID stays in the internal email for searching logs.
+// A short, readable code a person can quote back, like JD-9BF890. The full ID
+// stays in the internal email's plain text for searching logs.
 function shortReference(submissionId) {
-  return String(submissionId || '').split('-')[0].toUpperCase();
+  const id = String(submissionId || '').split('-')[0].toUpperCase().slice(0, 6);
+  return id ? `JD-${id}` : '';
 }
 
 function formatAdelaideTime(date) {
@@ -113,19 +114,13 @@ function button(href, label) {
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:separate;"><tr><td bgcolor="${BRAND.cta}" style="border-radius:8px;background:${BRAND.cta};"><a href="${escapeHtml(href)}" style="display:inline-block;padding:15px 26px;color:#111111;font-size:15px;font-weight:800;text-decoration:none;border-radius:8px;">${escapeHtml(label)} &rarr;</a></td></tr></table>`;
 }
 
-function stepRow(number, html) {
-  return `<tr><td style="padding:12px 0;width:44px;vertical-align:top;color:${BRAND.accent};font-size:13px;font-weight:800;letter-spacing:1px;border-top:1px solid ${EMAIL.border};">${number}</td><td style="padding:12px 0;vertical-align:top;color:${EMAIL.text};font-size:15px;line-height:1.6;border-top:1px solid ${EMAIL.border};">${html}</td></tr>`;
-}
-
-const REFERENCE_STYLE = "font-family:'SFMono-Regular',Menlo,Consolas,monospace;letter-spacing:2px;";
-
 function buildInternalTemplate(enquiry, options) {
   const fullName = [enquiry.firstName, enquiry.lastName].filter(Boolean).join(' ');
   const timestamp = options.timestamp.toISOString();
   const localTime = formatAdelaideTime(options.timestamp);
   const replyHref = `mailto:${enquiry.email}?subject=${encodeURIComponent('Re: your Team JD enquiry')}`;
-  const content = `${paragraph('A new general enquiry came in through the Team JD website. Reply to this email to answer them directly.')}
-${detailsPanel(`${detailsRow('Name', fullName)}${detailsRow('Email', enquiry.email)}${detailsRow('Interest', enquiry.serviceLabel)}${detailsRow('Submitted', localTime)}${detailsRow('Reference', enquiry.submissionId, `font-size:13px;color:${EMAIL.muted};`)}`)}
+  const content = `${paragraph('Someone sent an enquiry through the Team JD website. Reply to this email to answer them directly.')}
+${detailsPanel(`${detailsRow('Name', fullName)}${detailsRow('Email', enquiry.email)}${detailsRow('Interest', enquiry.serviceLabel)}${detailsRow('Submitted', localTime)}${detailsRow('Reference', shortReference(enquiry.submissionId), `font-size:13px;color:${EMAIL.muted};`)}`)}
 <p style="margin:0 0 10px;color:${EMAIL.muted};font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Message</p>
 <div style="white-space:pre-wrap;margin:0 0 28px;padding:18px 20px;background:${EMAIL.panel};color:${EMAIL.heading};font-size:15px;line-height:1.7;border-radius:10px;">${escapeHtml(enquiry.message)}</div>
 ${button(replyHref, `Reply to ${enquiry.firstName}`)}`;
@@ -139,7 +134,7 @@ ${button(replyHref, `Reply to ${enquiry.firstName}`)}`;
       content,
       social: options.social
     }),
-    text: `New Team JD website enquiry\n\nName: ${fullName}\nEmail: ${enquiry.email}\nInterest: ${enquiry.serviceLabel}\nSubmitted: ${localTime} (${timestamp})\nReference: ${enquiry.submissionId}\n\nMessage:\n${enquiry.message}`
+    text: `New Team JD website enquiry\n\nName: ${fullName}\nEmail: ${enquiry.email}\nInterest: ${enquiry.serviceLabel}\nSubmitted: ${localTime} (${timestamp})\nReference: ${shortReference(enquiry.submissionId)} (${enquiry.submissionId})\n\nMessage:\n${enquiry.message}`
   };
 }
 
@@ -147,14 +142,9 @@ function buildCustomerTemplate(enquiry, options) {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const reference = shortReference(enquiry.submissionId);
   const sentAt = formatAdelaideTime(options.timestamp || new Date());
-  const content = `${paragraph('Your message is with Jake. Here are the details for your records.', 'font-size:17px;')}
-${detailsPanel(`${detailsRow('Topic', enquiry.serviceLabel)}${detailsRow('Sent', sentAt)}${detailsRow('Reference', reference, REFERENCE_STYLE)}`)}
-<p style="margin:0 0 6px;color:${EMAIL.heading};font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;">What happens next</p>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 32px;">
-${stepRow('01', "Your enquiry is in Jake&#39;s inbox.")}
-${stepRow('02', `Jake will reply to <strong style="color:${EMAIL.heading};">${escapeHtml(enquiry.email)}</strong>.`)}
-${stepRow('03', 'Want to add something? Just reply to this email.')}
-</table>
+  const mailtoStyle = `color:${EMAIL.heading};font-weight:700;text-decoration:none;`;
+  const content = `${paragraph(`Your message is with Jake, and he&#39;ll reply to <a href="mailto:${escapeHtml(enquiry.email)}" style="${mailtoStyle}">${escapeHtml(enquiry.email)}</a>. Forgot something? Just reply to this email.`, 'font-size:17px;')}
+${detailsPanel(`${detailsRow('Topic', enquiry.serviceLabel)}${detailsRow('Sent', sentAt)}${detailsRow('Reference', reference)}`)}
 ${paragraph('While you wait, see what clients have achieved with Jake.', 'margin-bottom:20px;')}
 ${button(`${baseUrl}/results`, 'See client results')}
 <p style="margin:18px 0 0;font-size:14px;"><a href="${escapeHtml(baseUrl)}/services" style="color:${BRAND.accent};text-decoration:none;font-weight:700;">Explore services &rarr;</a></p>
@@ -169,7 +159,7 @@ ${button(`${baseUrl}/results`, 'See client results')}
       content,
       social: options.social
     }),
-    text: `Thanks, ${enquiry.firstName}.\n\nYour message is with Jake. Here are the details for your records.\n\nTopic: ${enquiry.serviceLabel}\nSent: ${sentAt}\nReference: ${reference}\n\nWhat happens next\n01 Your enquiry is in Jake's inbox.\n02 Jake will reply to ${enquiry.email}.\n03 Want to add something? Just reply to this email.\n\nSee client results: ${baseUrl}/results\nExplore services: ${baseUrl}/services\n\nDidn't send this? You can safely ignore it.`
+    text: `Thanks, ${enquiry.firstName}.\n\nYour message is with Jake, and he'll reply to ${enquiry.email}. Forgot something? Just reply to this email.\n\nTopic: ${enquiry.serviceLabel}\nSent: ${sentAt}\nReference: ${reference}\n\nWhile you wait, see what clients have achieved with Jake.\nSee client results: ${baseUrl}/results\nExplore services: ${baseUrl}/services\n\nDidn't send this? You can safely ignore it.`
   };
 }
 
