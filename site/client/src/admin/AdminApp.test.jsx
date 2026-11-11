@@ -97,7 +97,8 @@ describe('dashboard shell', () => {
     renderAt('/admin/faqs', (url) => (url === '/api/admin/collections/faqs'
       ? json({ items: [] })
       : signedIn(url)))
-    expect(await screen.findByRole('heading', { name: 'FAQs' })).toBeInTheDocument()
+    // The section is lazy-loaded; allow for a slow first import instead of the 1s default.
+    expect(await screen.findByRole('heading', { name: 'FAQs' }, { timeout: 5000 })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
     expect(within(nav).getByRole('link', { name: 'FAQs' })).toHaveAttribute('aria-current', 'page')
   })
