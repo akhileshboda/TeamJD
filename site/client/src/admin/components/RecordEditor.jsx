@@ -10,9 +10,11 @@ import { ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, StatusChips, 
 const SAVE_DELAY_MS = 800
 const PREVIEW_DELAY_MS = 200
 
+// Said beside the Live switch (which already reads "Live"), so Live is never
+// repeated here.
 const STATE_TEXT = {
-  published: 'Live.',
-  changed: 'Live, with unpublished changes.',
+  published: 'Up to date.',
+  changed: 'Has unpublished changes.',
   draft: 'Offline.',
   hidden: 'Offline.',
 }
@@ -257,7 +259,6 @@ export default function RecordEditor({
   // Items that cannot be taken offline (services) are always live, so they only
   // ever need Publish changes.
   const changesWaiting = hasUnpublishedChanges(status)
-  const showPublish = canHide ? changesWaiting : true
   const path = previewPath?.(draft, record)
 
   return (
@@ -293,16 +294,15 @@ export default function RecordEditor({
               <span>Discard<span className="jd-publish-bar-long"> changes</span></span>
             </button>
           )}
-          {showPublish && (
-            <button
-              type="button"
-              className="jd-admin-button jd-admin-button--primary"
-              disabled={working || !changesWaiting}
-              onClick={() => run('publish')}
-            >
-              {busy === 'publish' ? 'Publishing…' : 'Publish changes'}
-            </button>
-          )}
+          {/* Always there, in every collection, and off until something is waiting. */}
+          <button
+            type="button"
+            className="jd-admin-button jd-admin-button--primary"
+            disabled={working || !changesWaiting}
+            onClick={() => run('publish')}
+          >
+            {busy === 'publish' ? 'Publishing…' : 'Publish changes'}
+          </button>
         </div>
       </div>
 

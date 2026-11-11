@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
 import { RESULT_CATEGORY_LABELS } from '../../utils/resultsLibrary'
 import CollectionList from '../components/CollectionList'
-import { ChoiceField, FormSection, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
+import { ChoiceField, FormSection, RequiredNote, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
 import ImageFramer, { DEFAULT_FRAMING } from '../components/ImageFramer'
 import MediaPicker from '../components/MediaPicker'
 import RecordEditor from '../components/RecordEditor'
@@ -103,9 +103,7 @@ function ResultFields({ draft, update, errors }) {
   const [picking, setPicking] = useState(false)
   return (
     <>
-      <p className="jd-form-note">
-        Fields marked <span className="jd-required-tag">Required</span> must be filled in before this result can go live.
-      </p>
+      <RequiredNote />
       <FormSection title="Photo" required description="The image people see on the Results page and in the result's story.">
         <div className="jd-spot-actions">
           <button type="button" className="jd-admin-button jd-admin-button--sm" onClick={() => setPicking(true)}>

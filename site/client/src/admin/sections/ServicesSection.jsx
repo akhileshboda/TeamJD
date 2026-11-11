@@ -1,6 +1,6 @@
 import { Link, Route, Routes, useParams } from 'react-router-dom'
 import CollectionList from '../components/CollectionList'
-import { ChoiceField, FormSection, ListField, RowsField, TextField } from '../components/fields'
+import { ChoiceField, FormSection, ListField, RequiredNote, RowsField, TextField } from '../components/fields'
 import RecordEditor from '../components/RecordEditor'
 
 const COLUMNS = [{ key: 'price', label: 'Price', render: (row) => row.price }]
@@ -31,6 +31,7 @@ function ServiceFields({ draft, update, errors, record }) {
 
   return (
     <>
+      <RequiredNote>before you publish</RequiredNote>
       <FormSection title="Name and booking" section="card" collapsible summary={draft.name}
         description="The top of the page. The name and short description also appear in the menu, on the Services page and on Home.">
         <TextField label="Name" required value={draft.name} maxLength={60} error={errors.name} onChange={set('name')} />

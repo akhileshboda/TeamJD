@@ -56,10 +56,10 @@ export default function ChangelogSection() {
             <label className="jd-search">
               <JourneyIcon name="search" size={16} />
               <span className="visually-hidden">Search updates</span>
-              <input className="jd-input" type="search" value={query} placeholder="Search updates or dates" spellCheck={false}
+              <input className="jd-input" type="search" value={query} placeholder="Search…" spellCheck={false}
                 onChange={(event) => setParam('q', event.target.value)} />
             </label>
-            <label>
+            <label className="jd-list-sort">
               <span className="visually-hidden">Sort</span>
               <select className="jd-input jd-select" value={sort} onChange={(event) => setParam('sort', event.target.value)}>
                 {SORTS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
