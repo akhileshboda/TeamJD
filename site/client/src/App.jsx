@@ -1,27 +1,36 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import RouteLoading from './components/RouteLoading'
 import About from './pages/About'
+import { preloadContent } from './hooks/useContent'
+import { fontsReady } from './utils/fontsReady'
 
-const Home = lazy(() => import('./pages/Home'))
-const Services = lazy(() => import('./pages/Services'))
-const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'))
-const Results = lazy(() => import('./pages/Results'))
-const Contact = lazy(() => import('./pages/Contact'))
-const Privacy = lazy(() => import('./pages/Privacy'))
-const NotFound = lazy(() => import('./pages/NotFound'))
+// A page, the content it shows and the site font arrive together, so the page
+// renders complete on its first paint instead of swapping a placeholder for the
+// real layout (which made service pages jump while they loaded) or rewrapping
+// headings when the font lands. Only the first visit waits on the font.
+function lazyPage(load, ...collections) {
+  return lazy(() => Promise.all([load(), preloadContent(...collections), fontsReady()]).then(([module]) => module))
+}
+
+const Home = lazyPage(() => import('./pages/Home'), 'services', 'faqs', 'results')
+const Services = lazyPage(() => import('./pages/Services'), 'services')
+const ServiceDetailPage = lazyPage(() => import('./pages/ServiceDetailPage'), 'services')
+const Results = lazyPage(() => import('./pages/Results'), 'results')
+const Contact = lazyPage(() => import('./pages/Contact'), 'settings')
+const Privacy = lazyPage(() => import('./pages/Privacy'), 'settings')
+const NotFound = lazyPage(() => import('./pages/NotFound'), 'settings')
 const AdminApp = lazy(() => import('./admin/AdminApp'))
 
 export default function App() {
-  const loading = <div className="route-loading" role="status">Loading page&hellip;</div>
-
   return (
     <Routes>
       {/* Jake's dashboard is a tool, not a site page: no site nav, footer or funnels. */}
       <Route
         path="/admin/*"
         element={
-          <Suspense fallback={loading}>
+          <Suspense fallback={<RouteLoading />}>
             <AdminApp />
           </Suspense>
         }
@@ -30,18 +39,16 @@ export default function App() {
         path="*"
         element={
           <Layout>
-            <Suspense fallback={loading}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/services/:slug" element={<ServiceDetailPage />} />
-                <Route path="/results" element={<Results />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/services/:slug" element={<ServiceDetailPage />} />
+              <Route path="/results" element={<Results />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </Layout>
         }
       />

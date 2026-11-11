@@ -8,6 +8,60 @@
    Theme: Dark athletic — near-black + cyan accent
    ============================================================ */
 
+/* Manrope arrives from Google Fonts a moment after the page draws. Until then text
+   uses Arial, scaled per weight to Manrope's widths and line metrics (ascent 1.066,
+   descent 0.3), so the swap doesn't rewrap lines or move the page. Weights 600+
+   name Arial Bold explicitly: asked for 800, Windows would pick Arial Black. */
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 400;
+  src: local('Arial'), local('ArialMT');
+  size-adjust: 103.3%;
+  ascent-override: 103.19%;
+  descent-override: 29.04%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 500;
+  src: local('Arial'), local('ArialMT');
+  size-adjust: 105.1%;
+  ascent-override: 101.43%;
+  descent-override: 28.54%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 600;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 99.4%;
+  ascent-override: 107.24%;
+  descent-override: 30.18%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 700;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 101.1%;
+  ascent-override: 105.44%;
+  descent-override: 29.67%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Manrope Fallback';
+  font-weight: 800;
+  src: local('Arial Bold'), local('Arial-BoldMT');
+  size-adjust: 102.8%;
+  ascent-override: 103.70%;
+  descent-override: 29.18%;
+  line-gap-override: 0%;
+}
+
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Colors */
@@ -29,7 +83,7 @@
   --color-white:        #ffffff;
 
   /* Typography */
-  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Manrope', 'Manrope Fallback', system-ui, -apple-system, sans-serif;
 
   /* Spacing scale */
   --space-1:  0.25rem;
@@ -126,6 +180,13 @@ h1 { font-size: clamp(2.5rem, 6vw, 5rem); }
 h2 { font-size: clamp(1.75rem, 4vw, 3rem); }
 h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 h4 { font-size: 1.125rem; font-weight: 700; }
+
+/* Site headings balance their lines, so a heading never leaves one word alone on
+   its last line. Zero specificity (any rule can opt out); the dashboard keeps its
+   own heading styles. */
+:where(h1, h2, h3):not(:where(.jd-admin *)) {
+  text-wrap: balance;
+}
 p  { line-height: 1.7; color: var(--color-text); }
 
 .text-muted   { color: var(--color-text-muted); }
@@ -1221,30 +1282,57 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 /* ── CTA Banner ─────────────────────────────────────────────── */
 .cta-banner {
-  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-2) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-2xl);
-  padding: var(--space-16) var(--space-8);
-  text-align: center;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, rgba(31, 34, 35, 0.94), rgba(20, 22, 23, 0.94));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+.cta-banner-copy {
+  padding: clamp(2.5rem, 4vw, 3.5rem);
+}
+
+.cta-banner .eyebrow {
+  display: inline-block;
+  margin-bottom: var(--space-4);
 }
 
 .cta-banner h2 {
   margin-bottom: var(--space-4);
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  line-height: 1.02;
+  text-wrap: balance;
 }
 
 .cta-banner p {
-  color: var(--color-text-muted);
-  max-width: 480px;
-  margin-inline: auto;
-  margin-bottom: var(--space-8);
+  max-width: 42rem;
+  margin: 0;
+  color: #b3b3b3;
   font-size: 1.0625rem;
+}
+
+/* The button stack fills the action column, so it ends at the card's inner edge. */
+.cta-banner-action-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.5rem, 4vw, 3.5rem);
 }
 
 .cta-banner .actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cta-banner .actions .btn {
   justify-content: center;
+  width: 100%;
 }
 
 /* ── Page Hero (non-home) ───────────────────────────────────── */
@@ -1697,7 +1785,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   border-radius: var(--radius-xl);
   overflow: hidden;
   background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
 }
 
@@ -1709,9 +1797,9 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .about-identity-card {
-  margin-top: var(--space-6);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  margin-top: var(--space-5);
+  background: rgba(20, 21, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
   display: flex;
@@ -1741,8 +1829,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .about-bio-copy h2 {
-  margin-bottom: var(--space-6);
-  max-width: 18ch;
+  margin-bottom: var(--space-8);
 }
 
 .about-bio-copy p {
@@ -2268,7 +2355,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 420px;
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 1.25rem;
   background:
@@ -2382,7 +2468,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  width: min(100%, 13.5rem);
+  max-width: 100%;
   min-height: 2.625rem;
   padding: 0.35rem 0.65rem;
   border: 1px solid rgba(22, 201, 221, 0.4);
@@ -2532,8 +2618,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 .services-hub-inner {
   position: relative;
   z-index: 1;
-  max-width: 64rem;
-  margin-inline: auto;
 }
 
 .services-final-cta {
@@ -2871,9 +2955,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-bottom: var(--space-12);
   }
 
-  .cta-banner {
-    padding: var(--space-10) var(--space-6);
-  }
 
   .section {
     padding-block: var(--space-12);
@@ -2927,10 +3008,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     margin-bottom: var(--space-8);
   }
 
-  .about-bio-copy h2 {
-    max-width: none;
-  }
-
   .about-process-footer {
     flex-direction: column;
     align-items: flex-start;
@@ -2946,9 +3023,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     margin-bottom: var(--space-8);
   }
 
-  .home-service-pathway {
-    min-height: 360px;
-  }
 
   .home-services-consult-actions {
     justify-content: flex-start;
@@ -3071,7 +3145,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   }
 
   .home-service-pathway-label {
-    width: min(100%, 14.5rem);
     min-height: 1.75rem;
     padding: 0.28rem 0.55rem;
     font-size: 0.66rem;
@@ -3149,9 +3222,26 @@ p  { line-height: 1.7; color: var(--color-text); }
     grid-template-columns: 1fr;
   }
 
-  .hero-actions {
+  /* Stacked buttons on phones: one rule, full width and centred, on every page. */
+  .hero-actions,
+  .about-bio-actions,
+  .home-services-consult-actions,
+  .about-process-footer,
+  .not-found-actions,
+  .contact-form-actions {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .hero-actions .btn,
+  .about-bio-actions .btn,
+  .home-services-consult-actions .btn,
+  .about-process-footer .btn,
+  .not-found-actions .btn,
+  .contact-form-actions .btn,
+  .cta-banner .actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .home-service-pathway {
@@ -3166,18 +3256,8 @@ p  { line-height: 1.7; color: var(--color-text); }
     max-width: none;
   }
 
-  .about-process-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
   .home-services-consult {
     padding: var(--space-5);
-  }
-
-  .home-services-consult-actions {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .credibility-strip .container {
@@ -3201,9 +3281,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     height: 2.875rem;
   }
 
-  .cta-banner {
-    padding: var(--space-8) var(--space-4);
-  }
 
   .stats-grid {
     grid-template-columns: 1fr 1fr;
@@ -3251,20 +3328,11 @@ p  { line-height: 1.7; color: var(--color-text); }
   initial-value: 0deg;
 }
 
-.service-route-loading {
-  min-height: 65vh;
-  display: grid;
-  place-items: center;
-  padding: var(--space-24) var(--container-pad);
-  color: #b8b8b8;
-}
-
-.service-skeleton-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(16rem, 0.92fr);
-  align-items: center;
-  gap: clamp(3rem, 7vw, 7rem);
-  width: min(100%, 76rem);
+/* Service page placeholder: the real hero's section, container and grid, filling
+   the screen so nothing below it shows (and moves) when the hero arrives. */
+.service-journey-hero.service-journey-hero--loading {
+  min-height: 100svh;
+  background: linear-gradient(180deg, #0b0c0d 0%, var(--color-bg) 100%);
 }
 
 .service-skeleton-copy {
@@ -3309,19 +3377,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-skeleton-frame {
-  aspect-ratio: 4 / 5;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: clamp(1.25rem, 3vw, 2.25rem);
-}
-
-@media (max-width: 900px) {
-  .service-skeleton-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .service-skeleton-frame {
-    aspect-ratio: 4 / 3;
-  }
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3410,7 +3466,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   grid-template-columns: minmax(0, 1.08fr) minmax(20rem, 0.92fr);
   align-items: center;
   gap: clamp(3rem, 7vw, 7rem);
-  max-width: 76rem;
 }
 
 .service-journey-hero-copy {
@@ -3738,7 +3793,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .service-journey-container {
-  max-width: 76rem;
   padding-block: var(--space-20) var(--space-24);
 }
 
@@ -3898,20 +3952,27 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 /* ── "Team JD Standard" scroll-drawn timeline ─────────────── */
 .service-standard {
+  /* One axis for the whole section: the step badges and the rail are centred under
+     the heading's mark, and step text, federations and heading text share one left
+     edge (the mark's width plus the heading gap). */
+  --standard-mark: 3.5rem;
+  --standard-gap: var(--space-6);
+  --standard-indent: calc(var(--standard-mark) + var(--standard-gap));
+  --standard-node: 1.75rem;
+  --standard-axis: calc(var(--standard-mark) / 2);
   margin-bottom: var(--service-section-gap);
 }
 
 .service-standard-heading {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--standard-gap);
   align-items: start;
   max-width: 58rem;
   margin-bottom: var(--space-12);
 }
 
 .service-standard-heading h2 {
-  max-width: 18ch;
   margin-bottom: var(--space-4);
 }
 
@@ -3924,8 +3985,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .service-standard-track {
   position: relative;
-  max-width: 52rem;
-  padding-left: 3.25rem;
+  max-width: calc(52rem + var(--standard-indent));
+  padding-left: var(--standard-indent);
 }
 
 /* Static base rail + accent line drawn by scroll progress */
@@ -3934,7 +3995,7 @@ p  { line-height: 1.7; color: var(--color-text); }
   position: absolute;
   top: 0.4rem;
   bottom: 0.4rem;
-  left: 1.05rem;
+  left: calc(var(--standard-axis) - 1px);
   width: 2px;
   border-radius: 999px;
 }
@@ -3966,15 +4027,17 @@ p  { line-height: 1.7; color: var(--color-text); }
    step marker within a single section, so it reads quieter and squarer. */
 .service-standard-node {
   position: absolute;
+  z-index: 1;
   top: -0.05rem;
-  left: -3.25rem;
+  left: calc(var(--standard-axis) - var(--standard-node) / 2 - var(--standard-indent));
   display: grid;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: var(--standard-node);
+  height: var(--standard-node);
   border-radius: 0.4rem;
   color: rgba(var(--svc-accent-rgb), 0.75);
-  background: rgba(255, 255, 255, 0.045);
+  /* Opaque, so the rail passes behind the badge rather than through it. */
+  background: linear-gradient(rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.045)), var(--color-bg);
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -3991,7 +4054,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 .service-standard-federations {
   max-width: 52rem;
   margin-top: var(--space-10);
-  margin-left: 3.25rem;
+  margin-left: var(--standard-indent);
 }
 
 .service-standard-mark,
@@ -6601,6 +6664,12 @@ p  { line-height: 1.7; color: var(--color-text); }
     grid-template-columns: 1fr;
   }
 
+  /* The heading stacks here, so the steps get a tighter indent of their own. */
+  .service-standard {
+    --standard-indent: 2.5rem;
+    --standard-axis: calc(var(--standard-node) / 2);
+  }
+
   .service-inclusions-grid {
     grid-template-columns: 1fr;
   }
@@ -6673,7 +6742,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 @media (max-width: 640px) {
   .service-journey-hero {
-    padding-block: calc(4.5rem + var(--space-4)) var(--space-8);
+    padding-block: calc(4.5rem + var(--space-6)) var(--space-8);
   }
 
   .service-menu-link {
@@ -6866,25 +6935,10 @@ p  { line-height: 1.7; color: var(--color-text); }
     font-size: 2.75rem;
   }
 
-  .service-standard-track {
-    padding-left: 2.5rem;
-  }
-
-  .service-standard-track::before,
-  .service-standard-line {
-    left: 0.8rem;
-  }
-
   .service-standard-node {
-    left: -2.5rem;
-    width: 1.75rem;
-    height: 1.75rem;
     font-size: 0.56rem;
   }
 
-  .service-standard-federations {
-    margin-left: 0;
-  }
 
   .qualification-options,
   .service-finder-options {
@@ -6920,19 +6974,18 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 @media (max-width: 390px) {
-  .service-journey-hero {
-    padding-top: calc(4.5rem + var(--space-2));
-  }
-
-  .service-menu-link,
+  /* Small phones keep the hero's rhythm (it used to be squeezed to 8px gaps); the
+     CTA instead gets tighter padding so labels like "Book Online Coaching Consult"
+     stay on one line beside their arrow. */
   .service-journey-kickers,
   .service-journey-hero h1 {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
   }
 
-  .service-hero-stats,
-  .service-pricing-conversion--hero {
-    margin-top: var(--space-2);
+  .service-pricing-conversion--hero .service-pricing-conversion-action .btn {
+    padding-inline: var(--space-4);
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -6976,7 +7029,8 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .route-loading {
-  min-height: calc(100vh - 4.5rem);
+  /* Fills the screen while a page loads (the footer waits with the page). */
+  min-height: 100svh;
   display: grid;
   place-items: center;
   padding: var(--space-20) var(--container-pad);
@@ -6988,62 +7042,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   position: relative;
 }
 
-.cta-banner {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
-  padding: 0;
-  overflow: hidden;
-  text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(145deg, rgba(31, 34, 35, 0.94), rgba(20, 22, 23, 0.94));
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
-}
-
-.cta-banner-copy {
-  padding: clamp(2.5rem, 4vw, 3.5rem);
-}
-
-.cta-banner .eyebrow {
-  display: inline-block;
-  margin-bottom: var(--space-4);
-}
-
-.cta-banner h2 {
-  max-width: 15ch;
-  margin-bottom: var(--space-4);
-  font-size: clamp(2rem, 3.6vw, 3.25rem);
-  line-height: 1.02;
-}
-
-.cta-banner p {
-  max-width: 42rem;
-  margin: 0;
-  color: #b3b3b3;
-  font-size: 1.0625rem;
-}
-
-.cta-banner-action-zone {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  padding: clamp(2.5rem, 4vw, 3.5rem);
-}
-
-.cta-banner .actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-3);
-}
-
-.cta-banner .actions .btn {
-  justify-content: center;
-  width: 100%;
-}
 
 .about-photo-wrap {
   position: static;
@@ -7067,19 +7065,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   height: 100%;
 }
 
-.about-photo-frame {
-  aspect-ratio: 3 / 4;
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-.about-identity-card {
-  margin-top: var(--space-5);
-  border-radius: 0;
-  border-inline: 0;
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(20, 21, 22, 0.94);
-}
-
 .about-stats {
   margin: auto 0 0;
   padding-top: var(--space-5);
@@ -7100,11 +7085,6 @@ p  { line-height: 1.7; color: var(--color-text); }
 .about-bio-copy .eyebrow {
   display: inline-block;
   margin-bottom: var(--space-3);
-}
-
-.about-bio-copy h2 {
-  max-width: 12ch;
-  margin-bottom: var(--space-8);
 }
 
 .about-bio-copy p,
@@ -7810,9 +7790,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-top: 0;
   }
 
-  .cta-banner h2 {
-    max-width: 15ch;
-  }
 
   .about-bio-grid,
   .about-process-story,
@@ -7888,12 +7865,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   .cta-banner-copy,
   .cta-banner-action-zone {
     padding: var(--space-7) var(--space-5);
-  }
-
-  .cta-banner .actions .btn,
-  .about-bio-actions .btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .about-editorial-quote {
@@ -8254,10 +8225,10 @@ p  { line-height: 1.7; color: var(--color-text); }
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 2.65rem;
-  padding-inline: var(--space-3);
+  height: 3rem;
+  padding-inline: var(--space-4);
   border: 1px solid var(--color-accent);
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   color: #071012;
   background: var(--color-accent);
   font-size: 0.72rem;
@@ -8283,11 +8254,24 @@ p  { line-height: 1.7; color: var(--color-text); }
   flex: 0 0 auto;
 }
 
+/* A flex row sized to the controls actually shown (the type select only appears
+   when the library mixes types), so nothing stretches into an empty column. */
 .results-toolbar-primary {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(170px, 0.36fr) minmax(165px, 0.34fr) auto;
+  display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.results-toolbar-primary > .results-search {
+  flex: 1 1 18rem;
+}
+
+.results-toolbar-primary > .results-select {
+  flex: 0 1 11rem;
+}
+
+.results-toolbar-primary > .results-toolbar-toggle {
+  flex: none;
 }
 
 .results-toolbar-reveal {
@@ -8929,9 +8913,6 @@ p  { line-height: 1.7; color: var(--color-text); }
     max-width: 16ch;
   }
 
-  .results-toolbar-primary {
-    grid-template-columns: minmax(0, 1fr) minmax(160px, 0.36fr) minmax(155px, 0.34fr) auto;
-  }
 
   .results-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -8974,19 +8955,17 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-block: var(--space-4);
   }
 
+  /* Search on its own row, then the select(s) and the toggle share the next one. */
   .results-toolbar-primary {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
+    flex-wrap: wrap;
   }
 
-
-  .results-search {
-    grid-column: 1 / -1;
+  .results-toolbar-primary > .results-search {
+    flex-basis: 100%;
   }
 
-  .results-toolbar-primary > .results-toolbar-toggle {
-    grid-column: 1 / -1;
-    justify-self: end;
+  .results-toolbar-primary > .results-select {
+    flex: 1 1 0;
   }
 
   .results-search input,
@@ -9464,6 +9443,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .contact-route h2 {
   max-width: 14ch;
+  text-wrap: balance;
   margin-bottom: var(--space-4);
   font-size: clamp(1.55rem, 2.45vw, 2.2rem);
 }
@@ -9603,6 +9583,10 @@ p  { line-height: 1.7; color: var(--color-text); }
 }
 
 .contact-media-reel figcaption a {
+  /* A 24px tap target without moving the caption: padding out, margin back in. */
+  display: inline-block;
+  padding-block: 0.3125rem;
+  margin-block: -0.3125rem;
   opacity: 0.68;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.62rem;
@@ -9731,6 +9715,8 @@ p  { line-height: 1.7; color: var(--color-text); }
   justify-content: flex-end;
   gap: var(--space-5);
   margin-top: var(--space-12);
+  /* The same inset as the service rows, so its link ends where theirs do. */
+  padding-inline: var(--space-4);
   color: var(--color-text-muted);
   font-size: 0.9375rem;
 }
@@ -9888,6 +9874,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .contact-form-actions > p {
   max-width: 16rem;
+  text-wrap: balance;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
   line-height: 1.55;
@@ -10207,14 +10194,15 @@ p  { line-height: 1.7; color: var(--color-text); }
     grid-column: 1;
   }
 
-  .contact-route--primary {
-    min-height: 22rem;
+  /* Stacked, the two routes share both edges and a height. */
+  .contact-route--primary,
+  .contact-route--secondary {
+    min-height: 19rem;
+    margin: 0;
   }
 
-  .contact-route--secondary {
-    width: calc(100% - 4rem);
-    min-height: 19rem;
-    margin: var(--space-4) 0 0 auto;
+  .contact-route h2 {
+    max-width: none;
   }
 
   .contact-service-row {

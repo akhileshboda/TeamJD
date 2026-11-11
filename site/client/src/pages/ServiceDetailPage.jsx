@@ -38,19 +38,27 @@ export default function ServiceDetailPage() {
     noindex: missing,
   })
 
+  // Normally the services arrive with the page (App.jsx), so this only shows if
+  // they are slow or fail. It uses the hero's own layout and fills the screen, so
+  // nothing below it is visible to move when the real hero replaces it. The
+  // distinct keys stop React reusing the placeholder's nodes for the real page.
   if (!services) {
     return (
-      <div className="service-route-loading" role="status">
-        <span className="visually-hidden">Loading service</span>
-        <div className="service-skeleton-hero" aria-hidden="true">
-          <div className="service-skeleton-copy">
-            <div className="service-skeleton-bar service-skeleton-bar--chip" />
-            <div className="service-skeleton-bar service-skeleton-bar--title" />
-            <div className="service-skeleton-bar service-skeleton-bar--title-short" />
-            <div className="service-skeleton-bar service-skeleton-bar--text" />
+      <div className="service-journey-theme service-journey-theme--loading" key="loading">
+        <section className="service-journey-hero service-journey-hero--loading" role="status">
+          <span className="visually-hidden">Loading service</span>
+          <div className="container service-journey-hero-inner" aria-hidden="true">
+            <div className="service-skeleton-copy">
+              <div className="service-skeleton-bar service-skeleton-bar--chip" />
+              <div className="service-skeleton-bar service-skeleton-bar--title" />
+              <div className="service-skeleton-bar service-skeleton-bar--title-short" />
+              <div className="service-skeleton-bar service-skeleton-bar--text" />
+            </div>
+            <div className="service-journey-visual">
+              <div className="service-journey-image-frame service-skeleton-frame" />
+            </div>
           </div>
-          <div className="service-skeleton-frame" />
-        </div>
+        </section>
       </div>
     )
   }
@@ -82,7 +90,7 @@ export default function ServiceDetailPage() {
   const bookingAction = resolveServiceAction(service)
 
   return (
-    <div className="service-journey-theme" style={themeVars}>
+    <div className="service-journey-theme" style={themeVars} key={`service-${slug}`}>
       <ServiceDetailHero service={service} services={services} />
 
       <div className="service-journey-page">
