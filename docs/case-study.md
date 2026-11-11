@@ -18,7 +18,7 @@
 
 Jake's leads were going cold. For six months his replies to applicants landed in junk folders, people booked calls without filling in his application, and while he was travelling two of four new applicants signed with other coaches before he saw their forms. His old website, in his words, "could disappear tomorrow and it would have zero impact on the business."
 
-I built him a custom site that qualifies visitors before they book, sends email that actually arrives, and comes with a dashboard where he can change photos, prices, results and settings himself without touching code. The original plan was a one-month WordPress build. What shipped took about eight months and is a bespoke Express and React app, and most of this write-up explains why that trade was worth making and what I'd change.
+I built him a custom site that qualifies visitors before they book, sends email that actually arrives, and comes with a dashboard where he can change photos, prices, results and settings himself without touching code. The original plan was a WordPress site. As AI-assisted development matured, we pivoted to a custom React and Express build, and this write-up covers what that made possible, the decisions behind it and what I'd change.
 
 ---
 
@@ -64,17 +64,15 @@ Section 9 scores the project against each one, including the ones I can't claim 
 
 I was working alone and part-time, alongside study. The work was in-kind, with pay to be discussed after handover, so hosting had to stay close to free. Jake isn't technical and is often away at competitions or overseas, which meant anything he had to maintain needed to work from his phone and couldn't depend on me being around. And his content (120 client result photos, competition videos, testimonials) lived in a Dropbox folder that he kept adding to.
 
-## 5. Plan versus what happened
+## 5. The pivot: from WordPress to a custom React build
 
-The charter planned a WordPress site built in three one-week sprints between 9 July and 8 August 2025, with Figma wireframes first. It listed "custom plugin development or advanced backend functionality" as out of scope.
+The charter planned a WordPress site, with Figma wireframes first, three one-week sprints, and "custom plugin development or advanced backend functionality" explicitly out of scope. For a solo, part-time project in mid-2025 that was the sensible call; a hand-built web app was more than one person could responsibly take on and then maintain.
 
-That isn't what got built. Development started in February 2026 as a static rebuild on GitHub Pages, moved to an Express server in April, gained a React front end in May, and ran through October.
+Then AI-assisted development changed what one developer could ship. Coding agents that work through a well-specified ticket, write tests alongside the code and refactor across a whole codebase turned a custom React and Express app from a stretch into a practical option. So Jake and I pivoted.
 
-<!-- AUTHOR NOTE (Akhil): the reasoning below is inferred from the requirements and the git history. Rewrite it in your own words if your actual reasons were different, then delete this comment. -->
+The interview is why the pivot was worth it. Jake's costliest problems sat *between* his tools: an application that could be skipped, replies that landed in junk, notifications he didn't see. That's exactly the backend work the WordPress plan had ruled out. With a custom build we could own the funnel and the email path directly, and design a dashboard around the four things Jake actually edits instead of handing him a general-purpose CMS and a training session.
 
-Looking back at the interview, the gap was there from the start. Jake's most expensive problems were all in the flow between tools: an application that could be skipped, email that didn't arrive, notifications he didn't see. A themed WordPress site with a contact-form plugin would have looked better than his old site without fixing any of that, because the charter had ruled out exactly the backend work those problems needed. Once I accepted that the funnel and the email path were the product, a custom server was the more honest choice, and it let me build an editing experience shaped around the four things Jake changes rather than a general-purpose CMS he'd need training for.
-
-The cost was time. A one-month project became an eight-month one, and the Figma wireframes never happened; I designed directly in code instead. Both appear again under "What I'd do differently".
+It also changed my role. I spent less effort typing code and more on writing precise tickets, making product calls and reviewing what the agents produced (section 10). The Figma stage was the one casualty: with iteration in code this fast, I designed in the browser instead.
 
 ## 6. Architecture
 
@@ -107,7 +105,7 @@ The React app is a single-page app, but Express renders the head tags, structure
 
 | Decision | Alternative I rejected | Why |
 |---|---|---|
-| Custom Express + React app | WordPress with plugins (the original plan) | The core problems were in the lead flow and email path, which plugins would have papered over. A custom build also let me design an admin UI around Jake's four content types. |
+| Custom React + Express app | WordPress with plugins (the original plan) | AI-assisted development made a custom build practical for one developer. The core problems were in the lead flow and email path, which plugins would have papered over, and a custom build let me design an admin UI around Jake's four content types. |
 | Content in one JSON file with draft and published copies, backed up to Dropbox | A database (Postgres, SQLite) | One editor, a few hundred records. A file is easy to inspect, back up and restore ("copy it back and restart"), and keeps the VM simple. |
 | Six-digit email codes for dashboard sign-in, with an allowlist | Passwords | Jake won't remember another password. Codes expire in 10 minutes; five wrong tries lock that device, and 25 across all devices cancel every code, so nobody elsewhere can lock him out. |
 | Hosting on an Oracle VM behind a Cloudflare Tunnel | GitHub Pages, then a Raspberry Pi at home | Pages couldn't run a server. The Pi worked for staging and production but tied uptime to a home connection. The Oracle VM is cheap and always on, and with the tunnel the app only listens on localhost. |
@@ -175,7 +173,7 @@ The changelog came out of the same review. Jake had no easy way to see what had 
 
 **Record a baseline before building.** The charter's headline metric was a 15% rise in enquiries, and I never wrote down how many enquiries Jake got before. I can't prove that number now, whatever happens after launch.
 
-**Renegotiate scope in writing when it changes.** The project moved from WordPress-in-a-month to a custom app over eight months, and the charter never got a v2. The decision was right, but Jake and I should have agreed the new scope and timeline explicitly.
+**Revise the charter when the plan changes.** We agreed the pivot from WordPress to a custom build, but the charter never got a v2. A written revision of scope and success criteria would have made the scorecard in section 9 cleaner.
 
 **Set up CI on day one.** There's no CI and no linter. The tests are good, but they only run when I run them, and running them on Windows for this write-up turned up four deploy-script tests that fail on Windows paths and one dashboard test that fails only in the full run. CI would have caught both on the day they appeared.
 

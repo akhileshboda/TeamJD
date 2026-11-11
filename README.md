@@ -33,7 +33,7 @@ His old website, in his words, "could disappear tomorrow and it would have zero 
 - **Search and AI-crawler output** rendered on the server for a React app, fed from the same content Jake edits.
 - **A plain-English changelog** inside the dashboard, so Jake can see what changed and when.
 
-The original plan was a one-month WordPress site. The [case study](docs/case-study.md) covers why that changed, the decisions and trade-offs, how the work was run, and what I'd do differently.
+The original plan was a WordPress site; as AI-assisted development matured, we pivoted to a custom React build. The [case study](docs/case-study.md) covers that pivot, the decisions and trade-offs, how the work was run, and what I'd do differently.
 
 ## Repository
 
