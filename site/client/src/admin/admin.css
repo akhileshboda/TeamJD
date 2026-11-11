@@ -20,7 +20,16 @@
   --jd-sidebar: 14rem;
   --jd-topbar: 3.25rem;
   --jd-publishbar: 4rem;
-  --jd-radius: 0.625rem;
+  /* One radius and one card inset for every dashboard surface, on the site's shared
+     scale (globals.css :root). Cards in the narrow editor column use the small inset. */
+  --jd-radius: var(--radius-lg);
+  --jd-radius-sm: var(--radius-md);
+  --jd-card-pad: var(--space-5);
+  --jd-card-pad-sm: var(--space-4);
+  --jd-section-gap: var(--space-6);
+  --jd-stack-gap: var(--space-4);
+  /* One gap between the status bar, the form and the preview, both ways. */
+  --jd-editor-gap: var(--space-5);
 
   min-height: 100vh;
   min-height: 100dvh;
@@ -82,7 +91,7 @@ html:has(.jd-admin) {
   left: 1rem;
   top: -3rem;
   z-index: 60;
-  padding: 0.5rem 0.875rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--jd-radius);
   background: var(--jd-live);
   color: #071214;
@@ -108,8 +117,8 @@ html:has(.jd-admin) {
 .jd-admin-brand {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.25rem 0.625rem 1.25rem;
+  gap: 0.75rem;
+  padding: 0.25rem 0.75rem 1.25rem;
   color: var(--jd-muted);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -126,7 +135,7 @@ html:has(.jd-admin) {
   margin-top: 1.25rem;
 }
 .jd-admin-nav-heading {
-  padding: 0 0.625rem 0.375rem;
+  padding: 0 0.75rem 0.5rem;
   color: var(--jd-subtle);
   font-size: 0.75rem;
   font-weight: 600;
@@ -136,7 +145,7 @@ html:has(.jd-admin) {
   align-items: center;
   gap: 0.75rem;
   min-height: 2.25rem;
-  padding: 0 0.625rem;
+  padding: 0 0.75rem;
   border-radius: 0.5rem;
   color: var(--jd-muted);
   font-weight: 600;
@@ -153,7 +162,7 @@ html:has(.jd-admin) {
 
 .jd-admin-account {
   margin-top: 1.5rem;
-  padding: 0.875rem 0.625rem 0;
+  padding: 1rem 0.75rem 0;
   border-top: 1px solid var(--jd-line);
 }
 .jd-admin-account-email {
@@ -360,15 +369,15 @@ html:has(.jd-admin) {
 
 .jd-segmented {
   display: inline-flex;
-  padding: 0.1875rem;
+  padding: 0.25rem;
   border: 1px solid var(--jd-line);
-  border-radius: 0.625rem;
+  border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
 .jd-segmented button {
   min-height: 2.125rem;
-  padding: 0 0.875rem;
-  border-radius: 0.4375rem;
+  padding: 0 1rem;
+  border-radius: var(--jd-radius-sm);
   color: var(--jd-muted);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -380,7 +389,7 @@ html:has(.jd-admin) {
 
 .jd-field {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .jd-field + .jd-field {
   margin-top: 1rem;
@@ -401,8 +410,8 @@ html:has(.jd-admin) {
 }
 .jd-input {
   width: 100%;
-  min-height: 2.375rem;
-  padding: 0.4375rem 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--jd-line-strong);
   border-radius: 0.5rem;
   background: var(--jd-canvas);
@@ -526,7 +535,7 @@ html:has(.jd-admin) {
 .jd-signin-panel {
   padding: 2rem 1.75rem;
   border: 1px solid var(--jd-line);
-  border-radius: 1rem;
+  border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
 .jd-signin-logo-link {
@@ -558,7 +567,7 @@ html:has(.jd-admin) {
   width: 100%;
   min-height: 2.875rem;
   margin-top: 1.25rem;
-  font-size: 0.9375rem;
+  font-size: 1rem;
 }
 .jd-input--code {
   font-size: 1.5rem;
@@ -590,9 +599,9 @@ html:has(.jd-admin) {
 }
 
 .jd-scoreboard {
-  padding: 1.75rem 1.75rem 1.25rem;
+  padding: var(--jd-card-pad);
   border: 1px solid var(--jd-line);
-  border-radius: 1rem;
+  border-radius: var(--jd-radius);
   background:
     radial-gradient(120% 90% at 0% 0%, rgba(22, 201, 221, 0.07), transparent 60%),
     var(--jd-panel);
@@ -613,15 +622,15 @@ html:has(.jd-admin) {
   font-variant-numeric: tabular-nums;
 }
 .jd-scoreboard-label {
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
   color: var(--jd-muted);
-  font-size: 1.0625rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 .jd-change {
   display: inline-block;
   margin-top: 0.75rem;
-  padding: 0.25rem 0.625rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -730,7 +739,7 @@ html:has(.jd-admin) {
 .jd-chart-axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.625rem;
+  margin-top: 0.75rem;
   color: var(--jd-subtle);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
@@ -767,7 +776,7 @@ html:has(.jd-admin) {
     grid-template-columns: minmax(0, 1fr);
   }
   .jd-scoreboard {
-    padding: 1.25rem 1rem 1rem;
+    padding: var(--jd-card-pad);
   }
   .jd-scoreboard-side dd {
     font-size: 1.5rem;
@@ -778,7 +787,7 @@ html:has(.jd-admin) {
 }
 
 .jd-panel {
-  padding: 1.25rem;
+  padding: var(--jd-card-pad);
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
@@ -796,8 +805,8 @@ html:has(.jd-admin) {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.375rem;
-  padding: 0 0.75rem 0.375rem;
+  margin-bottom: 0.5rem;
+  padding: 0 0.75rem 0.5rem;
   border-bottom: 1px solid var(--jd-line);
   color: var(--jd-muted);
   font-size: 0.75rem;
@@ -805,7 +814,7 @@ html:has(.jd-admin) {
 }
 .jd-ranked {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .jd-ranked-row {
   position: relative;
@@ -946,7 +955,7 @@ html:has(.jd-admin) {
 }
 .jd-pending-publish {
   width: 100%;
-  margin-top: 0.875rem;
+  margin-top: 1rem;
 }
 
 /* ── List pages ────────────────────────────────────────────────────────── */
@@ -961,7 +970,7 @@ html:has(.jd-admin) {
 }
 .jd-page-lede {
   max-width: 40rem;
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
   color: var(--jd-muted);
 }
 .jd-list-head-actions {
@@ -1001,11 +1010,11 @@ html:has(.jd-admin) {
   pointer-events: none;
 }
 .jd-search .jd-input {
-  padding-left: 2.25rem;
+  padding-left: 2.5rem;
 }
 .jd-select {
   appearance: none;
-  padding-right: 2.25rem;
+  padding-right: 2.5rem;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
@@ -1025,7 +1034,7 @@ html:has(.jd-admin) {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   border: 1px solid rgba(22, 201, 221, 0.35);
   border-radius: var(--jd-radius);
   background: #10292c;
@@ -1091,9 +1100,9 @@ html:has(.jd-admin) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   min-height: 4rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   background: var(--jd-panel);
 }
 .jd-row:has(.jd-row-thumb) {
@@ -1245,9 +1254,24 @@ html:has(.jd-admin) {
   transform: rotate(180deg);
 }
 
-@media (max-width: 899px) {
-  .jd-row-cell,
+/* Columns give way to the title as the table narrows (by the table's own width,
+   which depends on the sidebar as well as the window). */
+.jd-table {
+  container: jd-table / inline-size;
+}
+@container jd-table (max-width: 64rem) {
+  .jd-row-cell {
+    width: 7.5rem;
+  }
+  .jd-row-status {
+    width: 7rem;
+  }
   .jd-row-updated {
+    display: none;
+  }
+}
+@container jd-table (max-width: 48rem) {
+  .jd-row-cell {
     display: none;
   }
 }
@@ -1302,7 +1326,7 @@ html:has(.jd-admin) {
 .jd-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
   color: var(--jd-muted);
   font-size: 0.875rem;
@@ -1327,12 +1351,19 @@ html:has(.jd-admin) {
   /* The preview gets the larger share; the form stops growing at 34rem. */
   grid-template-columns: minmax(18rem, 2fr) minmax(22rem, 3fr);
   align-items: start;
-  gap: 1.25rem;
+  gap: var(--jd-editor-gap);
+}
+/* Once the form's share would pass its 34rem cap, fix its column at 34rem and give
+   the rest to the preview, so no empty strip opens between the two. */
+@media (min-width: 1650px) {
+  .jd-editor-body {
+    grid-template-columns: 34rem minmax(22rem, 1fr);
+  }
 }
 .jd-editor-form {
   display: grid;
   align-content: start;
-  gap: 0.75rem;
+  gap: var(--jd-editor-gap);
   min-width: 0;
   max-width: 34rem;
 }
@@ -1367,9 +1398,13 @@ html:has(.jd-admin) {
     align-items: stretch;
     min-height: 0;
   }
-  /* A little inner space keeps focus rings from being clipped by the scroll. */
+  /* The form scrolls on its own here. Padding keeps focus rings and the scrollbar
+     from being clipped; the matching negative margins push that padding out into
+     the gutter, so the cards still sit exactly on the column edges and line up
+     with the preview card. */
   .jd-editor-form {
-    margin-left: -0.25rem;
+    max-width: none; /* the grid column caps the width here */
+    margin: -0.25rem -0.75rem 0 -0.25rem;
     padding: 0.25rem 0.75rem 1rem 0.25rem;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -1441,7 +1476,7 @@ html:has(.jd-admin) {
     order: 1;
     min-height: 0;
     margin: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-    padding: 0.5rem 0.875rem;
+    padding: 0.5rem 1rem;
     border: 1px solid var(--jd-line);
     border-radius: var(--jd-radius);
     background: var(--jd-panel);
@@ -1449,19 +1484,19 @@ html:has(.jd-admin) {
 }
 
 .jd-form-section {
-  padding: 1rem;
+  padding: var(--jd-card-pad-sm);
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
 .jd-form-section-head {
-  margin-bottom: 0.875rem;
+  margin-bottom: 1rem;
 }
 .jd-form-section-head h2 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 .jd-form-section-head p,
@@ -1472,25 +1507,23 @@ html:has(.jd-admin) {
 }
 .jd-form-section-body {
   display: grid;
-  gap: 0.875rem;
+  gap: 1rem;
 }
 .jd-form-section-body > .jd-field + .jd-field {
   margin-top: 0;
 }
+/* Side-by-side fields. They stack by default and only go two-up when the form
+   they sit in (not the window) has room: the editor's form column is narrow on
+   laptops even though the window is wide. See "Form density" below. */
 .jd-field-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
-}
-@media (max-width: 559px) {
-  .jd-field-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 .jd-required-tag {
   display: inline-block;
   margin-left: 0.5rem;
-  padding: 0.0625rem 0.375rem;
+  padding: 0.0625rem 0.5rem;
   border: 1px solid rgba(250, 128, 114, 0.45);
   border-radius: 999px;
   color: var(--jd-pending);
@@ -1524,7 +1557,7 @@ html:has(.jd-admin) {
 .jd-choice-options {
   display: grid;
   gap: 0.5rem;
-  margin-top: 0.375rem;
+  margin-top: 0.5rem;
 }
 .jd-choice-option {
   display: flex;
@@ -1596,7 +1629,7 @@ html:has(.jd-admin) {
 .jd-site-switch {
   display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.75rem;
   min-height: 2.75rem;
   padding: 0;
   border: 0;
@@ -1648,7 +1681,7 @@ html:has(.jd-admin) {
 
 .jd-photo-field {
   display: grid;
-  gap: 0.875rem;
+  gap: 1rem;
 }
 .jd-photo-frame {
   display: grid;
@@ -1678,7 +1711,7 @@ html:has(.jd-admin) {
 
 .jd-usage ul {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .jd-usage a {
   color: var(--jd-live);
@@ -1691,7 +1724,7 @@ html:has(.jd-admin) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0.75rem;
+  padding: var(--jd-card-pad-sm);
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
@@ -1702,7 +1735,7 @@ html:has(.jd-admin) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 0.75rem;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.75rem;
 }
 .jd-preview-heading {
   min-width: 0;
@@ -1761,8 +1794,8 @@ html:has(.jd-admin) {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  margin-bottom: 1rem;
-  padding: 0.5rem 0.875rem;
+  margin-bottom: var(--jd-editor-gap);
+  padding: 0.5rem 1rem;
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
@@ -1771,7 +1804,7 @@ html:has(.jd-admin) {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   min-width: 0;
 }
 .jd-publish-bar-text {
@@ -1875,10 +1908,10 @@ html:has(.jd-admin) {
 .jd-toast {
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
-  padding: 0.75rem 0.5rem 0.75rem 0.875rem;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
   border: 1px solid rgba(22, 201, 221, 0.35);
-  border-radius: 0.625rem;
+  border-radius: var(--jd-radius);
   background: #10292c;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   color: #dff8fb;
@@ -1954,7 +1987,7 @@ html:has(.jd-admin) {
   .jd-toast-close {
     width: 2.75rem;
     height: 2.75rem;
-    margin: -0.625rem -0.25rem -0.625rem 0;
+    margin: -0.75rem -0.25rem -0.75rem 0;
   }
 }
 
@@ -1973,7 +2006,7 @@ html:has(.jd-admin) {
   width: min(28rem, 100%);
   padding: 1.5rem;
   border: 1px solid var(--jd-line-strong);
-  border-radius: 1rem;
+  border-radius: var(--jd-radius);
   background: var(--jd-panel);
   box-shadow: var(--shadow-modal);
 }
@@ -2026,11 +2059,11 @@ html:has(.jd-admin) {
   font-size: 0.8125rem;
 }
 .jd-uploader--compact .jd-dropzone {
-  padding: 0.875rem 1rem;
+  padding: 1rem 1rem;
 }
 .jd-upload-queue {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 .jd-upload-item {
   position: relative;
@@ -2096,17 +2129,17 @@ html:has(.jd-admin) {
   position: absolute;
   right: 0.375rem;
   bottom: 0.375rem;
-  padding: 0.0625rem 0.375rem;
+  padding: 0.0625rem 0.5rem;
   border-radius: 0.25rem;
   background: rgba(0, 0, 0, 0.75);
   color: var(--jd-text);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
 .jd-dialog.jd-picker {
   display: grid;
-  gap: 0.875rem;
+  gap: 1rem;
   width: min(56rem, 100%);
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
@@ -2126,14 +2159,14 @@ html:has(.jd-admin) {
 .jd-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 .jd-picker-tile,
 .jd-media-tile {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.375rem;
+  padding: 0.5rem;
   border: 2px solid transparent;
   border-radius: 0.75rem;
   text-align: left;
@@ -2227,7 +2260,7 @@ html:has(.jd-admin) {
 }
 .jd-asset-facts {
   display: grid;
-  gap: 0.375rem;
+  gap: 0.5rem;
   font-size: 0.8125rem;
 }
 .jd-asset-facts div {
@@ -2248,7 +2281,7 @@ html:has(.jd-admin) {
   width: 100%;
 }
 .jd-asset-usage h3 {
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 700;
 }
@@ -2269,7 +2302,7 @@ html:has(.jd-admin) {
     top: auto;
     max-height: 80dvh;
     overscroll-behavior: contain;
-    border-radius: 1rem 1rem 0 0;
+    border-radius: var(--jd-radius) var(--jd-radius) 0 0;
     box-shadow: var(--shadow-modal);
   }
 }
@@ -2309,7 +2342,7 @@ html:has(.jd-admin) {
   display: grid;
   justify-items: start;
   gap: 0.25rem;
-  padding: 0.875rem 1rem 1rem;
+  padding: 1rem 1rem 1rem;
 }
 .jd-page-card-body > span:not(.jd-chip) {
   color: var(--jd-muted);
@@ -2370,19 +2403,23 @@ html:has(.jd-admin) {
 .jd-list-field,
 .jd-rows-field {
   display: grid;
-  gap: 0.625rem;
+  gap: 0.75rem;
   border: 0;
 }
 .jd-list-field-items,
 .jd-rows-field-items {
   display: grid;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 .jd-list-field-items > li,
 .jd-rows-field-row {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.5rem;
+}
+.jd-rows-controls {
+  justify-content: flex-end;
 }
 .jd-list-field-items > li > .jd-field,
 .jd-rows-field-cells {
@@ -2399,11 +2436,9 @@ html:has(.jd-admin) {
   display: grid;
   gap: 0.75rem;
 }
-.jd-rows-field-cells--2 {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-}
+.jd-rows-field-cells--2,
 .jd-rows-field-cells--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 .jd-rows-controls {
   display: flex;
@@ -2419,29 +2454,99 @@ html:has(.jd-admin) {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-@media (max-width: 719px) {
-  .jd-rows-field-row,
-  .jd-list-field-items > li {
-    flex-direction: column;
-    align-items: stretch;
+/* ── Form density ──────────────────────────────────────────────────────────
+   Forms lay out by the width of the form itself, not the window. The editor's
+   form column is only ~300-550px wide on laptops and desktops, so window
+   breakpoints gave desktop the most cramped forms. */
+.jd-editor-form,
+.jd-settings-panel {
+  container: jd-form / inline-size;
+}
+/* Each side-by-side field spans label / hint / input / count-or-error rows of a
+   shared subgrid, so labels and inputs line up across the row even when only one
+   field has a hint or a Required tag. */
+@container jd-form (min-width: 30rem) {
+  .jd-field-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, auto);
+    row-gap: 0;
   }
-  .jd-rows-field-cells--2,
+  .jd-field-row > .jd-field {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0.5rem;
+    align-content: start;
+  }
+  .jd-field-row > .jd-field > .jd-field-label {
+    grid-row: 1;
+  }
+  .jd-field-row > .jd-field > .jd-field-hint {
+    grid-row: 2;
+  }
+}
+/* Pin each part of a side-by-side field to its own row of the shared subgrid, so a
+   field without a hint keeps its input level with a neighbour that has one. */
+.jd-field-row > .jd-field > :not(.jd-field-label, .jd-field-hint, .jd-field-count, .jd-field-error),
+.jd-rows-field-cells > .jd-field > :not(.jd-field-label, .jd-field-hint, .jd-field-count, .jd-field-error) {
+  grid-row: 3;
+}
+.jd-field-row > .jd-field > .jd-field-count,
+.jd-rows-field-cells > .jd-field > .jd-field-count {
+  grid-row: 4;
+}
+.jd-field-row > .jd-field > .jd-field-error,
+.jd-rows-field-cells > .jd-field > .jd-field-error {
+  grid-row: 5;
+}
+/* Label/value rows sit inside a padded row box, so they need more room before
+   going two-up. */
+@container jd-form (min-width: 34rem) {
+  .jd-rows-field-cells--2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    grid-template-rows: repeat(5, auto);
+    row-gap: 0;
+  }
+  .jd-rows-field-cells--2 > .jd-field {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0.5rem;
+    align-content: start;
+  }
+  .jd-rows-field-cells--2 > .jd-field > .jd-field-label {
+    grid-row: 1;
+  }
+  .jd-rows-field-cells--2 > .jd-field > .jd-field-hint {
+    grid-row: 2;
+  }
+}
+/* Three cells plus the move/remove controls need real width: the reorder
+   buttons sit beside the cells only from here up. */
+@container jd-form (min-width: 40rem) {
+  .jd-list-field-items > li,
+  .jd-rows-field-row {
+    flex-direction: row;
+    align-items: flex-end;
+  }
   .jd-rows-field-cells--3 {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(5, auto);
+    row-gap: 0;
   }
-  .jd-rows-controls {
-    justify-content: flex-end;
+  .jd-rows-field-cells--3 > .jd-field {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0.5rem;
+    align-content: start;
   }
-}
-
-/* Side-by-side fields line up on their inputs even when only some have hints. */
-.jd-field-row {
-  align-items: end;
-}
-/* Cells of a row start level, and a growing field (a title beside its
-   description) fills the row's height. */
-.jd-rows-field-cells {
-  align-items: stretch;
+  .jd-rows-field-cells--3 > .jd-field > .jd-field-label {
+    grid-row: 1;
+  }
+  .jd-rows-field-cells--3 > .jd-field > .jd-field-hint {
+    grid-row: 2;
+  }
 }
 .jd-rows-field-cells > .jd-field + .jd-field,
 .jd-field-row > .jd-field + .jd-field {
@@ -2486,7 +2591,7 @@ html:has(.jd-admin) {
   align-items: center;
   gap: 0.75rem;
   min-height: 3.75rem;
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1rem;
   border-left: 3px solid transparent;
 }
 .jd-settings-link:hover {
@@ -2513,7 +2618,7 @@ html:has(.jd-admin) {
 }
 .jd-settings-panel {
   min-width: 0;
-  padding: 1.5rem;
+  padding: var(--jd-card-pad);
   border: 1px solid var(--jd-line);
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
@@ -2624,12 +2729,12 @@ html:has(.jd-admin) {
   }
 }
 .jd-seo-page legend {
-  padding: 0 0.375rem;
+  padding: 0 0.5rem;
 }
 .jd-search-preview {
   display: grid;
   gap: 0.125rem;
-  padding: 0.75rem 0.875rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   background: #f8f9fa;
   color: #202124;
@@ -2698,7 +2803,7 @@ html:has(.jd-admin) {
   gap: 0.75rem;
   min-height: 3.25rem;
   margin: 0;
-  padding: 0.75rem 1rem;
+  padding: var(--jd-card-pad-sm);
   border-radius: var(--jd-radius);
   cursor: pointer;
   list-style: none;
@@ -2738,7 +2843,7 @@ html:has(.jd-admin) {
   transform: rotate(180deg);
 }
 .jd-form-section--collapsible > .jd-form-section-body {
-  padding: 0 1rem 1rem;
+  padding: 0 var(--jd-card-pad-sm) var(--jd-card-pad-sm);
 }
 .jd-form-section--collapsible[open] > summary {
   border-radius: var(--jd-radius) var(--jd-radius) 0 0;
@@ -2792,7 +2897,7 @@ html:has(.jd-admin) {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 .jd-framer-zoom input {
   flex: 1;
@@ -2823,7 +2928,7 @@ html:has(.jd-admin) {
   display: grid;
   grid-template-columns: 5.5rem 1fr 2.75rem;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 .jd-trimmer-row input {
   min-height: 2.75rem;
@@ -2843,7 +2948,7 @@ html:has(.jd-admin) {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.625rem;
+  margin-top: 0.75rem;
   color: var(--jd-muted);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -2955,7 +3060,7 @@ html:has(.jd-admin) {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.25rem 1rem;
-  margin-bottom: 0.875rem;
+  margin-bottom: 1rem;
 }
 .jd-panel-head .jd-panel-title {
   margin-bottom: 0;
@@ -2963,7 +3068,7 @@ html:has(.jd-admin) {
 .jd-whatsnew-all {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   color: var(--jd-live);
   font-size: 0.875rem;
   font-weight: 600;
