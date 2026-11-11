@@ -66,9 +66,11 @@ export default function AdminApp() {
     }
   }
 
+  // Each state is its own tree (the keys stop React reusing the spinner's box as the
+  // shell, which made the whole page jump when the session check finished).
   if (session.status === 'checking') {
     return (
-      <div className="jd-admin jd-admin--bare">
+      <div key="bare" className="jd-admin jd-admin--bare">
         <Loading />
       </div>
     )
@@ -76,7 +78,7 @@ export default function AdminApp() {
 
   if (session.status === 'out') {
     return (
-      <div className="jd-admin jd-admin--bare">
+      <div key="bare" className="jd-admin jd-admin--bare">
         <SignIn
           notice={session.error}
           onSignedIn={(email) => setSession({ status: 'in', email })}
@@ -86,7 +88,7 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="jd-admin">
+    <div key="app" className="jd-admin">
       <AdminShell email={session.email} onSignOut={handleSignOut} inert={session.expired}>
         <Suspense fallback={<Loading />}>
           <Routes>

@@ -1,4 +1,5 @@
 [
+  { "date": "2026-11-11", "text": "Dashboard: Home is tidier. The latest updates sit right under the page title, everything is evenly spaced, the page no longer jumps around while it loads, wide screens use the full width, and if the visit numbers can't load there is now a Try again button." },
   { "date": "2026-11-11", "text": "Dashboard: on phones the publish bar no longer covers the end of a form, fields you tab to stay clear of the bars at the top and bottom, and ticking items in a list no longer shifts the list under your finger." },
   { "date": "2026-11-11", "text": "Dashboard: editing is roomier on laptops and desktops. Price, fact and link boxes are full width instead of a few letters wide, fields in a row line up, the form and live preview sit evenly side by side, and list titles have room to show. Cards across the dashboard now share the same spacing and corners." },
   { "date": "2026-11-11", "text": "Dashboard: error messages show in red again, hints and labels are greyed back to their quieter style, the visit trend shows its up or down colour, and Settings headings are their proper size." },

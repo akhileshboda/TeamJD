@@ -519,8 +519,14 @@ html:has(.jd-bulk-bar) {
   background-size: 200% 100%;
   animation: jd-shimmer 1.4s ease-in-out infinite;
 }
-.jd-skeleton--scoreboard {
-  height: 26rem;
+/* Placeholder text keeps the real line box; only the shimmer shows. */
+.jd-skeleton-text {
+  display: inline-block;
+  color: transparent;
+  border-radius: var(--jd-radius-sm);
+}
+.jd-change.jd-skeleton-text {
+  border-color: transparent;
 }
 @keyframes jd-shimmer {
   to {
@@ -614,13 +620,32 @@ html:has(.jd-bulk-bar) {
 
 /* ── Home: scoreboard ──────────────────────────────────────────────────── */
 
+/* Home: heading, What's new, the visits card, the two lists and the footnote,
+   one even gap apart. */
+.jd-home,
+.jd-home-body {
+  display: grid;
+  gap: var(--jd-section-gap);
+}
 .jd-home-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+}
+/* The numbers couldn't load: a card in the visits card's place, with a retry. */
+.jd-home-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-color: rgba(255, 107, 107, 0.35);
+}
+.jd-home-error p {
+  flex: 1 1 16rem;
+  color: var(--jd-text);
 }
 .jd-home-body.is-refreshing {
   opacity: 0.6;
@@ -638,7 +663,8 @@ html:has(.jd-bulk-bar) {
 .jd-scoreboard-figures {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  /* Page views and pages per visit line up with the top of the big number. */
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1.5rem 2.5rem;
   margin-bottom: 1.75rem;
@@ -691,8 +717,13 @@ html:has(.jd-bulk-bar) {
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
+/* Same height as the chart and its date axis, so the card doesn't change size
+   between a quiet period and a busy one. */
 .jd-scoreboard-empty {
-  padding: 2.5rem 1rem;
+  display: grid;
+  place-items: center;
+  min-height: calc(var(--jd-chart-h) + 0.75rem + 1.125rem);
+  padding: 1rem;
   border: 1px dashed var(--jd-line-strong);
   border-radius: var(--jd-radius);
   color: var(--jd-muted);
@@ -702,9 +733,15 @@ html:has(.jd-bulk-bar) {
 .jd-chart {
   margin: 0;
 }
+.jd-scoreboard {
+  --jd-chart-h: 15rem;
+}
+.jd-chart-legend.is-placeholder {
+  visibility: hidden;
+}
 .jd-chart-plot {
   position: relative;
-  height: 15rem;
+  height: var(--jd-chart-h);
   border-radius: 0.375rem;
   touch-action: pan-y;
 }
@@ -797,8 +834,7 @@ html:has(.jd-bulk-bar) {
 .jd-home-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--jd-section-gap);
 }
 @media (max-width: 719px) {
   .jd-home-grid {
@@ -810,8 +846,8 @@ html:has(.jd-bulk-bar) {
   .jd-scoreboard-side dd {
     font-size: 1.5rem;
   }
-  .jd-chart-plot {
-    height: 11rem;
+  .jd-scoreboard {
+    --jd-chart-h: 11rem;
   }
 }
 
@@ -830,6 +866,11 @@ html:has(.jd-bulk-bar) {
   color: var(--jd-muted);
 }
 
+/* The bars bleed into the card's padding so the labels line up with the card title. */
+.jd-ranked-head,
+.jd-ranked {
+  margin-inline: -0.75rem;
+}
 .jd-ranked-head {
   display: flex;
   justify-content: space-between;
@@ -876,7 +917,6 @@ html:has(.jd-bulk-bar) {
 }
 
 .jd-footnote {
-  margin-top: 1.25rem;
   color: var(--jd-subtle);
   font-size: 0.8125rem;
 }
@@ -3121,8 +3161,30 @@ html:has(.jd-bulk-bar) {
 
 /* ── What's new (Home) and the Change log ──────────────────────────────── */
 
-.jd-whatsnew {
-  margin-bottom: 1.5rem;
+/* What's new is a teaser for the Change log: each update is one line on wide
+   screens (two on phones), so the card has the same height before and after the
+   updates load and its text spans the card instead of stopping half-way. */
+.jd-whatsnew .jd-changelog-text {
+  display: -webkit-box;
+  max-width: none;
+  min-height: calc(2 * 1.55em);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+@media (min-width: 720px) {
+  .jd-whatsnew .jd-changelog-text {
+    min-height: 1.55em;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+}
+.jd-skeleton.jd-changelog-date {
+  justify-self: start;
+}
+.jd-whatsnew .jd-skeleton.jd-changelog-text {
+  display: block;
 }
 .jd-panel-head {
   display: flex;

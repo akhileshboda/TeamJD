@@ -55,6 +55,22 @@ describe('Home stats', () => {
     expect(await screen.findByText(/No visits counted yet/)).toBeInTheDocument()
     expect(screen.queryByRole('img', { name: /Daily visits/ })).not.toBeInTheDocument()
   })
+
+  it('offers a Try again button when the numbers cannot load, and recovers', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Could not load visit numbers.' }), { status: 500 }))
+      .mockResolvedValue(new Response(JSON.stringify(stats()), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    render(<MemoryRouter><HomeStats whatsNew={<p>Updates slot</p>} /></MemoryRouter>)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load visit numbers.')
+    expect(screen.getByText('Updates slot')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('21')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('stat helpers', () => {

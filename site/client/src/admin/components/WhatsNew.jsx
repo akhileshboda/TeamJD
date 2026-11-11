@@ -25,7 +25,17 @@ export default function WhatsNew() {
 
       {/* Updates are nice to have, so a failure here stays quiet rather than raising an alert over Home. */}
       {error && <p className="jd-panel-empty" role="status">The latest updates could not be loaded.</p>}
-      {!entries && !error && <div className="jd-skeleton jd-skeleton--whatsnew" role="status" aria-label="Loading updates" />}
+      {/* Same rows as the loaded list, so nothing below moves when updates arrive. */}
+      {!entries && !error && (
+        <ol className="jd-changelog" role="status" aria-label="Loading updates">
+          {Array.from({ length: RECENT_COUNT }, (_, index) => (
+            <li key={index} className="jd-changelog-entry">
+              <span className="jd-changelog-date jd-skeleton jd-skeleton-text">00 Mon 0000</span>
+              <span className="jd-changelog-text jd-skeleton jd-skeleton-text">&nbsp;</span>
+            </li>
+          ))}
+        </ol>
+      )}
       {entries?.length === 0 && <p className="jd-panel-empty">Nothing posted yet.</p>}
       {entries?.length > 0 && <ChangelogList entries={entries.slice(0, RECENT_COUNT)} />}
     </aside>
