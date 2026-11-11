@@ -9,7 +9,7 @@
 | **Role** | Sole consultant: requirements analysis, design, front-end and back-end development, hosting, documentation |
 | **Timeline** | Requirements interview July 2025; build February to October 2026 |
 | **Technology** | React 18 and Vite; Node 22 and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on an Oracle Cloud virtual machine |
-| **Scale** | 106 commits; 435 automated tests; 31 client-facing changelog entries |
+| **Scale** | 114 commits; 469 automated tests; 32 client-facing changelog entries |
 | **Website** | [team-jd.com.au](https://team-jd.com.au) |
 
 ---
@@ -140,6 +140,7 @@ The dashboard provides the following functions:
 - **Pages.** Every photograph and video position on the site can be replaced. Images store a focal point and zoom level rather than a fixed crop, because the same position has different proportions on mobile and desktop layouts.
 - **Results, Services & prices, and FAQs.** Edits are saved automatically as drafts and are published only on request. A Live control adds an item to, or removes it from, the public site.
 - **Media library.** Supports uploads from a phone in 32 MB chunks with automatic conversion, and shows where each file is used. Files in use cannot be deleted.
+- **Video framing and trimming.** The Contact page's looping video can be replaced, framed within its banner and trimmed so that only a chosen section loops. The trim is applied at playback rather than by re-encoding, and the server validates it against the video's length with a two-second minimum.
 - **Settings.** Controls site visibility (the under-construction page), contact and social media links, the enquiry destination address, search listing text and booking links. Changes take effect as soon as they are saved.
 - **Live preview.** Displays the public page alongside the editing form and scrolls to the section being edited.
 
@@ -148,11 +149,11 @@ The dashboard provides the following functions:
 
 ## 9. Outcomes
 
-The website has been built and deployed to the production server. It is currently held behind its under-construction page, which is controlled from the dashboard, so the timing of the public launch rests with the client. Traffic and enquiry data are not yet available, and the assessment below reflects this.
+The website was deployed to production on 5 November 2026. It is deliberately held behind its under-construction page until launch: every public route returns HTTP 503 with a `noindex` directive, so search engines do not index the site prematurely. The client controls the launch from the dashboard's Site visibility setting, and the go-live checks and Google Search Console steps are documented in [`site/docs/deployment-oracle.md`](../site/docs/deployment-oracle.md). Traffic and enquiry data are not yet available, and the assessment below reflects this.
 
 | Charter criterion | Status |
 |---|---|
-| Responsive website deployed to the domain | **Deployed.** Public launch is controlled by the client. |
+| Responsive website deployed to the domain | **Deployed** on 5 November 2026. Public launch is controlled by the client. |
 | 15% increase in enquiries in the first month | **Not yet measurable.** No pre-launch baseline was recorded, and the site has not yet launched publicly. |
 | Five or more testimonials and a certification badge | **Met.** Six client testimonials accompany their results, and federation logos appear on the About page. |
 | Mobile PageSpeed score of 80 or higher | **Not yet measured.** |
@@ -160,7 +161,9 @@ The website has been built and deployed to the production server. It is currentl
 | Independent content management, supported by a guide | **Met.** The dashboard and a plain-language guide ([`site/README.md`](../site/README.md)) are complete, and the dashboard was revised following the client's review on 23 October 2026. |
 | Published case study | **Met** (this document). |
 
-The codebase includes 435 automated tests: 176 server-side tests (Node's built-in test runner and supertest) and 259 client-side tests (Vitest and Testing Library). They cover sign-in lockouts, rate limiting, the email path, the content store, the deployment scripts and the principal user interface flows. A separate staging environment runs on the same server behind a password-protected gate. Each deployment is uploaded to a fresh directory, promoted, restarted, and must pass a `/healthz` health check before the process manager records its state.
+The codebase includes 469 automated tests: 203 server-side tests (Node's built-in test runner and supertest) and 266 client-side tests (Vitest and Testing Library). They cover sign-in lockouts, rate limiting, the email path, the content store, the deployment scripts and the principal user interface flows. A separate staging environment runs on the same server behind a password-protected gate. Each deployment is uploaded to a fresh directory, promoted, restarted, and must pass a `/healthz` health check before the process manager records its state.
+
+The production server is also monitored for capacity. Every 30 seconds, an in-process monitor samples host CPU, available memory, Node event-loop lag and Node memory use. If any of these remains above 80% in eight of the last ten samples, an alert is emailed through Resend, at most once every six hours, followed by a single recovery email once conditions return to normal. A `capacity:test` command sends an on-demand health report for either environment.
 
 ## 10. Delivery approach
 
@@ -168,7 +171,7 @@ Each unit of work began as a Notion ticket containing measurable acceptance crit
 
 From August 2026, work proceeded on feature branches, and the final two changes were merged through pull requests. The dashboard was delivered in six planned milestones (sign-in and statistics, the content store, media management, services and FAQs, settings, and launch hardening) and was then revised following the client's first review. That revision simplified the interface wording, merged testimonials into results and introduced in-place image cropping.
 
-The changelog originated in the same review. The client had no convenient way to see what had changed between visits, so the dashboard now opens with dated, plain-language entries covering the project from February 2026 onwards.
+The changelog originated in the same review. The client had no convenient way to see what had changed between visits, so the dashboard now opens with dated, plain-language entries covering the project from February 2026 onwards. Adding an entry is now a mandatory part of any change that the client or a visitor would notice, and the entry must be committed together with the change itself.
 
 ## 11. Lessons learned
 
@@ -195,7 +198,8 @@ The changelog originated in the same review. The client had no convenient way to
 | August–September 2026 | Application gate for Competition Preparation; site audit remediation |
 | 18 October 2026 | Dashboard milestones 1–6 |
 | 23 October 2026 | Dashboard revisions following client review; redesigned outage pages |
-| 25–27 October 2026 | Search engine and AI-crawler output; changelog |
+| 25–27 October 2026 | Search engine and AI-crawler output; changelog; server capacity monitoring and alerts |
+| 5 November 2026 | Contact video framing and trimming; production deployment; go-live and indexing procedure documented |
 
 ## Appendix: technology stack and repository structure
 

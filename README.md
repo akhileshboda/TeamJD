@@ -12,7 +12,7 @@ A custom website and content management platform for Jake Dedert, a competition 
 | **Role** | Sole consultant: requirements, design, full-stack development, hosting, documentation |
 | **Timeline** | Requirements interview July 2025; build February to October 2026 |
 | **Technology** | React and Vite; Node and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on Oracle Cloud |
-| **Testing** | 435 automated tests (176 server, 259 client) |
+| **Testing** | 469 automated tests (203 server, 266 client) |
 
 ## Problem
 
