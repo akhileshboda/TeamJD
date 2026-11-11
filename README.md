@@ -1,53 +1,77 @@
 # Team JD
 
-A custom website and content management platform for Jake Dedert, a competition preparation coach, designed to qualify prospective clients and ensure that no enquiry is lost.
+A lead-qualifying website and no-code content dashboard for Team JD, an Adelaide competition preparation coaching business.
 
-![The client dashboard: editing a service with a live preview of the public page](docs/case-study/service-editor.png)
+![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite 6](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Node.js 22](https://img.shields.io/badge/Node.js-22-5FA04E?logo=nodedotjs&logoColor=white)
+![Express 4](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
+![Cloudflare R2, Tunnel and Turnstile](https://img.shields.io/badge/Cloudflare-R2%20%C2%B7%20Tunnel%20%C2%B7%20Turnstile-F38020?logo=cloudflare&logoColor=white)
+![Resend](https://img.shields.io/badge/Resend-email-000000?logo=resend&logoColor=white)
 
-**[Read the full case study →](docs/case-study.md)**
+![The Team JD landing page and Contact page on a phone, side by side](docs/case-study/mobile-cover.png)
 
-| | |
-|---|---|
-| **Client** | Jake Dedert, Team JD (Adelaide) |
-| **Role** | Sole consultant: requirements, design, full-stack development, hosting, documentation |
-| **Timeline** | Requirements interview July 2025; build February to October 2026; production deployment November 2026 |
-| **Technology** | React and Vite; Node and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on Oracle Cloud |
-| **Testing** | 469 automated tests (203 server, 266 client) |
+> **Status:** deployed to production in November 2026. Public launch is pending, so team-jd.com.au currently shows an under-construction page.
 
-## Problem
+[Case study](docs/case-study.md) · [Live site](https://team-jd.com.au) · [Dashboard guide](site/README.md)
 
-The requirements interview identified several points at which the client's enquiry process was losing prospective clients:
+## What it does
 
-- For six months, replies to applicants were filtered into junk folders without the client's knowledge.
-- The booking link allowed prospective clients to schedule a consultation without completing the application, so the client often joined calls with no background on the caller.
-- While the client was overseas, four applications went unseen for four to five days, and two of those applicants engaged other coaches in the meantime.
+Jake Dedert's coaching business was losing leads between its tools: replies went to junk folders, consultation calls could be booked without an application, and new applications sat unseen while he travelled. This project places a website in front of his existing Typeform and Calendly setup that qualifies visitors, delivers every enquiry reliably and lets Jake update the site himself. It began as a WordPress plan and pivoted to a custom React build as AI-assisted development matured; the [case study](docs/case-study.md) explains why.
 
-The client described the previous website as one that "could disappear tomorrow and it would have zero impact on the business."
+### Features
 
-## Solution
-
-- **Find Your Fit:** a short questionnaire that directs visitors to the most suitable service, together with a gate that routes Competition Preparation applicants through the client's application form before they can book a consultation.
-- **Reliable email delivery:** enquiries are sent from a verified domain with SPF and DKIM records, protected by Cloudflare Turnstile and layered rate limits.
-- **Client administration dashboard:** management of photographs, videos, results, services, prices, FAQs and site settings, with draft and publish workflows and a live preview. Sign-in uses a six-digit email code, so no password is required.
+- **Find Your Fit:** a short questionnaire that recommends the right service, with Competition Preparation applicants routed through Jake's Typeform application before they can book.
+- **Reliable enquiry email:** sent from a verified domain (SPF and DKIM) through Resend, protected by Cloudflare Turnstile and layered rate limits.
+- **Jake's dashboard:** photos, videos, results, services, prices, FAQs and settings, with drafts, publishing and a live preview. Sign-in uses a six-digit email code.
+- **Photo and video framing:** focal-point cropping that adapts to each layout, and loop trimming for the Contact page video.
 - **Media pipeline:** phone uploads and Dropbox files are converted to WebP and H.264 and served from Cloudflare R2.
-- **Search and AI-crawler support:** metadata and structured data are rendered on the server for the React application, generated from the same content the client edits.
-- **Operational safeguards:** staged deployments with health checks, and capacity alerts by email when the production server is under sustained load.
+- **Search and AI-crawler output:** server-rendered metadata, structured data and `llms.txt`, generated from the content Jake edits.
+- **Operational safeguards:** a staging environment, health-checked deployments and email capacity alerts.
 
-The project was originally scoped as a WordPress site. As AI-assisted development matured, it pivoted to a custom React application. The [case study](docs/case-study.md) sets out the rationale for that pivot, the principal design decisions, the delivery approach, the outcomes and the lessons learned.
+## Tech stack
 
-## Repository
+| Layer | Technologies |
+| --- | --- |
+| Front end | React 18, React Router, Vite 6, Tailwind CSS, Motion |
+| Back end | Node.js 22, Express 4, sharp, ffmpeg |
+| Infrastructure | Oracle Cloud VM with PM2; Cloudflare DNS, Tunnel, R2 and Turnstile; Resend; Dropbox |
+| Testing | 469 automated tests: Node's test runner and supertest (server), Vitest and Testing Library (client) |
 
-| Path | Contents |
-|---|---|
-| [`site/`](site) | The application. [`site/README.md`](site/README.md) documents local setup, architecture, deployment and the client guide. |
-| [`docs/`](docs) | The case study, project charter, Gantt chart and setup notes |
-| [`requirements/`](requirements) | Requirements interview transcript |
+## Getting started
 
-To run the application locally:
+**Requirements:** Node.js 22 and npm, and ffmpeg on the `PATH` for video processing.
 
 ```bash
 cd site
 npm install
-cp .env.example .env   # populate the required values
-npm run dev
+(cd client && npm install)
+cp .env.example .env   # fill in the values you need
+npm run dev            # Vite on :5173, Express on :3000
 ```
+
+Run the test suites from `site/`:
+
+```bash
+npm test                  # server
+(cd client && npm test)   # client
+```
+
+A filled-in `.env` points at production storage. Before editing content locally, follow the local-development notes in the [dashboard guide](site/README.md): dashboard sign-in bypass, asset sync off and a scratch content store.
+
+## Repository structure
+
+| Path | Contents |
+| --- | --- |
+| [`site/`](site) | The application: Express server, React client, deployment scripts and tests |
+| [`site/README.md`](site/README.md) | Architecture, asset pipeline, deployment and Jake's dashboard guide |
+| [`docs/`](docs) | Case study, project charter, Gantt chart and setup notes |
+| [`requirements/`](requirements) | Requirements interview transcript |
+
+## Author
+
+Built by **Akhilesh Boda**, sole consultant on the project. [LinkedIn](https://www.linkedin.com/in/akhileshboda)
+
+## Licence
+
+© 2026 Akhilesh Boda. All rights reserved. This code is shared for portfolio purposes and is not licensed for reuse. Built for Team JD (Jake Dedert) and shown with permission.
