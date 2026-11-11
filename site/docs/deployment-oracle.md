@@ -36,8 +36,8 @@ DROPBOX_OAUTH_ENABLED=false
 ENQUIRY_MAIL_PROVIDER=resend
 RESEND_API_KEY=<production-sending-only-key>
 ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
-ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
-ENQUIRY_REPLY_TO=akhileshboda@outlook.com
+ENQUIRY_NOTIFICATION_TO=enquiries@example.com
+ENQUIRY_REPLY_TO=enquiries@example.com
 ENQUIRY_EMAIL_SUBJECT_PREFIX=
 TURNSTILE_SITE_KEY=<production-hostname-restricted-site-key>
 TURNSTILE_SECRET_KEY=<production-secret-key>
@@ -57,8 +57,8 @@ DROPBOX_OAUTH_ENABLED=false
 ENQUIRY_MAIL_PROVIDER=resend
 RESEND_API_KEY=<staging-sending-only-key>
 ENQUIRY_EMAIL_FROM=Team JD Enquiries <enquiries@send.team-jd.com.au>
-ENQUIRY_NOTIFICATION_TO=akhileshboda@outlook.com
-ENQUIRY_REPLY_TO=akhileshboda@outlook.com
+ENQUIRY_NOTIFICATION_TO=enquiries@example.com
+ENQUIRY_REPLY_TO=enquiries@example.com
 ENQUIRY_EMAIL_SUBJECT_PREFIX=[STAGING]
 TURNSTILE_SITE_KEY=<staging-hostname-restricted-site-key>
 TURNSTILE_SECRET_KEY=<staging-secret-key>
@@ -81,7 +81,7 @@ The rate-limit stores are process-local by design because each environment runs 
 1. Add to each environment's `.env`, then restart with `--update-env`:
 
    ```env
-   CMS_ADMIN_EMAILS=jake@team-jd.com.au,akboda00@gmail.com
+   CMS_ADMIN_EMAILS=jake@team-jd.com.au,developer@example.com
    ```
 
    Sign-in codes are sent through the enquiry Resend settings (`ENQUIRY_MAIL_PROVIDER`, `RESEND_API_KEY`, `ENQUIRY_EMAIL_FROM`); no other setup is needed. Never set `CMS_DEV_BYPASS` on the VM (it is ignored in production anyway). If a Cloudflare Access application from the old media manager exists for `/admin`, delete it: the dashboard has its own sign-in page.
