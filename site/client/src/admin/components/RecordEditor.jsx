@@ -5,7 +5,7 @@ import { applyAction, deleteItem, getItem, previewItem, saveDraft, SIGNED_IN_EVE
 import { focusFirstError, PreviewSectionContext } from './fields'
 import PreviewFrame from './PreviewFrame'
 import { useToast } from './Toasts'
-import { ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, StatusChips, timeAgo } from './ui'
+import { ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, StatusChips, timeAgo, useFixedBarHeight } from './ui'
 
 const SAVE_DELAY_MS = 800
 const PREVIEW_DELAY_MS = 200
@@ -231,6 +231,8 @@ export default function RecordEditor({
     }
   }
 
+  const publishBarRef = useFixedBarHeight()
+
   if (loadError) {
     return (
       <div className="jd-empty">
@@ -274,7 +276,7 @@ export default function RecordEditor({
       {/* Before the preview in the page order, so keyboard users reach it without
           tabbing through the whole site in the preview. On phones it is fixed to
           the bottom of the screen. */}
-      <div className="jd-publish-bar" role="region" aria-label="Publishing">
+      <div ref={publishBarRef} className="jd-publish-bar" role="region" aria-label="Publishing">
         <div className="jd-publish-bar-status">
           {canHide
             ? <LiveSwitch on={live} busy={working} onChange={(on) => run(on ? 'publish' : 'unpublish')} />
@@ -304,9 +306,11 @@ export default function RecordEditor({
         </div>
       </div>
 
-      <div className="jd-segmented jd-editor-switch" role="group" aria-label="Show">
-        <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => showMobileView('edit')}>Edit</button>
-        <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => showMobileView('preview')}>Preview</button>
+      <div className="jd-editor-switch-band">
+        <div className="jd-segmented jd-editor-switch" role="group" aria-label="Show">
+          <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => showMobileView('edit')}>Edit</button>
+          <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => showMobileView('preview')}>Preview</button>
+        </div>
       </div>
 
       <div ref={bodyRef} className={`jd-editor-body is-showing-${mobileView}`}>

@@ -28,6 +28,21 @@
   --jd-card-pad-sm: var(--space-4);
   --jd-section-gap: var(--space-6);
   --jd-stack-gap: var(--space-4);
+  /* One stacking order for everything that floats. Toasts sit above dialogs and
+     the full-screen preview; the top bar (and its pending-changes dropdown) sits
+     above the fixed publish bar. */
+  --jd-z-raised: 1;
+  --jd-z-save-bar: 5;
+  --jd-z-sticky: 10;
+  --jd-z-publishbar: 20;
+  --jd-z-topbar: 30;
+  --jd-z-scrim: 40;
+  --jd-z-sheet: 45;
+  --jd-z-drawer: 50;
+  --jd-z-dialog: 70;
+  --jd-z-fullscreen: 90;
+  --jd-z-toast: 100;
+  --jd-z-skip: 110;
   /* One gap between the status bar, the form and the preview, both ways. */
   --jd-editor-gap: var(--space-5);
 
@@ -42,9 +57,23 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Keep fields that receive focus clear of the sticky top bar and fixed publish bar. */
+/* Keep fields that receive focus clear of the bars that stay on screen. The chrome
+   sizes live on <html> (not .jd-admin) so scroll-padding can see them:
+   --jd-publishbar-h is the phone publish bar's measured height (set from
+   useFixedBarHeight, 0px when the bar is in the page flow), and --jd-sticky-extra
+   is whichever extra sticky bar is showing under the top bar. */
 html:has(.jd-admin) {
-  scroll-padding: calc(var(--jd-topbar, 3.75rem) + 1rem) 0 6rem;
+  --jd-topbar: 3.25rem;
+  --jd-sticky-extra: 0px;
+  scroll-padding: calc(var(--jd-topbar) + var(--jd-sticky-extra) + 1rem) 0 calc(var(--jd-publishbar-h, 0px) + 1rem);
+}
+html:has(.jd-bulk-bar) {
+  --jd-sticky-extra: 4rem;
+}
+@media (max-width: 999px) {
+  html:has(.jd-editor-switch-band) {
+    --jd-sticky-extra: 3.5rem;
+  }
 }
 
 /* Undo the public site's marketing type scale inside the dashboard.
@@ -90,7 +119,7 @@ html:has(.jd-admin) {
   position: absolute;
   left: 1rem;
   top: -3rem;
-  z-index: 60;
+  z-index: var(--jd-z-skip);
   padding: 0.5rem 1rem;
   border-radius: var(--jd-radius);
   background: var(--jd-live);
@@ -198,7 +227,7 @@ html:has(.jd-admin) {
 .jd-admin-topbar {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--jd-z-topbar);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -245,7 +274,7 @@ html:has(.jd-admin) {
   .jd-admin-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    z-index: 50;
+    z-index: var(--jd-z-drawer);
     width: min(18rem, 85vw);
     transform: translateX(-100%);
     transition: transform var(--transition-normal);
@@ -257,7 +286,7 @@ html:has(.jd-admin) {
   .jd-admin-shell.is-drawer-open .jd-admin-scrim {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: var(--jd-z-scrim);
     display: block;
     background: rgba(0, 0, 0, 0.6);
   }
@@ -915,7 +944,7 @@ html:has(.jd-admin) {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  z-index: 30;
+  z-index: var(--jd-z-raised); /* inside the top bar's stacking context */
   width: min(22rem, calc(100vw - 2rem));
   padding: 1rem;
   border: 1px solid var(--jd-line-strong);
@@ -1027,7 +1056,7 @@ html:has(.jd-admin) {
 .jd-bulk-bar {
   position: sticky;
   top: calc(var(--jd-topbar) + 0.5rem);
-  z-index: 10;
+  z-index: var(--jd-z-sticky);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1046,6 +1075,21 @@ html:has(.jd-admin) {
   gap: 0.5rem;
 }
 
+/* From tablet up the selection bar lays over this line instead of pushing the
+   table down under the cursor, so the line keeps the bar's height. On phones the
+   bar wraps to two lines and simply sits in the flow. */
+@media (min-width: 560px) {
+  .jd-bulk-bar {
+    min-height: 3.5rem;
+    margin-bottom: -3.5rem;
+    padding-block: 0.5rem;
+  }
+  .jd-list-meta {
+    display: flex;
+    align-items: center;
+    min-height: 3.5rem;
+  }
+}
 .jd-list-meta {
   margin-bottom: 0.5rem;
   color: var(--jd-muted);
@@ -1342,7 +1386,8 @@ html:has(.jd-admin) {
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
-.jd-editor-switch {
+.jd-editor-switch,
+.jd-editor-switch-band {
   display: none;
   margin-bottom: 1rem;
 }
@@ -1432,7 +1477,7 @@ html:has(.jd-admin) {
     max-width: none;
   }
   .jd-editor:has(.is-showing-edit) {
-    padding-bottom: calc(var(--jd-publishbar) + 1.5rem);
+    padding-bottom: calc(var(--jd-publishbar-h, var(--jd-publishbar)) + 1rem);
   }
   .jd-preview-note {
     display: none;
@@ -1779,7 +1824,7 @@ html:has(.jd-admin) {
 .jd-preview.is-expanded {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: var(--jd-z-fullscreen);
   height: auto;
   border: 0;
   border-radius: 0;
@@ -1837,7 +1882,7 @@ html:has(.jd-admin) {
     right: 0;
     bottom: 0;
     left: var(--jd-sidebar);
-    z-index: 25;
+    z-index: var(--jd-z-publishbar);
     min-height: var(--jd-publishbar);
     margin: 0;
     padding: 0.5rem 1.5rem calc(0.5rem + env(safe-area-inset-bottom));
@@ -1848,7 +1893,7 @@ html:has(.jd-admin) {
     backdrop-filter: blur(12px);
   }
   .jd-editor {
-    padding-bottom: calc(var(--jd-publishbar) + 1.5rem);
+    padding-bottom: calc(var(--jd-publishbar-h, var(--jd-publishbar)) + 1rem);
   }
   .jd-publish-bar-where {
     display: none;
@@ -1899,7 +1944,7 @@ html:has(.jd-admin) {
   position: fixed;
   top: calc(var(--jd-topbar) + 0.75rem);
   right: 1.5rem;
-  z-index: 60;
+  z-index: var(--jd-z-toast);
   display: grid;
   gap: 0.5rem;
   width: min(26rem, calc(100vw - 2rem));
@@ -1996,7 +2041,7 @@ html:has(.jd-admin) {
 .jd-dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: var(--jd-z-dialog);
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -2298,12 +2343,19 @@ html:has(.jd-admin) {
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 45;
+    z-index: var(--jd-z-sheet);
     top: auto;
     max-height: 80dvh;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     overscroll-behavior: contain;
     border-radius: var(--jd-radius) var(--jd-radius) 0 0;
-    box-shadow: var(--shadow-modal);
+    /* The second shadow dims the library behind the sheet, so it reads as a layer
+       on top; tiles behind stay tappable to switch the selection. */
+    box-shadow: var(--shadow-modal), 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+  }
+  /* Room to scroll the last tiles clear of the sheet. */
+  .jd-media-layout.has-detail {
+    padding-bottom: 60dvh;
   }
 }
 
@@ -2411,15 +2463,16 @@ html:has(.jd-admin) {
   display: grid;
   gap: 0.75rem;
 }
+/* Narrow forms: the cells stack at full width and the move/remove buttons form a
+   slim column beside them, so no row loses a whole line to its controls. */
 .jd-list-field-items > li,
 .jd-rows-field-row {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 0.5rem;
 }
-.jd-rows-controls {
-  justify-content: flex-end;
+.jd-rows-field-row > .jd-rows-controls {
+  flex-direction: column;
 }
 .jd-list-field-items > li > .jd-field,
 .jd-rows-field-cells {
@@ -2526,8 +2579,10 @@ html:has(.jd-admin) {
 @container jd-form (min-width: 40rem) {
   .jd-list-field-items > li,
   .jd-rows-field-row {
-    flex-direction: row;
     align-items: flex-end;
+  }
+  .jd-rows-field-row > .jd-rows-controls {
+    flex-direction: row;
   }
   .jd-rows-field-cells--3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2649,7 +2704,7 @@ html:has(.jd-admin) {
 .jd-save-bar {
   position: sticky;
   bottom: 0;
-  z-index: 5;
+  z-index: var(--jd-z-save-bar);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -3041,11 +3096,26 @@ html:has(.jd-admin) {
 /* On phones and portrait tablets the Edit / Preview switch stays reachable
    while scrolling a long form. */
 @media (max-width: 999px) {
-  .jd-editor-switch {
+  /* A solid full-width band, so the form doesn't show beside the switch as it
+     scrolls underneath. */
+  .jd-editor-switch-band {
     position: sticky;
-    top: calc(var(--jd-topbar) + 0.5rem);
-    z-index: 15;
-    box-shadow: 0 0 0 0.5rem var(--jd-canvas);
+    top: var(--jd-topbar);
+    z-index: var(--jd-z-sticky);
+    display: block;
+    margin: 0 -1.5rem 1rem;
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--jd-line);
+    background: var(--jd-canvas);
+  }
+  .jd-editor-switch {
+    margin-bottom: 0;
+  }
+}
+@media (max-width: 899px) {
+  .jd-editor-switch-band {
+    margin-inline: calc(-1 * max(1rem, env(safe-area-inset-left)));
+    padding-inline: max(1rem, env(safe-area-inset-left));
   }
 }
 

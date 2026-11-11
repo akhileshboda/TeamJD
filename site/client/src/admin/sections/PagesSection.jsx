@@ -8,7 +8,7 @@ import MediaPicker, { MediaThumb } from '../components/MediaPicker'
 import PreviewFrame from '../components/PreviewFrame'
 import VideoTrimmer from '../components/VideoTrimmer'
 import { useToast } from '../components/Toasts'
-import { Chip } from '../components/ui'
+import { Chip, useFixedBarHeight } from '../components/ui'
 
 export function pageKeyOf(slot) {
   return slot.pagePath === '/' ? 'home' : slot.pagePath.split('/').pop()
@@ -229,6 +229,7 @@ function PageSpots({ pages, reload, setSlot }) {
   const [section, setSection] = useState(null)
   const saved = useRef(new Set())
   const bodyRef = useRef(null)
+  const publishBarRef = useFixedBarHeight()
   const showMobileView = (view) => {
     setMobileView(view)
     requestAnimationFrame(() => bodyRef.current?.scrollIntoView({ block: 'start' }))
@@ -346,7 +347,7 @@ function PageSpots({ pages, reload, setSlot }) {
       </div>
       {/* Before the preview so keyboard users reach Publish first. On phones it
           is fixed to the bottom of the screen. */}
-      <div className="jd-publish-bar" role="region" aria-label="Publishing">
+      <div ref={publishBarRef} className="jd-publish-bar" role="region" aria-label="Publishing">
         <div className="jd-publish-bar-status">
           <span className={`jd-dot jd-dot--${pending.length ? 'pending' : 'live'}`} aria-hidden="true" />
           <p className="jd-publish-bar-text">
@@ -361,9 +362,11 @@ function PageSpots({ pages, reload, setSlot }) {
         </div>
       </div>
 
-      <div className="jd-segmented jd-editor-switch" role="group" aria-label="Show">
-        <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => showMobileView('edit')}>Images</button>
-        <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => showMobileView('preview')}>Preview</button>
+      <div className="jd-editor-switch-band">
+        <div className="jd-segmented jd-editor-switch" role="group" aria-label="Show">
+          <button type="button" aria-pressed={mobileView === 'edit'} onClick={() => showMobileView('edit')}>Images</button>
+          <button type="button" aria-pressed={mobileView === 'preview'} onClick={() => showMobileView('preview')}>Preview</button>
+        </div>
       </div>
 
       <div ref={bodyRef} className={`jd-editor-body is-showing-${mobileView}`}>
