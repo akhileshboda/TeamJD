@@ -29,36 +29,41 @@ test('customer template does not echo the message or promise a response time', (
 
   assert.match(result.html, /Didn&#39;t send this\? You can safely ignore it/);
   assert.match(result.html, /#FA8072/i);
-  assert.match(result.text, /9BF8903C/);
+  assert.match(result.text, /JD-9BF890/);
   assert.doesNotMatch(result.html, /alert\(&quot;message&quot;\)/);
   assert.doesNotMatch(result.text, /alert\("message"\)/);
   assert.doesNotMatch(result.text, /within \d+ (hours|days)/i);
   assert.doesNotMatch(result.html, /(tracking|pixel|utm_)/i);
 });
 
-test('customer template shows a short reference, Adelaide time and next steps', () => {
+test('customer template shows a readable reference, Adelaide time and a plain reply line', () => {
   const result = buildCustomerTemplate(enquiry, {
     baseUrl: 'https://team-jd.com.au',
     timestamp: new Date('2026-08-05T05:00:00.000Z')
   });
 
-  assert.equal(shortReference(enquiry.submissionId), '9BF8903C');
-  assert.match(result.html, /9BF8903C/);
-  assert.match(result.text, /Reference: 9BF8903C/);
+  assert.equal(shortReference(enquiry.submissionId), 'JD-9BF890');
+  assert.match(result.html, /JD-9BF890/);
+  assert.match(result.text, /Reference: JD-9BF890/);
   assert.match(result.text, /5 Aug 2026, 2:30\s?pm/i);
   assert.match(result.html, /Thanks, &lt;Akhil&gt;\./);
-  assert.match(result.html, /What happens next/);
+  assert.match(result.html, /he&#39;ll reply to <a href="mailto:akhil@example\.com"/);
+  assert.doesNotMatch(result.html, /What happens next/);
+  assert.doesNotMatch(result.text, /What happens next/);
   assert.match(result.html, /href="https:\/\/team-jd\.com\.au\/results"/);
   assert.match(result.html, /team-jd-logo\.png\?v=2/);
 });
 
-test('internal template keeps the full reference and a reply button', () => {
+test('internal template shows the short reference, keeps the full id in text, and has a reply button', () => {
   const result = buildInternalTemplate(enquiry, {
     baseUrl: 'https://team-jd.com.au',
     timestamp: new Date('2026-08-05T05:00:00.000Z')
   });
 
-  assert.match(result.html, /9bf8903c-3ac7-4d29-9538-529d5e1fbf3b/);
+  assert.match(result.html, /JD-9BF890/);
+  assert.doesNotMatch(result.html, /9bf8903c-3ac7-4d29-9538-529d5e1fbf3b/);
+  assert.match(result.text, /JD-9BF890 \(9bf8903c-3ac7-4d29-9538-529d5e1fbf3b\)/);
+  assert.doesNotMatch(result.html, /general enquiry/i);
   assert.match(result.html, /href="mailto:akhil@example\.com\?subject=/);
   assert.match(result.text, /2026-08-05T05:00:00\.000Z/);
 });
