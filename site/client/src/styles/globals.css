@@ -136,6 +136,22 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* The visitor's "Reduce motion" toggle (motion/MotionPreference.jsx) or the OS
+   setting. Calms every CSS animation and transition site-wide, on top of the
+   per-component prefers-reduced-motion rules. */
+html[data-motion='reduced'] {
+  scroll-behavior: auto;
+}
+
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg);
@@ -619,6 +635,74 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .nav-cta {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── Reduce motion toggle (components/MotionToggle.jsx) ─────── */
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: inherit;
+  color: #a3a3a3;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.motion-toggle:hover,
+.motion-toggle:focus-visible {
+  color: var(--color-text);
+  border-color: #444;
+}
+
+.motion-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.motion-toggle.is-reduced {
+  color: var(--color-accent);
+  border-color: rgba(22, 201, 221, 0.45);
+  background: var(--color-accent-glow);
+}
+
+.motion-toggle--icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  justify-content: center;
+  padding: 0;
+}
+
+.motion-toggle--text {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.motion-toggle-state {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.motion-toggle.is-reduced .motion-toggle-state {
+  background: var(--color-accent);
+  color: #041013;
+}
+
+.nav-mobile-motion {
+  align-self: flex-start;
+  margin: var(--space-4) 0 0;
 }
 
 .nav-hamburger {

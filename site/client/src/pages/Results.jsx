@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useReducedMotion } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ResultCard from '../components/ResultCard'

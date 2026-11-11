@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 
 const FOCUSABLE = [
   'a[href]',

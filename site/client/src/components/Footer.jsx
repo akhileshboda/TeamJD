@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAssets } from '../hooks/useAssets'
 import FindYourFitLink from './FindYourFitLink'
+import MotionToggle from './MotionToggle'
 import { useSettings } from '../hooks/useSettings'
 
 const LOGO_FALLBACK = '/assets/branding/team-jd-logo.png'
@@ -89,6 +90,7 @@ export default function Footer() {
             <Link to="/privacy">Privacy Policy</Link>
             <Link to="/admin">Admin login</Link>
           </nav>
+          <MotionToggle className="footer-motion" />
         </div>
       </div>
     </footer>

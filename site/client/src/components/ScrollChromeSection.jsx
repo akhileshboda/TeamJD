@@ -1,5 +1,6 @@
 import { useRef } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { motion, useScroll, useTransform } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 
 export default function ScrollChromeSection({ className = '', children, ...props }) {
   const sectionRef = useRef(null)

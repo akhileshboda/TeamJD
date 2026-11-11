@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
+import { useReducedMotion } from '../motion/MotionPreference'
 import { useAssets } from '../hooks/useAssets'
 import { useContent } from '../hooks/useContent'
 import FindYourFitLink from './FindYourFitLink'
+import MotionToggle from './MotionToggle'
 /* R2 logo-hover reframed to the same canvas/content box as R2 logo (no size jump on swap) */
 import logoHoverNav from '../assets/logo-hover-nav.webp'
 
@@ -180,6 +182,7 @@ export default function Nav() {
         </ul>
 
         <div className="nav-cta">
+          <MotionToggle variant="icon" />
           <FindYourFitLink
             className="btn btn-primary btn-sm"
             data-find-your-fit-focus-fallback
@@ -268,6 +271,7 @@ export default function Nav() {
                 </div>
               )
             })}
+            <MotionToggle className="nav-mobile-motion" />
             <div className="mobile-cta">
               <FindYourFitLink
                 className="btn btn-primary"
