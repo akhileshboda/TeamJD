@@ -216,13 +216,16 @@ describe('record editor', () => {
     vi.stubGlobal('fetch', fetchMock)
     renderEditor()
     const field = await screen.findByLabelText('Caption')
-    expect(screen.getByText('Live.')).toBeInTheDocument()
+    // The switch already says Live, so the status beside it does not repeat the word.
+    expect(screen.getByText('Up to date.')).toBeInTheDocument()
     expect(screen.getByText('Shows on the Things page and the Home page.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Publish changes' })).not.toBeInTheDocument()
+    // Publish changes is always there, off until something is waiting.
+    expect(screen.getByRole('button', { name: 'Publish changes' })).toBeDisabled()
 
     fireEvent.change(field, { target: { value: 'New caption' } })
-    expect(screen.getByText('Live, with unpublished changes.')).toBeInTheDocument()
+    expect(screen.getByText('Has unpublished changes.')).toBeInTheDocument()
     expect(screen.getByText('Unpublished changes')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Publish changes' })).toBeEnabled()
     await waitFor(() => expect(calls.some(([method]) => method === 'PUT')).toBe(true), { timeout: 3000 })
     const put = calls.find(([method]) => method === 'PUT')
     expect(put[2]).toEqual({ draft: { caption: 'New caption' }, rev: 3 })
@@ -254,7 +257,7 @@ describe('record editor', () => {
     renderEditor()
     const live = await screen.findByRole('switch', { name: 'Live' })
     expect(screen.getByText('Offline.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Publish changes' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Publish changes' })).toBeDisabled()
     fireEvent.click(live)
     expect(await screen.findByRole('alert')).toHaveTextContent('Some fields need attention')
     expect(live).toHaveAttribute('aria-checked', 'false')

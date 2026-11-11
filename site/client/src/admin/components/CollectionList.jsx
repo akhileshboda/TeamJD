@@ -369,7 +369,7 @@ export default function CollectionList({
           <label className="jd-search">
             <JourneyIcon name="search" size={16} />
             <span className="visually-hidden">Search {title.toLowerCase()}</span>
-            <input className="jd-input" type="search" value={query} placeholder="Search" spellCheck={false}
+            <input className="jd-input" type="search" value={query} placeholder="Search…" spellCheck={false}
               onChange={(event) => setParam('q', event.target.value)} />
           </label>
           <label>
@@ -403,7 +403,7 @@ export default function CollectionList({
                 {action.label}{action.rows.length < chosen.length ? ` (${action.rows.length})` : ''}
               </button>
             ))}
-            <button type="button" className="jd-link-button" onClick={() => setSelected(new Set())}>Clear</button>
+            <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" onClick={() => setSelected(new Set())}>Clear</button>
           </div>
         </div>
       )}

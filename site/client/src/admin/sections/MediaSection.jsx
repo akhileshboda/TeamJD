@@ -13,7 +13,7 @@ const FILTERS = [
   { value: '', label: 'Everything' },
   { value: 'image', label: 'Photos' },
   { value: 'video', label: 'Videos' },
-  { value: 'unused', label: 'Not used anywhere' },
+  { value: 'unused', label: 'Not used' },
 ]
 
 function sizeLabel(bytes) {
@@ -171,13 +171,16 @@ export default function MediaSection() {
 
       <MediaUploader onUploaded={(asset) => setItems((current) => [{ ...asset, usage: [] }, ...(current || [])])} />
 
-      <div className="jd-segmented jd-media-filter" role="group" aria-label="Show">
-        {FILTERS.map((option) => (
-          <button key={option.value} type="button" aria-pressed={filter === option.value} onClick={() => setParam('show', option.value)}>
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {/* Nothing to filter in an empty library. */}
+      {items?.length > 0 && (
+        <div className="jd-segmented jd-media-filter" role="group" aria-label="Show">
+          {FILTERS.map((option) => (
+            <button key={option.value} type="button" aria-pressed={filter === option.value} onClick={() => setParam('show', option.value)}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {error && <p className="jd-admin-error" role="alert">{error}</p>}
       {!items && !error && <div className="jd-skeleton jd-skeleton--list" role="status" aria-label="Loading library" />}

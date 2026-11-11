@@ -22,7 +22,9 @@ Desktop.ini
 ########################################
 .vscode/
 .idea/
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/agents/
 *.iml
 *.suo
 *.ntvs*

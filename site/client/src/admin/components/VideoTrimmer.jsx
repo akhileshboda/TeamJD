@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { formatSeconds, loopProps, loopSrc } from '../../utils/videoLoop'
+import usePrefersReducedMotion from '../usePrefersReducedMotion'
 
 // The shortest loop Jake can choose (the server checks the same).
 export const MIN_LOOP_SECONDS = 2
@@ -12,6 +13,9 @@ export default function VideoTrimmer({ src, poster, duration, value, onChange, l
   const videoRef = useRef(null)
   const hintId = useId()
   const [loadedDuration, setLoadedDuration] = useState(null)
+  // A device set to reduce motion shows the first frame, with the browser's own
+  // play button, instead of a video that starts by itself.
+  const reducedMotion = usePrefersReducedMotion()
   const length = Number.isFinite(duration) && duration > 0 ? duration : loadedDuration
   const trim = value || (length ? { start: 0, end: length } : null)
   const start = trim?.start ?? 0
@@ -20,6 +24,10 @@ export default function VideoTrimmer({ src, poster, duration, value, onChange, l
   useEffect(() => {
     if (videoRef.current && Number.isFinite(start)) videoRef.current.currentTime = start
   }, [start])
+
+  useEffect(() => {
+    if (reducedMotion) videoRef.current?.pause()
+  }, [reducedMotion])
 
   const set = (next) => {
     const whole = next.start <= 0 && next.end >= length
@@ -35,7 +43,8 @@ export default function VideoTrimmer({ src, poster, duration, value, onChange, l
   return (
     <div className="jd-trimmer" role="group" aria-label={`${label}: part that loops`} aria-describedby={hintId}>
       <span className="jd-field-label">Part that loops</span>
-      <video ref={videoRef} src={loopSrc(src, value)} poster={poster} muted autoPlay playsInline aria-hidden="true"
+      <video ref={videoRef} src={loopSrc(src, value)} poster={poster} muted autoPlay={!reducedMotion} controls={reducedMotion} preload="metadata" playsInline
+        aria-hidden={reducedMotion ? undefined : 'true'}
         {...preview} onLoadedMetadata={onLoadedMetadata} />
       {!length ? (
         <p id={hintId} className="jd-field-hint">Loading the video…</p>

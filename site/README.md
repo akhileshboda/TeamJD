@@ -174,7 +174,7 @@ Setup steps are in `docs/deployment-oracle.md` under "Dashboard setup".
 
 **Backup and restore.** `data/cms.json` is copied to Dropbox `/cms-backup/<environment>/cms.json` about 10 seconds after each change. After losing the VM: copy that file back to `data/cms.json` and restart. Library files are in R2 (and their originals in Dropbox); visit stats in `data/analytics/` are not backed up.
 
-**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. For dashboard work, run with `NODE_ENV=development`, `CMS_DEV_BYPASS=true`, the asset sync off (`ASSET_SYNC_ENABLED=false ASSET_AUTO_SYNC_ENABLED=false ASSET_SYNC_ON_BOOT=false`) and `CMS_DATA_PATH` pointing at a scratch file; uploads then land under `cms/development/` and are safe to delete.
+**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. For dashboard work, run with `NODE_ENV=development`, `CMS_DEV_BYPASS=true`, the asset sync off (`ASSET_SYNC_ENABLED=false ASSET_AUTO_SYNC_ENABLED=false ASSET_SYNC_ON_BOOT=false`) and `CMS_DATA_PATH` pointing at a scratch file; uploads then land under `cms/development/` and are safe to delete. `bash tools/ui-audit/serve.sh` does all of this for you (no storage credentials, scratch data in `data/ui-audit/`, port 3100).
 
 ## Health Check
 

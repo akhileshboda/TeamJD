@@ -1,9 +1,12 @@
+// Load .env before any module below reads process.env at import time (the content
+// store and analytics resolve their data paths when they are first required).
+require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
-const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
@@ -31,7 +34,6 @@ const {
   startAssetPoller
 } = require('./services/dropbox');
 
-dotenv.config();
 
 // Runtime state can contain session and provider metadata. Keep newly created
 // files private even when the host user's default umask is permissive.

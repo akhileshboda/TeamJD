@@ -97,10 +97,11 @@ describe('dashboard shell', () => {
     renderAt('/admin/faqs', (url) => (url === '/api/admin/collections/faqs'
       ? json({ items: [] })
       : signedIn(url)))
-    expect(await screen.findByRole('heading', { name: 'FAQs' })).toBeInTheDocument()
+    // The section is lazy-loaded; allow for a slow first import instead of the 1s default.
+    expect(await screen.findByRole('heading', { name: 'FAQs' }, { timeout: 12000 })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Dashboard' })
     expect(within(nav).getByRole('link', { name: 'FAQs' })).toHaveAttribute('aria-current', 'page')
-  })
+  }, 15000) // the lazy section import can be slow on a busy machine
 
   it('every section in the registry has a page', () => {
     expect(SECTIONS.every((section) => section.element)).toBe(true)
@@ -125,5 +126,16 @@ describe('dashboard shell', () => {
     expect(open).toHaveAttribute('aria-expanded', 'true')
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(open).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('closes the phone menu from its own close button and hands focus back to the menu button', async () => {
+    renderAt('/admin', signedIn)
+    const open = await screen.findByRole('button', { name: 'Open menu' })
+    fireEvent.click(open)
+    expect(open).toHaveAttribute('aria-expanded', 'true')
+    // One labelled close button: the scrim behind the drawer is pointer-only.
+    fireEvent.click(screen.getByRole('button', { name: 'Close menu' }))
+    expect(open).toHaveAttribute('aria-expanded', 'false')
+    expect(open).toHaveFocus()
   })
 })

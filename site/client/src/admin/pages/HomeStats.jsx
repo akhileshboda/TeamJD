@@ -72,12 +72,65 @@ function RankedList({ title, itemHeading, items, total, label }) {
   )
 }
 
-export default function HomeStats() {
+// Shown while the numbers load. It is the real layout (same cards, same classes,
+// placeholder text made transparent over a shimmer), so the page keeps its shape
+// and nothing below it moves when the numbers arrive.
+function HomeStatsPlaceholder() {
+  return (
+    <div className="jd-home-body" role="status" aria-label="Loading visits">
+      <section className="jd-scoreboard" aria-hidden="true">
+        <div className="jd-scoreboard-figures">
+          <div className="jd-scoreboard-main">
+            <p className="jd-scoreboard-value"><span className="jd-skeleton jd-skeleton-text">000</span></p>
+            <p className="jd-scoreboard-label">visits</p>
+            <p className="jd-change jd-skeleton jd-skeleton-text">Up 0% on the period before</p>
+          </div>
+          <dl className="jd-scoreboard-side">
+            <div>
+              <dt>Page views</dt>
+              <dd><span className="jd-skeleton jd-skeleton-text">0,000</span></dd>
+            </div>
+            <div>
+              <dt>Pages per visit</dt>
+              <dd><span className="jd-skeleton jd-skeleton-text">0.0</span></dd>
+            </div>
+          </dl>
+        </div>
+        <figure className="jd-chart">
+          <div className="jd-chart-plot jd-skeleton" />
+          <div className="jd-chart-axis"><span>&nbsp;</span></div>
+        </figure>
+        <p className="jd-chart-legend">
+          <span className="jd-legend-live">This period</span>
+          <span className="jd-legend-previous">Period before</span>
+        </p>
+      </section>
+      <div className="jd-home-grid" aria-hidden="true">
+        {['Most viewed pages', 'Where visitors came from'].map((title) => (
+          <section key={title} className="jd-panel">
+            <h2 className="jd-panel-title">{title}</h2>
+            <p className="jd-ranked-head"><span>&nbsp;</span></p>
+            <ol className="jd-ranked">
+              {[0, 1, 2, 3, 4, 5].map((row) => <li key={row} className="jd-ranked-row jd-skeleton" />)}
+            </ol>
+          </section>
+        ))}
+      </div>
+      <p className="jd-footnote">
+        Counted without cookies. Visits from you and anyone else signed in to this dashboard are left out.
+      </p>
+    </div>
+  )
+}
+
+// `whatsNew` renders between the page heading and the numbers.
+export default function HomeStats({ whatsNew = null }) {
   // The period lives in the URL so a refresh or shared link keeps it.
   const [searchParams, setSearchParams] = useSearchParams()
   const range = RANGES.some((item) => item.value === searchParams.get('range')) ? searchParams.get('range') : '30d'
   const setRange = (value) => setSearchParams(value === '30d' ? {} : { range: value }, { replace: true })
   const [state, setState] = useState({ status: 'loading' })
+  const [attempt, setAttempt] = useState(0)
   const { data: services } = useContent('services')
 
   useEffect(() => {
@@ -89,7 +142,7 @@ export default function HomeStats() {
     return () => {
       cancelled = true
     }
-  }, [range])
+  }, [range, attempt])
 
   const { stats } = state
   const rangeInfo = RANGES.find((item) => item.value === range)
@@ -115,8 +168,15 @@ export default function HomeStats() {
         </div>
       </div>
 
-      {state.status === 'error' && <p className="jd-admin-error" role="alert">{state.error}</p>}
-      {state.status === 'loading' && <div className="jd-skeleton jd-skeleton--scoreboard" role="status" aria-label="Loading visits" />}
+      {whatsNew}
+
+      {state.status === 'error' && (
+        <section className="jd-panel jd-home-error" role="alert">
+          <p>{state.error}</p>
+          <button type="button" className="jd-admin-button" onClick={() => setAttempt((count) => count + 1)}>Try again</button>
+        </section>
+      )}
+      {state.status === 'loading' && <HomeStatsPlaceholder />}
 
       {stats && (
         <div className={`jd-home-body${state.status === 'refreshing' ? ' is-refreshing' : ''}`} aria-busy={state.status === 'refreshing'}>
@@ -146,7 +206,8 @@ export default function HomeStats() {
             ) : (
               <VisitsChart daily={stats.daily} />
             )}
-            <p className="jd-chart-legend">
+            {/* Kept (invisible) when there's no chart, so the card keeps its height. */}
+            <p className={`jd-chart-legend${empty ? ' is-placeholder' : ''}`} aria-hidden={empty || undefined}>
               <span className="jd-legend-live">This period</span>
               <span className="jd-legend-previous">Period before</span>
             </p>
