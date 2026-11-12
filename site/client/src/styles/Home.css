@@ -78,7 +78,12 @@
     linear-gradient(90deg, rgba(5, 7, 7, 0.75) 0%, rgba(5, 7, 7, 0) 55%);
 }
 
+/* The hero's actions are right-aligned and sit in the same bottom-right corner the
+   shared Replay pill defaults to, so on laptop-height screens the two overlapped.
+   Park the pill top-right, under the nav, where nothing else lives. */
 .lp-hero .hero-replay {
+  top: calc(var(--lp-nav) + var(--space-4));
+  bottom: auto;
   transition: opacity var(--transition-normal);
 }
 
@@ -794,8 +799,10 @@
     left: var(--space-6);
   }
 
+  /* Keep the copy below the outlined numeral: the numeral is absolutely positioned,
+     so on narrow cards with long copy the two used to run into each other. */
   .lp-pathway-body {
-    padding: var(--space-6);
+    padding: calc(var(--space-6) + 4rem + var(--space-4)) var(--space-6) var(--space-6);
   }
 
   .lp-about-badge {

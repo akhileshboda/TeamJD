@@ -1,4 +1,5 @@
 [
+  { "date": "2026-11-12", "text": "Home page and menu touch-ups: the Find Your Fit button in the phone menu is readable again, the big numbers on the four coaching paths no longer run into the text on small phones, and the Replay button on the opening video no longer sits on top of the buttons on laptop screens." },
   { "date": "2026-11-11", "text": "Dashboard: small links like Back and View all are easier to tap on a phone, numbers no longer jiggle as they change, and if your device is set to reduce motion the dashboard keeps still." },
   { "date": "2026-11-11", "text": "Dashboard: Home is tidier. The latest updates sit right under the page title, everything is evenly spaced, the page no longer jumps around while it loads, wide screens use the full width, and if the visit numbers can't load there is now a Try again button." },
   { "date": "2026-11-11", "text": "Dashboard: lists are tidier on phones, especially when reordering FAQs, and buttons that can't be used now look it. The Pages overview fills its rows evenly, and the Live, Offline and Unpublished changes help has an arrow so it looks clickable." },
