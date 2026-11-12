@@ -702,7 +702,7 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .nav-mobile-motion {
   align-self: flex-start;
-  margin: var(--space-4) 0 0;
+  margin: var(--space-4) var(--container-pad) 0;
 }
 
 .nav-hamburger {
@@ -832,6 +832,17 @@ p  { line-height: 1.7; color: var(--color-text); }
 
 .nav-mobile .mobile-cta {
   padding: var(--space-4) var(--container-pad);
+}
+
+/* `.nav-mobile a` (muted link grey) outranks `.btn-primary`, which left the
+   button's label grey on cyan (~1.9:1). Restate the button's own colours. */
+.nav-mobile .mobile-cta .btn-primary,
+.nav-mobile .mobile-cta .btn-primary:hover {
+  color: #0d0d0d;
+}
+
+.nav-mobile .mobile-cta .btn-primary:hover {
+  background-color: var(--color-hover-accent-dark);
 }
 
 /* ── Footer ─────────────────────────────────────────────────── */
