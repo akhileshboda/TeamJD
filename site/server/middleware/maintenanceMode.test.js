@@ -3,6 +3,7 @@ const test = require('node:test');
 const express = require('express');
 const request = require('supertest');
 const {
+  createMaintenanceMode,
   maintenanceMode,
   isMaintenanceModeEnabled,
   isProductionRuntime
@@ -123,3 +124,66 @@ test('a signed-in admin sees the real site behind the gate; visitors do not', as
     else process.env.CMS_ADMIN_EMAILS = previousAdmins;
   }
 });
+
+async function withMaintenance(run) {
+  const previous = process.env.MAINTENANCE_MODE;
+  process.env.MAINTENANCE_MODE = 'true';
+  try {
+    await run();
+  } finally {
+    if (previous === undefined) delete process.env.MAINTENANCE_MODE;
+    else process.env.MAINTENANCE_MODE = previous;
+  }
+}
+
+function buildDiscoverableApp(renderHoldingPage) {
+  const app = express();
+  app.use(createMaintenanceMode({ renderHoldingPage }));
+  for (const file of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt']) {
+    app.get(file, (req, res) => res.type('text/plain').send(`real ${file}`));
+  }
+  app.all('/', (req, res) => res.send('<html>real home</html>'));
+  app.get('/about', (req, res) => res.send('<html>about</html>'));
+  app.get('/api/ping', (req, res) => res.json({ ok: true }));
+  return app;
+}
+
+test('search engines can still read the crawl files while the site is gated', () => withMaintenance(async () => {
+  const app = buildDiscoverableApp();
+  for (const file of ['/robots.txt', '/sitemap.xml', '/llms.txt', '/llms-full.txt']) {
+    const response = await request(app).get(file);
+    assert.equal(response.status, 200, file);
+    assert.equal(response.text, `real ${file}`);
+  }
+}));
+
+test('the homepage serves the indexable holding page while gated; other pages stay 503', () => withMaintenance(async () => {
+  const app = buildDiscoverableApp(async () => '<html><meta name="robots" content="index, follow">holding</html>');
+
+  const home = await request(app).get('/');
+  assert.equal(home.status, 200);
+  assert.match(home.text, /holding/);
+  assert.doesNotMatch(home.text, /real home/);
+  assert.equal(home.headers['retry-after'], undefined);
+  assert.equal(home.headers['cache-control'], 'no-cache');
+
+  const head = await request(app).head('/');
+  assert.equal(head.status, 200);
+
+  assert.equal((await request(app).post('/')).status, 503);
+  assert.equal((await request(app).get('/about')).status, 503);
+  assert.equal((await request(app).get('/api/ping')).status, 503);
+}));
+
+test('a failing holding page falls back to the 503 maintenance page', () => withMaintenance(async () => {
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    const app = buildDiscoverableApp(async () => { throw new Error('store down'); });
+    const home = await request(app).get('/');
+    assert.equal(home.status, 503);
+    assert.match(home.text, /Temporarily Unavailable/);
+  } finally {
+    console.error = originalError;
+  }
+}));
