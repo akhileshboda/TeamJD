@@ -6,7 +6,8 @@ const { getCmsStore } = require('../services/cmsStore');
 const publicDir = path.join(__dirname, '..', '..', 'public');
 const MAINTENANCE_PAGE_PATH = path.join(publicDir, '503.html');
 const MAINTENANCE_RETRY_AFTER_SECONDS = 3600;
-const EXEMPT_PATHS = new Set(['/healthz']);
+// The favicon is the public logo mark; the sign-in page needs it before sign-in.
+const EXEMPT_PATHS = new Set(['/healthz', '/favicon.png']);
 
 function isProductionRuntime(env = process.env) {
   return env.NODE_ENV === 'production' && env.APP_ENV !== 'staging';
