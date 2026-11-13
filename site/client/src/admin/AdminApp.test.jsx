@@ -28,6 +28,16 @@ afterEach(() => {
 })
 
 describe('dashboard sign-in', () => {
+  // The maintenance and staging gates block /api/* until sign-in, so the sign-in
+  // logo must be a static file, not /api/assets/logo.
+  it('shows the logo from a static file that the gates never block', async () => {
+    renderAt('/admin', (url) => (
+      url === '/api/admin/auth/session' ? json({ signedIn: false, email: null }) : json({}, 404)
+    ))
+    const logo = await screen.findByAltText('Team JD')
+    expect(logo.getAttribute('src')).toBe('/assets/branding/team-jd-logo.png')
+  })
+
   it('asks for an email, then the code, then opens the dashboard', async () => {
     renderAt('/admin', (url, init) => {
       if (url === '/api/admin/auth/session') return json({ signedIn: false, email: null })
