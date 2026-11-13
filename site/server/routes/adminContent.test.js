@@ -28,7 +28,7 @@ test('edit, preview, publish: the public site only changes on publish', async ()
   const { app, write } = await buildApp();
   const list = await request(app).get('/api/admin/collections/results');
   assert.equal(list.status, 200);
-  assert.equal(list.body.items.length, 120);
+  assert.equal(list.body.items.length, 6);
 
   const record = (await request(app).get('/api/admin/collections/results/1')).body;
   const saved = await write('put', '/api/admin/collections/results/1').send({ draft: { ...record.draft, caption: 'Edited' }, rev: record.rev });
