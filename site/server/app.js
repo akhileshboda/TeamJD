@@ -20,7 +20,7 @@ const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
 const { requestCounter, startCapacityMonitor } = require('./services/capacityMonitor');
-const { maintenanceMode } = require('./middleware/maintenanceMode');
+const { MAINTENANCE_PAGE_PATH, createMaintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
 const { createSiteAuthRouter } = require('./routes/siteAuth');
 const { securityHeaders } = require('./middleware/securityHeaders');
@@ -268,7 +268,9 @@ app.use(
 );
 app.use(siteGate);
 app.use('/api/auth', createSiteAuthRouter());
-app.use(maintenanceMode);
+// While gated, the homepage serves the maintenance page with the home route's
+// real search tags so the site stays findable. Function declarations below.
+app.use(createMaintenanceMode({ renderHoldingPage }));
 app.use('/auth', authRouter);
 app.use('/api/assets', assetsRouter);
 app.use('/api/enquiries', enquiriesRouter);
@@ -303,6 +305,16 @@ async function loadSeoData() {
     store.getPublic('faqs').catch(() => [])
   ]);
   return { services, faqs, settings: store.cachedSettings() };
+}
+
+async function renderHoldingPage() {
+  const [html, data, imageUrl] = await Promise.all([
+    fs.promises.readFile(MAINTENANCE_PAGE_PATH, 'utf8'),
+    loadSeoData(),
+    shareImageUrl('jake-hero')
+  ]);
+  const route = resolveRoute({ pathname: '/', baseUrl: publicBaseUrl, staging: isStaging, ...data });
+  return applyRouteToShell(html, route, { baseUrl: publicBaseUrl, imageUrl });
 }
 
 app.get('/robots.txt', (req, res) => {
