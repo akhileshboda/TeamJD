@@ -9,12 +9,15 @@ import SectionReveal from '../components/SectionReveal'
 import JourneyIcon from '../components/JourneyIcon'
 import { useContent } from '../hooks/useContent'
 import {
+  RESULT_AUDIENCES,
   RESULT_CATEGORIES,
   RESULT_SORTS,
   RESULT_TYPES,
   RESULTS_PER_PAGE,
   filterAndSortResults,
+  getAudienceCounts,
   getCategoryCounts,
+  resultAudience,
   getPaginationRange,
   getResultsParams,
   paginateResults,
@@ -22,6 +25,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta'
 
 const DEFAULT_PARAMS = {
+  audience: 'all',
   category: 'all',
   type: 'all',
   sort: 'curated',
@@ -43,7 +47,7 @@ export default function Results() {
   const filters = getResultsParams(searchParams)
   const filtered = useMemo(
     () => filterAndSortResults(results || [], filters),
-    [filters.category, filters.query, filters.sort, filters.type, results],
+    [filters.audience, filters.category, filters.query, filters.sort, filters.type, results],
   )
   const pagination = useMemo(
     () => paginateResults(filtered, filters.page),
@@ -51,14 +55,27 @@ export default function Results() {
   )
   const categoryCounts = useMemo(
     () => getCategoryCounts(results || [], filters),
+    [filters.audience, filters.query, filters.type, results],
+  )
+  const audienceCounts = useMemo(
+    () => getAudienceCounts(results || [], filters),
     [filters.query, filters.type, results],
   )
+  // The audience row only earns its place once the library holds more than one
+  // kind of client; a shared ?audience= link always keeps its own choice visible.
+  const visibleAudiences = useMemo(() => {
+    const present = new Set((results || []).map(resultAudience))
+    if (present.size < 2 && filters.audience === 'all') return []
+    return RESULT_AUDIENCES.filter(({ value }) => value === 'all' || value === filters.audience || present.has(value))
+  }, [filters.audience, results])
   // Only offer filters the published library can satisfy; the active choice
   // stays visible so a shared link never hides its own filter.
   const visibleCategories = useMemo(() => {
-    const present = new Set((results || []).map((result) => result.category))
+    const present = new Set((results || [])
+      .filter((result) => filters.audience === 'all' || resultAudience(result) === filters.audience)
+      .map((result) => result.category))
     return RESULT_CATEGORIES.filter(({ value }) => value === 'all' || value === filters.category || present.has(value))
-  }, [filters.category, results])
+  }, [filters.audience, filters.category, results])
   const hasMixedTypes = useMemo(
     () => new Set((results || []).map((result) => result.kind)).size > 1 || filters.type !== 'all',
     [filters.type, results],
@@ -73,7 +90,7 @@ export default function Results() {
     ? filtered[selectedIndex + 1]
     : null
   const hasActiveFilters = Boolean(
-    filters.query || filters.category !== 'all' || filters.type !== 'all' || filters.sort !== 'curated',
+    filters.query || filters.audience !== 'all' || filters.category !== 'all' || filters.type !== 'all' || filters.sort !== 'curated',
   )
 
   const updateParams = (updates, { replace = false } = {}) => {
@@ -158,7 +175,7 @@ export default function Results() {
       <PageHero
         eyebrow="Client Results"
         title="Proof in the Prep."
-        subtitle="Explore genuine Team JD client outcomes across competition prep, posing, and coaching."
+        subtitle="Genuine Team JD client outcomes: stage-ready competitors, body transformations, and everyday clients getting stronger."
       />
 
       <section ref={libraryRef} className="results-library" aria-labelledby="results-heading">
@@ -233,6 +250,24 @@ export default function Results() {
                     <span>Hide</span>
                   </button>
                 </div>
+
+                {visibleAudiences.length > 0 && (
+                  <div className="results-audience-row" role="group" aria-label="Filter by who the result is for">
+                    {visibleAudiences.map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={`results-audience-tab${filters.audience === value ? ' is-active' : ''}`}
+                        aria-label={`${label}, ${audienceCounts[value] || 0} results`}
+                        aria-pressed={filters.audience === value}
+                        onClick={() => updateParams({ audience: value, category: 'all', page: 1 })}
+                      >
+                        <span>{label}</span>
+                        <span className="results-category-count">{audienceCounts[value] || 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="results-category-row">
                   <div className="results-category-rail" role="group" aria-label="Filter by category">

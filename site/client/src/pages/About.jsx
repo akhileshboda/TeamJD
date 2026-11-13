@@ -4,6 +4,7 @@ import { useReducedMotion } from 'motion/react'
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ClientResultsCarousel from '../components/ClientResultsCarousel'
+import { interleaveByAudience } from '../utils/resultsLibrary'
 import AboutProcessCarousel from '../components/AboutProcessCarousel'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal, { StaggerContainer, StaggerItem } from '../components/SectionReveal'
@@ -214,9 +215,10 @@ export default function About() {
     return { ...image, src: photo.src, alt: photo.alt, style: framedImageStyle(photo), section: photo.slotId }
   })
   const { data: resultsLibrary } = useContent('results')
-  const results = (resultsLibrary || [])
+  // Audiences take turns so the carousel shows the range of clients, not one kind.
+  const results = interleaveByAudience((resultsLibrary || [])
     .filter((result) => result.kind === 'client' && result.featured)
-    .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id))
+    .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id)))
   const resultViewerOriginRef = useRef(null)
   const [selectedResultId, setSelectedResultId] = useState(null)
   const selectedResultIndex = selectedResultId === null

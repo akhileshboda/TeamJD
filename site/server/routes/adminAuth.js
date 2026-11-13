@@ -4,6 +4,8 @@ const { adminAttemptLimiter, adminCodeEmailLimiter, adminCodeEmailTotalLimiter }
 const { getAdmin, requireSameOrigin } = require('../middleware/adminAuth');
 const auth = require('../services/adminAuth');
 
+const SIGN_IN_FAILED_MESSAGE = 'That code did not work. It may be wrong or expired. Use the code in the latest email, or wait a few minutes and ask for a new one.';
+
 // /api/admin/auth — the dashboard's email-code sign-in. Responses never reveal
 // whether an address is on the allowlist, by content or by timing: the email is
 // sent after the response, so failures are logged rather than reported.
@@ -47,11 +49,10 @@ function createAdminAuthRouter(options = {}) {
     const email = auth.normalizeEmail(req.body?.email);
     const result = email ? codes.verify(email, req.body?.code, getClientIp(req)) : 'missing';
     if (result !== 'ok') {
-      const messages = {
-        expired: 'That code has expired. Ask for a new one.',
-        locked: 'Too many wrong codes from this device. Wait 10 minutes, then ask for a new code.'
-      };
-      return res.status(401).json({ error: messages[result] || 'That code is not right. Check the latest email, or ask for a new code.' });
+      // One message for every failure: 'expired' and 'locked' only happen for
+      // allowlisted addresses, so distinct wording would reveal who is an admin.
+      if (result === 'locked') console.warn(`[admin-auth] sign-in locked for ${email} from ${getClientIp(req)}`);
+      return res.status(401).json({ error: SIGN_IN_FAILED_MESSAGE });
     }
 
     // A fresh session id on sign-in prevents session fixation.
@@ -59,6 +60,7 @@ function createAdminAuthRouter(options = {}) {
       if (error) return next(error);
       req.session.admin = { email, signedInAt: new Date().toISOString() };
       req.session.cookie.maxAge = auth.SESSION_MAX_AGE_MS;
+      console.log(`[admin-auth] signed in ${email} from ${getClientIp(req)}`);
       return req.session.save((saveError) => (saveError ? next(saveError) : res.json({ email })));
     });
   });

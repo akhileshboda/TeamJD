@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { createMailProvider, getMailConfig, MailProviderError } = require('./mail');
 const { buildSignInCodeTemplate } = require('./enquiryTemplates');
 
-// Dashboard sign-in: an allowlisted email address receives a one-time six-digit
+// Dashboard sign-in: an allowlisted email address receives a one-time eight-digit
 // code. Codes live only in memory (one PM2 process), are stored as HMACs and
 // expire after 10 minutes. A restart simply means asking for a new code.
 //
@@ -15,7 +15,10 @@ const { buildSignInCodeTemplate } = require('./enquiryTemplates');
 
 const CODE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
-const MAX_TOTAL_ATTEMPTS = 25;
+const MAX_TOTAL_ATTEMPTS = 10;
+// Eight digits: with the attempt caps below, a distributed guesser's chance stays
+// negligible even if they keep asking for fresh codes (about 2 in a million per hour).
+const CODE_LENGTH = 8;
 const MAX_LIVE_CODES = 5;
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -27,9 +30,24 @@ function getAllowedEmails(env = process.env) {
   return new Set(String(env.CMS_ADMIN_EMAILS || '').split(',').map(normalizeEmail).filter(Boolean));
 }
 
-// Local development only; staging and production both run NODE_ENV=production.
+// True only for a local development run: not NODE_ENV=production, no APP_ENV
+// (staging and production both set deployment markers), and a public base URL,
+// if any, that points at this machine. A server started by hand with a dev .env
+// on a real host therefore never gets the dev shortcuts.
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+function isLocalDevelopment(env = process.env) {
+  if (env.NODE_ENV === 'production' || env.APP_ENV) return false;
+  if (!env.PUBLIC_BASE_URL) return true;
+  try {
+    return LOCAL_HOSTNAMES.has(new URL(env.PUBLIC_BASE_URL).hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
+// Skips dashboard sign-in. Local development only (see isLocalDevelopment).
 function isDevBypass(env = process.env) {
-  return env.NODE_ENV !== 'production' && env.CMS_DEV_BYPASS === 'true';
+  return env.CMS_DEV_BYPASS === 'true' && isLocalDevelopment(env);
 }
 
 function createCodeStore({ now = Date.now } = {}) {
@@ -52,7 +70,7 @@ function createCodeStore({ now = Date.now } = {}) {
   return {
     issue(email) {
       for (const known of entries.keys()) liveEntry(known);
-      const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+      const code = String(crypto.randomInt(0, 10 ** CODE_LENGTH)).padStart(CODE_LENGTH, '0');
       const entry = entries.get(email) || { codes: [], wrongByClient: new Map(), wrongTotal: 0 };
       entry.codes = [...entry.codes, { digest: digest(email, code), expiresAt: now() + CODE_TTL_MS }].slice(-MAX_LIVE_CODES);
       entries.set(email, entry);
@@ -67,7 +85,7 @@ function createCodeStore({ now = Date.now } = {}) {
       if ((entry.wrongByClient.get(client) || 0) >= MAX_ATTEMPTS) return 'locked';
 
       const candidate = String(code ?? '').trim();
-      const valid = /^\d{6}$/.test(candidate)
+      const valid = new RegExp(`^\\d{${CODE_LENGTH}}$`).test(candidate)
         && entry.codes.some((stored) => crypto.timingSafeEqual(stored.digest, digest(email, candidate)));
       if (valid) {
         entries.delete(email);
@@ -75,7 +93,10 @@ function createCodeStore({ now = Date.now } = {}) {
       }
       entry.wrongByClient.set(client, (entry.wrongByClient.get(client) || 0) + 1);
       entry.wrongTotal += 1;
-      if (entry.wrongTotal >= MAX_TOTAL_ATTEMPTS) entries.delete(email);
+      if (entry.wrongTotal >= MAX_TOTAL_ATTEMPTS) {
+        entries.delete(email);
+        console.warn(`[admin-auth] all codes revoked after ${MAX_TOTAL_ATTEMPTS} wrong guesses for ${email}`);
+      }
       return 'wrong';
     }
   };
@@ -99,6 +120,7 @@ async function sendSignInCode(email, code, { config = getMailConfig(), provider 
 }
 
 module.exports = {
+  CODE_LENGTH,
   CODE_TTL_MS,
   MAX_ATTEMPTS,
   MAX_TOTAL_ATTEMPTS,
@@ -106,6 +128,7 @@ module.exports = {
   createCodeStore,
   getAllowedEmails,
   isDevBypass,
+  isLocalDevelopment,
   isSignInMailConfigured,
   normalizeEmail,
   sendSignInCode

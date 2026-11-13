@@ -14,6 +14,17 @@ const SEED_DIR = path.join(__dirname, '..', 'seed');
 
 const RESULT_CATEGORIES = ['competition', 'posing', 'online', 'training', 'lifestyle'];
 const RESULT_KINDS = ['client', 'representative'];
+// Who a result speaks to. Category says which service it came from; audience says
+// which visitor should see themselves in it. Results saved before audience
+// existed take it from their category.
+const RESULT_AUDIENCES = ['competitor', 'transformation', 'everyday'];
+const AUDIENCE_BY_CATEGORY = {
+  competition: 'competitor',
+  posing: 'competitor',
+  online: 'everyday',
+  training: 'everyday',
+  lifestyle: 'everyday'
+};
 const RESULT_FITS = ['contain', 'cover'];
 
 function text(value, max) {
@@ -60,10 +71,12 @@ function requireFields(draft, messages) {
 function normalizeResult(input = {}) {
   const image = input.image || {};
   const presentation = input.presentation;
+  const category = oneOf(input.category, RESULT_CATEGORIES, 'competition');
   return {
     caption: text(input.caption, 160),
     alt: text(input.alt, 300),
-    category: oneOf(input.category, RESULT_CATEGORIES, 'competition'),
+    category,
+    audience: oneOf(input.audience, RESULT_AUDIENCES, AUDIENCE_BY_CATEGORY[category]),
     kind: oneOf(input.kind, RESULT_KINDS, 'client'),
     featured: Boolean(input.featured),
     image: { assetId: text(image.assetId, 80) || null, src: text(image.src, 1000) },
@@ -124,6 +137,7 @@ function toPublicResult(record, data) {
     alt: version.alt,
     caption: version.caption,
     category: version.category,
+    audience: version.audience,
     kind: version.kind,
     featured: version.featured
   };
@@ -145,6 +159,7 @@ function summarizeResult(record, data) {
     subtitle: version.caption && version.name ? version.caption : '',
     thumbnail: resultImageSrc(version, data),
     category: version.category,
+    audience: version.audience,
     kind: version.kind,
     featured: version.featured
   };
@@ -181,6 +196,21 @@ function foldTestimonialsIntoResults(data) {
   }
   delete data.collections.testimonials;
   return true;
+}
+
+// Results saved before the audience field existed get it from their category.
+// Re-normalising a version only adds that field, so nothing else changes.
+function backfillResultAudience(data) {
+  let changed = false;
+  for (const result of data.collections.results || []) {
+    for (const key of ['draft', 'published']) {
+      const version = result[key];
+      if (!version || version.audience) continue;
+      result[key] = normalizeResult(version);
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 // ── Placements ───────────────────────────────────────────────────────────────
@@ -297,8 +327,88 @@ function seedResults({ now, seedDir = SEED_DIR }) {
   return readSeed(seedDir, 'results-library.json').map((item) => {
     const id = String(item.id);
     const draft = normalizeResult({ ...item, image: { src: item.src } });
-    return seedRecord({ id, order: item.order, draft, live: item.kind === 'client', now });
+    return seedRecord({ id, order: item.order, draft, live: item.kind === 'client' && !item.hidden, now });
   });
+}
+
+// November 2026: four of the six original stage results were Akhil (two were the
+// same photo), so the seed now hides them and rewrites the copy on the two kept.
+// Stores seeded before that get the same change once, wherever a version still
+// shows the seed's own photo:
+// - the live version of the four is unpublished even if someone has edited its
+//   words (it is reversible from the dashboard, and nothing is deleted);
+// - on the two kept, each caption, headline, summary, length, stats list and
+//   testimonial author/label is replaced only while it is still exactly the old
+//   seed value, so anything Jake changed stays.
+const SEED_REVISION = 'seed-results-2026-11';
+// The old seed values on the two kept results. Each is replaced by the new seed
+// value only while it is still exactly this (stats compared as a whole list).
+const OLD_SEED_COPY = {
+  1: {
+    caption: 'ANB Champion — Competition Prep Client',
+    name: 'ANB champion with stage-ready control',
+    summary: 'A full prep result built around tighter presentation, clearer conditioning, and confidence when it mattered.',
+    duration: '16 Weeks',
+    stats: [
+      { label: 'Service', value: 'Prep' },
+      { label: 'Outcome', value: 'Gold', trend: 'up' },
+      { label: 'Focus', value: 'Stage' }
+    ],
+    testimonial: { author: 'ANB Champion', result: 'Gold Medal Stage Result' }
+  },
+  4: {
+    caption: 'Stage Presence — Online Coaching Client',
+    name: 'Presentation that translated under lights',
+    summary: 'A posing-focused result built around angles, transitions, breathing, and making the physique read from the judging table.',
+    duration: '8 Weeks',
+    stats: [
+      { label: 'Service', value: 'Posing' },
+      { label: 'Focus', value: 'Angles' },
+      { label: 'Confidence', value: 'Higher', trend: 'up' }
+    ],
+    testimonial: { author: 'Posing Client', result: 'Stage Presence Transformation' }
+  }
+};
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function applySeedRevision(data, { now, seedDir = SEED_DIR }) {
+  data.migrations ??= [];
+  if (data.migrations.includes(SEED_REVISION)) return false;
+  const seedById = new Map(readSeed(seedDir, 'results-library.json').map((item) => [String(item.id), item]));
+  for (const record of data.collections.results || []) {
+    const item = seedById.get(record.id);
+    if (!item) continue;
+    // Each version is judged on its own photo: one Jake has swapped is no longer
+    // one of Akhil's shots, so it is left exactly as it is.
+    const showsSeedPhoto = (version) => Boolean(version) && !version.image?.assetId && version.image?.src === item.src;
+    if (item.hidden) {
+      if (showsSeedPhoto(record.published)) {
+        record.published = null;
+        record.hiddenAt = now;
+      }
+      continue;
+    }
+    const old = OLD_SEED_COPY[record.id];
+    if (!old) continue;
+    for (const key of ['draft', 'published']) {
+      if (!showsSeedPhoto(record[key])) continue;
+      const version = record[key];
+      const copy = {};
+      for (const field of ['caption', 'name', 'summary', 'duration', 'stats']) {
+        if (same(version[field], old[field])) copy[field] = item[field] ?? '';
+      }
+      if (version.testimonial) {
+        const testimonial = { ...version.testimonial };
+        for (const field of ['author', 'result']) {
+          if (testimonial[field] === old.testimonial[field]) testimonial[field] = item.testimonial[field];
+        }
+        copy.testimonial = testimonial;
+      }
+      record[key] = normalizeResult({ ...version, ...copy });
+    }
+  }
+  data.migrations.push(SEED_REVISION);
+  return true;
 }
 
 // Public outputs the site reads, built from live records only.
@@ -358,9 +468,12 @@ const COLLECTIONS = {
 
 module.exports = {
   COLLECTIONS,
+  applySeedRevision,
   PUBLIC_OUTPUTS,
+  backfillResultAudience,
   foldTestimonialsIntoResults,
   mediaUsage,
+  RESULT_AUDIENCES,
   RESULT_CATEGORIES,
   RESULT_KINDS,
   SEED_DIR,

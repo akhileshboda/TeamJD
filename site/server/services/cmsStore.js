@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, foldTestimonialsIntoResults, mediaUsage } = require('./cmsCollections');
+const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, applySeedRevision, backfillResultAudience, foldTestimonialsIntoResults, mediaUsage } = require('./cmsCollections');
 const { normalizeSection, withDefaults } = require('./cmsSettings');
 
 // The dashboard's content store: one JSON file holding every collection.
@@ -182,6 +182,7 @@ function createCmsStore(options = {}) {
     data.media ??= [];
     data.settings ??= {};
     if (foldTestimonialsIntoResults(data)) changed = true;
+    if (backfillResultAudience(data)) changed = true;
     if (data.schemaVersion !== SCHEMA_VERSION) {
       data.schemaVersion = SCHEMA_VERSION;
       changed = true;
@@ -192,6 +193,7 @@ function createCmsStore(options = {}) {
         changed = true;
       }
     }
+    if (applySeedRevision(data, { now: now(), seedDir })) changed = true;
     if (changed) await write(data);
     cache = data;
     return data;

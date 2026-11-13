@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { requireDropboxOAuthWindow } = require('./auth');
+const { requireDropboxOAuthWindow, requireAdminInProduction } = require('./auth');
 
 function runGuard(environment, enabled) {
   const previousEnvironment = process.env.NODE_ENV;
@@ -34,4 +34,29 @@ test('Dropbox OAuth is disabled by default in production-mode environments', () 
 test('Dropbox OAuth requires an explicit controlled production window', () => {
   assert.equal(runGuard('production', 'true').next, true);
   assert.equal(runGuard('development').next, true);
+});
+
+test('Dropbox OAuth in production needs a signed-in dashboard admin', () => {
+  const previous = { NODE_ENV: process.env.NODE_ENV, CMS_ADMIN_EMAILS: process.env.CMS_ADMIN_EMAILS };
+  process.env.NODE_ENV = 'production';
+  process.env.CMS_ADMIN_EMAILS = 'owner@example.com';
+  try {
+    const run = (session) => {
+      const result = { next: false, status: null };
+      const res = {
+        set() { return this; },
+        status(code) { result.status = code; return this; },
+        json() { return this; }
+      };
+      requireAdminInProduction({ session }, res, () => { result.next = true; });
+      return result;
+    };
+    assert.deepEqual(run({}), { next: false, status: 401 });
+    assert.deepEqual(run({ admin: { email: 'owner@example.com' } }), { next: true, status: null });
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });

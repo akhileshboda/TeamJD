@@ -1,5 +1,6 @@
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import NotFound from './NotFound'
+import ClientResultsCarousel from '../components/ClientResultsCarousel'
 import CompetitionPrepAccessGate from '../components/CompetitionPrepAccessGate'
 import JourneyIcon from '../components/JourneyIcon'
 import ScrollChromeSection from '../components/ScrollChromeSection'
@@ -17,6 +18,17 @@ import { framedBackgroundPosition, framedImageStyle, useAssets, useMedia } from 
 import { useFindYourFitSession } from '../context/FindYourFitSession'
 import { resolveServiceAction } from '../utils/bookingLinks'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { interleaveByAudience, resultAudience } from '../utils/resultsLibrary'
+
+// Which clients each service's results strip speaks to, and the Results page
+// view its "View all" link opens.
+const SERVICE_RESULTS = {
+  'competition-prep': { audiences: ['competitor'], href: '/results?audience=competitor', title: 'Stage results' },
+  'posing-only': { audiences: ['competitor'], href: '/results?audience=competitor', title: 'Stage results' },
+  // Stage shots belong on the competition pages, even when they show a transformation.
+  'online-coaching': { audiences: ['transformation', 'everyday'], skipCategories: ['competition', 'posing'], href: '/results', title: 'Client results' },
+  'personal-training': { audiences: ['transformation', 'everyday'], skipCategories: ['competition', 'posing'], href: '/results', title: 'Client results' },
+}
 
 const inclusionGroups = [
   { title: 'Your coaching plan', range: [0, 2], variant: 'plan' },
@@ -26,6 +38,8 @@ const inclusionGroups = [
 export default function ServiceDetailPage() {
   const { slug } = useParams()
   const { data: services } = useContent('services')
+  const { data: resultsLibrary } = useContent('results')
+  const navigate = useNavigate()
   const resolveAsset = useAssets()
   const media = useMedia()
   const { canViewCompetitionPrep } = useFindYourFitSession()
@@ -38,19 +52,27 @@ export default function ServiceDetailPage() {
     noindex: missing,
   })
 
+  // Normally the services arrive with the page (App.jsx), so this only shows if
+  // they are slow or fail. It uses the hero's own layout and fills the screen, so
+  // nothing below it is visible to move when the real hero replaces it. The
+  // distinct keys stop React reusing the placeholder's nodes for the real page.
   if (!services) {
     return (
-      <div className="service-route-loading" role="status">
-        <span className="visually-hidden">Loading service</span>
-        <div className="service-skeleton-hero" aria-hidden="true">
-          <div className="service-skeleton-copy">
-            <div className="service-skeleton-bar service-skeleton-bar--chip" />
-            <div className="service-skeleton-bar service-skeleton-bar--title" />
-            <div className="service-skeleton-bar service-skeleton-bar--title-short" />
-            <div className="service-skeleton-bar service-skeleton-bar--text" />
+      <div className="service-journey-theme service-journey-theme--loading" key="loading">
+        <section className="service-journey-hero service-journey-hero--loading" role="status">
+          <span className="visually-hidden">Loading service</span>
+          <div className="container service-journey-hero-inner" aria-hidden="true">
+            <div className="service-skeleton-copy">
+              <div className="service-skeleton-bar service-skeleton-bar--chip" />
+              <div className="service-skeleton-bar service-skeleton-bar--title" />
+              <div className="service-skeleton-bar service-skeleton-bar--title-short" />
+              <div className="service-skeleton-bar service-skeleton-bar--text" />
+            </div>
+            <div className="service-journey-visual">
+              <div className="service-journey-image-frame service-skeleton-frame" />
+            </div>
           </div>
-          <div className="service-skeleton-frame" />
-        </div>
+        </section>
       </div>
     )
   }
@@ -80,9 +102,17 @@ export default function ServiceDetailPage() {
     `${service.name} coaching in action`,
   )
   const bookingAction = resolveServiceAction(service)
+  const resultsFit = SERVICE_RESULTS[service.id]
+  const serviceResults = resultsFit
+    ? interleaveByAudience((resultsLibrary || []).filter((result) => (
+      result.kind === 'client'
+      && resultsFit.audiences.includes(resultAudience(result))
+      && !(resultsFit.skipCategories || []).includes(result.category)
+    )))
+    : []
 
   return (
-    <div className="service-journey-theme" style={themeVars}>
+    <div className="service-journey-theme" style={themeVars} key={`service-${slug}`}>
       <ServiceDetailHero service={service} services={services} />
 
       <div className="service-journey-page">
@@ -243,6 +273,24 @@ export default function ServiceDetailPage() {
               </div>
             </ScrollChromeSection>
           </SectionReveal>
+
+          {/* Mounted only once results have loaded, so the reveal never fires on an empty strip. */}
+          {serviceResults.length > 0 && (
+            <section className="service-results-section" aria-labelledby="service-results-title">
+              <SectionReveal>
+                <ClientResultsCarousel
+                  results={serviceResults}
+                  onOpen={(result) => navigate(`/results?view=${encodeURIComponent(result.id)}`)}
+                  eyebrow="Client Results"
+                  title={resultsFit.title}
+                  caption={null}
+                  headingId="service-results-title"
+                  viewAllHref={resultsFit.href}
+                  analyticsLocation={`service_${service.id}_results`}
+                />
+              </SectionReveal>
+            </section>
+          )}
 
           {service.venue && (
             <SectionReveal>

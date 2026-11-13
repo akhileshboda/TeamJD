@@ -7,10 +7,10 @@ function withEnv(run) {
     ENQUIRY_MAIL_PROVIDER: 'resend',
     RESEND_API_KEY: 'resend-key',
     ENQUIRY_EMAIL_FROM: 'Team JD Enquiries <enquiries@send.team-jd.com.au>',
-    ENQUIRY_NOTIFICATION_TO: 'akhileshboda@outlook.com',
-    ENQUIRY_REPLY_TO: 'akhileshboda@outlook.com',
+    ENQUIRY_NOTIFICATION_TO: 'enquiries@example.com',
+    ENQUIRY_REPLY_TO: 'enquiries@example.com',
     ENQUIRY_EMAIL_SUBJECT_PREFIX: '[STAGING]',
-    PUBLIC_BASE_URL: 'https://staging.team-jd.com.au'
+    PUBLIC_BASE_URL: 'https://staging.example.com'
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
   Object.assign(process.env, values);
@@ -47,10 +47,10 @@ test('delivery fixes the internal recipient and reply-to values on the server', 
 
   assert.equal(batch.idempotencyKey, `enquiry/${enquiry.submissionId}`);
   assert.equal(batch.messages.length, 2);
-  assert.deepEqual(batch.messages[0].to, ['akhileshboda@outlook.com']);
+  assert.deepEqual(batch.messages[0].to, ['enquiries@example.com']);
   assert.equal(batch.messages[0].reply_to, 'customer@example.com');
   assert.deepEqual(batch.messages[1].to, ['customer@example.com']);
-  assert.equal(batch.messages[1].reply_to, 'akhileshboda@outlook.com');
+  assert.equal(batch.messages[1].reply_to, 'enquiries@example.com');
   assert.match(batch.messages[0].subject, /^\[STAGING\]/);
   assert.match(batch.messages[1].subject, /^\[STAGING\]/);
   assert.match(batch.messages[0].text, /Full internal message/);

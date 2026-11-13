@@ -44,7 +44,7 @@ test('an allowlisted email gets a code and signs in for 30 days', async () => {
   assert.equal(requested.status, 200);
   assert.equal(sent.length, 1);
   assert.equal(sent[0].email, 'jake@team-jd.com.au');
-  assert.match(sent[0].code, /^\d{6}$/);
+  assert.match(sent[0].code, /^\d{8}$/);
 
   const verified = await post('/api/admin/auth/verify', { email: 'jake@team-jd.com.au', code: sent[0].code });
   assert.equal(verified.status, 200);
@@ -72,22 +72,28 @@ test('a code works once, locks a device after too many wrong guesses, and expire
   const { post, sent } = buildApp({ now: () => clock });
   await post('/api/admin/auth/code', { email: 'akhil@example.com' });
   const { code } = sent[0];
-  const wrong = code === '000000' ? '111111' : '000000';
+  const wrong = code === '00000000' ? '11111111' : '00000000';
 
   for (let attempt = 1; attempt < MAX_ATTEMPTS; attempt += 1) {
     assert.equal((await post('/api/admin/auth/verify', { email: 'akhil@example.com', code: wrong })).status, 401);
   }
-  assert.equal((await post('/api/admin/auth/verify', { email: 'akhil@example.com', code: wrong })).status, 401);
+  const lastWrong = await post('/api/admin/auth/verify', { email: 'akhil@example.com', code: wrong });
+  assert.equal(lastWrong.status, 401);
   // After five wrong guesses this device cannot try again, even with the right code.
   const locked = await post('/api/admin/auth/verify', { email: 'akhil@example.com', code });
   assert.equal(locked.status, 401);
-  assert.match(locked.body.error, /Too many wrong codes/);
+  // Locked, expired, wrong and unknown-address failures all read the same, so the
+  // reply never reveals whether an address is on the allowlist.
+  assert.equal(locked.body.error, lastWrong.body.error);
+  const unknown = await post('/api/admin/auth/verify', { email: 'stranger@example.com', code: wrong });
+  assert.equal(unknown.status, 401);
+  assert.equal(unknown.body.error, lastWrong.body.error);
 
   await post('/api/admin/auth/code', { email: 'akhil@example.com' });
   clock += 11 * 60 * 1000;
   const expired = await post('/api/admin/auth/verify', { email: 'akhil@example.com', code: sent[1].code });
   assert.equal(expired.status, 401);
-  assert.match(expired.body.error, /expired/);
+  assert.equal(expired.body.error, lastWrong.body.error);
 });
 
 test('cross-site sign-in attempts are refused', async () => {
@@ -113,7 +119,7 @@ test('a stranger cannot lock Jake out by guessing or asking for codes', async ()
   const email = 'jake@team-jd.com.au';
   await post('/api/admin/auth/code', { email });
   const jakesCode = sent[0].code;
-  const wrong = jakesCode === '000000' ? '111111' : '000000';
+  const wrong = jakesCode === '00000000' ? '11111111' : '00000000';
 
   const stranger = otherIp();
   await postFrom(stranger, '/api/admin/auth/code', { email });
@@ -129,7 +135,7 @@ test('a stranger cannot lock Jake out by guessing or asking for codes', async ()
 test('guessing from many devices still kills every code for that address', () => {
   const codes = createCodeStore();
   const code = codes.issue('jake@team-jd.com.au');
-  const wrong = code === '000000' ? '111111' : '000000';
+  const wrong = code === '00000000' ? '11111111' : '00000000';
   for (let attempt = 0; attempt < MAX_TOTAL_ATTEMPTS; attempt += 1) {
     codes.verify('jake@team-jd.com.au', wrong, `client-${attempt}`);
   }

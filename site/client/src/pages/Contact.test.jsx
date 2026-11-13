@@ -136,7 +136,7 @@ describe('Contact page route chooser', () => {
     fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
     fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Boda' } })
     fireEvent.change(screen.getByLabelText('Email Address'), {
-      target: { value: 'akhileshboda@outlook.com' },
+      target: { value: 'enquiries@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Your Message'), {
       target: { value: 'I would like some clarity about coaching.' },
@@ -153,7 +153,7 @@ describe('Contact page route chooser', () => {
     expect(payload).toMatchObject({
       firstName: 'Akhil',
       lastName: 'Boda',
-      email: 'akhileshboda@outlook.com',
+      email: 'enquiries@example.com',
       service: 'online-coaching',
       message: 'I would like some clarity about coaching.',
       website: '',
@@ -175,7 +175,7 @@ describe('Contact page route chooser', () => {
 
     fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
     fireEvent.change(screen.getByLabelText('Email Address'), {
-      target: { value: 'akhileshboda@outlook.com' },
+      target: { value: 'enquiries@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Your Message'), {
       target: { value: 'Please keep this message after an error.' },
@@ -191,7 +191,7 @@ describe('Contact page route chooser', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('temporarily at capacity')
     expect(screen.getByLabelText('First Name')).toHaveValue('Akhil')
-    expect(screen.getByLabelText('Email Address')).toHaveValue('akhileshboda@outlook.com')
+    expect(screen.getByLabelText('Email Address')).toHaveValue('enquiries@example.com')
     expect(screen.getByLabelText('Your Message')).toHaveValue('Please keep this message after an error.')
   })
 
@@ -205,7 +205,7 @@ describe('Contact page route chooser', () => {
 
     fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Akhil' } })
     fireEvent.change(screen.getByLabelText('Email Address'), {
-      target: { value: 'akhileshboda@outlook.com' },
+      target: { value: 'enquiries@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Your Message'), {
       target: { value: 'Original message.' },

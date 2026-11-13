@@ -141,7 +141,7 @@ test('robots.txt: production opens the AI crawlers and lists the sitemap, stagin
   assert.match(production, /Sitemap: https:\/\/team-jd\.com\.au\/sitemap\.xml/);
   assert.ok(!/Disallow: \/api\/\s/.test(production), 'the site and Google need /api/ to render');
 
-  const staging = buildRobotsTxt({ baseUrl: 'https://jake-preview.team-jd.com.au', staging: true });
+  const staging = buildRobotsTxt({ baseUrl: 'https://staging.example.com', staging: true });
   assert.ok(!staging.includes('Sitemap:'));
   assert.ok(!staging.includes('GPTBot'));
   assert.ok(!/^Disallow: \/\s*$/m.test(staging), 'crawlers must reach pages to see the noindex header');

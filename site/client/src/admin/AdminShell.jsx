@@ -90,6 +90,11 @@ export default function AdminShell({ email, onSignOut, inert, children }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [drawerOpen])
 
+  const closeDrawer = () => {
+    setDrawerOpen(false)
+    menuButtonRef.current?.focus()
+  }
+
   const toggleRail = () => {
     setRail(!rail)
     try {
@@ -106,18 +111,24 @@ export default function AdminShell({ email, onSignOut, inert, children }) {
 
       {/* On phones the closed drawer is off-screen, so keep it out of the tab order. */}
       <aside ref={sidebarRef} className="jd-admin-sidebar" aria-label="Dashboard navigation" inert={narrow && !drawerOpen ? '' : undefined}>
-        <Brand />
+        <div className="jd-admin-sidebar-head">
+          <Brand />
+          {/* Phones and tablets only (CSS): the drawer's own way out, beside the scrim and Escape. */}
+          <button type="button" className="jd-admin-icon-button jd-admin-drawer-close" aria-label="Close menu" onClick={closeDrawer}>
+            <JourneyIcon name="close" size={20} />
+          </button>
+        </div>
         <SidebarNav onNavigate={() => setDrawerOpen(false)} rail={showRail} />
         <div className="jd-admin-account">
           <p className="jd-admin-account-email" title={email}>{email}</p>
           <button type="button" className="jd-admin-account-signout" onClick={onSignOut} title={showRail ? 'Sign out' : undefined}>
-            <JourneyIcon name="logOut" size={16} />
+            <JourneyIcon name="logOut" size={18} />
             <span>Sign out</span>
           </button>
           {!narrow && (
             <button type="button" className="jd-admin-rail-toggle" onClick={toggleRail}
               title={showRail ? 'Expand menu' : undefined}>
-              <JourneyIcon name="sidebar" size={16} />
+              <JourneyIcon name="sidebar" size={18} />
               <span>{showRail ? 'Expand menu' : 'Collapse menu'}</span>
             </button>
           )}
@@ -126,8 +137,8 @@ export default function AdminShell({ email, onSignOut, inert, children }) {
       <button
         type="button"
         className="jd-admin-scrim"
-        aria-label="Close menu"
-        tabIndex={drawerOpen ? 0 : -1}
+        aria-hidden="true"
+        tabIndex={-1}
         onClick={() => setDrawerOpen(false)}
       />
 

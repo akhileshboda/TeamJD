@@ -1,9 +1,12 @@
+// Load .env before any module below reads process.env at import time (the content
+// store and analytics resolve their data paths when they are first required).
+require('dotenv').config();
+
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
-const dotenv = require('dotenv');
 const authRouter = require('./routes/auth');
 const assetsRouter = require('./routes/assets');
 const enquiriesRouter = require('./routes/enquiries');
@@ -12,17 +15,18 @@ const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createAnalyticsRouter } = require('./routes/analytics');
 const { createContentRouter } = require('./routes/content');
 const { getCmsStore } = require('./services/cmsStore');
+const { runInstagramImport } = require('./services/instagramImport');
 const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
 const { requestCounter, startCapacityMonitor } = require('./services/capacityMonitor');
-const { visitLogger } = require('./middleware/visitLogger');
 const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
 const { createSiteAuthRouter } = require('./routes/siteAuth');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { genericApiLimiter } = require('./middleware/rateLimits');
 const { sendStaticPage } = require('./utils/staticPages');
+const { isDevBypass } = require('./services/adminAuth');
 const {
   getAssetManifest,
   getAssetServiceStatus,
@@ -31,7 +35,6 @@ const {
   startAssetPoller
 } = require('./services/dropbox');
 
-dotenv.config();
 
 // Runtime state can contain session and provider metadata. Keep newly created
 // files private even when the host user's default umask is permissive.
@@ -48,6 +51,15 @@ for (const envVar of requiredAuthEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`Missing required auth environment variable: ${envVar}`);
   }
+}
+
+if (process.env.CMS_DEV_BYPASS === 'true' && !isDevBypass()) {
+  console.warn('[security] CMS_DEV_BYPASS is ignored: it only works for a local development run.');
+}
+
+const syncToken = process.env.ASSET_SYNC_ADMIN_TOKEN;
+if (syncToken && syncToken.length < 32) {
+  console.warn('[security] ASSET_SYNC_ADMIN_TOKEN is shorter than 32 characters. Replace it with `openssl rand -hex 24`.');
 }
 
 const app = express();
@@ -228,7 +240,6 @@ app.get('/healthz', (req, res) => {
   });
 });
 app.use(requestCounter);
-app.use(visitLogger);
 // Session runs before the staging and maintenance gates so people signed in
 // (through the gate, or as dashboard admins) see the real site behind them.
 app.use(
@@ -421,6 +432,12 @@ async function startServer() {
 
   startAssetPoller();
   startCapacityMonitor();
+  // Copies the Instagram photos into this environment's media library once.
+  setImmediate(() => {
+    runInstagramImport(getCmsStore())
+      .then((outcome) => { if (outcome.status === 'imported') console.log('[cms] Instagram import:', outcome); })
+      .catch((error) => console.error('[cms] Instagram import failed; it will retry on next start:', error.message));
+  });
   setImmediate(() => {
     runStartupAssetSync().catch((error) => {
       console.error('Failed to run startup asset sync:', error);

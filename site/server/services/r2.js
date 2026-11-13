@@ -1,4 +1,5 @@
 const {
+  CopyObjectCommand,
   DeleteObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
@@ -288,6 +289,24 @@ async function uploadAssetToR2({ buffer, stream, contentLength, objectKey, conte
   );
 }
 
+// Server-side copy inside the bucket: nothing is downloaded or re-uploaded.
+async function copyR2Object({ sourceKey, objectKey, contentType }) {
+  const client = createR2Client();
+  if (!client) throw new Error('Cloudflare R2 is not configured.');
+  const { bucket } = getR2Config();
+
+  return client.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      Key: objectKey,
+      CopySource: `${bucket}/${sourceKey.split('/').map(encodeURIComponent).join('/')}`,
+      MetadataDirective: 'REPLACE',
+      ContentType: contentType,
+      CacheControl: PUBLIC_CACHE_CONTROL
+    })
+  );
+}
+
 async function deleteR2Object(objectKey, options = {}) {
   if (options.dryRun) {
     return { dryRun: true };
@@ -332,6 +351,7 @@ async function listR2ObjectKeys(prefix = getR2Config().assetPrefix) {
 
 module.exports = {
   PUBLIC_CACHE_CONTROL,
+  copyR2Object,
   deleteR2Object,
   getPublicR2Url,
   getPublicUrl: getPublicR2Url,

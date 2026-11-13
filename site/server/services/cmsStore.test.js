@@ -18,12 +18,12 @@ const countStatuses = (rows) => rows.reduce((counts, { status }) => {
   return counts;
 }, {});
 
-test('a new store seeds 6 live client results with their testimonials, and 114 hidden stock results', async () => {
+test('a new store seeds 2 live client results with their testimonials, and 118 hidden ones (4 retired stage shots and 114 stock)', async () => {
   const { store, storePath } = await tempStore();
   const results = await store.list('results');
   assert.equal(results.length, 120);
-  assert.deepEqual(countStatuses(results), { published: 6, hidden: 114 });
-  assert.equal(results[0].title, 'ANB champion with stage-ready control');
+  assert.deepEqual(countStatuses(results), { published: 2, hidden: 118 });
+  assert.equal(results[0].title, 'Akhil took gold at ANB');
   assert.match(results[0].thumbnail, /client-posing-1/);
 
   const first = await store.get('results', '1');
@@ -35,12 +35,17 @@ test('a new store seeds 6 live client results with their testimonials, and 114 h
   assert.deepEqual(onDisk.media, []);
 });
 
-test('public results are the original client records, apart from string ids and de-duplicated tags', async () => {
+test('public results are the live seed client records, apart from string ids, audience and de-duplicated tags', async () => {
   const { store } = await tempStore();
+  const audienceByCategory = { competition: 'competitor', posing: 'competitor' };
   const expected = ORIGINAL_RESULTS
-    .filter((item) => item.kind === 'client')
-    .map((item) => ({
-      ...item,
+    .filter((item) => item.kind === 'client' && !item.hidden)
+    // Public output leaves out an empty stats list.
+    .map(({ hidden, stats, ...item }) => (stats?.length ? { ...item, stats } : item))
+    .map(({ category, ...item }) => ({
+      ...Object.fromEntries(Object.entries(item).flatMap(([key, value]) =>
+        // Audience sits straight after category; seed records take it from their category.
+        key === 'kind' ? [['category', category], ['audience', audienceByCategory[category]], [key, value]] : [[key, value]])),
       id: String(item.id),
       // Every framed photo now also says how far it is zoomed in (1 = not at all).
       ...(item.presentation && { presentation: { ...item.presentation, zoom: 1 } }),
@@ -49,6 +54,96 @@ test('public results are the original client records, apart from string ids and 
   // Key order matters too: the site and its tests read this exact JSON before.
   assert.equal(JSON.stringify(await store.getPublic('results')), JSON.stringify(expected));
   await assert.rejects(store.getPublic('testimonials'), { statusCode: 404 });
+});
+
+test('stores seeded before November 2026 hide four of Akhil\'s shots and take the new copy once, keeping wording Jake changed', async () => {
+  const { storePath } = await tempStore();
+  const seed = Object.fromEntries(ORIGINAL_RESULTS.map((item) => [String(item.id), item]));
+  const OLD = {
+    1: ['ANB Champion — Competition Prep Client', 'ANB champion with stage-ready control', 'A full prep result built around tighter presentation, clearer conditioning, and confidence when it mattered.'],
+    4: ['Stage Presence — Online Coaching Client', 'Presentation that translated under lights', 'A posing-focused result built around angles, transitions, breathing, and making the physique read from the judging table.']
+  };
+  const OLD_EXTRAS = {
+    1: { duration: '16 Weeks', stats: [{ label: 'Service', value: 'Prep' }, { label: 'Outcome', value: 'Gold', trend: 'up' }, { label: 'Focus', value: 'Stage' }], testimonial: { quote: 'Real words one', author: 'ANB Champion', service: 'Competition Preparation', result: 'Gold Medal Stage Result' } },
+    4: { duration: '8 Weeks', stats: [{ label: 'Service', value: 'Posing' }, { label: 'Focus', value: 'Angles' }, { label: 'Confidence', value: 'Higher', trend: 'up' }], testimonial: { quote: 'Real words four', author: 'Posing Client', service: 'Posing', result: 'Stage Presence Transformation' } }
+  };
+  // A store as the old seed made it: all six original client results live, with the old copy.
+  const old = (id, extra = {}) => {
+    const [caption, name, summary] = OLD[id] || [`old ${id}`, `old name ${id}`, `old summary ${id}`];
+    const extras = OLD_EXTRAS[id] || { duration: '', stats: [], testimonial: null };
+    const draft = { caption, alt: 'a', name, summary, category: 'competition', kind: 'client', featured: true, image: { assetId: null, src: seed[id].src }, presentation: null, tags: [], ...structuredClone(extras) };
+    return { id: String(id), order: id, draft, published: structuredClone(draft), rev: 1, updatedBy: 'seed', publishedAt: 'then', hiddenAt: null, ...extra };
+  };
+  const one = old(1, { updatedBy: 'jake@example.com', rev: 6 });
+  one.draft.caption = one.published.caption = 'Jake wrote this';
+  one.draft.duration = one.published.duration = '12 weeks';
+  const two = old(2, { updatedBy: 'jake@example.com', rev: 3 });
+  // Jake swapped the photo on 5 and published it, so it is not Akhil any more and stays live.
+  const five = old(5, { updatedBy: 'jake@example.com', rev: 2 });
+  five.draft.image.src = five.published.image.src = 'https://cdn.example/someone-else.webp';
+  // On 6 he swapped the photo in a draft only, so the live version is still Akhil and goes.
+  const six = old(6, { updatedBy: 'jake@example.com', rev: 2 });
+  six.draft.image.src = 'https://cdn.example/new-draft.webp';
+  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 2, collections: { results: [one, two, old(3), old(4), five, six] }, media: [] }));
+  const store = createCmsStore({ storePath, backup: null });
+
+  const live = await store.getPublic('results');
+  // 2, 3 and 6 are hidden, including 2 whose words had been edited; 5 now shows someone else.
+  assert.deepEqual(live.map((result) => result.id), ['1', '4', '5']);
+  assert.equal((await store.get('results', '2')).status, 'hidden');
+  // 6 keeps Jake's unpublished draft with the new photo.
+  const sixAfter = await store.get('results', '6');
+  assert.equal(sixAfter.published, null);
+  assert.equal(sixAfter.draft.image.src, 'https://cdn.example/new-draft.webp');
+  // 4 still had the old seed copy, so it takes all of the new copy.
+  const four = live.find((item) => item.id === '4');
+  assert.deepEqual([four.caption, four.name, four.summary], [seed[4].caption, seed[4].name, seed[4].summary]);
+  // 1 keeps the caption Jake wrote; the fields he had not touched take the new copy.
+  // The made-up length, stats and anonymous labels go; the quotes stay.
+  assert.equal(four.duration, undefined);
+  assert.equal(four.stats, undefined);
+  assert.deepEqual(four.testimonial, { quote: 'Real words four', author: 'Akhil', service: 'Posing', result: '' });
+  const first = live.find((item) => item.id === '1');
+  assert.equal(first.caption, 'Jake wrote this');
+  assert.equal(first.duration, '12 weeks');
+  assert.equal(first.stats, undefined);
+  assert.deepEqual(first.testimonial, { quote: 'Real words one', author: 'Akhil', service: 'Competition Preparation', result: 'Gold at ANB' });
+  assert.deepEqual([first.name, first.summary], [seed[1].name, seed[1].summary]);
+  assert.equal(first.src, seed[1].src);
+
+  const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
+  assert.ok(onDisk.migrations.includes('seed-results-2026-11'));
+  for (const index of [1, 2, 5]) assert.ok(onDisk.collections.results[index].hiddenAt, `record ${index + 1} records when it was hidden`);
+  assert.equal(onDisk.collections.results[4].hiddenAt, null);
+  // Runs once: a record re-published later is not hidden again.
+  onDisk.collections.results[1].published = onDisk.collections.results[1].draft;
+  await fs.writeFile(storePath, JSON.stringify(onDisk));
+  const reloaded = createCmsStore({ storePath, backup: null });
+  assert.ok((await reloaded.getPublic('results')).some((item) => item.id === '2'));
+});
+
+test('results saved before audience existed get it from their category on load', async () => {
+  const { storePath } = await tempStore();
+  const legacy = (category) => ({ caption: 'c', alt: 'a', category, kind: 'client', featured: false, image: { assetId: null, src: '/x.webp' }, presentation: null, tags: [], stats: [] });
+  const record = (id, category, published) => ({ id, order: Number(id), draft: legacy(category), published: published ? legacy(category) : null, rev: 1 });
+  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 2, collections: { results: [record('1', 'posing', true), record('2', 'training', false)] }, media: [] }));
+  const store = createCmsStore({ storePath, backup: null });
+  const [posing, training] = [await store.get('results', '1'), await store.get('results', '2')];
+  assert.equal(posing.draft.audience, 'competitor');
+  assert.equal(posing.published.audience, 'competitor');
+  assert.equal(training.draft.audience, 'everyday');
+  assert.equal(training.published, null);
+  const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
+  assert.equal(onDisk.collections.results[0].published.audience, 'competitor');
+});
+
+test('a chosen audience is kept and an unknown one falls back to the category', async () => {
+  const { store } = await tempStore();
+  const record = await store.get('results', '1');
+  const saved = await store.saveDraft('results', '1', { draft: { ...record.draft, audience: 'transformation' }, rev: record.rev }, 'jake@example.com');
+  assert.equal(saved.draft.audience, 'transformation');
+  const again = await store.saveDraft('results', '1', { draft: { ...saved.draft, category: 'lifestyle', audience: 'nonsense' }, rev: saved.rev }, 'jake@example.com');
+  assert.equal(again.draft.audience, 'everyday');
 });
 
 test('an existing store is never re-seeded, but a missing collection is', async () => {

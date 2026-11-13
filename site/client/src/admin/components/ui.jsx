@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 
 // Small shared pieces of the dashboard UI.
 
@@ -59,6 +59,35 @@ export function LiveSwitch({ on, busy = false, label = 'Live', hideLabel = false
 
 const relative = new Intl.RelativeTimeFormat('en-AU', { numeric: 'auto' })
 const dateOnly = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+
+// A bar fixed to the screen edge (the phone publish bar) changes height as its
+// text and buttons wrap. Publish its real height as a custom property on <html>
+// while it is fixed, so the page can reserve exactly that much room and keyboard
+// focus is scrolled clear of it (0px whenever the bar sits in the page flow).
+// Returns a callback ref, so it starts measuring whenever the bar mounts.
+export function useFixedBarHeight(property = '--jd-publishbar-h') {
+  const stop = useRef(null)
+  useEffect(() => () => stop.current?.(), [])
+  return useCallback((bar) => {
+    stop.current?.()
+    stop.current = null
+    if (!bar || typeof ResizeObserver === 'undefined') return
+    const root = document.documentElement
+    const update = () => {
+      const fixed = getComputedStyle(bar).position === 'fixed'
+      root.style.setProperty(property, fixed ? `${Math.ceil(bar.getBoundingClientRect().height)}px` : '0px')
+    }
+    const observer = new ResizeObserver(update)
+    observer.observe(bar)
+    window.addEventListener('resize', update)
+    update()
+    stop.current = () => {
+      observer.disconnect()
+      window.removeEventListener('resize', update)
+      root.style.removeProperty(property)
+    }
+  }, [property])
+}
 
 export function timeAgo(iso, now = Date.now()) {
   if (!iso) return ''

@@ -7,6 +7,7 @@ const { getPublicR2Url } = require('../services/r2');
 const mediaSlots = require('../services/mediaSlots');
 const ingest = require('../services/mediaIngest');
 const { createAdminContentRouter } = require('./adminContent');
+const { readChangelog } = require('../services/changelog');
 const { getMailConfig } = require('../services/mail');
 const { isMaintenanceModeEnabled, isMaintenanceModeEnabledByEnv } = require('../middleware/maintenanceMode');
 
@@ -53,6 +54,8 @@ function createAdminRouter(options = {}) {
   router.use(createAdminContentRouter({ store }));
 
   router.get('/stats', handle((req) => analytics.getStats(String(req.query.range || '30d'))));
+
+  router.get('/changelog', handle(async () => ({ entries: await readChangelog(options.changelogPath) })));
 
   // ── Settings (apply immediately) ───────────────────────────────────────────
 

@@ -3,11 +3,14 @@ import results from '../../../server/seed/results-library.json'
 import {
   RESULTS_PER_PAGE,
   filterAndSortResults,
+  getAudienceCounts,
   getPaginationRange,
   getResultPresentation,
   getResultStory,
   getResultsParams,
+  interleaveByAudience,
   paginateResults,
+  resultAudience,
 } from './resultsLibrary'
 
 const defaultFilters = {
@@ -95,7 +98,7 @@ describe('Canonical results library data', () => {
       title: results[0].name,
       categoryLabel: 'Competition Prep',
       location: results[0].location,
-      duration: results[0].duration,
+      duration: results[0].duration ?? null,
       summary: results[0].summary,
       testimonial: results[0].testimonial,
     })
@@ -134,10 +137,11 @@ describe('results library browsing', () => {
   })
 
   it('normalizes unsupported URL parameters', () => {
-    const params = new URLSearchParams('category=unknown&type=nope&sort=random&page=-3&q=posing')
+    const params = new URLSearchParams('audience=aliens&category=unknown&type=nope&sort=random&page=-3&q=posing')
 
     expect(getResultsParams(params)).toEqual({
       query: 'posing',
+      audience: 'all',
       category: 'all',
       type: 'all',
       sort: 'curated',
@@ -155,5 +159,35 @@ describe('results library browsing', () => {
       'ellipsis-11',
       20,
     ])
+  })
+
+  it('takes the audience a result names, or derives it from the category', () => {
+    expect(resultAudience({ audience: 'transformation', category: 'competition' })).toBe('transformation')
+    expect(resultAudience({ category: 'posing' })).toBe('competitor')
+    expect(resultAudience({ category: 'lifestyle' })).toBe('everyday')
+    expect(resultAudience({ audience: 'bogus', category: 'training' })).toBe('everyday')
+  })
+
+  it('filters by audience from the URL', () => {
+    const mixed = [
+      { id: 1, order: 1, caption: 'A', alt: '', category: 'competition', kind: 'client', tags: [] },
+      { id: 2, order: 2, caption: 'B', alt: '', category: 'online', audience: 'transformation', kind: 'client', tags: [] },
+      { id: 3, order: 3, caption: 'C', alt: '', category: 'training', kind: 'client', tags: [] },
+    ]
+    const filters = getResultsParams(new URLSearchParams('audience=transformation'))
+    expect(filters.audience).toBe('transformation')
+    expect(filterAndSortResults(mixed, filters).map(({ id }) => id)).toEqual([2])
+    expect(getAudienceCounts(mixed, filters)).toEqual({ all: 3, competitor: 1, transformation: 1, everyday: 1 })
+  })
+
+  it('interleaves audiences while keeping each audience in order', () => {
+    const items = [
+      { id: 'c1', category: 'competition' },
+      { id: 'c2', category: 'competition' },
+      { id: 'c3', category: 'posing' },
+      { id: 't1', audience: 'transformation', category: 'online' },
+      { id: 'e1', category: 'lifestyle' },
+    ]
+    expect(interleaveByAudience(items).map(({ id }) => id)).toEqual(['c1', 't1', 'e1', 'c2', 'c3'])
   })
 })

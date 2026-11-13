@@ -110,3 +110,56 @@ test('asset discovery requires an admin token in every environment', async () =>
     else process.env.ASSET_SYNC_ADMIN_TOKEN = previous;
   }
 });
+
+test('public asset status exposes only the same fields as /healthz', async () => {
+  const app = express();
+  app.use('/api/assets', assetsRouter);
+
+  const response = await request(app)
+    .get('/api/assets/status')
+    .set('CF-Connecting-IP', '203.0.113.71');
+  assert.equal(response.status, 200);
+  assert.deepEqual(Object.keys(response.body).sort(), ['cacheReady', 'source', 'state']);
+});
+
+test('public manifest keeps render fields and drops storage internals', () => {
+  const { toPublicManifest } = assetsRouter;
+  const result = toPublicManifest({
+    generatedAt: '2026-11-13T00:00:00.000Z',
+    source: 'r2',
+    assetCount: 1,
+    byCategory: { home: ['hero'] },
+    assets: {
+      hero: {
+        key: 'hero',
+        category: 'home',
+        url: 'https://cdn.example.com/site-assets/home/hero.webp?v=1',
+        name: 'hero.webp',
+        contentType: 'image/webp',
+        width: 1200,
+        height: 800,
+        dropboxPath: '/assets/home/hero.jpg',
+        originalDropboxPath: '/assets/home/hero.jpg',
+        r2Key: 'site-assets/home/hero.webp',
+        r2ObjectKey: 'site-assets/home/hero.webp',
+        rev: 'abc',
+        contentHash: 'def',
+        originalSize: 123,
+        originalName: 'hero.jpg'
+      }
+    }
+  });
+
+  assert.deepEqual(result.assets.hero, {
+    key: 'hero',
+    category: 'home',
+    url: 'https://cdn.example.com/site-assets/home/hero.webp?v=1',
+    name: 'hero.webp',
+    contentType: 'image/webp',
+    width: 1200,
+    height: 800
+  });
+  assert.deepEqual(result.byCategory, { home: ['hero'] });
+  assert.equal(result.assetCount, 1);
+  assert.equal(JSON.stringify(result).includes('dropbox'), false);
+});

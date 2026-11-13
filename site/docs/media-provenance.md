@@ -79,3 +79,19 @@ The public Instagram profile returned “Profile isn’t available” when check
 - Accessed: 22 July 2026
 - Transformations: source JPEGs optimized to WebP by the Team JD asset pipeline; presentation uses non-destructive CSS crops
 - Placement: `/contact`, looping “Follow the Work” carousel
+
+## Instagram imports (November 2026)
+
+Client competition photos, transformation stories and everyday-client wins were imported from Jake's Team JD Coaching Instagram (posts, collaboration posts co-published with clients, and Jake's story highlights) in three batches on 11–12 November 2026. Clients are not named in this public record; the client-facing copy uses first names only.
+
+- Permission basis: media published on, or co-published with, Jake's Team JD Coaching Instagram, or reposted by Jake in his own story highlights. The site owner confirmed on 11 November 2026 that Jake has his clients' consent for website use.
+- Photographer credit: some stage shots are event or freelance photography. Client consent does not cover photographer copyright; confirm a credit or licence with Jake before featuring them prominently.
+- Accessed: 11–12 November 2026.
+- Selection: unrelated, blurry, watermarked or unattributable frames were left out, as were frames whose result could not be verified from the image, the client's own caption or Jake's text.
+- Transformations: screenshots or source JPEGs, hand-cropped to remove Instagram chrome, account handles and avatars, then re-encoded to WebP with the Team JD asset optimiser. `-v2`/`-v3` suffixes mark later, tighter crops; superseded versions were deleted from storage.
+- Accuracy: every placing or number in result copy comes from text in the frame, the client's own post caption, or Jake's own text.
+- Storage: R2 prefixes under `imports/instagram/`, outside `site-assets/` so `npm run rebuild-assets` does not purge them. They are not in the asset manifest; each environment copies them into its own media library on start. The per-frame source posts and keys are recorded in `server/seed/instagram-import.json` and in the private project records.
+
+### Site owner's own stage photos
+
+Four of the six original "client" stage results were photos of the site owner, two of them the same photo (`client-comp-1`, `client-comp-2`, `client-comp-4`, `ab-posing`). They are hidden, not deleted: the seed marks them `hidden`, and a one-off migration unpublishes the live version in existing stores wherever it still shows the original photo. The kept two (`client-posing-1`, `client-comp-3`) have new copy, and their testimonials are credited to the site owner at the owner's request (12 November 2026).

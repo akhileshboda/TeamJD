@@ -39,6 +39,7 @@ export const requestCode = (email) => adminRequest('/api/admin/auth/code', { met
 export const verifyCode = (email, code) => adminRequest('/api/admin/auth/verify', { method: 'POST', json: { email, code } })
 export const signOut = () => adminRequest('/api/admin/auth/logout', { method: 'POST' })
 export const getStats = (range) => adminRequest(`/api/admin/stats?range=${encodeURIComponent(range)}`)
+export const getChangelog = () => adminRequest('/api/admin/changelog').then((body) => body.entries)
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 

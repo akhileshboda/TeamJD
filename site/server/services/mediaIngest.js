@@ -256,6 +256,7 @@ function run(command, args) {
 // ffmpeg picks a demuxer from file contents, and some (HLS, concat) fetch URLs or read
 // other local files. Only real MP4/QuickTime or Matroska/WebM containers get through,
 // and that demuxer is then forced for every ffprobe/ffmpeg call on the upload.
+// '-protocol_whitelist file' also stops any input from opening network URLs.
 async function detectContainer(filePath) {
   const handle = await fsp.open(filePath, 'r');
   try {
@@ -273,7 +274,7 @@ async function probeVideo(filePath, container) {
   let info;
   try {
     info = JSON.parse(await run('ffprobe', [
-      '-v', 'error', '-f', container, '-print_format', 'json', '-show_format', '-show_streams', filePath
+      '-v', 'error', '-protocol_whitelist', 'file', '-f', container, '-print_format', 'json', '-show_format', '-show_streams', filePath
     ]));
   } catch (error) {
     if (error instanceof IngestError) throw error;
@@ -292,7 +293,7 @@ async function probeVideo(filePath, container) {
 // (every video on the site plays muted), moov atom up front so playback starts at once.
 function transcodeArgs(input, container, output) {
   return [
-    '-y', '-f', container, '-i', input, '-map', '0:v:0',
+    '-y', '-protocol_whitelist', 'file', '-f', container, '-i', input, '-map', '0:v:0',
     '-vf', "scale=w='min(1920,iw)':h='min(1920,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2",
     '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-maxrate', '4M', '-bufsize', '8M',
     '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', output
@@ -306,7 +307,7 @@ async function processVideo({ session, id, prefix, storage }) {
   const posterPath = `${session.filePath}.poster.jpg`;
   try {
     await run('ffmpeg', transcodeArgs(session.filePath, container, outPath));
-    await run('ffmpeg', ['-y', '-ss', String(Math.min(1, duration / 2)), '-i', outPath, '-frames:v', '1', '-q:v', '3', posterPath]);
+    await run('ffmpeg', ['-y', '-protocol_whitelist', 'file', '-ss', String(Math.min(1, duration / 2)), '-i', outPath, '-frames:v', '1', '-q:v', '3', posterPath]);
 
     const { size } = await fsp.stat(outPath);
     if (size > VIDEO_MAX_OUTPUT_BYTES) throw new IngestError('That video is still too large after compression. Please use a shorter clip.');

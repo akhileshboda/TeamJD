@@ -1,4 +1,5 @@
-import { useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import usePrefersReducedMotion from '../usePrefersReducedMotion'
 
 const MAX_ZOOM = 3
 const NUDGE = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }
@@ -21,10 +22,26 @@ export default function ImageFramer({ src, poster, video = false, value, onChang
   const framing = { ...DEFAULT_FRAMING, ...value, focus: { ...DEFAULT_FRAMING.focus, ...value?.focus } }
   const frameRef = useRef(null)
   const drag = useRef(null)
+  const videoRef = useRef(null)
   const hintId = useId()
+  // A device set to reduce motion doesn't get a video that plays by itself: it
+  // shows the first frame, with a button to play it.
+  const reducedMotion = usePrefersReducedMotion()
+  const [playing, setPlaying] = useState(false)
   const changed = framing.zoom !== 1 || framing.focus.x !== 50 || framing.focus.y !== 50
 
   const set = (next) => onChange({ ...framing, ...next })
+
+  useEffect(() => {
+    if (reducedMotion) videoRef.current?.pause()
+  }, [reducedMotion])
+
+  const togglePlay = () => {
+    const element = videoRef.current
+    if (!element) return
+    if (element.paused) element.play()?.catch?.(() => {})
+    else element.pause()
+  }
 
   const startDrag = (event) => {
     if (event.button !== 0) return
@@ -74,7 +91,8 @@ export default function ImageFramer({ src, poster, video = false, value, onChang
         onKeyDown={onKeyDown}
       >
         {video
-          ? <video src={src} poster={poster} muted loop autoPlay playsInline aria-hidden="true" style={framedStyle(framing)} />
+          ? <video ref={videoRef} src={src} poster={poster} muted loop autoPlay={!reducedMotion} preload="metadata" playsInline aria-hidden="true" style={framedStyle(framing)}
+              onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
           : <img src={src} alt="" draggable={false} style={framedStyle(framing)} />}
       </div>
       <p id={hintId} className="jd-field-hint">
@@ -93,6 +111,11 @@ export default function ImageFramer({ src, poster, video = false, value, onChang
             aria-valuetext={`${Math.round(framing.zoom * 100)}%`}
           />
         </label>
+        {video && reducedMotion && (
+          <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" onClick={togglePlay}>
+            {playing ? 'Pause preview' : 'Play preview'}
+          </button>
+        )}
         <button type="button" className="jd-admin-button jd-admin-button--sm jd-admin-button--quiet" disabled={!changed}
           onClick={() => onChange(DEFAULT_FRAMING)}>
           Reset

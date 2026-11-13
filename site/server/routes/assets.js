@@ -26,6 +26,32 @@ const { getCmsStore } = require('../services/cmsStore');
 const router = express.Router();
 const ASSET_REDIRECT_CACHE_SECONDS = 60 * 60;
 
+// The stored manifest also records Dropbox paths, R2 object keys, revisions and
+// sizes for the sync. The public endpoints only need what a browser renders.
+const PUBLIC_ASSET_FIELDS = ['key', 'category', 'url', 'name', 'contentType', 'extension', 'width', 'height', 'updatedAt'];
+
+function toPublicAsset(asset) {
+  const publicAsset = {};
+  for (const field of PUBLIC_ASSET_FIELDS) {
+    if (asset && asset[field] !== undefined) publicAsset[field] = asset[field];
+  }
+  return publicAsset;
+}
+
+function toPublicManifest(manifest) {
+  const assets = {};
+  for (const [key, asset] of Object.entries(manifest?.assets || {})) {
+    assets[key] = toPublicAsset(asset);
+  }
+  return {
+    generatedAt: manifest?.generatedAt ?? null,
+    source: manifest?.source ?? 'empty',
+    assetCount: manifest?.assetCount ?? Object.keys(assets).length,
+    assets,
+    byCategory: manifest?.byCategory || {}
+  };
+}
+
 function sendAssetError(res, error, fallbackMessage) {
   if (error instanceof AssetNotFoundError) {
     return res.status(error.statusCode).json({ error: error.message });
@@ -86,7 +112,7 @@ router.get('/', publicAssetLimiter, async (req, res) => {
     })]);
 
     res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
-    return res.json({ ...manifest, slots });
+    return res.json({ ...toPublicManifest(manifest), slots });
   } catch (error) {
     console.error('GET /api/assets error:', error);
     res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
@@ -105,7 +131,7 @@ router.get('/manifest', publicAssetLimiter, async (req, res) => {
     const manifest = await getAssetManifest();
 
     res.set('Cache-Control', 'no-cache, max-age=0, must-revalidate');
-    return res.json(manifest);
+    return res.json(toPublicManifest(manifest));
   } catch (error) {
     console.error('GET /api/assets/manifest error:', error);
     return sendAssetError(res, error, 'Failed to load asset manifest.');
@@ -150,8 +176,11 @@ router.get('/refresh', publicAssetLimiter, (req, res) => {
   return res.status(405).json({ error: 'Method not allowed.' });
 });
 
+// Public, so only what /healthz already shows. Dropbox paths, sync state and error
+// text stay behind the bearer token at /setup-status.
 router.get('/status', publicAssetLimiter, (req, res) => {
-  return res.json(getAssetServiceStatus());
+  const { state, cacheReady, source } = getAssetServiceStatus();
+  return res.json({ state, cacheReady, source });
 });
 
 router.get('/setup-status', adminAttemptLimiter, requireSyncAdmin, async (req, res) => {
@@ -232,3 +261,4 @@ router.get('/:assetKey', publicAssetLimiter, async (req, res) => {
 
 module.exports = router;
 module.exports.requireSyncAdmin = requireSyncAdmin;
+module.exports.toPublicManifest = toPublicManifest;

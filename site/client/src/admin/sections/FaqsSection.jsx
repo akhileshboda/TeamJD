@@ -1,6 +1,6 @@
 import { Route, Routes, useParams } from 'react-router-dom'
 import CollectionList from '../components/CollectionList'
-import { FormSection, TextField } from '../components/fields'
+import { FormSection, RequiredNote, TextField } from '../components/fields'
 import RecordEditor from '../components/RecordEditor'
 
 function FaqEditor() {
@@ -17,12 +17,15 @@ function FaqEditor() {
       previewNote="FAQs are near the bottom of the Home page."
       siteLocation={() => ['the Home page']}
       renderFields={({ draft, update, errors }) => (
-        <FormSection title="Question">
-          <TextField label="Question" required value={draft.question} maxLength={300} error={errors.question}
-            onChange={(question) => update({ question })} />
-          <TextField label="Answer" required multiline rows={6} value={draft.answer} maxLength={2000} error={errors.answer}
-            onChange={(answer) => update({ answer })} />
-        </FormSection>
+        <>
+          <RequiredNote />
+          <FormSection title="Question and answer">
+            <TextField label="Question" required value={draft.question} maxLength={300} error={errors.question}
+              onChange={(question) => update({ question })} />
+            <TextField label="Answer" required multiline rows={6} value={draft.answer} maxLength={2000} error={errors.answer}
+              onChange={(answer) => update({ answer })} />
+          </FormSection>
+        </>
       )}
     />
   )
