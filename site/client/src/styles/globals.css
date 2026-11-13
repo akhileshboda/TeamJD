@@ -7703,6 +7703,10 @@ p  { line-height: 1.7; color: var(--color-text); }
   transition: transform var(--transition-slow), filter var(--transition-slow);
 }
 
+.client-result-card img[data-fit="contain"] {
+  object-fit: contain;
+}
+
 .client-result-card-overlay {
   position: absolute;
   inset: 0;
@@ -8351,6 +8355,63 @@ p  { line-height: 1.7; color: var(--color-text); }
   background-color: rgba(9, 13, 14, 0.92);
 }
 
+/* Who the result is for: a segmented control above the category chips. */
+.results-audience-row {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.625rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.results-audience-row::-webkit-scrollbar {
+  display: none;
+}
+
+.results-audience-tab {
+  display: inline-flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: calc(var(--radius-md) - 0.25rem);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.results-audience-tab:hover {
+  color: var(--color-hover-accent);
+}
+
+.results-audience-tab.is-active {
+  color: var(--color-accent);
+  background: rgba(22, 201, 221, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(22, 201, 221, 0.45);
+}
+
+.results-audience-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* On phones the four tabs sit in a 2 x 2 grid rather than scrolling sideways. */
+@media (max-width: 560px) {
+  .results-audience-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+
 .results-category-row {
   display: flex;
   align-items: center;
@@ -8509,6 +8570,12 @@ p  { line-height: 1.7; color: var(--color-text); }
   height: 100%;
   object-fit: cover;
   transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1), filter var(--transition-normal);
+}
+
+/* Before/after pairs and story frames are set to show whole, so a card never
+   cuts a pair in half. */
+.results-page .result-card img[data-fit="contain"] {
+  object-fit: contain;
 }
 
 .results-page .result-card:hover img {
@@ -8999,7 +9066,8 @@ p  { line-height: 1.7; color: var(--color-text); }
     padding-right: var(--space-4);
   }
 
-  .results-category-chip {
+  .results-category-chip,
+  .results-audience-tab {
     min-height: 2.75rem;
   }
 

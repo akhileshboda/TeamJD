@@ -4,12 +4,12 @@ import { useContent } from '../hooks/useContent'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { getResultStory, RESULT_CATEGORY_LABELS } from '../utils/resultsLibrary'
+import { getResultStory, interleaveByAudience, RESULT_AUDIENCE_LABELS, resultAudience } from '../utils/resultsLibrary'
 import ResultPresentation from './ResultPresentation'
 import SectionReveal from './SectionReveal'
 import '../styles/AppleWatchGallery.css'
 
-const CATEGORY_ORDER = ['all', 'competition', 'online', 'posing', 'lifestyle', 'training']
+const AUDIENCE_ORDER = ['all', 'competitor', 'transformation', 'everyday']
 const DESKTOP_ICON_SIZE_PX = 70
 const MOBILE_ICON_SIZE_PX = 62
 const FOCUS_REGION_RATIO = 0.75
@@ -431,19 +431,21 @@ export default function AppleWatchGallery() {
     || !enhancedGalleryDrag
   )
 
-  const enrichedItems = useMemo(() => {
-    return [...(results || [])]
-      .sort((left, right) => left.order - right.order)
-  }, [results])
+  // Audiences take turns so the first faces in the gallery aren't all stage shots.
+  const enrichedItems = useMemo(() => interleaveByAudience(
+    [...(results || [])].sort((left, right) => left.order - right.order),
+  ), [results])
 
+  // One pill per audience the library actually holds; a single audience needs no pills.
   const categories = useMemo(() => {
-    const available = new Set(enrichedItems.map((item) => item.category))
-    return CATEGORY_ORDER.filter((category) => category === 'all' || available.has(category))
+    const available = new Set(enrichedItems.map(resultAudience))
+    if (available.size < 2) return []
+    return AUDIENCE_ORDER.filter((audience) => audience === 'all' || available.has(audience))
   }, [enrichedItems])
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'all') return enrichedItems
-    return enrichedItems.filter((item) => item.category === activeFilter)
+    return enrichedItems.filter((item) => resultAudience(item) === activeFilter)
   }, [activeFilter, enrichedItems])
 
   const iconSizePx = getGalleryIconSize(viewportSize.w)
@@ -785,7 +787,8 @@ export default function AppleWatchGallery() {
             </div>
           </SectionReveal>
 
-          <div className="results-filter-bar" aria-label="Filter results by service">
+          {categories.length > 0 && (
+          <div className="results-filter-bar" aria-label="Filter results by who they are for">
             {categories.map((category) => (
               <button
                 key={category}
@@ -794,10 +797,11 @@ export default function AppleWatchGallery() {
                 onClick={() => handleFilterChange(category)}
                 aria-pressed={activeFilter === category}
               >
-                {category === 'all' ? 'All Results' : RESULT_CATEGORY_LABELS[category] || category}
+                {category === 'all' ? 'All Results' : RESULT_AUDIENCE_LABELS[category] || category}
               </button>
             ))}
           </div>
+          )}
 
           <div className="results-gallery-grid">
             <div className="results-browser">
@@ -840,7 +844,7 @@ export default function AppleWatchGallery() {
                     </motion.div>
                   )
                 ) : (
-                  <p className="watch-grid-empty">No results in this category yet.</p>
+                  <p className="watch-grid-empty">No results for this group yet.</p>
                 )}
               </div>
               {useNativeGalleryScroll && (

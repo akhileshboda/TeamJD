@@ -36,6 +36,7 @@ export default function ResultCard({ result, onOpen, priority = false }) {
             decoding="async"
             width="900"
             height="1200"
+            data-fit={result.presentation?.fit === 'contain' ? 'contain' : undefined}
             onError={() => setImageFailed(true)}
           />
         )}

@@ -3,7 +3,7 @@
     "id": 1,
     "src": "/api/assets/client-posing-1",
     "alt": "Team JD client on stage at ANB competition, winning gold medal",
-    "caption": "ANB Champion — Competition Prep Client",
+    "caption": "Akhil, gold at ANB",
     "category": "competition",
     "kind": "client",
     "featured": true,
@@ -14,21 +14,16 @@
         "y": 50
       }
     },
-    "name": "ANB champion with stage-ready control",
+    "name": "Akhil took gold at ANB",
     "location": "Competition Preparation",
-    "duration": "16 Weeks",
-    "summary": "A full prep result built around tighter presentation, clearer conditioning, and confidence when it mattered.",
+    "summary": "Akhil did his full prep with Jake and came home from ANB with a gold medal.",
     "testimonial": {
       "quote": "Jake kept every part of prep organised, from the training adjustments to the stage details. I knew exactly what we were chasing each week.",
-      "author": "ANB Champion",
+      "author": "Akhil",
       "service": "Competition Preparation",
-      "result": "Gold Medal Stage Result"
+      "result": "Gold at ANB"
     },
-    "stats": [
-      { "label": "Service", "value": "Prep" },
-      { "label": "Outcome", "value": "Gold", "trend": "up" },
-      { "label": "Focus", "value": "Stage" }
-    ],
+    "stats": [],
     "tags": [
       "competition",
       "client result",
@@ -40,6 +35,7 @@
   {
     "id": 2,
     "src": "/api/assets/client-comp-1",
+    "hidden": true,
     "alt": "Team JD client competing on stage, showcasing peak conditioning",
     "caption": "Stage Ready — Bodybuilding Division",
     "category": "competition",
@@ -78,6 +74,7 @@
   {
     "id": 3,
     "src": "/api/assets/client-comp-2",
+    "hidden": true,
     "alt": "Team JD client posing on stage at bodybuilding competition",
     "caption": "Peak Conditioning — Competition Prep",
     "category": "competition",
@@ -117,7 +114,7 @@
     "id": 4,
     "src": "/api/assets/client-comp-3",
     "alt": "Team JD client on stage displaying physique at competition",
-    "caption": "Stage Presence — Online Coaching Client",
+    "caption": "Akhil, posing routine",
     "category": "posing",
     "kind": "client",
     "featured": true,
@@ -128,21 +125,16 @@
         "y": 52
       }
     },
-    "name": "Presentation that translated under lights",
+    "name": "Akhil's kneeling pose",
     "location": "Posing Coaching",
-    "duration": "8 Weeks",
-    "summary": "A posing-focused result built around angles, transitions, breathing, and making the physique read from the judging table.",
+    "summary": "Akhil worked on his posing routine with Jake. This is the kneeling pose from it.",
     "testimonial": {
       "quote": "Jake helped me understand how to show my strengths instead of just hitting poses. That changed everything.",
-      "author": "Posing Client",
+      "author": "Akhil",
       "service": "Posing",
-      "result": "Stage Presence Transformation"
+      "result": ""
     },
-    "stats": [
-      { "label": "Service", "value": "Posing" },
-      { "label": "Focus", "value": "Angles" },
-      { "label": "Confidence", "value": "Higher", "trend": "up" }
-    ],
+    "stats": [],
     "tags": [
       "posing",
       "client result",
@@ -154,6 +146,7 @@
   {
     "id": 5,
     "src": "/api/assets/client-comp-4",
+    "hidden": true,
     "alt": "Team JD client competing in physique division",
     "caption": "Best Shape of Their Life — Comp Prep Client",
     "category": "competition",
@@ -192,6 +185,7 @@
   {
     "id": 6,
     "src": "/api/assets/ab-posing",
+    "hidden": true,
     "alt": "Athlete demonstrating abdominal and thigh posing routine",
     "caption": "Posing Mastery — Mandatory Poses",
     "category": "posing",

@@ -1,0 +1,1054 @@
+{
+  "_note": "Photos taken from Jake's Instagram (see site/docs/media-provenance.md). On start with R2 configured, each environment copies every batch it has not had yet into its own media library and creates that batch's results, once per batch.",
+  "batches": [
+    {
+      "id": "instagram-2026-11-11",
+      "sourcePrefix": "imports/instagram/2026-11-11",
+      "photos": [
+        {
+          "key": "client-ethan-lifts-2026-10-04-01.webp",
+          "width": 1333,
+          "height": 1667,
+          "bytes": 133326,
+          "alt": ""
+        },
+        {
+          "key": "client-ethan-lifts-2026-10-04-02.webp",
+          "width": 1080,
+          "height": 1351,
+          "bytes": 140558,
+          "alt": ""
+        },
+        {
+          "key": "client-ethan-lifts-2026-10-04-03.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 82122,
+          "alt": ""
+        },
+        {
+          "key": "client-ethan-lifts-2026-10-04-04.webp",
+          "width": 1080,
+          "height": 1351,
+          "bytes": 103488,
+          "alt": "Ethan on stage at ICN South Australia in posing trunks, wearing a medal"
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-01.webp",
+          "width": 1333,
+          "height": 1777,
+          "bytes": 134908,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-02.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 135510,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-03.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 109128,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-04.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 88188,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-05.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 114486,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollar-2026-10-16-06.webp",
+          "width": 722,
+          "height": 962,
+          "bytes": 25238,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-01.webp",
+          "width": 1333,
+          "height": 1777,
+          "bytes": 133070,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-03.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 109014,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-04.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 143520,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-06.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 128126,
+          "alt": ""
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-07.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 163384,
+          "alt": "Gabi on the ICN South Australia stage in a blue swimsuit and winner's sash, holding a trophy and a plaque, with two men beside her"
+        },
+        {
+          "key": "client-gabidollarfit-2026-10-07-08.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 113722,
+          "alt": ""
+        },
+        {
+          "key": "client-its-bmitch-2026-10-19-01.webp",
+          "width": 1536,
+          "height": 1536,
+          "bytes": 207364,
+          "alt": ""
+        },
+        {
+          "key": "client-its-bmitch-2026-10-19-02.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 26814,
+          "alt": "Ben on stage in board shorts with his hands behind his back, showing his conditioning"
+        },
+        {
+          "key": "client-its-bmitch-2026-10-19-03.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 32890,
+          "alt": ""
+        },
+        {
+          "key": "client-its-bmitch-2026-10-19-07.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 74276,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-02.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 93760,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-03.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 83592,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-04.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 31986,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-05.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 74736,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-07.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 45670,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-08.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 53218,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-09.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 73440,
+          "alt": ""
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-10.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 81874,
+          "alt": "Rachel celebrating on stage at ICN South Australia with both arms raised"
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-11.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 41424,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-08-01.webp",
+          "width": 1333,
+          "height": 1777,
+          "bytes": 155322,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-08-02.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 94462,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-08-03.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 139890,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-08-04.webp",
+          "width": 1020,
+          "height": 1360,
+          "bytes": 100784,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-08-05.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 69042,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-16-01.webp",
+          "width": 1320,
+          "height": 1639,
+          "bytes": 89968,
+          "alt": ""
+        },
+        {
+          "key": "client-sezthebezt-2026-10-16-02.webp",
+          "width": 1080,
+          "height": 1341,
+          "bytes": 85504,
+          "alt": "Sarah posing on stage in a blue one-piece at ICN South Australia"
+        },
+        {
+          "key": "client-sezthebezt-2026-10-16-04.webp",
+          "width": 1080,
+          "height": 1341,
+          "bytes": 65610,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-06-28-02.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 60022,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-06-28-04.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 61970,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-06-28-05.webp",
+          "width": 1080,
+          "height": 1079,
+          "bytes": 61078,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-06-28-06.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 56528,
+          "alt": "Team JD client in a pink one-piece posing on stage at the ICN National Championships"
+        },
+        {
+          "key": "client-teamjd-2025-06-28-07.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 40050,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-09-25-02.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 86468,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-09-25-03.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 80700,
+          "alt": ""
+        },
+        {
+          "key": "client-teamjd-2025-09-25-04.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 81962,
+          "alt": "Matt on stage with his arms raised, wearing a bronze medal"
+        },
+        {
+          "key": "jake-teamjd-2025-06-28-01.webp",
+          "width": 1440,
+          "height": 1440,
+          "bytes": 165356,
+          "alt": ""
+        },
+        {
+          "key": "jake-teamjd-2025-06-28-03.webp",
+          "width": 1080,
+          "height": 1080,
+          "bytes": 99304,
+          "alt": ""
+        },
+        {
+          "key": "jake-teamjd-2025-09-25-01.webp",
+          "width": 1440,
+          "height": 1920,
+          "bytes": 171732,
+          "alt": ""
+        },
+        {
+          "key": "jake-with-ethan-lifts-2026-10-10-01.webp",
+          "width": 2400,
+          "height": 3200,
+          "bytes": 444666,
+          "alt": ""
+        },
+        {
+          "key": "jake-with-ethan-lifts-2026-10-10-02.webp",
+          "width": 1080,
+          "height": 1440,
+          "bytes": 52434,
+          "alt": ""
+        },
+        {
+          "key": "jake-with-gabidollarfit-2026-10-07-02.webp",
+          "width": 1080,
+          "height": 1439,
+          "bytes": 167218,
+          "alt": ""
+        },
+        {
+          "key": "jake-with-rachelaccadia-2025-12-20-01.webp",
+          "width": 1365,
+          "height": 1820,
+          "bytes": 185540,
+          "alt": ""
+        }
+      ],
+      "results": [
+        {
+          "key": "client-gabidollarfit-2026-10-07-07.webp",
+          "id": "ig-gabi",
+          "category": "competition",
+          "featured": true,
+          "name": "Gabi won the overall Ms Swimsuit title",
+          "caption": "Gabi, Ms Swimsuit SA 2026",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "icn",
+            "bikini"
+          ],
+          "alt": "Gabi on the ICN South Australia stage in a blue swimsuit and winner's sash, holding a trophy and a plaque, with two men beside her",
+          "audience": "competitor",
+          "summary": "Gabi took the overall Ms Swimsuit title at ICN South Australia in 2026, then competed in a pro show at Nationals nine days later."
+        },
+        {
+          "key": "client-sezthebezt-2026-10-16-02.webp",
+          "id": "ig-sarah",
+          "category": "competition",
+          "featured": true,
+          "name": "Sarah stepped on stage at ICN SA",
+          "caption": "Sarah, ICN SA 2026",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "icn",
+            "bikini"
+          ],
+          "alt": "Sarah posing on stage in a blue one-piece at ICN South Australia",
+          "audience": "competitor",
+          "summary": "Sarah competed at ICN South Australia in 2026 and was back on stage at Nationals eight days later.",
+          "testimonial": {
+            "quote": "From the hard work of ticking every box and dedication behind the scenes, I did it, I stepped on stage.",
+            "author": "Sarah",
+            "service": "Competition Preparation",
+            "result": "On stage at ICN SA"
+          }
+        },
+        {
+          "key": "client-ethan-lifts-2026-10-04-04.webp",
+          "id": "ig-ethan",
+          "category": "competition",
+          "featured": true,
+          "name": "Ethan's first season: four placings at ICN SA",
+          "caption": "Ethan, ICN SA 2026",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "icn",
+            "physique"
+          ],
+          "alt": "Ethan on stage at ICN South Australia in posing trunks, wearing a medal",
+          "audience": "competitor",
+          "summary": "Ethan prepped for 22 weeks. At ICN South Australia he won Men's Physique First Timer, came 2nd in Novice, 4th in Open and 3rd in Classic Physique.",
+          "duration": "22 weeks",
+          "testimonial": {
+            "quote": "I truly appreciate the support and understanding you showed to adapt prep to my chaotic lifestyle, especially during peak week.",
+            "author": "Ethan",
+            "service": "Competition Preparation",
+            "result": "Men's Physique First Timer, 1st"
+          }
+        },
+        {
+          "key": "client-rachelaccadia-2025-12-20-10.webp",
+          "id": "ig-rachel",
+          "category": "competition",
+          "featured": true,
+          "name": "Rachel won the Wellness and Sports overalls",
+          "caption": "Rachel, two overall titles",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "icn",
+            "wellness"
+          ],
+          "alt": "Rachel celebrating on stage at ICN South Australia with both arms raised",
+          "audience": "competitor",
+          "summary": "At the ICN South Australia state show Rachel won the overall titles in both Wellness and Sports.",
+          "testimonial": {
+            "quote": "Just doing my thing and having a blast while doing it.",
+            "author": "Rachel",
+            "service": "Competition Preparation",
+            "result": "Wellness and Sports overall winner"
+          }
+        },
+        {
+          "key": "client-its-bmitch-2026-10-19-02.webp",
+          "id": "ig-ben",
+          "category": "competition",
+          "featured": true,
+          "name": "Ben on stage in men's physique",
+          "caption": "Ben, men's physique",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "physique"
+          ],
+          "alt": "Ben on stage in board shorts with his hands behind his back, showing his conditioning",
+          "audience": "competitor",
+          "summary": "In his 2026 season with Jake, Ben won Men's Physique Under 23 at ICN South Australia and placed 3rd in Classic Physique Open Class 2."
+        },
+        {
+          "key": "client-teamjd-2025-06-28-06.webp",
+          "id": "ig-nationals-2025",
+          "category": "competition",
+          "featured": false,
+          "name": "Team JD at ICN Nationals 2025",
+          "caption": "ICN Nationals 2025",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "icn",
+            "nationals"
+          ],
+          "alt": "Team JD client in a pink one-piece posing on stage at the ICN National Championships",
+          "audience": "competitor",
+          "summary": "A Team JD athlete at ICN Nationals 2025. Jake took three athletes that year, and between them they won Open Class 1, a Bikini pro card and placings in Swimsuit and Bikini."
+        },
+        {
+          "key": "client-teamjd-2025-09-25-04.webp",
+          "id": "ig-medal-2025",
+          "category": "competition",
+          "featured": false,
+          "name": "Matt's first IFBB show",
+          "caption": "Matt, IFBB Pro League",
+          "location": "Competition Preparation",
+          "tags": [
+            "competition",
+            "client result",
+            "team jd",
+            "stage prep"
+          ],
+          "alt": "Matt on stage with his arms raised, wearing a bronze medal",
+          "audience": "competitor",
+          "summary": "Matt competed as a natural at IFBB Pro League SA, his first IFBB show, and won Open Middle Weight with 3rd in True Novice."
+        }
+      ]
+    },
+    {
+      "id": "instagram-2026-11-12",
+      "sourcePrefix": "imports/instagram/2026-11-12",
+      "photos": [
+        {
+          "key": "everyday-client-wins-07-v3.webp",
+          "width": 1035,
+          "height": 1637,
+          "bytes": 66800,
+          "alt": "Alanah doing a 120kg hip thrust in the gym, captioned as her first since a back injury five months earlier"
+        },
+        {
+          "key": "everyday-client-wins-09-v2.webp",
+          "width": 1312,
+          "height": 2000,
+          "bytes": 53340,
+          "alt": "Alanah in a mirror photo, captioned 4kg down and muscle gain"
+        },
+        {
+          "key": "everyday-krissy-client-wins-08-v3.webp",
+          "width": 1094,
+          "height": 1452,
+          "bytes": 46090,
+          "alt": "Krissy's gym mirror photos next to an app badge showing seven new personal bests"
+        },
+        {
+          "key": "transformation-akhil-client-wins-10-v2.webp",
+          "width": 1400,
+          "height": 1078,
+          "bytes": 43232,
+          "alt": "Akhil before coaching, standing in his bedroom, and after, lean and posing with one arm raised in the gym"
+        },
+        {
+          "key": "transformation-brooke-client-wins-05-v3.webp",
+          "width": 1458,
+          "height": 1711,
+          "bytes": 124380,
+          "alt": "Brooke in two gym mirror photos side by side, captioned 4 weeks progress"
+        },
+        {
+          "key": "transformation-brooke-client-wins-06-v2.webp",
+          "width": 1458,
+          "height": 1426,
+          "bytes": 88498,
+          "alt": "Brooke at the beach and in the gym, side by side"
+        },
+        {
+          "key": "transformation-client-wins-01-v2.webp",
+          "width": 1458,
+          "height": 1970,
+          "bytes": 79074,
+          "alt": "Team JD before and after graphic, back view: 67kg on 1600 calories a day and yoga three times a week, then 55kg on about 2150 calories a day and resistance training five times a week"
+        },
+        {
+          "key": "transformation-client-wins-03-v2.webp",
+          "width": 1458,
+          "height": 1763,
+          "bytes": 78592,
+          "alt": "Day 1 and Day 75 photos of a female client side by side, above her list from the 75 days: 4.7kg lost, 6.2kg in total working with Jake"
+        },
+        {
+          "key": "transformation-client-wins-04-v3.webp",
+          "width": 1312,
+          "height": 1703,
+          "bytes": 103790,
+          "alt": "The same client in the gym in January 2023 and June 2023, captioned getting shredded and shaping up slowly"
+        }
+      ],
+      "results": [
+        {
+          "key": "transformation-client-wins-01-v2.webp",
+          "id": "ig-transform-67-55",
+          "category": "online",
+          "featured": true,
+          "name": "12kg down while eating more",
+          "caption": "67kg to 55kg",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation",
+            "fat loss"
+          ],
+          "alt": "Team JD before and after graphic, back view: 67kg on 1600 calories a day and yoga three times a week, then 55kg on about 2150 calories a day and resistance training five times a week",
+          "audience": "transformation",
+          "summary": "Before: 67kg on 1600 calories a day and yoga three times a week. After: 55kg on about 2150 calories a day with resistance training five times a week.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-akhil-client-wins-10-v2.webp",
+          "id": "ig-akhil",
+          "category": "online",
+          "featured": true,
+          "name": "Akhil's before and after",
+          "caption": "Akhil, before and after",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation"
+          ],
+          "alt": "Akhil before coaching, standing in his bedroom, and after, lean and posing with one arm raised in the gym",
+          "audience": "transformation",
+          "summary": "Akhil's starting point on the left, and where he got to with Jake on the right.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-client-wins-03-v2.webp",
+          "id": "ig-transform-day-75",
+          "category": "online",
+          "featured": true,
+          "name": "4.7kg down in 75 days",
+          "caption": "Day 1 to Day 75",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation",
+            "fat loss",
+            "habits"
+          ],
+          "alt": "Day 1 and Day 75 photos of a female client side by side, above her list from the 75 days: 4.7kg lost, 6.2kg in total working with Jake",
+          "audience": "transformation",
+          "summary": "Over 75 days this client lost 4.7kg (6.2kg in total with Jake), did at least 150 workouts, drank at least 300 litres of water and had no cheat meals or alcohol.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-client-wins-04-v3.webp",
+          "id": "ig-transform-jan-june",
+          "category": "online",
+          "featured": true,
+          "name": "Five months of cutting and shaping up",
+          "caption": "January to June 2023",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation"
+          ],
+          "alt": "The same client in the gym in January 2023 and June 2023, captioned getting shredded and shaping up slowly",
+          "audience": "transformation",
+          "summary": "January 2023 on the left, June 2023 on the right. The client's caption says they were getting shredded and shaping up slowly.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-brooke-client-wins-05-v3.webp",
+          "id": "ig-brooke",
+          "category": "online",
+          "featured": true,
+          "name": "Brooke after four weeks",
+          "caption": "Brooke, 4 weeks in",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation"
+          ],
+          "alt": "Brooke in two gym mirror photos side by side, captioned 4 weeks progress",
+          "audience": "transformation",
+          "summary": "Brooke's starting photo and her four-week check-in, side by side.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "everyday-client-wins-07-v3.webp",
+          "id": "ig-alanah",
+          "category": "online",
+          "featured": true,
+          "name": "Back to 120kg hip thrusts after a back injury",
+          "caption": "Alanah, 120kg hip thrust",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "strength",
+            "injury",
+            "everyday"
+          ],
+          "alt": "Alanah doing a 120kg hip thrust in the gym, captioned as her first since a back injury five months earlier",
+          "audience": "everyday",
+          "summary": "Five months after hurting her back, Alanah was hip thrusting 120kg again: nine reps on her top set.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "everyday-krissy-client-wins-08-v3.webp",
+          "id": "ig-krissy",
+          "category": "online",
+          "featured": true,
+          "name": "7 new personal bests",
+          "caption": "Krissy, 7 new PBs",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "strength",
+            "everyday"
+          ],
+          "alt": "Krissy's gym mirror photos next to an app badge showing seven new personal bests",
+          "audience": "everyday",
+          "summary": "Krissy's training app showed 7 new personal bests.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "instagram-2026-11-12-round2",
+      "sourcePrefix": "imports/instagram/2026-11-12-round2",
+      "photos": [
+        {
+          "key": "competitor-gabriel-sznb-2024.webp",
+          "width": 1458,
+          "height": 2125,
+          "bytes": 130636,
+          "alt": "Gabriel on stage at ICN South Australia in a teal bikini with a medal, under the caption Bikini Novice Class 2 Winner"
+        },
+        {
+          "key": "competitor-jade-fmg-worlds-v2.webp",
+          "width": 867,
+          "height": 959,
+          "bytes": 48722,
+          "alt": "Jade in a red bikini holding a plaque, standing with Jake, who holds a bunch of flowers"
+        },
+        {
+          "key": "competitor-maxine-state-2025-v2.webp",
+          "width": 1530,
+          "height": 2138,
+          "bytes": 121730,
+          "alt": "Maxine on stage at ICN South Australia in a purple bikini and Ms Bikini sash, resting a hand on a ceremonial sword"
+        },
+        {
+          "key": "competitor-sophie-sznb-2024.webp",
+          "width": 1458,
+          "height": 2125,
+          "bytes": 144662,
+          "alt": "Two competitors with medals on the ICN South Australia podium, under the caption Sophie Holtham, Wellness Open Class 1, 2nd Place"
+        },
+        {
+          "key": "everyday-brooke-5-weeks.webp",
+          "width": 1458,
+          "height": 1672,
+          "bytes": 100914,
+          "alt": "Brooke at the beach and in the gym, captioned 5 weeks down and amazing changes"
+        },
+        {
+          "key": "everyday-massimo-summer-inbound.webp",
+          "width": 1166,
+          "height": 2026,
+          "bytes": 60408,
+          "alt": "Massimo in a gym mirror photo, captioned September 18, summer inbound, 1.3kg down"
+        },
+        {
+          "key": "transformation-krissy-prep-vs-now-v2.webp",
+          "width": 1458,
+          "height": 1983,
+          "bytes": 93218,
+          "alt": "Krissy in two photos side by side, captioned in prep vs now, we growin'"
+        },
+        {
+          "key": "transformation-sbarbarblacksheep-1-year-v2.webp",
+          "width": 982,
+          "height": 1350,
+          "bytes": 70030,
+          "alt": "A men's physique competitor in teal board shorts on stage, tagged one year ago, above a back pose from a year later"
+        },
+        {
+          "key": "transformation-shari-2018-2020-v2.webp",
+          "width": 854,
+          "height": 686,
+          "bytes": 29836,
+          "alt": "Shari's back pose on stage in two photos side by side, from 2018 and 2020"
+        }
+      ],
+      "results": [
+        {
+          "key": "competitor-maxine-state-2025-v2.webp",
+          "id": "ig-maxine",
+          "category": "competition",
+          "featured": true,
+          "name": "Maxine won the overall state title in her debut",
+          "caption": "Maxine, Miss Bikini State Champion",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "competition",
+            "bikini",
+            "icn"
+          ],
+          "alt": "Maxine on stage at ICN South Australia in a purple bikini and Ms Bikini sash, resting a hand on a ceremonial sword",
+          "audience": "competitor",
+          "summary": "Maxine's first time on a bodybuilding stage, at ICN South Australia in 2025, ended with the overall Miss Bikini State title. It qualified her for Nationals and the pro league.",
+          "testimonial": {
+            "quote": "At the very start, I told my coach, \"I'll do whatever it takes to win that title.\" And boy we did!",
+            "author": "Maxine",
+            "service": "Competition Preparation",
+            "result": "Miss Bikini State Champion 2025"
+          }
+        },
+        {
+          "key": "competitor-jade-fmg-worlds-v2.webp",
+          "id": "ig-jade",
+          "category": "competition",
+          "featured": true,
+          "name": "Jade won Bikini and her pro card at FMG Worlds",
+          "caption": "Jade, FMG pro card",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "competition",
+            "bikini",
+            "pro card"
+          ],
+          "alt": "Jade in a red bikini holding a plaque, standing with Jake, who holds a bunch of flowers",
+          "audience": "competitor",
+          "summary": "Jade won first place in Bikini at the FMG World Championships on the Gold Coast and was awarded her pro card. It was her second FMG show, two weeks after placing 3rd at FMG New Zealand.",
+          "testimonial": {
+            "quote": "The push you give has made me overcome so many limiting beliefs and showed me I actually can push harder and go further than I thought.",
+            "author": "Jade",
+            "service": "Competition Preparation",
+            "result": "FMG Bikini 1st and pro card"
+          }
+        },
+        {
+          "key": "competitor-gabriel-sznb-2024.webp",
+          "id": "ig-gabriel",
+          "category": "competition",
+          "featured": true,
+          "name": "Gabriel won Bikini Novice Class 2",
+          "caption": "Gabriel, Bikini Novice winner",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "competition",
+            "bikini",
+            "icn"
+          ],
+          "alt": "Gabriel on stage at ICN South Australia in a teal bikini with a medal, under the caption Bikini Novice Class 2 Winner",
+          "audience": "competitor",
+          "summary": "At ICN South Australia Season B 2024, Gabriel won Bikini Novice Class 2, Bikini Open Class 2 and Swimsuit."
+        },
+        {
+          "key": "competitor-sophie-sznb-2024.webp",
+          "id": "ig-sophie",
+          "category": "competition",
+          "featured": true,
+          "name": "Sophie placed 2nd in Wellness Open Class 1",
+          "caption": "Sophie, Wellness Open 2nd",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "competition",
+            "wellness",
+            "icn"
+          ],
+          "alt": "Two competitors with medals on the ICN South Australia podium, under the caption Sophie Holtham, Wellness Open Class 1, 2nd Place",
+          "audience": "competitor",
+          "summary": "Sophie came 2nd in Wellness Open Class 1 at ICN South Australia Season B 2024, and 2nd in themewear at the same show."
+        },
+        {
+          "key": "transformation-shari-2018-2020-v2.webp",
+          "id": "ig-shari",
+          "category": "competition",
+          "featured": true,
+          "name": "Shari's back, 2018 and 2020",
+          "caption": "Shari, 2018 and 2020",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation",
+            "figure"
+          ],
+          "alt": "Shari's back pose on stage in two photos side by side, from 2018 and 2020",
+          "audience": "transformation",
+          "summary": "Shari's back pose on the ICN South Australia stage in April 2018 and in November 2020, from her own post. She later won Figure Novice at ICN Nationals.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-sbarbarblacksheep-1-year-v2.webp",
+          "id": "ig-one-year",
+          "category": "competition",
+          "featured": true,
+          "name": "The same competitor, one year apart",
+          "caption": "One year apart",
+          "location": "Competition Preparation",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation",
+            "physique"
+          ],
+          "alt": "A men's physique competitor in teal board shorts on stage, tagged one year ago, above a back pose from a year later",
+          "audience": "transformation",
+          "summary": "A men's physique client on stage a year ago, above a back pose from a year later. The story caption: can't wait to roll out the new improved version.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "transformation-krissy-prep-vs-now-v2.webp",
+          "id": "ig-krissy-prep",
+          "category": "online",
+          "featured": true,
+          "name": "Krissy kept building after prep",
+          "caption": "Krissy, in prep vs now",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "transformation"
+          ],
+          "alt": "Krissy in two photos side by side, captioned in prep vs now, we growin'",
+          "audience": "transformation",
+          "summary": "Krissy put a photo from her prep next to a more recent one, captioned: in prep vs now, we growin'.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "everyday-brooke-5-weeks.webp",
+          "id": "ig-brooke-5-weeks",
+          "category": "online",
+          "featured": true,
+          "name": "Five weeks into coaching",
+          "caption": "Brooke, 5 weeks in",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "everyday"
+          ],
+          "alt": "Brooke at the beach and in the gym, captioned 5 weeks down and amazing changes",
+          "audience": "everyday",
+          "summary": "Brooke at the beach and in the gym, five weeks in. The story caption reads: 5 weeks down and amazing changes.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        },
+        {
+          "key": "everyday-massimo-summer-inbound.webp",
+          "id": "ig-massimo",
+          "category": "online",
+          "featured": true,
+          "name": "1.3kg down heading into summer",
+          "caption": "Massimo, 1.3kg down",
+          "location": "Online Coaching",
+          "tags": [
+            "client result",
+            "team jd",
+            "everyday",
+            "fat loss"
+          ],
+          "alt": "Massimo in a gym mirror photo, captioned September 18, summer inbound, 1.3kg down",
+          "audience": "everyday",
+          "summary": "Massimo's update on 18 September: 1.3kg down, with summer on the way.",
+          "presentation": {
+            "fit": "contain",
+            "focus": {
+              "x": 50,
+              "y": 50
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

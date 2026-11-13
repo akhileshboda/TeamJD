@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
-import { RESULT_CATEGORY_LABELS } from '../../utils/resultsLibrary'
+import { RESULT_AUDIENCE_LABELS, RESULT_CATEGORY_LABELS, resultAudience } from '../../utils/resultsLibrary'
 import CollectionList from '../components/CollectionList'
 import { ChoiceField, FormSection, RequiredNote, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
 import ImageFramer, { DEFAULT_FRAMING } from '../components/ImageFramer'
@@ -8,12 +8,25 @@ import MediaPicker from '../components/MediaPicker'
 import RecordEditor from '../components/RecordEditor'
 
 const CATEGORY_OPTIONS = Object.entries(RESULT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))
+const AUDIENCE_HINTS = {
+  competitor: 'Stage and posing results, for people preparing to compete.',
+  transformation: 'Before and after or body-composition change, for people wanting to transform.',
+  everyday: 'Strength, health and lifestyle wins, for people training for themselves.',
+}
+const AUDIENCE_OPTIONS = Object.entries(RESULT_AUDIENCE_LABELS).map(([value, label]) => ({ value, label, hint: AUDIENCE_HINTS[value] }))
 const KIND_OPTIONS = [
   { value: 'client', label: 'Client result', hint: 'A real Team JD client. Shown as a genuine outcome.' },
   { value: 'representative', label: 'Representative image', hint: 'A stock or example photo, labelled as not a client outcome.' },
 ]
 
 const FILTERS = [
+  {
+    key: 'audience',
+    label: 'Audience',
+    anyLabel: 'Any audience',
+    options: AUDIENCE_OPTIONS.map(({ value, label }) => ({ value, label })),
+    match: (row, value) => resultAudience(row) === value,
+  },
   { key: 'category', label: 'Category', anyLabel: 'Any category', options: CATEGORY_OPTIONS, match: (row, value) => row.category === value },
   {
     key: 'kind',
@@ -25,6 +38,7 @@ const FILTERS = [
 ]
 
 const COLUMNS = [
+  { key: 'audience', label: 'Audience', render: (row) => RESULT_AUDIENCE_LABELS[resultAudience(row)] },
   { key: 'category', label: 'Category', render: (row) => RESULT_CATEGORY_LABELS[row.category] },
   { key: 'kind', label: 'Type', render: (row) => (row.kind === 'client' ? 'Client' : 'Representative') },
 ]
@@ -140,6 +154,7 @@ function ResultFields({ draft, update, errors }) {
           error={errors.caption} onChange={(caption) => update({ caption })} />
         <TextField label="Headline" hint="Shown when someone opens the result." value={draft.name} maxLength={160}
           onChange={(name) => update({ name })} />
+        <ChoiceField label="Who it's for" value={resultAudience(draft)} options={AUDIENCE_OPTIONS} onChange={(audience) => update({ audience })} />
         <SelectField label="Category" value={draft.category} options={CATEGORY_OPTIONS} onChange={(category) => update({ category })} />
         <ChoiceField label="Type" value={draft.kind} options={KIND_OPTIONS} onChange={(kind) => update({ kind })} />
         {draft.kind === 'client' ? (
@@ -197,7 +212,7 @@ export default function ResultsSection() {
             title="Results"
             description="Your clients' results. Results that are on the site show on the Results page and in the Home page gallery. Featured client results also show on About."
             noun="result"
-            newDraft={{ kind: 'client', category: 'competition' }}
+            newDraft={{ kind: 'client', category: 'competition', audience: 'competitor' }}
             columns={COLUMNS}
             filters={FILTERS}
             emptyText="No results yet. Add your first client result."

@@ -15,6 +15,7 @@ const { createAdminAuthRouter } = require('./routes/adminAuth');
 const { createAnalyticsRouter } = require('./routes/analytics');
 const { createContentRouter } = require('./routes/content');
 const { getCmsStore } = require('./services/cmsStore');
+const { runInstagramImport } = require('./services/instagramImport');
 const { clearLeftoverUploads } = require('./services/mediaIngest');
 const { buildSitemap } = require('./services/sitemap');
 const { applyRouteToShell, buildLlmsTxt, buildRobotsTxt, resolveRoute } = require('./services/seo');
@@ -423,6 +424,12 @@ async function startServer() {
 
   startAssetPoller();
   startCapacityMonitor();
+  // Copies the Instagram photos into this environment's media library once.
+  setImmediate(() => {
+    runInstagramImport(getCmsStore())
+      .then((outcome) => { if (outcome.status === 'imported') console.log('[cms] Instagram import:', outcome); })
+      .catch((error) => console.error('[cms] Instagram import failed; it will retry on next start:', error.message));
+  });
   setImmediate(() => {
     runStartupAssetSync().catch((error) => {
       console.error('Failed to run startup asset sync:', error);

@@ -413,7 +413,7 @@ describe('AppleWatchGallery canonical library', () => {
     viewport.scrollLeft = 0
     viewport.scrollTop = 0
 
-    fireEvent.click(screen.getByRole('button', { name: 'Posing' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Everyday clients' }))
 
     expect(viewport.scrollLeft).toBe(200)
     expect(viewport.scrollTop).toBe(140)
@@ -615,7 +615,7 @@ describe('AppleWatchGallery canonical library', () => {
     fireEvent.pointerDown(document.querySelector('.watch-grid-viewport'))
     await waitFor(() => expect(screen.queryByRole('note')).not.toBeInTheDocument())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Posing' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Everyday clients' }))
     expect(screen.queryByRole('note')).not.toBeInTheDocument()
   })
 
@@ -706,7 +706,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     mockStorySheetGeometry(sheet, { storyHeight: 480 })
 
@@ -742,7 +742,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     mockStorySheetGeometry(sheet, { storyHeight: 250 })
 
@@ -762,7 +762,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       )
 
       const sheet = screen.getByRole('group', {
-        name: 'ANB champion with stage-ready control',
+        name: 'Akhil took gold at ANB',
       })
       const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 })
 
@@ -792,7 +792,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       )
 
       const sheet = screen.getByRole('group', {
-        name: 'ANB champion with stage-ready control',
+        name: 'Akhil took gold at ANB',
       })
       const frame = sheet.closest('.result-presentation')
       const image = frame.querySelector('.result-media-foreground')
@@ -843,7 +843,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     let sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     let { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 })
     fireCancelableWheel(sheet, 100)
@@ -855,7 +855,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show Story' }))
 
     sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     ;({ scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 }))
     expect(scroll.scrollTop).toBe(0)
@@ -874,7 +874,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -909,7 +909,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       )
 
       const sheet = screen.getByRole('group', {
-        name: 'ANB champion with stage-ready control',
+        name: 'Akhil took gold at ANB',
       })
       const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -949,7 +949,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       )
 
       const sheet = screen.getByRole('group', {
-        name: 'ANB champion with stage-ready control',
+        name: 'Akhil took gold at ANB',
       })
       const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -999,7 +999,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
     fireCancelableWheel(sheet, 100)
@@ -1012,7 +1012,7 @@ describe('AppleWatchGallery full-story overlays', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Show Story' }))
     const reopenedSheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const reopened = mockStorySheetGeometry(reopenedSheet, { storyHeight: 800 })
     expect(reopened.scroll.scrollTop).toBe(0)
@@ -1036,7 +1036,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       )
 
       const sheet = screen.getByRole('group', {
-        name: 'ANB champion with stage-ready control',
+        name: 'Akhil took gold at ANB',
       })
       const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -1078,7 +1078,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -1104,17 +1104,17 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     let sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     let { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 })
     fireCancelableWheel(sheet, 100)
     expect(sheet).toHaveStyle({ height: '407.2px' })
     expect(scroll.scrollTop).toBe(0)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Competition Prep' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Competitors' }))
 
     sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     ;({ scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 }))
     expect(scroll.scrollTop).toBe(0)
@@ -1154,7 +1154,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     let sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     let { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 })
     fireCancelableWheel(sheet, 100)
@@ -1172,7 +1172,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       mediaQueries.get('(min-width: 1025px)').notify()
     })
     sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     ;({ scroll } = mockStorySheetGeometry(sheet, { storyHeight: 480 }))
     expect(sheet.closest('.result-presentation')).toHaveAttribute('data-story-layout', 'overlay')
@@ -1197,7 +1197,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const presentation = sheet.closest('.result-presentation')
     const header = sheet.querySelector('.result-overlay-header')
@@ -1225,7 +1225,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
 
     mockDockedStoryGeometry(sheet, {
@@ -1256,12 +1256,12 @@ describe('AppleWatchGallery full-story overlays', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Open result: ANB champion with stage-ready control',
+        name: 'Open result: Akhil took gold at ANB',
       }),
     )
 
     const sheet = screen.getByRole('document', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
 
     expect(sheet.closest('.result-presentation')).toHaveAttribute('data-story-frame', 'bounded')
@@ -1295,11 +1295,11 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     fireEvent.click(screen.getByRole('button', {
-      name: 'Open result: ANB champion with stage-ready control',
+      name: 'Open result: Akhil took gold at ANB',
     }))
 
     const sheet = screen.getByRole('document', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
 
     mockDockedStoryGeometry(sheet, {
@@ -1360,7 +1360,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
 
@@ -1391,7 +1391,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     let sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     let { scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
     fireEvent.keyDown(sheet, { key: 'PageDown' })
@@ -1414,7 +1414,7 @@ describe('AppleWatchGallery full-story overlays', () => {
       </MemoryRouter>,
     )
     sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     ;({ scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 }))
     fireCancelableWheel(sheet, 350)
@@ -1435,7 +1435,7 @@ describe('AppleWatchGallery full-story overlays', () => {
     )
 
     const sheet = screen.getByRole('group', {
-      name: 'ANB champion with stage-ready control',
+      name: 'Akhil took gold at ANB',
     })
     const { frame, scroll } = mockStorySheetGeometry(sheet, { storyHeight: 800 })
     fireCancelableWheel(sheet, 100)

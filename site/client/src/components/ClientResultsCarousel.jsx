@@ -13,6 +13,8 @@ export default function ClientResultsCarousel({
   title = 'The work shows.',
   caption = 'Built with intent. Shown with confidence.',
   headingId = 'client-results-heading',
+  viewAllHref = '/results',
+  analyticsLocation = 'about_carousel',
 }) {
   const resolveAsset = useAssets()
   const shouldReduceMotion = useReducedMotion()
@@ -148,7 +150,7 @@ export default function ClientResultsCarousel({
         tabIndex={duplicate ? -1 : 0}
         aria-label={duplicate ? undefined : `View result: ${result.caption}`}
         data-analytics-event={duplicate ? undefined : 'result_open'}
-        data-analytics-location={duplicate ? undefined : 'about_carousel'}
+        data-analytics-location={duplicate ? undefined : analyticsLocation}
         data-analytics-id={duplicate ? undefined : result.id}
         data-result-id={duplicate ? undefined : result.id}
       >
@@ -159,6 +161,7 @@ export default function ClientResultsCarousel({
           decoding="async"
           width="683"
           height="1024"
+          data-fit={result.presentation?.fit === 'contain' ? 'contain' : undefined}
         />
         <span className="client-result-card-overlay">
           <span>{result.caption}</span>
@@ -184,17 +187,17 @@ export default function ClientResultsCarousel({
               onClick={() => setIsPaused((value) => !value)}
               aria-pressed={isPaused}
               data-analytics-event="carousel_toggle"
-              data-analytics-location="about_carousel"
+              data-analytics-location={analyticsLocation}
             >
               <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
               {isPaused ? 'Resume' : 'Pause'}
             </button>
           )}
           <Link
-            to="/results"
+            to={viewAllHref}
             className="client-results-link"
             data-analytics-event="results_view_all"
-            data-analytics-location="about_carousel"
+            data-analytics-location={analyticsLocation}
           >
             View all results <span aria-hidden="true">→</span>
           </Link>

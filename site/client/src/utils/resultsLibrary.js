@@ -8,6 +8,44 @@ export const RESULT_CATEGORY_LABELS = {
   lifestyle: 'Lifestyle',
 }
 
+// Who a result speaks to. Category is the service it came from; audience is the
+// visitor who should see themselves in it. Older results take it from category.
+export const RESULT_AUDIENCE_LABELS = {
+  competitor: 'Competitors',
+  transformation: 'Transformations',
+  everyday: 'Everyday clients',
+}
+
+const AUDIENCE_BY_CATEGORY = {
+  competition: 'competitor',
+  posing: 'competitor',
+  online: 'everyday',
+  training: 'everyday',
+  lifestyle: 'everyday',
+}
+
+export const RESULT_AUDIENCES = [
+  { value: 'all', label: 'All' },
+  ...Object.entries(RESULT_AUDIENCE_LABELS).map(([value, label]) => ({ value, label })),
+]
+
+export function resultAudience(result) {
+  if (result?.audience && RESULT_AUDIENCE_LABELS[result.audience]) return result.audience
+  return AUDIENCE_BY_CATEGORY[result?.category] || 'competitor'
+}
+
+// Mixes audiences so a row of results never opens on one kind: takes the next
+// result from each audience in turn, keeping each audience's own order.
+export function interleaveByAudience(results) {
+  const queues = Object.keys(RESULT_AUDIENCE_LABELS).map((audience) =>
+    results.filter((result) => resultAudience(result) === audience))
+  const mixed = []
+  while (queues.some((queue) => queue.length)) {
+    queues.forEach((queue) => { if (queue.length) mixed.push(queue.shift()) })
+  }
+  return mixed
+}
+
 export const RESULT_CATEGORIES = [
   { value: 'all', label: 'All' },
   ...Object.entries(RESULT_CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
@@ -25,6 +63,7 @@ export const RESULT_SORTS = [
   { value: 'caption', label: 'Caption A–Z' },
 ]
 
+const audienceValues = new Set(RESULT_AUDIENCES.map(({ value }) => value))
 const categoryValues = new Set(RESULT_CATEGORIES.map(({ value }) => value))
 const typeValues = new Set(RESULT_TYPES.map(({ value }) => value))
 const sortValues = new Set(RESULT_SORTS.map(({ value }) => value))
@@ -75,12 +114,14 @@ export function getResultPresentation(result) {
 
 export function getResultsParams(searchParams) {
   const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10)
+  const audience = searchParams.get('audience') || 'all'
   const category = searchParams.get('category') || 'all'
   const type = searchParams.get('type') || 'all'
   const sort = searchParams.get('sort') || 'curated'
 
   return {
     query: searchParams.get('q') || '',
+    audience: audienceValues.has(audience) ? audience : 'all',
     category: categoryValues.has(category) ? category : 'all',
     type: typeValues.has(type) ? type : 'all',
     sort: sortValues.has(sort) ? sort : 'curated',
@@ -91,6 +132,7 @@ export function getResultsParams(searchParams) {
 export function filterAndSortResults(results, filters) {
   const needle = filters.query.trim().toLocaleLowerCase()
   const filtered = results.filter((result) => {
+    if (filters.audience && filters.audience !== 'all' && resultAudience(result) !== filters.audience) return false
     if (filters.category !== 'all' && result.category !== filters.category) return false
     if (filters.type !== 'all' && result.kind !== filters.type) return false
     if (!needle) return true
@@ -99,6 +141,7 @@ export function filterAndSortResults(results, filters) {
       result.caption,
       result.alt,
       result.category,
+      RESULT_AUDIENCE_LABELS[resultAudience(result)],
       ...(result.tags || []),
     ].join(' ').toLocaleLowerCase()
 
@@ -152,13 +195,27 @@ export function getPaginationRange(currentPage, totalPages) {
   return range
 }
 
-export function getCategoryCounts(results, { query, type }) {
+export function getAudienceCounts(results, { query, type }) {
+  const counts = { all: 0 }
+  RESULT_AUDIENCES.slice(1).forEach(({ value }) => { counts[value] = 0 })
+
+  filterAndSortResults(results, { query, type, audience: 'all', category: 'all', sort: 'curated' })
+    .forEach((result) => {
+      counts.all += 1
+      counts[resultAudience(result)] += 1
+    })
+
+  return counts
+}
+
+export function getCategoryCounts(results, { query, type, audience = 'all' }) {
   const counts = { all: 0 }
   RESULT_CATEGORIES.slice(1).forEach(({ value }) => { counts[value] = 0 })
 
   const matching = filterAndSortResults(results, {
     query,
     type,
+    audience,
     category: 'all',
     sort: 'curated',
   })
