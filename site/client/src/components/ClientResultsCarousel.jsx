@@ -4,7 +4,9 @@ import { useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useDragScroll } from '../hooks/useDragScroll'
 
-const LOOP_DURATION_MS = 35000
+// A constant pace, so the rail moves at the same calm speed however many results it holds.
+// (A fixed lap time made it race once the results library grew.)
+const SCROLL_SPEED_PX_PER_S = 32
 
 export default function ClientResultsCarousel({
   results = [],
@@ -54,6 +56,8 @@ export default function ClientResultsCarousel({
 
     let frameId
     let lastTime = performance.now()
+    // Browsers round scrollLeft, so sub-pixel steps would stall; track the exact position here.
+    let position = viewport.scrollLeft
 
     const animate = (now) => {
       const duplicateGroup = viewport.querySelector('[data-carousel-duplicate]')
@@ -69,10 +73,10 @@ export default function ClientResultsCarousel({
         !viewport.contains(document.activeElement) &&
         !interactionPausedRef.current
       ) {
-        viewport.scrollLeft += (loopWidth / LOOP_DURATION_MS) * delta
-        if (viewport.scrollLeft >= loopWidth) {
-          viewport.scrollLeft -= loopWidth
-        }
+        if (Math.abs(viewport.scrollLeft - position) > 1) position = viewport.scrollLeft
+        position += (SCROLL_SPEED_PX_PER_S / 1000) * delta
+        if (position >= loopWidth) position -= loopWidth
+        viewport.scrollLeft = position
       }
 
       frameId = requestAnimationFrame(animate)
