@@ -10,6 +10,12 @@ function PinIcon() {
   )
 }
 
+// Text typed in the dashboard keeps its shape: a blank line starts a new
+// paragraph, and a single line break stays a line break (CSS pre-line).
+function paragraphs(text) {
+  return text.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean)
+}
+
 export function ResultStoryBadge({ result }) {
   const story = getResultStory(result)
 
@@ -37,22 +43,26 @@ export default function ResultStory({
 
       <Heading id={titleId} className="result-story-title">{story.title}</Heading>
 
-      {story.location && (
+      {(story.location || story.duration) && (
         <div className="result-story-location">
-          <PinIcon />
-          <span>{story.location}</span>
-          {story.duration && <span className="result-story-meta-sep">{story.duration}</span>}
+          {story.location && <PinIcon />}
+          {story.location && <span>{story.location}</span>}
+          {story.duration && <span className={story.location ? 'result-story-meta-sep' : undefined}>{story.duration}</span>}
         </div>
       )}
 
       {story.summary && (
-        <p id={descriptionId} className="result-story-summary">{story.summary}</p>
+        <div id={descriptionId} className="result-story-summary">
+          {paragraphs(story.summary).map((part, index) => <p key={index}>{part}</p>)}
+        </div>
       )}
 
       {story.testimonial && (
         <figure className="result-story-testimonial" data-category={result?.category}>
           <span className="result-story-quote-mark" aria-hidden="true">&ldquo;</span>
-          <blockquote>{story.testimonial.quote}</blockquote>
+          <blockquote>
+            {paragraphs(story.testimonial.quote).map((part, index) => <p key={index}>{part}</p>)}
+          </blockquote>
           <figcaption>
             <strong>{story.testimonial.author}</strong>
             {story.testimonial.result && ` · ${story.testimonial.result}`}

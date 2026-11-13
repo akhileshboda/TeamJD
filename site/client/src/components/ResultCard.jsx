@@ -14,7 +14,7 @@ export default function ResultCard({ result, onOpen, priority = false }) {
   return (
     <button
       type="button"
-      className={`result-card result-card--${result.kind}`}
+      className="result-card result-card--client"
       onClick={(event) => onOpen(result, event.currentTarget)}
       aria-label={`View ${result.caption}`}
       data-analytics-event="result_open"
@@ -42,9 +42,7 @@ export default function ResultCard({ result, onOpen, priority = false }) {
         )}
         <span className="result-card-badges" aria-hidden="true">
           <span className="result-card-category">{RESULT_CATEGORY_LABELS[result.category]}</span>
-          <span className={`result-card-kind result-card-kind--${result.kind}`}>
-            {result.kind === 'client' ? 'Client result' : 'Reference'}
-          </span>
+          <span className="result-card-kind result-card-kind--client">Client result</span>
         </span>
       </span>
 

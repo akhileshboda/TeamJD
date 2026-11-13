@@ -18,12 +18,12 @@ const countStatuses = (rows) => rows.reduce((counts, { status }) => {
   return counts;
 }, {});
 
-test('a new store seeds 2 live client results with their testimonials, and 4 hidden retired stage shots', async () => {
+test('a new store seeds 1 live client result with its testimonial, and 5 hidden retired shots', async () => {
   const { store, storePath } = await tempStore();
   const results = await store.list('results');
   assert.equal(results.length, 6);
-  assert.deepEqual(countStatuses(results), { published: 2, hidden: 4 });
-  assert.equal(results[0].title, 'Akhil took gold at ANB');
+  assert.deepEqual(countStatuses(results), { published: 1, hidden: 5 });
+  assert.equal(results[0].title, 'Akhil won gold at ANB after a full prep with Jake');
   assert.match(results[0].thumbnail, /client-posing-1/);
 
   const first = await store.get('results', '1');
@@ -50,7 +50,9 @@ test('public results are the live seed client records, apart from string ids, au
       // Every framed photo now also says how far it is zoomed in (1 = not at all).
       ...(item.presentation && { presentation: { ...item.presentation, zoom: 1 } }),
       tags: [...new Set(item.tags)]
-    }));
+    }))
+    // The service shows as the site's own service name ("Posing Coaching" was typed by hand).
+    .map((item) => (item.location === 'Posing Coaching' ? { ...item, location: 'Posing' } : item));
   // Key order matters too: the site and its tests read this exact JSON before.
   assert.equal(JSON.stringify(await store.getPublic('results')), JSON.stringify(expected));
   await assert.rejects(store.getPublic('testimonials'), { statusCode: 404 });
@@ -88,21 +90,17 @@ test('stores seeded before November 2026 hide four of Akhil\'s shots and take th
   const store = createCmsStore({ storePath, backup: null });
 
   const live = await store.getPublic('results');
-  // 2, 3 and 6 are hidden, including 2 whose words had been edited; 5 now shows someone else.
-  assert.deepEqual(live.map((result) => result.id), ['1', '4', '5']);
+  // 2, 3, 4 and 6 are hidden, including 2 whose words had been edited; 5 now shows someone else.
+  // (4 was kept at first; the seed has hidden it too since the copy refresh.)
+  assert.deepEqual(live.map((result) => result.id), ['1', '5']);
   assert.equal((await store.get('results', '2')).status, 'hidden');
   // 6 keeps Jake's unpublished draft with the new photo.
   const sixAfter = await store.get('results', '6');
   assert.equal(sixAfter.published, null);
   assert.equal(sixAfter.draft.image.src, 'https://cdn.example/new-draft.webp');
-  // 4 still had the old seed copy, so it takes all of the new copy.
-  const four = live.find((item) => item.id === '4');
-  assert.deepEqual([four.caption, four.name, four.summary], [seed[4].caption, seed[4].name, seed[4].summary]);
+  assert.equal((await store.get('results', '4')).status, 'hidden');
   // 1 keeps the caption Jake wrote; the fields he had not touched take the new copy.
   // The made-up length, stats and anonymous labels go; the quotes stay.
-  assert.equal(four.duration, undefined);
-  assert.equal(four.stats, undefined);
-  assert.deepEqual(four.testimonial, { quote: 'Real words four', author: 'Akhil', service: 'Posing', result: '' });
   const first = live.find((item) => item.id === '1');
   assert.equal(first.caption, 'Jake wrote this');
   assert.equal(first.duration, '12 weeks');
@@ -113,7 +111,7 @@ test('stores seeded before November 2026 hide four of Akhil\'s shots and take th
 
   const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
   assert.ok(onDisk.migrations.includes('seed-results-2026-11'));
-  for (const index of [1, 2, 5]) assert.ok(onDisk.collections.results[index].hiddenAt, `record ${index + 1} records when it was hidden`);
+  for (const index of [1, 2, 3, 5]) assert.ok(onDisk.collections.results[index].hiddenAt, `record ${index + 1} records when it was hidden`);
   assert.equal(onDisk.collections.results[4].hiddenAt, null);
   // Runs once: a record re-published later is not hidden again.
   onDisk.collections.results[1].published = onDisk.collections.results[1].draft;
@@ -246,22 +244,51 @@ test('publishing an incomplete item is refused with the fields to fix', async ()
   await assert.rejects(store.apply('results', created.id, 'discard'), { statusCode: 409 });
 });
 
-test('new items go to the top and reordering goes live immediately', async () => {
-  const { store } = await tempStore();
+test('new results go to the top: results list newest first, and other lists reorder live', async () => {
+  let clock = Date.parse('2026-11-01T00:00:00.000Z');
+  const { store } = await tempStore({ now: () => new Date(clock += 1000).toISOString() });
   const created = await store.create('results', {
     caption: 'Stage day',
     alt: 'Athlete on stage',
     image: { src: 'https://cdn.example.com/stage.webp' }
   });
   assert.equal((await store.list('results'))[0].id, created.id);
+  assert.ok((await store.list('results'))[0].createdAt);
   await store.apply('results', created.id, 'publish');
   assert.equal((await store.getPublic('results'))[0].id, created.id);
 
+  // Results ignore manual order; they stay newest first.
   const ids = (await store.list('results')).map((item) => item.id);
-  const reordered = [...ids.slice(1), ids[0]];
-  await store.reorder('results', reordered);
-  assert.equal((await store.getPublic('results')).at(-1).id, created.id);
-  await assert.rejects(store.reorder('results', reordered.slice(1)), { statusCode: 409 });
+  await store.reorder('results', [...ids.slice(1), ids[0]]);
+  assert.equal((await store.getPublic('results'))[0].id, created.id);
+
+  const faqIds = (await store.list('faqs')).map((item) => item.id);
+  const reordered = [...faqIds.slice(1), faqIds[0]];
+  await store.reorder('faqs', reordered);
+  assert.deepEqual((await store.list('faqs')).map((item) => item.id), reordered);
+  await assert.rejects(store.reorder('faqs', reordered.slice(1)), { statusCode: 409 });
+});
+
+test('results saved with a typed service name, or as representative, take a service id and become client results', async () => {
+  const { storePath } = await tempStore();
+  const legacy = { caption: 'Old', alt: 'x', category: 'online', audience: 'everyday', kind: 'representative', featured: false,
+    image: { assetId: null, src: 'https://x/y.webp' }, presentation: null, name: '', location: 'Contest Prep', duration: '',
+    summary: '', testimonial: null, stats: [], tags: [] };
+  await fs.writeFile(storePath, JSON.stringify({
+    schemaVersion: 2, migrations: [], media: [],
+    collections: { results: [{ id: 'old', order: 1, draft: legacy, published: legacy, rev: 1, createdAt: '2026-01-01T00:00:00.000Z' }] }
+  }));
+  const store = createCmsStore({ storePath, backup: null });
+  const record = await store.get('results', 'old');
+  assert.equal(record.status, 'published');
+  assert.equal(record.draft.serviceId, 'competition-prep');
+  assert.equal(record.draft.kind, 'client');
+  assert.equal(record.draft.location, undefined);
+  const live = (await store.getPublic('results')).find((item) => item.id === 'old');
+  assert.equal(live.location, 'Competition Preparation');
+
+  const saved = await store.saveDraft('results', 'old', { draft: { ...record.draft, serviceId: '' }, rev: record.rev });
+  assert.equal(saved.draft.serviceId, '');
 });
 
 test('a testimonial is part of its result: it goes live with it, and must be complete', async () => {
@@ -347,6 +374,44 @@ test('preview shows the public list as if the draft were live, without saving it
 
   const fresh = await store.preview('results', null, { caption: 'Brand new', alt: 'x', image: { src: 'https://x/y.webp' } });
   assert.equal(fresh.results[0].caption, 'Brand new');
+});
+
+test('the November 2026 copy refresh applies once, only to wording nobody has changed, and takes the kneeling pose offline', async () => {
+  const { storePath } = await tempStore();
+  const COPY = require('../seed/results-copy-2026-11.json');
+  const base = { alt: 'a', category: 'competition', audience: 'competitor', kind: 'client', featured: true,
+    image: { assetId: null, src: 'https://x/y.webp' }, presentation: null, serviceId: '', duration: '', testimonial: null, stats: [] };
+  const version = (id) => ({ ...base, caption: '', name: '', summary: '', tags: [], ...structuredClone(COPY.results[id].from) });
+  const record = (id, draft, published = draft) => ({ id, order: 1, draft, published: structuredClone(published), rev: 1, createdAt: '2026-11-12T00:00:00.000Z' });
+
+  const maxine = record('ig-maxine', version('ig-maxine'));
+  // Jake already rewrote Gabi's headline, live and in the draft.
+  const gabiEdited = { ...version('ig-gabi'), name: 'Gabi, by Jake' };
+  const gabi = record('ig-gabi', gabiEdited);
+  const pose = record('4', { ...base, caption: 'Akhil, posing routine', name: '', summary: '', tags: [] });
+  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 2, migrations: [], media: [], collections: { results: [maxine, gabi, pose] } }));
+  const store = createCmsStore({ storePath, backup: null });
+
+  const maxineAfter = await store.get('results', 'ig-maxine');
+  assert.equal(maxineAfter.status, 'published');
+  assert.equal(maxineAfter.draft.summary, COPY.results['ig-maxine'].to.summary);
+  assert.deepEqual(maxineAfter.draft.tags, COPY.results['ig-maxine'].to.tags);
+  assert.ok(!maxineAfter.draft.tags.includes('team jd'));
+
+  const gabiAfter = await store.get('results', 'ig-gabi');
+  assert.equal(gabiAfter.draft.name, 'Gabi, by Jake');
+  assert.equal(gabiAfter.draft.caption, COPY.results['ig-gabi'].to.caption);
+  assert.equal(gabiAfter.status, 'published');
+
+  assert.equal((await store.get('results', '4')).status, 'hidden');
+
+  // Runs once: Jake putting the pose back live keeps it live.
+  const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
+  assert.ok(onDisk.migrations.includes('results-copy-2026-11'));
+  onDisk.collections.results[2].published = onDisk.collections.results[2].draft;
+  await fs.writeFile(storePath, JSON.stringify(onDisk));
+  const reloaded = createCmsStore({ storePath, backup: null });
+  assert.equal((await reloaded.get('results', '4')).status, 'published');
 });
 
 test('concurrent writes are serialised and all land', async () => {

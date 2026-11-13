@@ -217,7 +217,7 @@ export default function About() {
   const { data: resultsLibrary } = useContent('results')
   // Audiences take turns so the carousel shows the range of clients, not one kind.
   const results = interleaveByAudience((resultsLibrary || [])
-    .filter((result) => result.kind === 'client' && result.featured)
+    .filter((result) => result.featured)
     .sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id)))
   const resultViewerOriginRef = useRef(null)
   const [selectedResultId, setSelectedResultId] = useState(null)

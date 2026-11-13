@@ -133,6 +133,20 @@
   overflow-y: auto;
 }
 
+/* A story taller than its card scrolls; fade its bottom edge (Results page and Home gallery alike) so it reads as "more
+   below" rather than text cut off mid-line. The spacer lets the last line scroll
+   clear of the fade. */
+.result-preview-overlay[data-scroll-mode="overflow"] .result-overlay-scroll,
+.result-preview-overlay[data-scroll-mode="reveal"] .result-overlay-scroll {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+}
+
+.result-preview-overlay[data-scroll-mode="overflow"] .result-overlay-scroll::after {
+  content: '';
+  flex: 0 0 2.5rem;
+}
+
 .result-overlay-scroll::-webkit-scrollbar {
   display: none;
 }

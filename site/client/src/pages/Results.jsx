@@ -7,12 +7,11 @@ import ResultCard from '../components/ResultCard'
 import ResultsViewer from '../components/ResultsViewer'
 import SectionReveal from '../components/SectionReveal'
 import JourneyIcon from '../components/JourneyIcon'
-import { useContent } from '../hooks/useContent'
+import { isPreviewWindow, useContent } from '../hooks/useContent'
 import {
   RESULT_AUDIENCES,
   RESULT_CATEGORIES,
   RESULT_SORTS,
-  RESULT_TYPES,
   RESULTS_PER_PAGE,
   filterAndSortResults,
   getAudienceCounts,
@@ -27,8 +26,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 const DEFAULT_PARAMS = {
   audience: 'all',
   category: 'all',
-  type: 'all',
-  sort: 'curated',
+  sort: 'newest',
   page: 1,
 }
 
@@ -47,7 +45,7 @@ export default function Results() {
   const filters = getResultsParams(searchParams)
   const filtered = useMemo(
     () => filterAndSortResults(results || [], filters),
-    [filters.audience, filters.category, filters.query, filters.sort, filters.type, results],
+    [filters.audience, filters.category, filters.query, filters.sort, results],
   )
   const pagination = useMemo(
     () => paginateResults(filtered, filters.page),
@@ -55,11 +53,11 @@ export default function Results() {
   )
   const categoryCounts = useMemo(
     () => getCategoryCounts(results || [], filters),
-    [filters.audience, filters.query, filters.type, results],
+    [filters.audience, filters.query, results],
   )
   const audienceCounts = useMemo(
     () => getAudienceCounts(results || [], filters),
-    [filters.query, filters.type, results],
+    [filters.query, results],
   )
   // The audience row only earns its place once the library holds more than one
   // kind of client; a shared ?audience= link always keeps its own choice visible.
@@ -76,10 +74,6 @@ export default function Results() {
       .map((result) => result.category))
     return RESULT_CATEGORIES.filter(({ value }) => value === 'all' || value === filters.category || present.has(value))
   }, [filters.audience, filters.category, results])
-  const hasMixedTypes = useMemo(
-    () => new Set((results || []).map((result) => result.kind)).size > 1 || filters.type !== 'all',
-    [filters.type, results],
-  )
   const paginationRange = getPaginationRange(pagination.page, pagination.totalPages)
   const selectedIndex = selectedId === null
     ? -1
@@ -90,7 +84,7 @@ export default function Results() {
     ? filtered[selectedIndex + 1]
     : null
   const hasActiveFilters = Boolean(
-    filters.query || filters.audience !== 'all' || filters.category !== 'all' || filters.type !== 'all' || filters.sort !== 'curated',
+    filters.query || filters.audience !== 'all' || filters.category !== 'all' || filters.sort !== 'newest',
   )
 
   const updateParams = (updates, { replace = false } = {}) => {
@@ -117,8 +111,11 @@ export default function Results() {
   }, [filters.page, pagination.page])
 
   useEffect(() => {
-    // Wait for the library before dropping a selection it does not contain.
-    if (results && selectedId !== null && selectedIndex === -1) setSelectedId(null)
+    // Wait for the library before dropping a selection it does not contain. In
+    // the dashboard's preview the published library can arrive before the draft
+    // being edited (a new result is not in it yet), so the selection is kept and
+    // opens as soon as the draft arrives.
+    if (results && selectedId !== null && selectedIndex === -1 && !isPreviewWindow()) setSelectedId(null)
   }, [results, selectedId, selectedIndex])
 
   const resetFilters = () => {
@@ -212,20 +209,6 @@ export default function Results() {
                       )}
                     />
                   </label>
-
-                  {hasMixedTypes && (
-                    <label className="results-select">
-                      <span className="visually-hidden">Content type</span>
-                      <select
-                        value={filters.type}
-                        onChange={(event) => updateParams({ type: event.target.value, page: 1 })}
-                      >
-                        {RESULT_TYPES.map(({ value, label }) => (
-                          <option key={value} value={value}>{label}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
 
                   <label className="results-select">
                     <span className="visually-hidden">Sort results</span>

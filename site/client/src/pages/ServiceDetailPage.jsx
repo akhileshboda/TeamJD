@@ -105,8 +105,7 @@ export default function ServiceDetailPage() {
   const resultsFit = SERVICE_RESULTS[service.id]
   const serviceResults = resultsFit
     ? interleaveByAudience((resultsLibrary || []).filter((result) => (
-      result.kind === 'client'
-      && resultsFit.audiences.includes(resultAudience(result))
+      resultsFit.audiences.includes(resultAudience(result))
       && !(resultsFit.skipCategories || []).includes(result.category)
     )))
     : []

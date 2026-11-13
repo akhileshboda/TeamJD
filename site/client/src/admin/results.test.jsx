@@ -15,7 +15,7 @@ const draft = {
   image: { assetId: null, src: 'https://cdn/result.webp' },
   presentation: null,
   name: '',
-  location: '',
+  serviceId: 'competition-prep',
   duration: '',
   summary: '',
   testimonial: null,
@@ -34,6 +34,9 @@ function server() {
       return json({ ...record, draft: body.draft, rev: body.rev + 1, status: 'changed' })
     }
     if (url.endsWith('/preview')) return json({ results: [] })
+    if (url.endsWith('/api/content/services')) {
+      return json([{ id: 'competition-prep', name: 'Competition Preparation' }, { id: 'online-coaching', name: 'Online Coaching' }])
+    }
     return json(record)
   })
   return { fetchMock, saved }
@@ -78,17 +81,27 @@ describe('result editor', () => {
     expect(screen.getByLabelText(/^Quote/)).toHaveValue('Best prep I have done.')
   })
 
-  it('says where the result shows, with About only for a featured client result', async () => {
+  it('says where the result shows, with About only for a featured result', async () => {
     const { fetchMock } = server()
     vi.stubGlobal('fetch', fetchMock)
     renderResult()
     expect(await screen.findByText('Shows on the Results page, the Home page gallery and the About page.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('switch', { name: /Feature on the About page/ }))
     expect(screen.getByText('Shows on the Results page and the Home page gallery.')).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /Representative image/ })).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(screen.getByRole('radio', { name: /Representative image/ }))
-    expect(screen.queryByRole('switch', { name: /Feature on the About page/ })).not.toBeInTheDocument()
-    expect(screen.getByText('Only client results can be featured on the About page.')).toBeInTheDocument()
+  it('picks the service from the site\'s services, or none', async () => {
+    const { fetchMock, saved } = server()
+    vi.stubGlobal('fetch', fetchMock)
+    renderResult()
+    const service = await screen.findByLabelText(/^Service/)
+    await waitFor(() => expect(within(service).getByRole('option', { name: 'Online Coaching' })).toBeInTheDocument())
+    expect(service).toHaveValue('competition-prep')
+    fireEvent.change(service, { target: { value: 'online-coaching' } })
+    await waitFor(() => expect(saved.at(-1)?.serviceId).toBe('online-coaching'), { timeout: 3000 })
+    fireEvent.change(service, { target: { value: '' } })
+    await waitFor(() => expect(saved.at(-1)?.serviceId).toBe(''), { timeout: 3000 })
   })
 
   it('crops a photo that fills its frame, by keyboard as well as dragging', async () => {

@@ -13,7 +13,9 @@ const { publicSettings } = require('./cmsSettings');
 const SEED_DIR = path.join(__dirname, '..', 'seed');
 
 const RESULT_CATEGORIES = ['competition', 'posing', 'online', 'training', 'lifestyle'];
-const RESULT_KINDS = ['client', 'representative'];
+// Every result is a real client result. Stock "representative" images were
+// dropped in November 2026; older versions saved with that kind become client.
+const RESULT_KINDS = ['client'];
 // Who a result speaks to. Category says which service it came from; audience says
 // which visitor should see themselves in it. Results saved before audience
 // existed take it from their category.
@@ -26,6 +28,26 @@ const AUDIENCE_BY_CATEGORY = {
   lifestyle: 'everyday'
 };
 const RESULT_FITS = ['contain', 'cover'];
+
+// The service a result came from is one of the site's services, stored by id so
+// the story always shows that service's current name. Results saved before the
+// field existed kept a typed name in `location`; those names map to an id here.
+const SERVICE_IDS = require(path.join(SEED_DIR, 'services.json')).map((service) => service.id);
+const SERVICE_ID_BY_NAME = {
+  'competition preparation': 'competition-prep',
+  'competition prep': 'competition-prep',
+  'contest prep': 'competition-prep',
+  'online coaching': 'online-coaching',
+  'personal training': 'personal-training',
+  posing: 'posing-only',
+  'posing coaching': 'posing-only'
+};
+
+function resultServiceId(input) {
+  if (SERVICE_IDS.includes(input.serviceId)) return input.serviceId;
+  if (input.serviceId === '') return '';
+  return SERVICE_ID_BY_NAME[text(input.location, 120).toLowerCase()] || '';
+}
 
 function text(value, max) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -77,14 +99,14 @@ function normalizeResult(input = {}) {
     alt: text(input.alt, 300),
     category,
     audience: oneOf(input.audience, RESULT_AUDIENCES, AUDIENCE_BY_CATEGORY[category]),
-    kind: oneOf(input.kind, RESULT_KINDS, 'client'),
+    kind: 'client',
     featured: Boolean(input.featured),
     image: { assetId: text(image.assetId, 80) || null, src: text(image.src, 1000) },
     presentation: presentation
       ? { fit: oneOf(presentation.fit, RESULT_FITS, 'contain'), ...framing(presentation) }
       : null,
     name: text(input.name, 160),
-    location: text(input.location, 120),
+    serviceId: resultServiceId(input),
     duration: text(input.duration, 60),
     summary: text(input.summary, 1200),
     testimonial: input.testimonial ? normalizeTestimonial(input.testimonial) : null,
@@ -129,6 +151,12 @@ function resultImageSrc(version, data) {
 
 // The exact shape public/content/results-library.json had, so the site's results
 // components need no changes. Optional fields appear only when set.
+function serviceName(data, serviceId) {
+  if (!serviceId) return '';
+  const service = (data.collections.services || []).find((record) => record.id === serviceId);
+  return (service?.published || service?.draft)?.name || '';
+}
+
 function toPublicResult(record, data) {
   const version = record.published;
   const out = {
@@ -142,7 +170,10 @@ function toPublicResult(record, data) {
     featured: version.featured
   };
   if (version.presentation) out.presentation = version.presentation;
-  for (const field of ['name', 'location', 'duration', 'summary']) {
+  if (version.name) out.name = version.name;
+  const location = serviceName(data, version.serviceId);
+  if (location) out.location = location;
+  for (const field of ['duration', 'summary']) {
     if (version[field]) out[field] = version[field];
   }
   if (version.testimonial) out.testimonial = { ...version.testimonial };
@@ -198,14 +229,18 @@ function foldTestimonialsIntoResults(data) {
   return true;
 }
 
-// Results saved before the audience field existed get it from their category.
-// Re-normalising a version only adds that field, so nothing else changes.
+// Results saved before the audience, service or client-only changes get them
+// once: audience from the category, serviceId from the typed service name, and
+// kind "client". Re-normalising a version only changes those fields, and both
+// versions change alike, so a live result stays live with nothing to publish.
+const needsBackfill = (version) => !version.audience || !Object.hasOwn(version, 'serviceId') || version.kind !== 'client';
+
 function backfillResultAudience(data) {
   let changed = false;
   for (const result of data.collections.results || []) {
     for (const key of ['draft', 'published']) {
       const version = result[key];
-      if (!version || version.audience) continue;
+      if (!version || !needsBackfill(version)) continue;
       result[key] = normalizeResult(version);
       changed = true;
     }
@@ -300,9 +335,9 @@ function mediaUsage(data, assetId) {
 }
 
 // ── Seed ─────────────────────────────────────────────────────────────────────
-// A brand-new store starts from the JSON files the site used to serve. Real
-// client results go live; stock "representative" images arrive hidden so Jake
-// can delete or replace them. Testimonials stay inside their result.
+// A brand-new store starts from the JSON files the site used to serve. Client
+// results go live unless the seed marks them hidden. Testimonials stay inside
+// their result.
 
 function seedRecord({ id, order, draft, live, now }) {
   return {
@@ -327,7 +362,7 @@ function seedResults({ now, seedDir = SEED_DIR }) {
   return readSeed(seedDir, 'results-library.json').map((item) => {
     const id = String(item.id);
     const draft = normalizeResult({ ...item, image: { src: item.src } });
-    return seedRecord({ id, order: item.order, draft, live: item.kind === 'client' && !item.hidden, now });
+    return seedRecord({ id, order: item.order, draft, live: !item.hidden, now });
   });
 }
 
@@ -429,9 +464,50 @@ function removePlaceholderResults(data) {
   return true;
 }
 
+// November 2026: Akhil rewrote the results' captions, headlines, summaries and
+// search words (seed/results-copy-2026-11.json) and took his kneeling-pose
+// result off the site. Each version of a result takes a new field only while
+// that field still reads exactly as before, so anything Jake has changed stays.
+// Taking the pose offline is reversible from the dashboard; nothing is deleted.
+const COPY_REVISION = 'results-copy-2026-11';
+
+function applyResultsCopy(data, { now, seedDir = SEED_DIR }) {
+  data.migrations ??= [];
+  if (data.migrations.includes(COPY_REVISION)) return false;
+  const copy = readSeed(seedDir, 'results-copy-2026-11.json');
+  for (const record of data.collections.results || []) {
+    if (copy.hide.includes(record.id) && record.published) {
+      record.published = null;
+      record.hiddenAt = now;
+    }
+    const change = copy.results[record.id];
+    if (!change) continue;
+    for (const key of ['draft', 'published']) {
+      const version = record[key];
+      if (!version) continue;
+      const next = {};
+      for (const [field, before] of Object.entries(change.from)) {
+        if (same(version[field], before)) next[field] = change.to[field];
+      }
+      if (Object.keys(next).length) record[key] = normalizeResult({ ...version, ...next });
+    }
+  }
+  data.migrations.push(COPY_REVISION);
+  return true;
+}
+
+// Results list newest first, on the dashboard and the site. Results added in one
+// import share a timestamp, so their saved order breaks the tie.
+function newestFirst(records) {
+  return [...(records || [])].sort((a, b) => (
+    String(b.createdAt || '').localeCompare(String(a.createdAt || '')) || a.order - b.order
+  ));
+}
+
 // Public outputs the site reads, built from live records only.
 const PUBLIC_OUTPUTS = {
-  results: (data, sortedLive) => sortedLive('results').map((record) => toPublicResult(record, data)),
+  results: (data) => newestFirst(data.collections.results).filter((record) => record.published)
+    .map((record) => toPublicResult(record, data)),
   slots: (data) => publicSlots(data),
   services: services.publicServices,
   faqs: services.publicFaqs,
@@ -445,6 +521,7 @@ const COLLECTIONS = {
     normalizeDraft: normalizeResult,
     validateForPublish: validateResult,
     summarize: summarizeResult,
+    sort: newestFirst,
     seed: seedResults
   },
   services: {
@@ -487,6 +564,7 @@ const COLLECTIONS = {
 module.exports = {
   COLLECTIONS,
   applySeedRevision,
+  applyResultsCopy,
   removePlaceholderResults,
   PUBLIC_OUTPUTS,
   backfillResultAudience,

@@ -4,10 +4,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import results from '../test/fixtures/resultsLibrary.js'
 import Results from './Results'
 
-const library = vi.hoisted(() => ({ data: null }))
+const library = vi.hoisted(() => ({ data: null, preview: false }))
 
 vi.mock('../hooks/useContent', () => ({
   useContent: () => ({ data: library.data, loading: false, error: null }),
+  isPreviewWindow: () => library.preview,
 }))
 
 vi.mock('../hooks/useAssets', () => ({
@@ -20,6 +21,7 @@ vi.mock('../components/SectionReveal', () => ({
 
 beforeEach(() => {
   library.data = results
+  library.preview = false
 })
 
 afterEach(() => cleanup())
@@ -35,8 +37,8 @@ function renderResults(path = '/results') {
 }
 
 describe('Results page library', () => {
-  it('only offers the categories and content types the published library contains', () => {
-    library.data = results.filter((result) => result.kind === 'client')
+  it('only offers the categories the published library contains, and no type filter', () => {
+    library.data = results.slice(0, 6)
     renderResults()
 
     expect(screen.queryByLabelText('Content type')).not.toBeInTheDocument()
@@ -45,9 +47,29 @@ describe('Results page library', () => {
   })
 
   it('opens a result straight from a ?view= link', () => {
-    library.data = results.filter((result) => result.kind === 'client')
+    library.data = results.slice(0, 6)
     renderResults('/results?view=2')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('in the dashboard preview, keeps a ?view= result the published library lacks until the draft arrives', () => {
+    library.preview = true
+    library.data = results.slice(0, 6)
+    const view = render(
+      <MemoryRouter initialEntries={['/results?view=brand-new&cmsPreview=1']}>
+        <Routes><Route path="/results" element={<Results />} /></Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    library.data = [{ ...results[0], id: 'brand-new', name: 'Brand new result' }, ...results.slice(0, 6)]
+    view.rerender(
+      <MemoryRouter initialEntries={['/results?view=brand-new&cmsPreview=1']}>
+        <Routes><Route path="/results" element={<Results />} /></Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Brand new result' })).toBeInTheDocument()
   })
 
   it('renders only 24 cards at once and pages through the full library', () => {
@@ -62,11 +84,12 @@ describe('Results page library', () => {
     expect(screen.getByText('Showing 25–48 of 120 results')).toBeInTheDocument()
   })
 
-  it('restores URL filters and exposes an honest representative-image mode', () => {
-    renderResults('/results?type=representative&category=training')
+  it('restores URL filters, defaults to newest first and ignores old type links', () => {
+    renderResults('/results?type=representative&category=training&sort=caption')
 
-    expect(screen.getByLabelText('Content type')).toHaveValue('representative')
-    expect(screen.getByRole('option', { name: 'Featured' })).toHaveValue('curated')
+    expect(screen.queryByLabelText('Content type')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Sort results')).toHaveValue('caption')
+    expect(screen.getByRole('option', { name: 'Newest' })).toHaveValue('newest')
     expect(screen.queryByText(/curated collection/i)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Personal Training, 24 results' })).toHaveAttribute(
       'aria-pressed',
