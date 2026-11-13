@@ -1,5 +1,4 @@
-import { motion } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, useReducedMotion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { getResultPresentation } from '../utils/resultsLibrary'
 import '../styles/ResultMedia.css'

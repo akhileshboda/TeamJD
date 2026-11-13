@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { useReducedMotion } from 'motion/react'
 import PageHero from '../components/PageHero'
 import CTABanner from '../components/CTABanner'
 import ClientResultsCarousel from '../components/ClientResultsCarousel'

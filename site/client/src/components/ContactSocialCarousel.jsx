@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { useReducedMotion } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useDragScroll } from '../hooks/useDragScroll'
 

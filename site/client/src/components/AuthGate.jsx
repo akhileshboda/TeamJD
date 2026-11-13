@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { useLocation } from 'react-router-dom'
 
 // The staging gate's sign-in screen (server side: server/middleware/siteGate.js).

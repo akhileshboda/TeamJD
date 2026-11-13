@@ -1,5 +1,4 @@
-import { motion } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, useReducedMotion } from 'motion/react'
 
 export default function PageHero({ eyebrow, title, subtitle }) {
   const shouldReduce = useReducedMotion()

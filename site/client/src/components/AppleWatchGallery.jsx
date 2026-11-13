@@ -1,5 +1,4 @@
-import { AnimatePresence, motion, useMotionValue, useTransform } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
 import { useAssets } from '../hooks/useAssets'
 import { useContent } from '../hooks/useContent'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -713,9 +712,6 @@ export default function AppleWatchGallery() {
     const el = viewportRef.current
     if (!el || !canPan) return undefined
     const handleWheel = (event) => {
-      // Smooth scrolling (Lenis) is already moving the page; forwarding too
-      // would scroll twice.
-      if (document.documentElement.classList.contains('lenis')) return
       window.scrollBy({ top: event.deltaY, left: 0, behavior: 'instant' })
     }
     el.addEventListener('wheel', handleWheel, { passive: true })
@@ -808,9 +804,6 @@ export default function AppleWatchGallery() {
               <div
                 className={`watch-grid-viewport ${useNativeGalleryScroll ? 'watch-grid-viewport--scroll' : ''} ${canPan ? 'watch-grid-viewport--pannable' : ''}`}
                 ref={viewportRef}
-                // Landing-page smooth scrolling (Lenis) moves the page over the frame,
-                // except when the frame is its own native scroller.
-                data-lenis-prevent={useNativeGalleryScroll ? '' : undefined}
                 role="region"
                 aria-label="Client results gallery"
                 aria-describedby={showGalleryHint ? 'watch-grid-interaction-hint' : undefined}

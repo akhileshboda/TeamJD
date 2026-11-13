@@ -1,6 +1,5 @@
 import { useRef } from 'react'
-import { motion, useScroll } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, useReducedMotion, useScroll } from 'motion/react'
 import JourneyIcon from './JourneyIcon'
 import SectionReveal from './SectionReveal'
 

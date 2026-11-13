@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { framedImageStyle, useMedia } from '../hooks/useAssets'
 import JourneyIcon from './JourneyIcon'
 import ServicePricingConversion from './ServicePricingConversion'

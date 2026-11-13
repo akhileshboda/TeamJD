@@ -1,9 +1,14 @@
-import { useReducedMotion } from '../motion/MotionPreference'
+import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fallbackHeroPosterUrl, fallbackHeroVideoUrl } from '../config/heroMedia'
 import FindYourFitLink from './FindYourFitLink'
 import { useMedia } from '../hooks/useAssets'
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } },
+}
 
 const MOBILE_HERO_QUERY = '(max-width: 640px)'
 
@@ -36,6 +41,15 @@ export default function Hero() {
     !shouldReduce &&
     !saveDataEnabled &&
     !videoFailed
+
+  const containerVariants = shouldReduce
+    ? {}
+    : {
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+      }
+
+  const Item = shouldReduce ? 'div' : motion.div
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
@@ -114,64 +128,66 @@ export default function Hero() {
     }
   }, [])
 
-  // Motion (load-in line reveal, the pinned scroll-away) is choreographed by the
-  // landing page in pages/Home.jsx; this component only owns the media and copy.
   return (
-    <section className="lp-hero" aria-label="Hero" data-cms-section="home.hero-video">
-      <div className="lp-hero-stage">
-        <div className="lp-hero-media">
-          <div
-            className="lp-hero-bg"
-            style={{ backgroundImage: `url('${heroPosterUrl}')` }}
-            aria-hidden="true"
-          />
-          {canUseVideo && (
-            <video
-              ref={videoRef}
-              className="lp-hero-video"
-              src={heroVideoUrl}
-              poster={heroPosterUrl}
-              autoPlay
-              muted
-              playsInline
-              preload="metadata"
-              aria-hidden="true"
-              onEnded={handleVideoEnded}
-              onError={handleVideoError}
-            />
-          )}
-          <div className="lp-hero-overlay" aria-hidden="true" />
-        </div>
+    <section className="hero" aria-label="Hero" data-cms-section="home.hero-video">
+      <div
+        className="hero-bg"
+        style={{ backgroundImage: `url('${heroPosterUrl}')` }}
+        aria-hidden="true"
+      />
+      {canUseVideo && (
+        <video
+          ref={videoRef}
+          className="hero-video"
+          src={heroVideoUrl}
+          poster={heroPosterUrl}
+          autoPlay
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          onEnded={handleVideoEnded}
+          onError={handleVideoError}
+        />
+      )}
+      <div className="hero-overlay" />
+      {canUseVideo && hasVideoEnded && (
+        <button
+          type="button"
+          className="hero-replay"
+          onClick={handleReplay}
+          aria-label="Replay hero video"
+        >
+          Replay
+        </button>
+      )}
+      <div className="container hero-content">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <Item variants={itemVariants}>
+            <p className="hero-eyebrow">Team JD &mdash; Jake Dedert Fitness</p>
+          </Item>
 
-        {canUseVideo && hasVideoEnded && (
-          <button
-            type="button"
-            className="hero-replay"
-            onClick={handleReplay}
-            aria-label="Replay hero video"
-          >
-            Replay
-          </button>
-        )}
+          <Item variants={itemVariants}>
+            <h1>
+              UNLOCK YOUR
+              <br />
+              TRUE POTENTIAL
+            </h1>
+          </Item>
 
-        <div className="container lp-hero-content">
-          <p className="lp-hero-eyebrow">
-            <span className="lp-hero-eyebrow-rule" aria-hidden="true" />
-            Team JD &mdash; Jake Dedert Fitness
-          </p>
-
-          <h1 className="lp-hero-title">
-            <span className="lp-hero-line">Unlock your</span>
-            <span className="lp-hero-line lp-hero-line--accent">true potential</span>
-          </h1>
-
-          <div className="lp-hero-foot">
-            <p className="lp-hero-subtitle">
+          <Item variants={itemVariants}>
+            <p className="hero-subtitle">
               Strong body, unstoppable mind. Let&apos;s build both. Personalised coaching
               tailored exclusively to you — competition prep, online coaching, and posing.
             </p>
+          </Item>
 
-            <div className="lp-hero-actions">
+          <Item variants={itemVariants}>
+            <div className="hero-actions">
               <FindYourFitLink className="btn btn-primary btn-lg">
                 Find Your Fit
               </FindYourFitLink>
@@ -179,13 +195,8 @@ export default function Hero() {
                 View Services
               </Link>
             </div>
-          </div>
-        </div>
-
-        <div className="lp-hero-cue" aria-hidden="true">
-          <span>Scroll</span>
-          <span className="lp-hero-cue-line" />
-        </div>
+          </Item>
+        </motion.div>
       </div>
     </section>
   )

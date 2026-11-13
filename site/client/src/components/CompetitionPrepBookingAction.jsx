@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'motion/react'
-import { useReducedMotion } from '../motion/MotionPreference'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import FindYourFitLink from './FindYourFitLink'
 import JourneyIcon from './JourneyIcon'
 import { useFindYourFitSession } from '../context/FindYourFitSession'

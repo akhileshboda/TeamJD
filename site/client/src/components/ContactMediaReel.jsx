@@ -1,4 +1,4 @@
-import { useReducedMotion } from '../motion/MotionPreference'
+import { useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { loopProps, loopSrc } from '../utils/videoLoop'
 
