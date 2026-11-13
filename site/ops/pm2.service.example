@@ -1,3 +1,6 @@
+# Template for the systemd unit that resurrects PM2 on boot.
+# Replace <deploy-user> and copy to /etc/systemd/system/pm2-<deploy-user>.service
+# (or generate one with `pm2 startup systemd`).
 [Unit]
 Description=PM2 process manager
 Documentation=https://pm2.keymetrics.io/
@@ -5,12 +8,12 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=ubuntu
+User=<deploy-user>
 LimitNOFILE=infinity
 LimitNPROC=infinity
 LimitCORE=infinity
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-Environment=PM2_HOME=/home/ubuntu/.pm2
+Environment=PM2_HOME=/home/<deploy-user>/.pm2
 RemainAfterExit=yes
 ExecStart=/usr/lib/node_modules/pm2/bin/pm2 resurrect
 ExecReload=/usr/lib/node_modules/pm2/bin/pm2 reload all

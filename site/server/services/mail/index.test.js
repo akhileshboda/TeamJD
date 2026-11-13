@@ -10,7 +10,7 @@ function withEnv(run) {
     ENQUIRY_NOTIFICATION_TO: 'enquiries@example.com',
     ENQUIRY_REPLY_TO: 'enquiries@example.com',
     ENQUIRY_EMAIL_SUBJECT_PREFIX: '[STAGING]',
-    PUBLIC_BASE_URL: 'https://staging.team-jd.com.au'
+    PUBLIC_BASE_URL: 'https://staging.example.com'
   };
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
   Object.assign(process.env, values);

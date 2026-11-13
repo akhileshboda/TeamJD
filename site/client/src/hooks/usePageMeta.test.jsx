@@ -32,9 +32,9 @@ describe('page meta', () => {
   })
 
   it('points canonicals at the address the server wrote into the page', () => {
-    document.head.insertAdjacentHTML('beforeend', '<meta name="teamjd:site-url" content="https://jake-preview.team-jd.com.au/">')
+    document.head.insertAdjacentHTML('beforeend', '<meta name="teamjd:site-url" content="https://staging.example.com/">')
     render(<MemoryRouter initialEntries={['/services/']}><Page page="services" /></MemoryRouter>)
-    expect(head('link[rel="canonical"]', 'href')).toBe('https://jake-preview.team-jd.com.au/services')
+    expect(head('link[rel="canonical"]', 'href')).toBe('https://staging.example.com/services')
     expect(head('meta[name="twitter:title"]')).toBe('Coaching Services | Team JD')
   })
 

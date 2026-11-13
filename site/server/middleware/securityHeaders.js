@@ -3,7 +3,9 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()'
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  // Isolates the browsing context from cross-origin windows (no popups are used).
+  'Cross-Origin-Opener-Policy': 'same-origin'
 };
 
 // Content-Security-Policy. It ships as Report-Only: violations show in the browser

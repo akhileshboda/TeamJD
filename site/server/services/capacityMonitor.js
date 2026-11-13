@@ -6,7 +6,7 @@ const { createResendProvider } = require('./mail/resend');
 
 // Capacity alert: samples host CPU, host RAM, Node event-loop lag and process
 // memory, and emails (via Resend) when any of them stays above the threshold.
-// One process per environment (see docs/deployment-oracle.md), and only the
+// One process per environment (see docs/deployment.md), and only the
 // production process runs it, because staging shares the same host.
 
 const DEFAULTS = {
@@ -251,7 +251,7 @@ function buildAlertEmail(context) {
     ],
     notes: [
       `Over the last ${WINDOW_SAMPLES} samples, at least ${MIN_BREACHING_SAMPLES} were above ${pct(config.threshold)}. At most one alert is sent every ${config.cooldownMs / 3600000} hours.`,
-      'Next steps: check `pm2 logs`, then consider a larger VM shape (see docs/deployment-oracle.md).'
+      'Next steps: check `pm2 logs`, then consider a larger VM shape (see docs/deployment.md).'
     ]
   });
 }

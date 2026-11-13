@@ -21,8 +21,5 @@ export default defineConfig({
       // Express. Without this, vite returns its SPA index.html for image URLs.
       '/assets': 'http://localhost:3000',
     },
-    allowedHosts: [
-      "engaged-assembled-runs-vary.trycloudflare.com",
-    ],
   },
 })

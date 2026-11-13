@@ -26,6 +26,7 @@ const { createSiteAuthRouter } = require('./routes/siteAuth');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { genericApiLimiter } = require('./middleware/rateLimits');
 const { sendStaticPage } = require('./utils/staticPages');
+const { isDevBypass } = require('./services/adminAuth');
 const {
   getAssetManifest,
   getAssetServiceStatus,
@@ -50,6 +51,10 @@ for (const envVar of requiredAuthEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`Missing required auth environment variable: ${envVar}`);
   }
+}
+
+if (process.env.CMS_DEV_BYPASS === 'true' && !isDevBypass()) {
+  console.warn('[security] CMS_DEV_BYPASS is ignored: it only works for a local development run.');
 }
 
 const syncToken = process.env.ASSET_SYNC_ADMIN_TOKEN;

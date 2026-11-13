@@ -97,8 +97,8 @@ Cloudflare R2 pipeline for server-managed media. Two-project layout:
 - **`client/`** — Vite + React 18 SPA, ESM (`type: module`), Vitest.
 
 Full asset-pipeline diagram, env var reference, Dropbox/R2 setup, and the
-Oracle deploy runbook are already documented in `README.md` and
-`docs/deployment-oracle.md` — read those before re-deriving this from code.
+deploy runbook are already documented in `README.md` and
+`docs/deployment.md` — read those before re-deriving this from code.
 Host-specific deploy commands live in the untracked local `deploy.md`.
 
 ## Commands
@@ -117,7 +117,7 @@ Run from repo root unless noted.
   all R2 objects. Never run the non-dry-run version without explicit user
   confirmation (it requires `-- --confirm PURGE_SITE_ASSETS` itself).
 - `npm run deploy:production` / `deploy:staging` — rsync-based deploy to
-  the Oracle VM. See `docs/deployment-oracle.md`. Never run without the
+  the server. See `docs/deployment.md`. Never run without the
   user explicitly asking — this touches production.
 
 There is no lint/format tooling and no CI configured. Don't invent an
@@ -206,3 +206,15 @@ and at `/admin/changelog`). Add it at the top, newest first, as
 Write it in plain, non-technical words (no "server", file or code names); start
 dashboard features with `Dashboard: `. Skip it only for internal-only work
 (tests, docs, refactors, tooling).
+
+## Branches — only main, staging and dev on GitHub
+
+`origin` keeps exactly three long-lived branches, each matching what runs:
+
+- `main` — what production runs. Deploy production only from `main`.
+- `staging` — what staging runs. Deploy staging only from `staging`.
+- `dev` — integration; feature/fix branches merge here first.
+
+Flow: feature branch → `dev` → `staging` (deploy, check) → `main` (deploy).
+Keep feature/fix branches local, or delete them from `origin` once merged. Don't
+create dated `deploy/*`, `integration/*` or per-environment branches.

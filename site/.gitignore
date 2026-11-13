@@ -6,3 +6,4 @@ public/assets/generated/
 
 client/node_modules/
 dist/
+deploy.env
