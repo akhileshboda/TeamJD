@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import results from '../../../server/seed/results-library.json'
+import results from '../test/fixtures/resultsLibrary.js'
 import Results from './Results'
 
 const library = vi.hoisted(() => ({ data: null }))
