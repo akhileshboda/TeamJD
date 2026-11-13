@@ -28,6 +28,7 @@ function buildApp() {
   app.use(maintenanceMode);
   app.use('/assets', express.static(__dirname));
   app.get('/api/ping', (req, res) => res.json({ ok: true }));
+  app.get('/favicon.png', (req, res) => res.type('png').send('png'));
   app.get('/', (req, res) => res.send('<html>home</html>'));
   return app;
 }
@@ -43,6 +44,10 @@ test('gated responses: 503.html for pages, JSON 503 for /api, Retry-After set, /
 
     const asset = await request(app).get('/assets/maintenanceMode.js');
     assert.equal(asset.status, 200);
+
+    // The sign-in page's tab icon must load before anyone has signed in.
+    const favicon = await request(app).get('/favicon.png');
+    assert.equal(favicon.status, 200);
 
     const api = await request(app).get('/api/ping');
     assert.equal(api.status, 503);
