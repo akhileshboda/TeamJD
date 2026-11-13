@@ -62,7 +62,7 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
   const panel = (
     <div className="jd-signin-panel">
       <a className="jd-signin-logo-link" href="/">
-        <img className="jd-signin-logo" src="/api/assets/logo" alt="Team JD" width="132" height="42" />
+        <img className="jd-signin-logo" src="/assets/branding/team-jd-logo.png" alt="Team JD" width="91" height="42" />
       </a>
       <h1 id={titleId}>Sign in to your dashboard</h1>
 
