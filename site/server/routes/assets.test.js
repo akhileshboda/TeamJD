@@ -110,3 +110,14 @@ test('asset discovery requires an admin token in every environment', async () =>
     else process.env.ASSET_SYNC_ADMIN_TOKEN = previous;
   }
 });
+
+test('public asset status exposes only the same fields as /healthz', async () => {
+  const app = express();
+  app.use('/api/assets', assetsRouter);
+
+  const response = await request(app)
+    .get('/api/assets/status')
+    .set('CF-Connecting-IP', '203.0.113.71');
+  assert.equal(response.status, 200);
+  assert.deepEqual(Object.keys(response.body).sort(), ['cacheReady', 'source', 'state']);
+});

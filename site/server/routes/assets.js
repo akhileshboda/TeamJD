@@ -150,8 +150,11 @@ router.get('/refresh', publicAssetLimiter, (req, res) => {
   return res.status(405).json({ error: 'Method not allowed.' });
 });
 
+// Public, so only what /healthz already shows. Dropbox paths, sync state and error
+// text stay behind the bearer token at /setup-status.
 router.get('/status', publicAssetLimiter, (req, res) => {
-  return res.json(getAssetServiceStatus());
+  const { state, cacheReady, source } = getAssetServiceStatus();
+  return res.json({ state, cacheReady, source });
 });
 
 router.get('/setup-status', adminAttemptLimiter, requireSyncAdmin, async (req, res) => {

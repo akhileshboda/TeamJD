@@ -1,4 +1,5 @@
 [
+  { "date": "2026-11-13", "text": "Dashboard: the sign-in code emailed to you is now 8 digits instead of 6, which makes it much harder to guess." },
   { "date": "2026-11-12", "text": "Results now speak to three kinds of client: competitors, transformations and everyday clients. The Results page can be filtered by who a result is for, the Home gallery and About carousel mix them together, and each service page shows results from the clients it suits. Real photos from Jake's Instagram are now in the Media library and on the site, each with a plain caption that says what the client actually achieved. Before-and-after photos now show whole on result cards instead of being cropped in half. Dashboard: each result has a new Who it's for choice, and the Results list can be filtered by it." },
   { "date": "2026-11-12", "text": "Menu touch-up: the Find Your Fit button in the phone menu is readable again." },
   { "date": "2026-11-11", "text": "Dashboard: small links like Back and View all are easier to tap on a phone, numbers no longer jiggle as they change, and if your device is set to reduce motion the dashboard keeps still." },

@@ -1,6 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { requestCode, verifyCode } from './api'
 
+// Must match CODE_LENGTH in server/services/adminAuth.js.
+const CODE_LENGTH = 8
+
 // The sign-in page, or with `dialog` the same form over the dashboard when a
 // session runs out mid-edit (the dashboard behind it is made inert).
 export default function SignIn({ notice, onSignedIn, dialog = false, initialEmail = '' }) {
@@ -41,8 +44,8 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
 
   const signIn = async (event) => {
     event.preventDefault()
-    if (code.length !== 6) {
-      setError('Enter all 6 digits from the email.')
+    if (code.length !== CODE_LENGTH) {
+      setError('Enter all 8 digits from the email.')
       return
     }
     setBusy(true)
@@ -67,7 +70,7 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
 
       {step === 'email' ? (
         <form onSubmit={sendCode} noValidate>
-          <p className="jd-signin-lede">We will email you a 6-digit code. No password needed.</p>
+          <p className="jd-signin-lede">We will email you an 8-digit code. No password needed.</p>
           <label className="jd-field">
             <span className="jd-field-label">Email</span>
             <input
@@ -105,7 +108,7 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
             If <strong>{email}</strong> can sign in, a code is on its way. It expires in 10 minutes.
           </p>
           <label className="jd-field">
-            <span className="jd-field-label">6-digit code</span>
+            <span className="jd-field-label">8-digit code</span>
             <input
               ref={codeRef}
               className="jd-input jd-input--code"
@@ -113,11 +116,11 @@ export default function SignIn({ notice, onSignedIn, dialog = false, initialEmai
               autoComplete="one-time-code"
               inputMode="numeric"
               pattern="[0-9]*"
-              maxLength={6}
+              maxLength={CODE_LENGTH}
               spellCheck={false}
               required
               value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH))}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault()
