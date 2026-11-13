@@ -16,8 +16,7 @@ import {
 const defaultFilters = {
   query: '',
   category: 'all',
-  type: 'all',
-  sort: 'curated',
+  sort: 'newest',
 }
 
 describe('Canonical results library data', () => {
@@ -81,48 +80,60 @@ describe('Canonical results library data', () => {
     })
   })
 
-  it('keeps every representative image on a direct external URL', () => {
-    const representative = results.filter(({ kind }) => kind === 'representative')
-
-    expect(representative).toHaveLength(114)
-    representative.forEach(({ src }) => {
+  it('keeps every extra fixture image on a direct external URL', () => {
+    const extra = results.slice(6)
+    expect(extra).toHaveLength(114)
+    extra.forEach(({ src }) => {
       expect(src).toMatch(/^https:\/\//)
       expect(src).not.toContain('/api/assets')
-      expect(src.toLowerCase()).not.toContain('r2')
     })
-    expect(representative.every(({ testimonial }) => testimonial === undefined)).toBe(true)
   })
 
-  it('normalizes client and representative stories without inventing testimonials', () => {
+  it('builds a story from what the result says, inventing nothing', () => {
     expect(getResultStory(results[0])).toMatchObject({
       title: results[0].name,
       categoryLabel: 'Competition Prep',
-      location: results[0].location,
+      location: null, // "Competition Preparation" repeats the "Competition Prep" badge
       duration: results[0].duration ?? null,
       summary: results[0].summary,
       testimonial: results[0].testimonial,
     })
 
-    const representative = getResultStory(results.find(({ kind }) => kind === 'representative'))
-    expect(representative.location).toBe('Representative imagery')
-    expect(representative.summary).toMatch(/not presented as a Team JD client outcome/)
-    expect(representative.testimonial).toBeNull()
+    const bare = getResultStory({ caption: 'Stage day', category: 'online' })
+    expect(bare.summary).toBe('')
+    expect(bare.location).toBeNull()
+    expect(bare.testimonial).toBeNull()
+  })
+
+  it('leaves out the service when it repeats the category badge', () => {
+    expect(getResultStory({ category: 'online', location: 'Online Coaching' }).location).toBeNull()
+    expect(getResultStory({ category: 'competition', location: 'Competition Preparation' }).location).toBeNull()
+    expect(getResultStory({ category: 'posing', location: 'Competition Preparation' }).location).toBe('Competition Preparation')
   })
 })
 
 describe('results library browsing', () => {
-  it('filters by content type, category, and searchable tags', () => {
+  it('filters by category and searchable words, keeping the newest-first order', () => {
     const filtered = filterAndSortResults(results, {
       ...defaultFilters,
       query: 'stage',
       category: 'competition',
-      type: 'representative',
     })
 
     expect(filtered.length).toBeGreaterThan(0)
-    expect(filtered.every(({ category, kind }) => (
-      category === 'competition' && kind === 'representative'
-    ))).toBe(true)
+    expect(filtered.every(({ category }) => category === 'competition')).toBe(true)
+    const ids = results.map(({ id }) => id)
+    expect(filtered.map(({ id }) => ids.indexOf(id))).toEqual([...filtered.map(({ id }) => ids.indexOf(id))].sort((a, b) => a - b))
+  })
+
+  it('searches the headline and the service too', () => {
+    const items = [
+      { id: 1, caption: 'A', name: 'Won the overall', alt: '', category: 'competition', location: 'Posing', tags: [] },
+      { id: 2, caption: 'B', alt: '', category: 'online', tags: [] },
+    ]
+    expect(filterAndSortResults(items, { ...defaultFilters, query: 'overall' }).map(({ id }) => id)).toEqual([1])
+    expect(filterAndSortResults(items, { ...defaultFilters, query: 'posing' }).map(({ id }) => id)).toEqual([1])
+    expect(filterAndSortResults(items, { ...defaultFilters, query: 'online coaching' }).map(({ id }) => id)).toEqual([2])
   })
 
   it('mounts only one 24-item page and clamps invalid pages', () => {
@@ -137,14 +148,13 @@ describe('results library browsing', () => {
   })
 
   it('normalizes unsupported URL parameters', () => {
-    const params = new URLSearchParams('audience=aliens&category=unknown&type=nope&sort=random&page=-3&q=posing')
+    const params = new URLSearchParams('audience=aliens&category=unknown&type=nope&sort=curated&page=-3&q=posing')
 
     expect(getResultsParams(params)).toEqual({
       query: 'posing',
       audience: 'all',
       category: 'all',
-      type: 'all',
-      sort: 'curated',
+      sort: 'newest',
       page: 1,
     })
   })

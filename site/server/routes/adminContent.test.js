@@ -67,9 +67,9 @@ test('validation, conflicts and bad actions come back as clear errors', async ()
 
 test('bulk hide, reorder and delete', async () => {
   const { app, write } = await buildApp();
-  // A fresh store has only 1 and 4 live; bring back 2, 3, 5 and 6 so there is something to hide and reorder.
-  const published = await write('post', '/api/admin/collections/results/bulk').send({ action: 'publish', ids: ['2', '3', '5', '6'] });
-  assert.equal(published.body.done.length, 4);
+  // A fresh store has only 1 live; bring back 2 to 6 so there is something to hide and reorder.
+  const published = await write('post', '/api/admin/collections/results/bulk').send({ action: 'publish', ids: ['2', '3', '4', '5', '6'] });
+  assert.equal(published.body.done.length, 5);
   assert.deepEqual((await request(app).get('/api/content/results')).body.map((item) => item.id), ['1', '2', '3', '4', '5', '6']);
   const hidden = await write('post', '/api/admin/collections/results/bulk').send({ action: 'unpublish', ids: ['1', '2'] });
   assert.equal(hidden.body.done.length, 2);

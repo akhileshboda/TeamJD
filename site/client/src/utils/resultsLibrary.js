@@ -51,38 +51,34 @@ export const RESULT_CATEGORIES = [
   ...Object.entries(RESULT_CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
 ]
 
-export const RESULT_TYPES = [
-  { value: 'all', label: 'All imagery' },
-  { value: 'client', label: 'Client results' },
-  { value: 'representative', label: 'Representative imagery' },
-]
-
+// The library arrives newest first, so "newest" keeps the order it came in.
 export const RESULT_SORTS = [
-  { value: 'curated', label: 'Featured' },
+  { value: 'newest', label: 'Newest' },
   { value: 'category', label: 'Category A–Z' },
   { value: 'caption', label: 'Caption A–Z' },
 ]
 
 const audienceValues = new Set(RESULT_AUDIENCES.map(({ value }) => value))
 const categoryValues = new Set(RESULT_CATEGORIES.map(({ value }) => value))
-const typeValues = new Set(RESULT_TYPES.map(({ value }) => value))
 const sortValues = new Set(RESULT_SORTS.map(({ value }) => value))
 
 export function getResultStory(result) {
   const item = result || {}
   const categoryLabel = RESULT_CATEGORY_LABELS[item.category] || 'Coaching'
-  const isRepresentative = item.kind === 'representative'
+  // The service only earns its own line when it says something the category
+  // badge does not: "Online Coaching" under an "Online Coaching" badge, or
+  // "Competition Preparation" under "Competition Prep", is the same thing twice.
+  const service = (item.location || '').toLowerCase()
+  const badge = categoryLabel.toLowerCase()
+  const location = service && !service.startsWith(badge) && !badge.startsWith(service) ? item.location : null
 
   return {
     title: item.name || item.caption || `${categoryLabel} result`,
     categoryLabel,
-    location: item.location || (isRepresentative ? 'Representative imagery' : categoryLabel),
+    location,
     duration: item.duration || null,
-    summary: item.summary || (
-      isRepresentative
-        ? `Representative fitness imagery for the ${categoryLabel.toLowerCase()} category. It is not presented as a Team JD client outcome.`
-        : `A genuine Team JD client result from the ${categoryLabel.toLowerCase()} coaching archive.`
-    ),
+    // No summary means no description: nothing is made up in its place.
+    summary: item.summary || '',
     testimonial: item.testimonial || null,
   }
 }
@@ -116,15 +112,14 @@ export function getResultsParams(searchParams) {
   const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10)
   const audience = searchParams.get('audience') || 'all'
   const category = searchParams.get('category') || 'all'
-  const type = searchParams.get('type') || 'all'
-  const sort = searchParams.get('sort') || 'curated'
+  const sort = searchParams.get('sort') || 'newest'
 
   return {
     query: searchParams.get('q') || '',
     audience: audienceValues.has(audience) ? audience : 'all',
     category: categoryValues.has(category) ? category : 'all',
-    type: typeValues.has(type) ? type : 'all',
-    sort: sortValues.has(sort) ? sort : 'curated',
+    // Links from before "Newest" said "curated"; they get the default.
+    sort: sortValues.has(sort) ? sort : 'newest',
     page: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
   }
 }
@@ -134,13 +129,15 @@ export function filterAndSortResults(results, filters) {
   const filtered = results.filter((result) => {
     if (filters.audience && filters.audience !== 'all' && resultAudience(result) !== filters.audience) return false
     if (filters.category !== 'all' && result.category !== filters.category) return false
-    if (filters.type !== 'all' && result.kind !== filters.type) return false
     if (!needle) return true
 
     const haystack = [
       result.caption,
+      result.name,
       result.alt,
+      result.location,
       result.category,
+      RESULT_CATEGORY_LABELS[result.category],
       RESULT_AUDIENCE_LABELS[resultAudience(result)],
       ...(result.tags || []),
     ].join(' ').toLocaleLowerCase()
@@ -148,17 +145,9 @@ export function filterAndSortResults(results, filters) {
     return haystack.includes(needle)
   })
 
-  return [...filtered].sort((left, right) => {
-    if (filters.sort === 'caption') {
-      return left.caption.localeCompare(right.caption) || left.order - right.order
-    }
-
-    if (filters.sort === 'category') {
-      return left.category.localeCompare(right.category) || left.order - right.order
-    }
-
-    return left.order - right.order
-  })
+  if (filters.sort === 'caption') return [...filtered].sort((left, right) => left.caption.localeCompare(right.caption))
+  if (filters.sort === 'category') return [...filtered].sort((left, right) => left.category.localeCompare(right.category))
+  return filtered
 }
 
 export function paginateResults(results, requestedPage, pageSize = RESULTS_PER_PAGE) {

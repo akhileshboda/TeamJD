@@ -8628,10 +8628,6 @@ p  { line-height: 1.7; color: var(--color-text); }
   color: #72e7f3;
 }
 
-.result-card-kind--representative {
-  color: #c6c6c6;
-}
-
 .result-card-copy {
   display: flex;
   flex: 1;

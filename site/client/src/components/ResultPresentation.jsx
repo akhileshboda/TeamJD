@@ -965,7 +965,7 @@ export default function ResultPresentation({
           className="result-preview-overlay"
           role={role}
           aria-labelledby={titleId}
-          aria-describedby={descriptionId}
+          aria-describedby={result?.summary ? descriptionId : undefined}
           data-scroll-mode={isDesktop || usesBoundedStory ? scrollMode : 'docked'}
           data-scroll-scope={scrollsWholeStory ? 'whole-story' : undefined}
           data-reveal-state={scrollsWholeStory ? revealState : undefined}
