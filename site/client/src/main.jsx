@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom'
 import './styles/globals.css'
 import App from './App'
 import AuthGate from './components/AuthGate'
+import { applyFontStylesheet } from './utils/fontStylesheet'
+
+applyFontStylesheet()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
