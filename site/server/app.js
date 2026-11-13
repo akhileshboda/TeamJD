@@ -24,6 +24,7 @@ const { maintenanceMode } = require('./middleware/maintenanceMode');
 const { siteGate } = require('./middleware/siteGate');
 const { createSiteAuthRouter } = require('./routes/siteAuth');
 const { securityHeaders } = require('./middleware/securityHeaders');
+const { createHttpsOnly } = require('./middleware/httpsOnly');
 const { genericApiLimiter } = require('./middleware/rateLimits');
 const { sendStaticPage } = require('./utils/staticPages');
 const { isDevBypass } = require('./services/adminAuth');
@@ -65,6 +66,8 @@ if (syncToken && syncToken.length < 32) {
 const app = express();
 app.disable('x-powered-by');
 app.use(securityHeaders);
+// Redirects plain-HTTP visitors and sends HSTS (production, behind the tunnel only).
+app.use(createHttpsOnly());
 // Only the local Cloudflare tunnel may supply proxy metadata. Limiter keys use
 // validated CF-Connecting-IP values and never use arbitrary X-Forwarded-For.
 app.set('trust proxy', 'loopback');

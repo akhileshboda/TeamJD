@@ -6,8 +6,9 @@ const WEIGHTS = [400, 500, 700, 800]
 
 let ready = null
 
-// index.html loads Google's font stylesheet without blocking (#site-font-css). The
-// font faces only exist once it has arrived, so wait for it before asking for them.
+// index.html preloads Google's font stylesheet (#site-font-css) and main.jsx turns it
+// into a stylesheet (utils/fontStylesheet.js). The font faces only exist once it has
+// arrived, so wait for it before asking for them.
 function stylesheetLoaded() {
   const link = document.getElementById('site-font-css')
   if (!link || link.sheet) return Promise.resolve()
