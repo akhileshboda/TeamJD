@@ -18,8 +18,8 @@ const SECURITY_HEADERS = {
 // 'unsafe-inline' for styles is needed by React inline styles and motion.
 // The sha256 hash allows the one inline script in client/index.html (about-page
 // hero preload). If that script changes, rebuild and replace the hash from
-// dist/index.html. The font <link onload="..."> handler also reports; it only
-// delays the stylesheet swap and is harmless in Report-Only.
+// dist/index.html. Never add inline event handlers (onload="...") to HTML: hashes
+// don't cover them, so an enforced policy blocks them (the font loader once did).
 const INLINE_SCRIPT_HASH = "'sha256-ErUipctiYFhuQWesdatFR5031XtU7mIl+6G8r1XoFM8='";
 
 function originOf(value) {
