@@ -30,9 +30,24 @@ function getAllowedEmails(env = process.env) {
   return new Set(String(env.CMS_ADMIN_EMAILS || '').split(',').map(normalizeEmail).filter(Boolean));
 }
 
-// Local development only; staging and production both run NODE_ENV=production.
+// True only for a local development run: not NODE_ENV=production, no APP_ENV
+// (staging and production both set deployment markers), and a public base URL,
+// if any, that points at this machine. A server started by hand with a dev .env
+// on a real host therefore never gets the dev shortcuts.
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+function isLocalDevelopment(env = process.env) {
+  if (env.NODE_ENV === 'production' || env.APP_ENV) return false;
+  if (!env.PUBLIC_BASE_URL) return true;
+  try {
+    return LOCAL_HOSTNAMES.has(new URL(env.PUBLIC_BASE_URL).hostname);
+  } catch (_) {
+    return false;
+  }
+}
+
+// Skips dashboard sign-in. Local development only (see isLocalDevelopment).
 function isDevBypass(env = process.env) {
-  return env.NODE_ENV !== 'production' && env.CMS_DEV_BYPASS === 'true';
+  return env.CMS_DEV_BYPASS === 'true' && isLocalDevelopment(env);
 }
 
 function createCodeStore({ now = Date.now } = {}) {
@@ -113,6 +128,7 @@ module.exports = {
   createCodeStore,
   getAllowedEmails,
   isDevBypass,
+  isLocalDevelopment,
   isSignInMailConfigured,
   normalizeEmail,
   sendSignInCode

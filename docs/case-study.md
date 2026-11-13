@@ -8,7 +8,7 @@
 | **Client** | Jake Dedert, Team JD (competition preparation and body-composition coaching, Adelaide) |
 | **Role** | Sole consultant: requirements analysis, design, front-end and back-end development, hosting, documentation |
 | **Timeline** | Requirements interview July 2025; build February to October 2026; production deployment November 2026 |
-| **Technology** | React 18 and Vite; Node 22 and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on an Oracle Cloud virtual machine |
+| **Technology** | React 18 and Vite; Node 22 and Express; Cloudflare (Tunnel, R2, Turnstile); Resend; PM2 on a cloud virtual machine |
 | **Scale** | 114 commits; 469 automated tests; 32 client-facing changelog entries |
 | **Website** | [team-jd.com.au](https://team-jd.com.au) |
 
@@ -40,7 +40,7 @@ A recorded requirements interview was conducted with the client on 14 July 2025 
 
 **Unqualified consultation calls.** The client's Typeform application linked to Calendly, but "Typeform lets people book a call without completing the app. I get on a call and I don't know who they are, what they want." Some of these bookings were unsolicited sales approaches from overseas.
 
-**Delayed notifications.** "When I was in Vietnam, I got four applications, didn't see them for 4–5 days, and by then two had signed with other coaches."
+**Delayed notifications.** Applications could sit unseen for days while the client travelled, and some prospective clients signed with other coaches in the meantime.
 
 **An ineffective website.** The client's Instagram profile linked directly to an application form, and the previous website had been taken offline because it could only be found by "deliberately Googling me and scrolling down 15 results." Prospective clients also tended to assume that he coached only bodybuilders.
 
@@ -62,7 +62,7 @@ Section 9 assesses the project against each criterion, including those that cann
 
 ## 4. Constraints
 
-The project was delivered by a single consultant working part-time alongside study. It was delivered in-kind, with remuneration to be discussed after handover, so hosting costs needed to remain minimal. The client is not technically trained and frequently travels for competitions, so any system he maintains had to be usable from a phone and could not depend on the consultant's availability. In addition, the site's media library (including 120 client result images, competition footage and testimonials) was held in a Dropbox folder to which the client added material on an ongoing basis.
+The project was delivered by a single consultant working part-time alongside study. Hosting costs needed to remain minimal. The client is not technically trained and frequently travels for competitions, so any system he maintains had to be usable from a phone and could not depend on the consultant's availability. In addition, the site's media library (including 120 client result images, competition footage and testimonials) was held in a Dropbox folder to which the client added material on an ongoing basis.
 
 ## 5. The pivot from WordPress to a custom React application
 
@@ -82,7 +82,7 @@ flowchart LR
   V[Visitor<br/>public website] --> CF
   CF --> X
 
-  subgraph VM[Oracle Cloud VM, PM2]
+  subgraph VM[Cloud VM, PM2]
     X[Express app<br/>production and staging]
     S[(Content store<br/>draft and published)]
     A[(Visit statistics<br/>cookie-less, monthly)]
@@ -97,7 +97,7 @@ flowchart LR
 ```
 *Figure 2. System architecture.*
 
-The front end is a React single-page application served by one Express server on an Oracle Cloud virtual machine, reached only through a Cloudflare Tunnel. To ensure that search engines and AI crawlers receive meaningful content, the server renders the document head, structured data (JSON-LD) and a plain-text summary for every route. Media does not pass through the server: images are converted to WebP (maximum width 2,400 px) and videos to H.264 with a poster frame, and visitors' browsers load both directly from Cloudflare R2. Competition Preparation applications go to Typeform and other bookings to Calendly, the client's existing tools.
+The front end is a React single-page application served by one Express server on a cloud virtual machine, reached only through a Cloudflare Tunnel. To ensure that search engines and AI crawlers receive meaningful content, the server renders the document head, structured data (JSON-LD) and a plain-text summary for every route. Media does not pass through the server: images are converted to WebP (maximum width 2,400 px) and videos to H.264 with a poster frame, and visitors' browsers load both directly from Cloudflare R2. Competition Preparation applications go to Typeform and other bookings to Calendly, the client's existing tools.
 
 ## 7. Key design decisions
 
@@ -105,8 +105,8 @@ The front end is a React single-page application served by one Express server on
 |---|---|---|
 | Custom React and Express application | WordPress with plugins (the original plan) | AI-assisted development made a custom build practical for a single developer. The client's core problems lay in the enquiry flow and email delivery, which plugins would not have resolved, and a custom build allowed the administration interface to be designed around the client's four content types. |
 | Content stored in a single JSON file with draft and published versions, backed up to Dropbox | A relational database (PostgreSQL or SQLite) | The system has one editor and a few hundred records. A single file is straightforward to inspect, back up and restore, and keeps the server configuration simple. |
-| Passwordless sign-in using six-digit email codes and an allowlist | Password authentication | Removes the need for the client to manage another password. Codes expire after 10 minutes; five incorrect attempts lock the device concerned, and 25 across all devices invalidate every outstanding code, so a third party cannot lock the client out. |
-| Hosting on an Oracle Cloud virtual machine behind a Cloudflare Tunnel | GitHub Pages; subsequently a Raspberry Pi | GitHub Pages cannot run a server. The Raspberry Pi supported staging and production but made availability dependent on a residential connection. The virtual machine is low-cost and continuously available, and with the tunnel the application listens only on the loopback interface. |
+| Passwordless sign-in using short-lived email codes and an allowlist | Password authentication | Removes the need for the client to manage another password. Codes expire quickly, and repeated wrong guesses are rate-limited per device and across all devices. |
+| Hosting on a cloud virtual machine behind a Cloudflare Tunnel | GitHub Pages; subsequently a single-board computer | GitHub Pages cannot run a server. The single-board computer supported staging and production but made availability dependent on a residential connection. The virtual machine is low-cost and continuously available, and with the tunnel the application listens only on the loopback interface. |
 | Find Your Fit implemented as a client-side qualification step | Server-enforced gating | The questionnaire is a lead-qualification aid rather than a security control, and is documented as such. The definitive screening step is the client's review of each Typeform application. |
 | Server-rendered metadata and an `llms.txt` file for the single-page application | Full server-side rendering or a static-site rewrite | Rendering the head, JSON-LD and a `<noscript>` summary for each route met crawler requirements at much lower cost. Because this output is generated from the same content store, price changes made in the dashboard are reflected in search results. |
 | Cookie-less visit statistics | Google Analytics | The client requires only visit counts, popular pages and traffic sources. The chosen approach requires no cookie consent banner, stores no IP addresses or user-agent strings, and excludes bots and signed-in administrators. |
@@ -130,7 +130,7 @@ Find Your Fit is a short branching questionnaire of four to six questions that d
 
 ### Undelivered replies: a correctly configured sending domain
 
-Enquiries are sent through Resend from a dedicated subdomain with verified SPF and DKIM records. Each enquiry generates a notification to the client and a confirmation to the visitor in a single batch. To prevent abuse of the form, Cloudflare Turnstile verifies that the sender is human, and three layers of rate limiting apply: five attempts per IP address per 15 minutes, three per email address per day (with addresses stored only as HMAC hashes), and 40 enquiries per day across the site.
+Enquiries are sent through Resend from a dedicated subdomain with verified SPF and DKIM records. Each enquiry generates a notification to the client and a confirmation to the visitor in a single batch. To prevent abuse of the form, Cloudflare Turnstile verifies that the sender is human, and three layers of rate limiting apply: per IP address, per email address (with addresses stored only as HMAC hashes), and a daily cap across the site.
 
 ![The enquiry form on the Contact page, with the Cloudflare Turnstile check passed](case-study/contact-enquiry-form.png)
 *Figure 6. The enquiry form on the Contact page, protected by Cloudflare Turnstile.*
@@ -168,7 +168,7 @@ This requirement did not arise from the interview. It followed from the charter'
 
 ## 9. Outcomes
 
-The website was deployed to production on 5 November 2026. It is deliberately held behind its under-construction page until launch: every public route returns HTTP 503 with a `noindex` directive, so search engines do not index the site prematurely. The client controls the launch from the dashboard's Site visibility setting, and the go-live checks and Google Search Console steps are documented in the [deployment guide](../site/docs/deployment-oracle.md). Traffic and enquiry data are not yet available, and the assessment below reflects this.
+The website was deployed to production on 5 November 2026. It is deliberately held behind its under-construction page until launch: every public route returns HTTP 503 with a `noindex` directive, so search engines do not index the site prematurely. The client controls the launch from the dashboard's Site visibility setting, and the go-live checks and Google Search Console steps are documented in the [deployment guide](../site/docs/deployment.md). Traffic and enquiry data are not yet available, and the assessment below reflects this.
 
 | Charter criterion | Status |
 |---|---|
@@ -217,8 +217,8 @@ The changelog originated in the same review. The client had no convenient way to
 | 18 October 2026 | Dashboard milestones 1–6 |
 | August–September 2026 | Application gate for Competition Preparation; site audit remediation |
 | July–August 2026 | Results library, Find Your Fit, enquiry email delivery resolved, maintenance mode, pricing |
-| 19–22 July 2026 | Migration to Oracle Cloud |
-| June–July 2026 | Redesigned Home, About, Services and Contact pages; branded error pages; Dropbox-to-R2 media pipeline; staging and production on a Raspberry Pi |
+| 19–22 July 2026 | Migration to a cloud virtual machine |
+| June–July 2026 | Redesigned Home, About, Services and Contact pages; branded error pages; Dropbox-to-R2 media pipeline; staging and production on a single-board computer |
 | April–May 2026 | Migration to Express; Dropbox integration; React and Vite front end |
 | February 2026 | Rebuild begins as a static site on GitHub Pages |
 | 14 July 2025 | Requirements interview; charter and Gantt chart prepared for a WordPress build |
@@ -229,7 +229,7 @@ The changelog originated in the same review. The client had no convenient way to
 |---|---|
 | Front end | React 18, React Router 6, Vite 6, Tailwind CSS 3, Motion; tested with Vitest, jsdom and Testing Library |
 | Back end | Node 22, Express 4, express-session with a SQLite session store, express-rate-limit, node-cron, sharp, ffmpeg, AWS S3 SDK (for R2), Dropbox SDK; tested with `node:test` and supertest |
-| Infrastructure | Oracle Cloud virtual machine, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend |
+| Infrastructure | Cloud virtual machine, PM2 with a systemd unit, Cloudflare DNS, Tunnel, R2 and Turnstile, Resend |
 
 | Path | Contents |
 |---|---|

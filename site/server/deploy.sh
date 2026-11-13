@@ -3,25 +3,90 @@ set -euo pipefail
 
 DEPLOY_ENVIRONMENT="${1:-}"
 
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly SITE_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+
+# Host-specific values (paths, PM2 names, ports) live in the git-ignored
+# deploy.env, not in this public script. Variables already set in the
+# environment win over the file. See deploy.env.example.
+DEPLOY_CONFIG_FILE="${DEPLOY_CONFIG_FILE:-${SITE_ROOT}/deploy.env}"
+if [[ -f "${DEPLOY_CONFIG_FILE}" ]]; then
+  while IFS= read -r config_line || [[ -n "${config_line}" ]]; do
+    [[ "${config_line}" =~ ^[[:space:]]*(#|$) ]] && continue
+    if [[ ! "${config_line}" =~ ^([A-Z][A-Z0-9_]*)=(.*)$ ]]; then
+      echo "Ignoring malformed line in ${DEPLOY_CONFIG_FILE}" >&2
+      continue
+    fi
+    config_key="${BASH_REMATCH[1]}"
+    config_value="${BASH_REMATCH[2]}"
+    config_value="${config_value%\"}"; config_value="${config_value#\"}"
+    if [[ -z "${!config_key+x}" ]]; then
+      export "${config_key}=${config_value}"
+    fi
+  done < "${DEPLOY_CONFIG_FILE}"
+fi
+
 case "${DEPLOY_ENVIRONMENT}" in
-  production)
-    readonly DEPLOY_PATH="/var/www/teamjd"
-    readonly PM2_APP_NAME="jake-production"
-    readonly EXPECTED_PORT="3000"
-    ;;
-  staging)
-    readonly DEPLOY_PATH="/var/www/teamjd-staging"
-    readonly PM2_APP_NAME="jake-staging"
-    readonly EXPECTED_PORT="3002"
-    ;;
+  production|staging) ;;
   *)
     echo "Usage: $0 <production|staging>" >&2
     exit 2
     ;;
 esac
 
-: "${DEPLOY_USER:?Missing DEPLOY_USER}"
-: "${DEPLOY_HOST:?Missing DEPLOY_HOST}"
+: "${DEPLOY_USER:?Missing DEPLOY_USER (see deploy.env.example)}"
+: "${DEPLOY_HOST:?Missing DEPLOY_HOST (see deploy.env.example)}"
+: "${TEAMJD_PRODUCTION_PATH:?Missing TEAMJD_PRODUCTION_PATH (see deploy.env.example)}"
+: "${TEAMJD_STAGING_PATH:?Missing TEAMJD_STAGING_PATH (see deploy.env.example)}"
+: "${TEAMJD_PRODUCTION_PM2_NAME:?Missing TEAMJD_PRODUCTION_PM2_NAME (see deploy.env.example)}"
+: "${TEAMJD_STAGING_PM2_NAME:?Missing TEAMJD_STAGING_PM2_NAME (see deploy.env.example)}"
+: "${TEAMJD_PRODUCTION_PORT:?Missing TEAMJD_PRODUCTION_PORT (see deploy.env.example)}"
+: "${TEAMJD_STAGING_PORT:?Missing TEAMJD_STAGING_PORT (see deploy.env.example)}"
+
+if [[ "${DEPLOY_ENVIRONMENT}" == "production" ]]; then
+  readonly DEPLOY_PATH="${TEAMJD_PRODUCTION_PATH}"
+  readonly PM2_APP_NAME="${TEAMJD_PRODUCTION_PM2_NAME}"
+  readonly EXPECTED_PORT="${TEAMJD_PRODUCTION_PORT}"
+  readonly LEGACY_PM2_APP_NAME="-"
+else
+  readonly DEPLOY_PATH="${TEAMJD_STAGING_PATH}"
+  readonly PM2_APP_NAME="${TEAMJD_STAGING_PM2_NAME}"
+  readonly EXPECTED_PORT="${TEAMJD_STAGING_PORT}"
+  readonly LEGACY_PM2_APP_NAME="${TEAMJD_STAGING_LEGACY_PM2_NAME:--}"
+fi
+readonly PRODUCTION_PATH="${TEAMJD_PRODUCTION_PATH}"
+
+# Validate locally so nothing odd reaches the remote shell. Every remote argument
+# must be non-empty: ssh flattens argv into one string and drops empty entries.
+validate_path() {
+  if [[ ! "$2" =~ ^/[A-Za-z0-9._/-]+$ || "$2" == *..* || "$2" == "/" ]]; then
+    echo "Invalid $1: must be an absolute path of letters, digits, '.', '_', '-' and '/'." >&2
+    exit 2
+  fi
+}
+validate_name() {
+  if [[ ! "$2" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "Invalid $1: use letters, digits, '.', '_' or '-'." >&2
+    exit 2
+  fi
+}
+validate_port() {
+  if [[ ! "$2" =~ ^[1-9][0-9]{0,4}$ ]] || (( $2 > 65535 )); then
+    echo "Invalid $1: must be a TCP port number." >&2
+    exit 2
+  fi
+}
+validate_path "deploy path" "${DEPLOY_PATH}"
+validate_path "production path" "${PRODUCTION_PATH}"
+validate_name "PM2 app name" "${PM2_APP_NAME}"
+validate_name "legacy PM2 app name" "${LEGACY_PM2_APP_NAME}"
+validate_port "app port" "${EXPECTED_PORT}"
+if [[ "${DEPLOY_ENVIRONMENT}" == "staging" && "${DEPLOY_PATH}" == "${PRODUCTION_PATH}" ]]; then
+  echo "Staging and production deploy paths must differ." >&2
+  exit 2
+fi
+
+readonly REMOTE_ARGS=("${DEPLOY_ENVIRONMENT}" "${DEPLOY_PATH}" "${EXPECTED_PORT}" "${PM2_APP_NAME}" "${LEGACY_PM2_APP_NAME}" "${PRODUCTION_PATH}")
 
 if [[ "${DEPLOY_ENVIRONMENT}" == "staging" && "${DEPLOY_RUN_SYNC:-false}" == "true" ]]; then
   echo "DEPLOY_RUN_SYNC=true is not allowed for staging." >&2
@@ -36,11 +101,9 @@ for local_command in npm rsync ssh; do
 done
 
 readonly DEPLOY_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly SITE_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 readonly INCOMING_PATH="${DEPLOY_PATH}/.deploy-incoming"
 
-echo "Preparing Oracle ${DEPLOY_ENVIRONMENT} deploy to ${DEPLOY_TARGET}:${DEPLOY_PATH}"
+echo "Preparing ${DEPLOY_ENVIRONMENT} deploy to ${DEPLOY_TARGET}:${DEPLOY_PATH}"
 echo "Local source: ${SITE_ROOT}/"
 echo "PM2 process: ${PM2_APP_NAME}; expected app port: 127.0.0.1:${EXPECTED_PORT}"
 echo "Asset sync after deploy: ${DEPLOY_RUN_SYNC:-false}"
@@ -51,24 +114,39 @@ echo "Building React client from ${SITE_ROOT}..."
   npm run build
 )
 
-if ! ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_PREPARE'
+if ! ssh "${DEPLOY_TARGET}" bash -s -- "${REMOTE_ARGS[@]}" <<'REMOTE_PREPARE'
 set -euo pipefail
 
 deploy_environment="$1"
+deploy_path="$2"
+expected_port="$3"
+pm2_app_name="$4"
+legacy_pm2_app_name="$5"
+production_path="$6"
+if [[ "$#" -ne 6 ]]; then
+  echo "Refusing deploy: expected 6 arguments, got $#." >&2
+  exit 1
+fi
 case "${deploy_environment}" in
-  production)
-    deploy_path="/var/www/teamjd"
-    expected_port="3000"
-    ;;
-  staging)
-    deploy_path="/var/www/teamjd-staging"
-    expected_port="3002"
-    ;;
+  production|staging) ;;
   *)
     echo "Refusing unexpected deployment environment: ${deploy_environment}" >&2
     exit 1
     ;;
 esac
+for remote_path in "${deploy_path}" "${production_path}"; do
+  if [[ ! "${remote_path}" =~ ^/[A-Za-z0-9._/-]+$ || "${remote_path}" == *..* ]]; then
+    echo "Refusing unexpected deploy path." >&2
+    exit 1
+  fi
+done
+if [[ ! "${expected_port}" =~ ^[1-9][0-9]{0,4}$ || ! "${pm2_app_name}" =~ ^[A-Za-z0-9._-]+$ || ! "${legacy_pm2_app_name}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Refusing unexpected PM2 name or port." >&2
+  exit 1
+fi
+if [[ "${legacy_pm2_app_name}" == "-" ]]; then
+  legacy_pm2_app_name=""
+fi
 
 incoming_path="${deploy_path}/.deploy-incoming"
 legacy_path="${deploy_path}/site"
@@ -115,8 +193,8 @@ then
   cat >&2 <<EOF
 Unable to prepare ${DEPLOY_TARGET}:${DEPLOY_PATH}.
 
-Confirm the Oracle user owns the target and that its .env exists. The recommended
-${DEPLOY_ENVIRONMENT} values are documented in deploy.md. For a new target, run once on Oracle:
+Confirm the deploy user owns the target and that its .env exists. For a new
+target, run once on the server:
   sudo mkdir -p ${DEPLOY_PATH}
   sudo chown ${DEPLOY_USER}:${DEPLOY_USER} ${DEPLOY_PATH}
 EOF
@@ -137,39 +215,56 @@ rsync -avzh --delete --progress \
   --exclude '/.idea/' \
   --exclude '/.vscode/' \
   --exclude '/deploy.md' \
-  --exclude '/pi_deploy.md' \
+  --exclude '/deploy.env' \
   --exclude '.DS_Store' \
   --exclude 'npm-debug.log' \
   "${SITE_ROOT}/" "${DEPLOY_TARGET}:${INCOMING_PATH}/"
 
-ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_PROMOTE'
+ssh "${DEPLOY_TARGET}" bash -s -- "${REMOTE_ARGS[@]}" <<'REMOTE_PROMOTE'
 set -euo pipefail
 
 deploy_environment="$1"
+deploy_path="$2"
+expected_port="$3"
+pm2_app_name="$4"
+legacy_pm2_app_name="$5"
+production_path="$6"
+if [[ "$#" -ne 6 ]]; then
+  echo "Refusing deploy: expected 6 arguments, got $#." >&2
+  exit 1
+fi
 case "${deploy_environment}" in
-  production)
-    deploy_path="/var/www/teamjd"
-    pm2_app_name="jake-production"
-    expected_port="3000"
-    legacy_pm2_app_name=""
-    ;;
-  staging)
-    deploy_path="/var/www/teamjd-staging"
-    pm2_app_name="jake-staging"
-    expected_port="3002"
-    legacy_pm2_app_name="jake-site-staging"
-    ;;
+  production|staging) ;;
   *)
     echo "Refusing unexpected deployment environment: ${deploy_environment}" >&2
     exit 1
     ;;
 esac
+for remote_path in "${deploy_path}" "${production_path}"; do
+  if [[ ! "${remote_path}" =~ ^/[A-Za-z0-9._/-]+$ || "${remote_path}" == *..* ]]; then
+    echo "Refusing unexpected deploy path." >&2
+    exit 1
+  fi
+done
+if [[ ! "${expected_port}" =~ ^[1-9][0-9]{0,4}$ || ! "${pm2_app_name}" =~ ^[A-Za-z0-9._-]+$ || ! "${legacy_pm2_app_name}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Refusing unexpected PM2 name or port." >&2
+  exit 1
+fi
+if [[ "${legacy_pm2_app_name}" == "-" ]]; then
+  legacy_pm2_app_name=""
+fi
 
 incoming_path="${deploy_path}/.deploy-incoming"
 legacy_path="${deploy_path}/site"
 
 cd "${incoming_path}"
 npm ci --omit=dev
+
+if [[ "${deploy_environment}" == "production" ]]; then
+  export TEAMJD_PRODUCTION_PM2_NAME="${pm2_app_name}" TEAMJD_PRODUCTION_PORT="${expected_port}"
+else
+  export TEAMJD_STAGING_PM2_NAME="${pm2_app_name}" TEAMJD_STAGING_PORT="${expected_port}"
+fi
 
 node - "${pm2_app_name}" "${expected_port}" "${deploy_environment}" <<'NODE_CONFIG'
 const path = require('node:path');
@@ -225,7 +320,7 @@ mkdir -p "${deploy_path}/data"
 chmod 700 "${deploy_path}/data"
 
 if [[ "${deploy_environment}" == "staging" ]]; then
-  production_manifest="/var/www/teamjd/data/asset-manifest.json"
+  production_manifest="${production_path}/data/asset-manifest.json"
   staging_manifest="${deploy_path}/data/asset-manifest.json"
 
   if [[ -f "${production_manifest}" ]]; then
@@ -345,19 +440,17 @@ done
 REMOTE_PROMOTE
 
 if [[ "${DEPLOY_RUN_SYNC:-false}" == "true" ]]; then
-  ssh "${DEPLOY_TARGET}" bash -s -- "${DEPLOY_ENVIRONMENT}" <<'REMOTE_SYNC'
+  ssh "${DEPLOY_TARGET}" bash -s -- "${REMOTE_ARGS[@]}" <<'REMOTE_SYNC'
 set -euo pipefail
-case "$1" in
-  production) deploy_path="/var/www/teamjd" ;;
-  staging)
-    echo "Deploy-time asset sync is not allowed for staging." >&2
-    exit 1
-    ;;
-  *)
-    echo "Refusing unexpected deployment environment: $1" >&2
-    exit 1
-    ;;
-esac
+if [[ "$1" != "production" ]]; then
+  echo "Deploy-time asset sync is only allowed for production." >&2
+  exit 1
+fi
+deploy_path="$2"
+if [[ ! "${deploy_path}" =~ ^/[A-Za-z0-9._/-]+$ || "${deploy_path}" == *..* ]]; then
+  echo "Refusing unexpected deploy path." >&2
+  exit 1
+fi
 cd "${deploy_path}"
 npm run sync-assets
 REMOTE_SYNC
@@ -365,4 +458,4 @@ else
   echo "Skipped deploy-time asset sync."
 fi
 
-echo "Oracle ${DEPLOY_ENVIRONMENT} deployment complete."
+echo "${DEPLOY_ENVIRONMENT} deployment complete."

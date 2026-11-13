@@ -151,7 +151,7 @@ The protected API real sync requires a matching API dry-run before mutating Drop
 
 `/admin` is Jake's dashboard: visit stats, plus the content he manages himself (page photos and videos, results with their testimonials, services and prices, FAQs) and site settings. Code lives in `client/src/admin/` (UI) and `server/routes/admin*.js` + `server/services/cms*.js` (API and store).
 
-- **Sign-in.** Allowlisted addresses (`CMS_ADMIN_EMAILS`) ask for an 8-digit code, emailed through the Resend settings used for enquiries (`ENQUIRY_EMAIL_FROM`). Codes expire after 10 minutes. Five wrong tries lock out that device only, and 10 across all devices kill every code for the address, so nobody can lock Jake out from elsewhere. A session lasts 30 days on that device, and ends as soon as its address is taken off `CMS_ADMIN_EMAILS` (after a restart). If a code email fails to send, the server logs it rather than telling the browser, so the response never shows which addresses are allowed. Every write to `/api/admin` must come from this site (a `Sec-Fetch-Site`/`Origin` check). `CMS_DEV_BYPASS=true` skips sign-in locally and is ignored whenever `NODE_ENV=production`.
+- **Sign-in.** Allowlisted addresses (`CMS_ADMIN_EMAILS`) ask for a short-lived one-time code, emailed through the Resend settings used for enquiries (`ENQUIRY_EMAIL_FROM`). Wrong guesses are rate-limited per device and across all devices, and every failure gets the same reply so it never shows which addresses are allowed. Limits live in `server/services/adminAuth.js` and `server/middleware/rateLimits.js`. A session lasts 30 days on that device, and ends as soon as its address is taken off `CMS_ADMIN_EMAILS` (after a restart). If a code email fails to send, the server logs it rather than telling the browser, so the response never shows which addresses are allowed. Every write to `/api/admin` must come from this site (a `Sec-Fetch-Site`/`Origin` check). `CMS_DEV_BYPASS=true` skips sign-in locally and is ignored whenever `NODE_ENV=production`.
 - **Content store.** `data/cms.json` (override with `CMS_DATA_PATH`) holds every collection, the media library and settings. It is seeded on first start from `server/seed/*.json` (services, FAQs, and results with their testimonials), so a fresh environment shows exactly what the site showed before. A testimonial is part of its result; stores from before that (schema 1, with a separate testimonials collection) are converted on load. Each content record has a `draft` and a `published` version: Jake's edits autosave to the draft and reach the site only when he publishes. Reordering is live immediately. Settings apply as soon as they are saved.
 - **Public reads.** The site reads published content from `GET /api/content/{results,services,faqs,settings}` through `useContent()` (`client/src/hooks/useContent.js`), in the same shapes the old JSON files had. Photo and video spots still come through `useMedia()`, fed by the `slots` field of `/api/assets`.
 - **Live preview.** Editors show the real public page in an iframe (`?cmsPreview=1`), as tall as the screen allows, with a full-screen option. The dashboard posts draft data into it (same origin only) and `useContent`/`useMedia` show it in place of the published data. Each form section names the part of the page it edits, and the preview scrolls to the matching `data-cms-section` element on the public page. The Find Your Fit checkpoint is skipped inside the preview. Signed-in admins pass the maintenance gate and the public asset rate limit, so previews work before launch and during long editing sessions.
@@ -161,10 +161,10 @@ The protected API real sync requires a matching API dry-run before mutating Drop
 - **Settings.** Site visibility (the under-construction page) overrides `MAINTENANCE_MODE`; the enquiry address overrides `ENQUIRY_NOTIFICATION_TO`/`ENQUIRY_REPLY_TO`; contact details and search listings feed the footer, Contact page and page titles. `/sitemap.xml` is generated from the live services.
 - **What stays in code.** Page headlines and paragraphs, service ids/slugs/colours, and the static `public/*.html` fallback pages. Services can be edited but not added, removed or hidden: their ids are hard-coded in the contact form, enquiry validation, Find Your Fit and the footer.
 
-Setup steps are in `docs/deployment-oracle.md` under "Dashboard setup".
+Setup steps are in `docs/deployment.md` under "Dashboard setup".
 
 **For Jake:**
-1. Go to `https://team-jd.com.au/admin`, enter your email and type in the 8-digit code we email you.
+1. Go to `https://team-jd.com.au/admin`, enter your email and type in the code we email you.
 2. **Home** shows how many people visited, which pages they looked at and where they came from.
 3. **Pages**: open a page, press **Choose photo** on any image and pick from your library or upload a new one. Any photo works: press **Adjust crop** and drag it to choose what stays in view. Add a short description, then press **Publish changes**.
 4. **Results**, **Services & prices** and **FAQs**: the **Live** switch, in each list row and at the top of each editor, puts an item on the site or takes it offline (services are always live). Open an item, change it, and watch the preview beside the form (or the Preview tab on your phone). It scrolls to the part you are editing. Your edits save as you type; on a live item they wait as **Unpublished changes** until you press **Publish changes**, and **Discard changes** goes back to what is live. The bulk buttons use the same words: **Go live**, **Take offline**, **Publish changes**. A result's testimonial is part of the result: switch on **Add a testimonial**.
@@ -172,38 +172,29 @@ Setup steps are in `docs/deployment-oracle.md` under "Dashboard setup".
 6. **Settings**: pick a setting from the menu (site visibility, contact and social links, where enquiries go, search listings, booking links). A save bar appears once you change something; saved settings apply straight away.
 7. The orange "unpublished" button at the top lists every unpublished change, with **Publish all**. It never puts an offline item live; only the Live switch does that. Messages appear in the top corner: confirmations fade on their own, and errors stay until you close them.
 
-**Backup and restore.** `data/cms.json` is copied to Dropbox `/cms-backup/<environment>/cms.json` about 10 seconds after each change. After losing the VM: copy that file back to `data/cms.json` and restart. Library files are in R2 (and their originals in Dropbox); visit stats in `data/analytics/` are not backed up.
+**Backup and restore.** `data/cms.json` is copied to Dropbox shortly after each change. After losing the server: copy that file back to `data/cms.json` and restart. Library files are in R2 (and their originals in Dropbox); visit stats in `data/analytics/` are not backed up.
 
-**Local testing warning:** local `.env` points at the production R2 bucket and Dropbox. For dashboard work, run with `NODE_ENV=development`, `CMS_DEV_BYPASS=true`, the asset sync off (`ASSET_SYNC_ENABLED=false ASSET_AUTO_SYNC_ENABLED=false ASSET_SYNC_ON_BOOT=false`) and `CMS_DATA_PATH` pointing at a scratch file; uploads then land under `cms/development/` and are safe to delete. `bash tools/ui-audit/serve.sh` does all of this for you (no storage credentials, scratch data in `data/ui-audit/`, port 3100).
+**Local testing warning:** if your local `.env` holds real storage credentials, local runs can write to them. For dashboard work, run with `NODE_ENV=development`, `CMS_DEV_BYPASS=true`, a local `PUBLIC_BASE_URL` (for example `http://localhost:3000`; the bypass is ignored when it points elsewhere or `APP_ENV` is set), the asset sync off (`ASSET_SYNC_ENABLED=false ASSET_AUTO_SYNC_ENABLED=false ASSET_SYNC_ON_BOOT=false`) and `CMS_DATA_PATH` pointing at a scratch file; uploads then land under `cms/development/` and are safe to delete. `bash tools/ui-audit/serve.sh` does all of this for you (no storage credentials, scratch data in `data/ui-audit/`, port 3100).
 
 ## Health Check
 
 `GET /healthz` returns HTTP 200 only after the asset manifest cache is ready. The response includes liveness and non-secret asset-cache status and is safe for local process monitoring.
 
-## Oracle Deployments
+## Deployments
 
-Production and staging are deployed from the local `site/` directory into separate application roots on Oracle. The host does not need a Git checkout or repository content outside `site/`.
-
-| Environment | Application root | PM2 process | Origin |
-| --- | --- | --- | --- |
-| Production | `/var/www/teamjd` | `jake-production` | `127.0.0.1:3000` |
-| Staging | `/var/www/teamjd-staging` | `jake-staging` | `127.0.0.1:3002` |
+Production and staging are deployed from the local `site/` directory into separate application roots on one Linux host. The host does not need a Git checkout or repository content outside `site/`. Host-specific values (SSH target, paths, PM2 names, ports) live in the git-ignored `deploy.env`:
 
 ```bash
-DEPLOY_USER=ubuntu \
-DEPLOY_HOST=your-oracle-hostname-or-ip \
+cp deploy.env.example deploy.env   # once; fill in real values
 npm run deploy:production
-
-DEPLOY_USER=ubuntu \
-DEPLOY_HOST=your-oracle-hostname-or-ip \
 npm run deploy:staging
 ```
 
 Each script removes an abandoned incoming directory, then uploads and installs into a fresh temporary incoming directory before promoting the release. Deployments preserve their own `.env`, `data/`, and `public/assets/generated/`, and can flatten an older nested `site/` layout after checking for state conflicts. After promotion, the selected PM2 process is deleted and started fresh; its new PID, runtime settings, and health endpoint must pass before PM2 state is saved.
 
-Staging uses production security semantics on port `3002`. Staging sits behind the staging gate: a username and password screen using the `SITE_AUTH_*` accounts in its `.env` (see `.env.example`). Dashboard admins signed in at `/admin` get through without it. Its PM2 ecosystem entry forces `NODE_ENV=production`, loopback binding, and both asset automation settings to `false`, including when a preserved legacy `.env` still contains older runtime values. Staging receives production's current asset manifest without copying other runtime state. `DEPLOY_RUN_SYNC=true` is supported only for production.
+Staging uses production security semantics on its own loopback port. Staging sits behind the staging gate: a username and password screen using the `SITE_AUTH_*` accounts in its `.env` (see `.env.example`). Dashboard admins signed in at `/admin` get through without it. Its PM2 ecosystem entry forces `NODE_ENV=production`, loopback binding, and both asset automation settings to `false`, including when a preserved legacy `.env` still contains older runtime values. Staging receives production's current asset manifest without copying other runtime state. `DEPLOY_RUN_SYNC=true` is supported only for production.
 
-Setup, migration, rollback, and routine operations are documented in [`docs/deployment-oracle.md`](docs/deployment-oracle.md). Host-specific commands live in the ignored local `deploy.md`. Cloudflare and cloudflared remain outside the deploy scripts.
+Setup, migration, rollback, and routine operations are documented in [`docs/deployment.md`](docs/deployment.md). Host-specific commands live in the ignored local `deploy.md`. Cloudflare and cloudflared remain outside the deploy scripts.
 
 ## Public Asset Endpoints
 

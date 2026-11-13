@@ -273,8 +273,17 @@ fs.appendFileSync(process.env.FAKE_EVENT_LOG, JSON.stringify({
       ...process.env,
       PATH: `${binDir}:${process.env.PATH}`,
       DEPLOY_USER: 'tester',
-      DEPLOY_HOST: 'oracle.example',
+      DEPLOY_HOST: 'deploy.example',
       DEPLOY_RUN_SYNC: 'false',
+      // Never pick up a developer's real deploy.env during tests.
+      DEPLOY_CONFIG_FILE: '/dev/null',
+      TEAMJD_PRODUCTION_PATH: productionRoot,
+      TEAMJD_STAGING_PATH: stagingRoot,
+      TEAMJD_PRODUCTION_PM2_NAME: 'jake-production',
+      TEAMJD_STAGING_PM2_NAME: 'jake-staging',
+      TEAMJD_STAGING_LEGACY_PM2_NAME: 'jake-site-staging',
+      TEAMJD_PRODUCTION_PORT: '3000',
+      TEAMJD_STAGING_PORT: '3002',
       FAKE_PRODUCTION_ROOT: productionRoot,
       FAKE_STAGING_ROOT: stagingRoot,
       FAKE_EVENT_LOG: eventLog,
@@ -406,15 +415,18 @@ test('production drops no SSH arguments and replaces the PM2 process on every de
   const events = readEvents(harness);
   const sshEvents = events.filter((event) => event.command === 'ssh');
   assert.ok(sshEvents.length >= 2);
+  const expectedRemoteArgs = [
+    'production', harness.productionRoot, '3000', 'jake-production', '-', harness.productionRoot
+  ];
   for (const event of sshEvents) {
-    assert.deepEqual(event.rawRemoteArgs, ['production']);
-    assert.deepEqual(event.flattenedRemoteArgs, ['production']);
+    assert.deepEqual(event.rawRemoteArgs, expectedRemoteArgs);
+    assert.deepEqual(event.flattenedRemoteArgs, expectedRemoteArgs);
   }
   const upload = events.find((event) => event.command === 'rsync' && event.kind === 'upload');
   const installIndex = events.findIndex((event) => event.command === 'npm' && event.args[0] === 'ci');
   const promoteIndex = events.findIndex((event) => event.command === 'rsync' && event.kind === 'promote');
   assert.ok(upload.args.includes(`${siteRoot}/`));
-  assert.equal(upload.args.at(-1), 'tester@oracle.example:/var/www/teamjd/.deploy-incoming/');
+  assert.equal(upload.args.at(-1), `tester@deploy.example:${harness.productionRoot}/.deploy-incoming/`);
   assert.ok(installIndex >= 0 && installIndex < promoteIndex);
   assert.equal(events[installIndex].activeStaleAtInstall, true);
   assertFreshLifecycle(events, 'jake-production', oldPid, 3000);
@@ -438,7 +450,8 @@ test('production drops no SSH arguments and replaces the PM2 process on every de
     (event) => event.command === 'npm' && event.args.join(' ') === 'run sync-assets'
   ));
   assert.ok(repeatEvents.filter((event) => event.command === 'ssh').every(
-    (event) => event.rawRemoteArgs.length === 1 && event.rawRemoteArgs[0] === 'production'
+    (event) => event.rawRemoteArgs.length === 6 && event.rawRemoteArgs[0] === 'production'
+      && event.flattenedRemoteArgs.length === 6
   ));
 });
 
@@ -485,7 +498,7 @@ test('staging accepts legacy env values, removes the legacy process, and remains
 
   const events = readEvents(harness);
   const upload = events.find((event) => event.command === 'rsync' && event.kind === 'upload');
-  assert.equal(upload.args.at(-1), 'tester@oracle.example:/var/www/teamjd-staging/.deploy-incoming/');
+  assert.equal(upload.args.at(-1), `tester@deploy.example:${harness.stagingRoot}/.deploy-incoming/`);
   assert.ok(events.some(
     (event) => event.command === 'pm2' && event.args.join(' ') === 'pid jake-staging' && event.resultPid === 0
   ));
@@ -497,7 +510,8 @@ test('staging accepts legacy env values, removes the legacy process, and remains
   ));
   assertFreshLifecycle(events, 'jake-staging', 0, 3002);
   assert.ok(events.filter((event) => event.command === 'ssh').every(
-    (event) => event.rawRemoteArgs.length === 1 && event.rawRemoteArgs[0] === 'staging'
+    (event) => event.flattenedRemoteArgs.length === 6 && event.rawRemoteArgs[0] === 'staging'
+      && event.rawRemoteArgs[5] === harness.productionRoot
   ));
 
   const state = readPm2State(harness);
@@ -564,4 +578,41 @@ test('health failure leaves PM2 state unsaved', (t) => {
   const events = readEvents(harness);
   assert.equal(events.filter((event) => event.command === 'curl').length, 15);
   assert.equal(events.some((event) => event.command === 'pm2' && event.args[0] === 'save'), false);
+});
+
+test('deploy refuses to start without host config or with unsafe values', (t) => {
+  const missing = createHarness(t);
+  delete missing.env.TEAMJD_PRODUCTION_PATH;
+  const missingResult = runDeploy(missing, 'production');
+  assert.notEqual(missingResult.status, 0);
+  assert.match(missingResult.stderr, /Missing TEAMJD_PRODUCTION_PATH/);
+  assert.equal(readEvents(missing).length, 0);
+
+  const unsafe = createHarness(t);
+  unsafe.env.TEAMJD_PRODUCTION_PATH = '/srv/teamjd; rm -rf /';
+  const unsafeResult = runDeploy(unsafe, 'production');
+  assert.notEqual(unsafeResult.status, 0);
+  assert.match(unsafeResult.stderr, /Invalid deploy path/);
+  assert.equal(readEvents(unsafe).length, 0);
+
+  const shared = createHarness(t);
+  shared.env.TEAMJD_STAGING_PATH = shared.env.TEAMJD_PRODUCTION_PATH;
+  const sharedResult = runDeploy(shared, 'staging');
+  assert.notEqual(sharedResult.status, 0);
+  assert.match(sharedResult.stderr, /must differ/);
+});
+
+test('deploy.env supplies values the shell has not set', (t) => {
+  const harness = createHarness(t);
+  const configFile = path.join(harness.callerDir, 'deploy.env');
+  fs.writeFileSync(configFile, `# comment\nTEAMJD_PRODUCTION_PORT=3999\nDEPLOY_HOST=from-file.example\n`);
+  harness.env.DEPLOY_CONFIG_FILE = configFile;
+  delete harness.env.TEAMJD_PRODUCTION_PORT;
+  writeEnvironment(path.join(harness.productionRoot, '.env'), 'production');
+  harness.env.FAKE_HEALTH_FAIL = 'true';
+
+  const result = runDeploy(harness, 'production');
+  // The file's port is used; the shell's DEPLOY_HOST wins over the file's.
+  assert.match(result.stdout, /expected app port: 127\.0\.0\.1:3999/);
+  assert.match(result.stdout, /tester@deploy\.example/);
 });

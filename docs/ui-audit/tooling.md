@@ -29,7 +29,7 @@ node tools/ui-audit/report.mjs data/ui-audit/runs/<name> --min P2
 
 `--only admin-home,admin-faqs` and `--viewports phone,wide` narrow a run. On Git Bash, set `MSYS_NO_PATHCONV=1` before passing URL paths to helper scripts.
 
-Never point the tools at a server started with a real `.env`: it reaches the production R2 bucket and Dropbox. Note that `CMS_DATA_PATH` and `ANALYTICS_DATA_DIR` set in `.env` are ignored (`server/app.js` loads `.env` after the modules that read them), which is why `serve.sh` exports them.
+Never point the tools at a server started with a real `.env`: it can reach real storage (R2 and Dropbox). Note that `CMS_DATA_PATH` and `ANALYTICS_DATA_DIR` set in `.env` are ignored (`server/app.js` loads `.env` after the modules that read them), which is why `serve.sh` exports them.
 
 ## Known limits
 

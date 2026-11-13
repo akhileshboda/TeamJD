@@ -23,7 +23,7 @@ Jake Dedert's coaching business was losing leads between its tools: replies went
 
 - **Find Your Fit:** a short questionnaire that recommends the right service, with Competition Preparation applicants routed through Jake's Typeform application before they can book.
 - **Reliable enquiry email:** sent from a verified domain (SPF and DKIM) through Resend, protected by Cloudflare Turnstile and layered rate limits.
-- **Jake's dashboard:** photos, videos, results, services, prices, FAQs and settings, with drafts, publishing and a live preview. Sign-in uses a six-digit email code.
+- **Jake's dashboard:** photos, videos, results, services, prices, FAQs and settings, with drafts, publishing and a live preview. Sign-in uses a one-time email code.
 - **Photo and video framing:** focal-point cropping that adapts to each layout, and loop trimming for the Contact page video.
 - **Media pipeline:** phone uploads and Dropbox files are converted to WebP and H.264 and served from Cloudflare R2.
 - **Search and AI-crawler output:** server-rendered metadata, structured data and `llms.txt`, generated from the content Jake edits.
@@ -35,7 +35,7 @@ Jake Dedert's coaching business was losing leads between its tools: replies went
 | --- | --- |
 | Front end | React 18, React Router, Vite 6, Tailwind CSS, Motion |
 | Back end | Node.js 22, Express 4, sharp, ffmpeg |
-| Infrastructure | Oracle Cloud VM with PM2; Cloudflare DNS, Tunnel, R2 and Turnstile; Resend; Dropbox |
+| Infrastructure | Cloud VM with PM2; Cloudflare DNS, Tunnel, R2 and Turnstile; Resend; Dropbox |
 | Testing | 469 automated tests: Node's test runner and supertest (server), Vitest and Testing Library (client) |
 
 ## Getting started

@@ -97,7 +97,7 @@ function createFakeClient(handler) {
 }
 
 const LOOKUP_ENV = {
-  R2_ACCOUNT_ID: 'd3e7e7f4a642f016210bf1611abf6226',
+  R2_ACCOUNT_ID: '0123456789abcdef0123456789abcdef',
   R2_ACCESS_KEY_ID: 'key',
   R2_SECRET_ACCESS_KEY: 'secret',
   R2_BUCKET_NAME: 'jake-site-assets',
@@ -138,7 +138,7 @@ test('R2 bucket preflight reports missing configured bucket without creating it'
     assert.equal(result.bucketReachable, false);
     assert.equal(result.bucketLookupError.code, 'r2_bucket_not_found');
     assert.match(result.bucketLookupError.message, /R2_BUCKET_NAME="jake-site-assets"/);
-    assert.match(result.bucketLookupError.message, /R2 account "d3e7e7f4a642f016210bf1611abf6226"/);
+    assert.match(result.bucketLookupError.message, /R2 account "0123456789abcdef0123456789abcdef"/);
     assert.match(result.bucketLookupError.message, /No bucket was created/);
     assert.deepEqual(result.candidateBuckets, ['other-bucket']);
     assert.equal(fakeClient.commands.includes('CreateBucketCommand'), false);

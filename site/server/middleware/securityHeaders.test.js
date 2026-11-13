@@ -14,6 +14,7 @@ test('every response carries the baseline security headers', async () => {
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
       assert.equal(res.headers[name.toLowerCase()], value, `${name} on ${path}`);
     }
+    assert.equal(res.headers['cross-origin-opener-policy'], 'same-origin');
   }
 });
 

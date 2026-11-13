@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const express = require('express');
 const { createDropboxAuth } = require('../services/dropboxAuth');
 const { dropboxOAuthLimiter } = require('../middleware/rateLimits');
+const { requireAdmin } = require('../middleware/adminAuth');
+const { isLocalDevelopment } = require('../services/adminAuth');
 
 const router = express.Router();
 const DROPBOX_SCOPES = [
@@ -32,7 +34,8 @@ function getCallbackPayload(dropboxSession) {
     expiresIn: dropboxSession.expiresIn
   };
 
-  if (isProduction()) {
+  // Raw tokens are only echoed back on a local development run.
+  if (!isLocalDevelopment()) {
     return {
       ...basePayload,
       hasAccessToken: Boolean(dropboxSession.accessToken),
@@ -47,8 +50,16 @@ function getCallbackPayload(dropboxSession) {
   };
 }
 
+// Even inside a controlled OAuth window, only a signed-in dashboard admin may
+// connect the Dropbox account. Local development keeps the open flow.
+const adminOnly = requireAdmin();
+function requireAdminInProduction(req, res, next) {
+  if (!isProduction()) return next();
+  return adminOnly(req, res, next);
+}
+
 router.use(dropboxOAuthLimiter);
-router.use('/dropbox', requireDropboxOAuthWindow);
+router.use('/dropbox', requireDropboxOAuthWindow, requireAdminInProduction);
 
 router.get('/dropbox/start', async (req, res) => {
   try {
@@ -142,3 +153,4 @@ router.get('/dropbox/callback', async (req, res) => {
 
 module.exports = router;
 module.exports.requireDropboxOAuthWindow = requireDropboxOAuthWindow;
+module.exports.requireAdminInProduction = requireAdminInProduction;

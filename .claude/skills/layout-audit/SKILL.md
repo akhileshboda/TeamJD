@@ -20,7 +20,7 @@ SKIP_BUILD=1 bash tools/ui-audit/serve.sh          # reuse the last build
 `serve.sh` runs the built app with sign-in bypassed, asset sync off, blank R2/Dropbox/Resend
 credentials, and scratch data in `site/data/ui-audit/` (gitignored). It seeds ~120 days of fake
 visits on first run (`node tools/ui-audit/seed-analytics.js` re-seeds). Do not point audits at
-`npm run dev` with a real `.env`: that `.env` reaches the production R2 bucket and Dropbox.
+`npm run dev` with a real `.env`: that `.env` can reach real storage (R2 and Dropbox).
 Rebuild (`serve.sh` without `SKIP_BUILD`) after any CSS/JSX change you want to measure.
 
 Public photos and videos come from R2/Dropbox, so they are missing in the sandbox. Judge
