@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import results from '../../../server/seed/results-library.json'
+import results from '../test/fixtures/resultsLibrary.js'
 import AppleWatchGallery, {
   canUseEnhancedGalleryDrag,
   centerGalleryViewport,

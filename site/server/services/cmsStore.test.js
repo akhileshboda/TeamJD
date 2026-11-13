@@ -18,11 +18,11 @@ const countStatuses = (rows) => rows.reduce((counts, { status }) => {
   return counts;
 }, {});
 
-test('a new store seeds 2 live client results with their testimonials, and 118 hidden ones (4 retired stage shots and 114 stock)', async () => {
+test('a new store seeds 2 live client results with their testimonials, and 4 hidden retired stage shots', async () => {
   const { store, storePath } = await tempStore();
   const results = await store.list('results');
-  assert.equal(results.length, 120);
-  assert.deepEqual(countStatuses(results), { published: 2, hidden: 118 });
+  assert.equal(results.length, 6);
+  assert.deepEqual(countStatuses(results), { published: 2, hidden: 4 });
   assert.equal(results[0].title, 'Akhil took gold at ANB');
   assert.match(results[0].thumbnail, /client-posing-1/);
 
@@ -122,6 +122,29 @@ test('stores seeded before November 2026 hide four of Akhil\'s shots and take th
   assert.ok((await reloaded.getPublic('results')).some((item) => item.id === '2'));
 });
 
+test('stores seeded with the 114 stock example photos drop them once, keeping any given an uploaded photo', async () => {
+  const { storePath } = await tempStore();
+  const stock = (id, image = { assetId: null, src: 'https://images.unsplash.com/x.jpg' }) => {
+    const draft = { caption: `Stock ${id}`, alt: 'a', category: 'training', kind: 'representative', featured: false, image, presentation: null, tags: [] };
+    return { id, order: 10, draft, published: null, rev: 1, updatedBy: 'seed', publishedAt: null, hiddenAt: 'then' };
+  };
+  const mine = { ...stock('42'), draft: { ...stock('42').draft, caption: 'Jake added this one' } };
+  const swapped = stock('reference-training-07', { assetId: 'upload-1', src: '/media/upload-1.webp' });
+  const results = [stock('reference-competition-01'), stock('reference-posing-12'), stock('reference-online-03'), stock('reference-lifestyle-09'), stock('reference-training-24'), swapped, mine];
+  await fs.writeFile(storePath, JSON.stringify({ schemaVersion: 2, collections: { results }, media: [], migrations: ['seed-results-2026-11'] }));
+
+  const store = createCmsStore({ storePath, backup: null });
+  assert.deepEqual((await store.list('results')).map((item) => item.id).sort(), ['42', 'reference-training-07']);
+  const onDisk = JSON.parse(await fs.readFile(storePath, 'utf8'));
+  assert.ok(onDisk.migrations.includes('remove-placeholder-results-2026-11'));
+
+  // Runs once: an id like the old stock ones added later is left alone.
+  onDisk.collections.results.push(stock('reference-competition-02'));
+  await fs.writeFile(storePath, JSON.stringify(onDisk));
+  const reloaded = createCmsStore({ storePath, backup: null });
+  assert.equal((await reloaded.list('results')).length, 3);
+});
+
 test('results saved before audience existed get it from their category on load', async () => {
   const { storePath } = await tempStore();
   const legacy = (category) => ({ caption: 'c', alt: 'a', category, kind: 'client', featured: false, image: { assetId: null, src: '/x.webp' }, presentation: null, tags: [], stats: [] });
@@ -181,7 +204,7 @@ test('a draft edit stays off the site until it is published, and discard reverts
 test('unpublished changes leave out offline items, so publishing them all never puts one live', async () => {
   const { store } = await tempStore();
   await store.create('results', { caption: 'Still offline' }, 'jake@example.com');
-  const hidden = await store.get('results', 'reference-competition-01');
+  const hidden = await store.get('results', '3');
   await store.saveDraft('results', hidden.id, { draft: { ...hidden.draft, caption: 'Edited while offline' }, rev: hidden.rev });
   assert.deepEqual(await store.pending(), []);
 
@@ -306,7 +329,7 @@ test('bulk actions run in one write and report items that could not change', asy
   assert.equal(outcome.failed[0].fields.caption, 'Add a short caption.');
 
   await store.bulk(stock.map(({ id }) => ({ collection: 'results', id })), 'delete');
-  assert.equal((await store.list('results')).length, 118);
+  assert.equal((await store.list('results')).length, 4);
 });
 
 test('preview shows the public list as if the draft were live, without saving it', async () => {
@@ -316,8 +339,8 @@ test('preview shows the public list as if the draft were live, without saving it
   assert.equal(preview.results.find((item) => item.id === '2').caption, 'Preview caption');
   assert.notEqual((await store.get('results', '2')).draft.caption, 'Preview caption');
 
-  const hidden = await store.preview('results', 'reference-competition-01', (await store.get('results', 'reference-competition-01')).draft);
-  assert.ok(hidden.results.some((item) => item.id === 'reference-competition-01'));
+  const hidden = await store.preview('results', '3', (await store.get('results', '3')).draft);
+  assert.ok(hidden.results.some((item) => item.id === '3'));
 
   const quote = await store.preview('results', '2', { ...record.draft, testimonial: { quote: 'New words', author: 'Sam' } });
   assert.equal(quote.results.find((item) => item.id === '2').testimonial.quote, 'New words');
@@ -330,7 +353,7 @@ test('concurrent writes are serialised and all land', async () => {
   const { store, storePath } = await tempStore();
   await Promise.all(Array.from({ length: 10 }, (_, index) => store.create('results', { caption: `Result ${index}` })));
   const fresh = createCmsStore({ storePath, backup: null });
-  assert.equal((await fresh.list('results')).length, 130);
+  assert.equal((await fresh.list('results')).length, 16);
 });
 
 test('every write schedules a backup of the whole store', async () => {

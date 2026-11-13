@@ -411,6 +411,24 @@ function applySeedRevision(data, { now, seedDir = SEED_DIR }) {
   return true;
 }
 
+// November 2026: the seed used to add 114 stock "representative" photos, hidden,
+// as examples. Jake never used them and their images no longer load, so stores
+// seeded with them drop them once. Only the seed's own ids go, and any one whose
+// photo has been swapped for an upload is kept.
+const PLACEHOLDER_REVISION = 'remove-placeholder-results-2026-11';
+const PLACEHOLDER_ID = /^reference-(competition|posing|online|training|lifestyle)-\d+$/;
+
+function removePlaceholderResults(data) {
+  data.migrations ??= [];
+  if (data.migrations.includes(PLACEHOLDER_REVISION)) return false;
+  const hasUpload = (version) => Boolean(version?.image?.assetId);
+  data.collections.results = (data.collections.results || []).filter((record) => (
+    !PLACEHOLDER_ID.test(record.id) || hasUpload(record.draft) || hasUpload(record.published)
+  ));
+  data.migrations.push(PLACEHOLDER_REVISION);
+  return true;
+}
+
 // Public outputs the site reads, built from live records only.
 const PUBLIC_OUTPUTS = {
   results: (data, sortedLive) => sortedLive('results').map((record) => toPublicResult(record, data)),
@@ -469,6 +487,7 @@ const COLLECTIONS = {
 module.exports = {
   COLLECTIONS,
   applySeedRevision,
+  removePlaceholderResults,
   PUBLIC_OUTPUTS,
   backfillResultAudience,
   foldTestimonialsIntoResults,

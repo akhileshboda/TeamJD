@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import results from '../../../server/seed/results-library.json'
+import results from '../test/fixtures/resultsLibrary.js'
 import {
   RESULTS_PER_PAGE,
   filterAndSortResults,
