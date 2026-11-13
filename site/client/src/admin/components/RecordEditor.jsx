@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { applyAction, deleteItem, getItem, previewItem, saveDraft, SIGNED_IN_EVENT } from '../api'
+import { listReturnPath } from '../listReturn'
 import { focusFirstError, PreviewSectionContext } from './fields'
 import PreviewFrame from './PreviewFrame'
 import { useToast } from './Toasts'
@@ -63,6 +64,7 @@ export default function RecordEditor({
   // The list's switch can send Jake here with the fields it found missing.
   const [errors, setErrors] = useState(() => location.state?.fieldErrors || {})
   const [preview, setPreview] = useState(null)
+  const [previewFailed, setPreviewFailed] = useState(false)
   const [confirm, setConfirm] = useState(null)
   // The action running (publish, unpublish, discard, delete), or ''.
   const [busy, setBusy] = useState('')
@@ -75,6 +77,7 @@ export default function RecordEditor({
   const saving = useRef(null)
   const saveTimer = useRef(null)
   const previewTimer = useRef(null)
+  const previewRequest = useRef(0)
   const formRef = useRef(null)
   const bodyRef = useRef(null)
 
@@ -88,8 +91,22 @@ export default function RecordEditor({
   const refreshPreview = useCallback((nextDraft) => {
     clearTimeout(previewTimer.current)
     previewTimer.current = setTimeout(() => {
-      previewItem(collection, id, nextDraft).then(setPreview).catch(() => {})
+      // Only the newest request may update the preview; a slow earlier one that
+      // answers last would otherwise put old words back.
+      const request = ++previewRequest.current
+      previewItem(collection, id, nextDraft)
+        .then((next) => {
+          if (request !== previewRequest.current) return
+          setPreview(next)
+          setPreviewFailed(false)
+        })
+        .catch(() => request === previewRequest.current && setPreviewFailed(true))
     }, PREVIEW_DELAY_MS)
+  }, [collection, id])
+
+  // An item opens at the top of the page, not wherever its list was scrolled to.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }, [collection, id])
 
   useEffect(() => {
@@ -225,7 +242,7 @@ export default function RecordEditor({
     try {
       clearTimeout(saveTimer.current)
       await deleteItem(collection, id)
-      navigate(backTo, { replace: true })
+      navigate(listReturnPath(collection, backTo), { replace: true })
     } catch (error) {
       notify({ tone: 'error', text: error.message })
       setBusy('')
@@ -264,7 +281,7 @@ export default function RecordEditor({
   return (
     <div className="jd-editor">
       <div className="jd-editor-head">
-        <Link className="jd-back" to={backTo}>
+        <Link className="jd-back" to={listReturnPath(collection, backTo)}>
           <JourneyIcon name="arrowLeft" size={16} />
           {backLabel}
         </Link>
@@ -334,6 +351,7 @@ export default function RecordEditor({
             collections={preview}
             section={section}
             title="Live preview"
+            failed={previewFailed}
             note={path ? previewNote : previewNote || 'This is not shown anywhere on the site yet.'}
           />
         </div>

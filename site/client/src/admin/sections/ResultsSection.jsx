@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Route, Routes, useParams } from 'react-router-dom'
+import { useContent } from '../../hooks/useContent'
 import { RESULT_AUDIENCE_LABELS, RESULT_CATEGORY_LABELS, resultAudience } from '../../utils/resultsLibrary'
 import CollectionList from '../components/CollectionList'
 import { ChoiceField, FormSection, RequiredNote, SelectField, TagsField, TextField, ToggleField } from '../components/fields'
@@ -14,10 +15,6 @@ const AUDIENCE_HINTS = {
   everyday: 'Strength, health and lifestyle wins, for people training for themselves.',
 }
 const AUDIENCE_OPTIONS = Object.entries(RESULT_AUDIENCE_LABELS).map(([value, label]) => ({ value, label, hint: AUDIENCE_HINTS[value] }))
-const KIND_OPTIONS = [
-  { value: 'client', label: 'Client result', hint: 'A real Team JD client. Shown as a genuine outcome.' },
-  { value: 'representative', label: 'Representative image', hint: 'A stock or example photo, labelled as not a client outcome.' },
-]
 
 const FILTERS = [
   {
@@ -28,20 +25,20 @@ const FILTERS = [
     match: (row, value) => resultAudience(row) === value,
   },
   { key: 'category', label: 'Category', anyLabel: 'Any category', options: CATEGORY_OPTIONS, match: (row, value) => row.category === value },
-  {
-    key: 'kind',
-    label: 'Type',
-    anyLabel: 'Any type',
-    options: KIND_OPTIONS.map(({ value, label }) => ({ value, label })),
-    match: (row, value) => row.kind === value,
-  },
 ]
 
 const COLUMNS = [
   { key: 'audience', label: 'Audience', render: (row) => RESULT_AUDIENCE_LABELS[resultAudience(row)] },
   { key: 'category', label: 'Category', render: (row) => RESULT_CATEGORY_LABELS[row.category] },
-  { key: 'kind', label: 'Type', render: (row) => (row.kind === 'client' ? 'Client' : 'Representative') },
+  { key: 'added', label: 'Added', render: (row) => formatAdded(row.createdAt) },
 ]
+
+function formatAdded(createdAt) {
+  const date = createdAt ? new Date(createdAt) : null
+  return date && !Number.isNaN(date.getTime())
+    ? date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+    : ''
+}
 
 const NO_TESTIMONIAL = { quote: '', author: '', service: '', result: '' }
 
@@ -50,7 +47,7 @@ const NO_TESTIMONIAL = { quote: '', author: '', service: '', result: '' }
 const resultPlaces = (draft) => [
   'the Results page',
   'the Home page gallery',
-  ...(draft.kind === 'client' && draft.featured ? ['the About page'] : []),
+  ...(draft.featured ? ['the About page'] : []),
 ]
 
 // On the Results page each photo sits in a square. "Fill the frame" crops it to
@@ -113,8 +110,18 @@ function TestimonialFields({ draft, update, errors }) {
   )
 }
 
+// The site's services, by id, so the story always shows the service's current name.
+function useServiceOptions() {
+  const { data: services } = useContent('services')
+  return [
+    { value: '', label: 'None' },
+    ...(Array.isArray(services) ? services : []).map((service) => ({ value: service.id, label: service.name })),
+  ]
+}
+
 function ResultFields({ draft, update, errors }) {
   const [picking, setPicking] = useState(false)
+  const serviceOptions = useServiceOptions()
   return (
     <>
       <RequiredNote />
@@ -156,25 +163,20 @@ function ResultFields({ draft, update, errors }) {
           onChange={(name) => update({ name })} />
         <ChoiceField label="Who it's for" value={resultAudience(draft)} options={AUDIENCE_OPTIONS} onChange={(audience) => update({ audience })} />
         <SelectField label="Category" value={draft.category} options={CATEGORY_OPTIONS} onChange={(category) => update({ category })} />
-        <ChoiceField label="Type" value={draft.kind} options={KIND_OPTIONS} onChange={(kind) => update({ kind })} />
-        {draft.kind === 'client' ? (
-          <ToggleField label="Feature on the About page" hint="Also shows this result in the About page's client results." checked={draft.featured}
-            onChange={(featured) => update({ featured })} />
-        ) : (
-          <p className="jd-field-hint">Only client results can be featured on the About page.</p>
-        )}
+        <ToggleField label="Feature on the About page" hint="Also shows this result in the About page's client results." checked={draft.featured}
+          onChange={(featured) => update({ featured })} />
       </FormSection>
 
       <TestimonialFields draft={draft} update={update} errors={errors} />
 
       <FormSection title="Story" description="Optional detail shown when the result is opened.">
         <div className="jd-field-row">
-          <TextField label="Service" hint="For example: Competition Preparation" value={draft.location} maxLength={120}
-            onChange={(location) => update({ location })} />
+          <SelectField label="Service" hint="One of your services. Shown when it adds to the category." value={draft.serviceId}
+            options={serviceOptions} onChange={(serviceId) => update({ serviceId })} />
           <TextField label="Length" hint="For example: 16 weeks" value={draft.duration} maxLength={60}
             onChange={(duration) => update({ duration })} />
         </div>
-        <TextField label="What happened" multiline rows={5} value={draft.summary} maxLength={1200}
+        <TextField label="What happened" hint="Leave a blank line to start a new paragraph." multiline rows={5} value={draft.summary} maxLength={1200}
           onChange={(summary) => update({ summary })} />
         <TagsField label="Search words" hint="Separate with commas. Helps people find this with the Results page search."
           value={draft.tags} onChange={(tags) => update({ tags })} />
@@ -210,13 +212,13 @@ export default function ResultsSection() {
           <CollectionList
             collection="results"
             title="Results"
-            description="Your clients' results. Results that are on the site show on the Results page and in the Home page gallery. Featured client results also show on About."
+            description="Your clients' results. Results that are on the site show on the Results page and in the Home page gallery. Featured ones also show on About. Newest first, here and on the site."
             noun="result"
-            newDraft={{ kind: 'client', category: 'competition', audience: 'competitor' }}
+            newDraft={{ category: 'competition', audience: 'competitor', serviceId: 'competition-prep' }}
             columns={COLUMNS}
             filters={FILTERS}
             emptyText="No results yet. Add your first client result."
-            reorderHint="The order here is the order on the site."
+            reorderable={false}
           />
         )}
       />

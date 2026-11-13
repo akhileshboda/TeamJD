@@ -134,7 +134,7 @@ export default function ResultsViewer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="results-viewer-title"
-            aria-describedby="results-viewer-description"
+            aria-describedby={result.summary ? "results-viewer-description" : undefined}
             tabIndex={-1}
             onPointerDown={(event) => {
               if (event.pointerType === 'touch') {
@@ -155,7 +155,7 @@ export default function ResultsViewer({
             <header className="results-viewer-header">
               <div>
                 <span className="results-viewer-eyebrow">
-                  {result.kind === 'client' ? 'Team JD client result' : 'Representative imagery'}
+                  Team JD client result
                 </span>
                 <span className="results-viewer-count">{position} of {total}</span>
               </div>

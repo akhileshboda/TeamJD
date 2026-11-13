@@ -16,7 +16,7 @@ const result = {
   alt: 'Athlete training with a coach',
   caption: 'Personal Training Reference — Guided strength work',
   category: 'training',
-  kind: 'representative',
+  kind: 'client',
 }
 
 describe('ResultCard', () => {
@@ -25,7 +25,7 @@ describe('ResultCard', () => {
     render(<ResultCard result={result} onOpen={onOpen} />)
 
     const card = screen.getByRole('button', { name: /View Personal Training Reference/ })
-    expect(screen.getByText('Reference')).toBeInTheDocument()
+    expect(screen.getByText('Client result')).toBeInTheDocument()
     expect(screen.getByText('Personal Training')).toBeInTheDocument()
 
     fireEvent.click(card)
@@ -150,7 +150,9 @@ describe('ResultsViewer', () => {
       />,
     )
 
-    expect(screen.getByText(/not presented as a Team JD client outcome/)).toBeInTheDocument()
+    // A result with no summary gets no made-up description.
+    expect(document.querySelector('.result-story-summary')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-describedby')
     expect(document.querySelector('.result-story-testimonial')).not.toBeInTheDocument()
   })
 

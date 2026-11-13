@@ -1,0 +1,614 @@
+{
+  "_note": "Copy refresh approved by Akhil on 2026-11-13 (Results copy review doc, version 113). Each field changes only while it still reads exactly as \"from\".",
+  "hide": [
+    "4"
+  ],
+  "results": {
+    "1": {
+      "from": {
+        "caption": "Akhil, gold at ANB",
+        "name": "Akhil took gold at ANB",
+        "summary": "Akhil did his full prep with Jake and came home from ANB with a gold medal.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "stage prep"
+        ]
+      },
+      "to": {
+        "caption": "Akhil, ANB gold medal",
+        "name": "Akhil won gold at ANB after a full prep with Jake",
+        "summary": "Jake ran every part of Akhil's prep, from training changes week to week through to the stage details. Akhil came home from ANB with a gold medal.",
+        "tags": [
+          "competition",
+          "anb",
+          "gold",
+          "competition prep",
+          "stage prep"
+        ]
+      }
+    },
+    "ig-gabi": {
+      "from": {
+        "caption": "Gabi, Ms Swimsuit SA 2026",
+        "name": "Gabi won the overall Ms Swimsuit title",
+        "summary": "Gabi took the overall Ms Swimsuit title at ICN South Australia in 2026, then competed in a pro show at Nationals nine days later.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "icn",
+          "bikini"
+        ]
+      },
+      "to": {
+        "caption": "Gabi, Ms Swimsuit overall 2026",
+        "name": "Gabi won the Ms Swimsuit overall at ICN SA",
+        "summary": "Gabi won the overall Ms Swimsuit title at ICN South Australia in 2026. Nine days later she was on stage again, in a pro show at Nationals.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "swimsuit",
+          "ms swimsuit",
+          "overall",
+          "nationals",
+          "pro show"
+        ]
+      }
+    },
+    "ig-sarah": {
+      "from": {
+        "caption": "Sarah, ICN SA 2026",
+        "name": "Sarah stepped on stage at ICN SA",
+        "summary": "Sarah competed at ICN South Australia in 2026 and was back on stage at Nationals eight days later.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "icn",
+          "bikini"
+        ]
+      },
+      "to": {
+        "caption": "Sarah, ICN SA and Nationals",
+        "name": "Sarah did two shows in eight days",
+        "summary": "Sarah ticked every box behind the scenes to get to the stage. She competed at ICN South Australia in 2026, and eight days later she was on stage again at Nationals.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "nationals",
+          "bikini",
+          "2026"
+        ]
+      }
+    },
+    "ig-ethan": {
+      "from": {
+        "summary": "Ethan prepped for 22 weeks. At ICN South Australia he won Men's Physique First Timer, came 2nd in Novice, 4th in Open and 3rd in Classic Physique.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "icn",
+          "physique"
+        ],
+        "name": "Ethan's first season: four placings at ICN SA"
+      },
+      "to": {
+        "summary": "Ethan prepped for 22 weeks, with the plan adapted around a chaotic schedule, peak week included.\n\nAt ICN South Australia he won Men's Physique First Timer, came 2nd in Novice and 3rd in Classic Physique.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "men's physique",
+          "classic physique",
+          "first timer",
+          "novice",
+          "22 weeks"
+        ],
+        "name": "Ethan's first season: podium placings at ICN SA"
+      }
+    },
+    "ig-rachel": {
+      "from": {
+        "caption": "Rachel, two overall titles",
+        "name": "Rachel won the Wellness and Sports overalls",
+        "summary": "At the ICN South Australia state show Rachel won the overall titles in both Wellness and Sports.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "icn",
+          "wellness"
+        ]
+      },
+      "to": {
+        "caption": "Rachel, Wellness and Sports overalls",
+        "name": "Rachel won two overall titles at one show",
+        "summary": "Rachel won the overall title in Wellness and the overall title in Sports, both at the ICN South Australia state show. In her words, she was just doing her thing and having a blast.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "state show",
+          "wellness",
+          "sports",
+          "overall"
+        ]
+      }
+    },
+    "ig-ben": {
+      "from": {
+        "caption": "Ben, men's physique",
+        "name": "Ben on stage in men's physique",
+        "summary": "In his 2026 season with Jake, Ben won Men's Physique Under 23 at ICN South Australia and placed 3rd in Classic Physique Open Class 2.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "physique"
+        ]
+      },
+      "to": {
+        "caption": "Ben, Men's Physique U23 winner",
+        "name": "Ben won Men's Physique Under 23 at ICN SA",
+        "summary": "Ben's 2026 season with Jake gave him a win in Men's Physique Under 23 at ICN South Australia and 3rd place in Classic Physique Open Class 2.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "men's physique",
+          "under 23",
+          "classic physique",
+          "open class",
+          "2026"
+        ]
+      }
+    },
+    "ig-nationals-2025": {
+      "from": {
+        "caption": "ICN Nationals 2025",
+        "name": "Team JD at ICN Nationals 2025",
+        "summary": "A Team JD athlete at ICN Nationals 2025. Jake took three athletes that year, and between them they won Open Class 1, a Bikini pro card and placings in Swimsuit and Bikini.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "icn",
+          "nationals"
+        ]
+      },
+      "to": {
+        "caption": "ICN Nationals 2025, three athletes",
+        "name": "Jake took three athletes to ICN Nationals in 2025",
+        "summary": "Jake took three athletes to ICN Nationals in 2025. Between them they won Open Class 1, earned a Bikini pro card and placed in Swimsuit and Bikini.\n\nThis is one of the three on the national stage.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn nationals",
+          "nationals",
+          "open class",
+          "pro card",
+          "bikini",
+          "swimsuit",
+          "2025"
+        ]
+      }
+    },
+    "ig-medal-2025": {
+      "from": {
+        "caption": "Matt, IFBB Pro League",
+        "name": "Matt's first IFBB show",
+        "summary": "Matt competed as a natural at IFBB Pro League SA, his first IFBB show, and won Open Middle Weight with 3rd in True Novice.",
+        "tags": [
+          "competition",
+          "client result",
+          "team jd",
+          "stage prep"
+        ]
+      },
+      "to": {
+        "caption": "Matt, Open Middle Weight winner",
+        "name": "Matt at his first IFBB show",
+        "summary": "IFBB Pro League SA was Matt's first IFBB show, and he competed as a natural. He won Open Middle Weight and came 3rd in True Novice.",
+        "tags": [
+          "competition",
+          "ifbb",
+          "ifbb pro league",
+          "natural",
+          "middle weight",
+          "true novice",
+          "first show",
+          "stage prep"
+        ]
+      }
+    },
+    "ig-maxine": {
+      "from": {
+        "summary": "Maxine's first time on a bodybuilding stage, at ICN South Australia in 2025, ended with the overall Miss Bikini State title. It qualified her for Nationals and the pro league.",
+        "tags": [
+          "client result",
+          "team jd",
+          "competition",
+          "bikini",
+          "icn"
+        ]
+      },
+      "to": {
+        "summary": "At the very start, Maxine told Jake she'd do whatever it took to win that title.\n\nHer first time on a bodybuilding stage, at ICN South Australia in 2025, ended with the overall Miss Bikini State title. It qualified her for Nationals and the pro league.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "bikini",
+          "miss bikini",
+          "state champion",
+          "overall",
+          "debut",
+          "first show",
+          "2025"
+        ]
+      }
+    },
+    "ig-jade": {
+      "from": {
+        "summary": "Jade won first place in Bikini at the FMG World Championships on the Gold Coast and was awarded her pro card. It was her second FMG show, two weeks after placing 3rd at FMG New Zealand.",
+        "tags": [
+          "client result",
+          "team jd",
+          "competition",
+          "bikini",
+          "pro card"
+        ]
+      },
+      "to": {
+        "summary": "Two weeks after placing 3rd at FMG New Zealand, Jade won Bikini at the FMG World Championships on the Gold Coast and was awarded her pro card.",
+        "tags": [
+          "competition",
+          "fmg",
+          "fmg worlds",
+          "world championships",
+          "gold coast",
+          "new zealand",
+          "bikini",
+          "pro card"
+        ]
+      }
+    },
+    "ig-gabriel": {
+      "from": {
+        "caption": "Gabriel, Bikini Novice winner",
+        "name": "Gabriel won Bikini Novice Class 2",
+        "summary": "At ICN South Australia Season B 2024, Gabriel won Bikini Novice Class 2, Bikini Open Class 2 and Swimsuit.",
+        "tags": [
+          "client result",
+          "team jd",
+          "competition",
+          "bikini",
+          "icn"
+        ]
+      },
+      "to": {
+        "caption": "Gabriel, three wins at ICN SA",
+        "name": "Gabriel won three classes at ICN SA",
+        "summary": "Gabriel cleaned up Bikini Novice Class 2, Bikini Open Class 2 and Swimsuit. ICN Season B 2024.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "season b",
+          "bikini",
+          "novice",
+          "open class",
+          "swimsuit",
+          "2024"
+        ]
+      }
+    },
+    "ig-sophie": {
+      "from": {
+        "name": "Sophie placed 2nd in Wellness Open Class 1",
+        "summary": "Sophie came 2nd in Wellness Open Class 1 at ICN South Australia Season B 2024, and 2nd in themewear at the same show.",
+        "tags": [
+          "client result",
+          "team jd",
+          "competition",
+          "wellness",
+          "icn"
+        ]
+      },
+      "to": {
+        "name": "Sophie took two 2nd places at ICN SA",
+        "summary": "At ICN South Australia Season B 2024, Sophie came 2nd in Wellness Open Class 1. She was 2nd in themewear at the same show.",
+        "tags": [
+          "competition",
+          "icn",
+          "icn south australia",
+          "season b",
+          "wellness",
+          "open class",
+          "themewear",
+          "2nd place",
+          "2024"
+        ]
+      }
+    },
+    "ig-shari": {
+      "from": {
+        "name": "Shari's back, 2018 and 2020",
+        "summary": "Shari's back pose on the ICN South Australia stage in April 2018 and in November 2020, from her own post. She later won Figure Novice at ICN Nationals.",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation",
+          "figure"
+        ]
+      },
+      "to": {
+        "name": "Shari went on to win Figure Novice at ICN Nationals",
+        "summary": "Shari posted these two back poses from the ICN South Australia stage: April 2018 on one side, November 2020 on the other.\n\nShe later won Figure Novice at ICN Nationals.",
+        "tags": [
+          "transformation",
+          "figure",
+          "figure novice",
+          "back pose",
+          "icn",
+          "icn south australia",
+          "nationals",
+          "2018",
+          "2020"
+        ]
+      }
+    },
+    "ig-one-year": {
+      "from": {
+        "name": "The same competitor, one year apart",
+        "summary": "A men's physique client on stage a year ago, above a back pose from a year later. The story caption: can't wait to roll out the new improved version.",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation",
+          "physique"
+        ]
+      },
+      "to": {
+        "name": "One year between these two stage photos",
+        "summary": "\"Can't wait to roll out the new improved version,\" read the story caption.\n\nThe top photo is this men's physique client on stage, tagged one year ago. Below it is a back pose from a year later.",
+        "tags": [
+          "transformation",
+          "physique",
+          "men's physique",
+          "one year",
+          "back pose",
+          "before and after"
+        ]
+      }
+    },
+    "ig-transform-67-55": {
+      "from": {
+        "name": "12kg down while eating more",
+        "summary": "Before: 67kg on 1600 calories a day and yoga three times a week. After: 55kg on about 2150 calories a day with resistance training five times a week.",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation",
+          "fat loss"
+        ]
+      },
+      "to": {
+        "name": "More food, less weight",
+        "summary": "This client weighed 67kg, eating 1600 calories a day and doing yoga three times a week.\n\nAfter starting with TeamJD, we moved her to about 2150 calories a day and resistance training five times a week.",
+        "tags": [
+          "transformation",
+          "before and after",
+          "fat loss",
+          "weight loss",
+          "calories",
+          "resistance training",
+          "yoga",
+          "12kg"
+        ]
+      }
+    },
+    "ig-akhil": {
+      "from": {
+        "caption": "Akhil, before and after",
+        "name": "Akhil's before and after",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation"
+        ]
+      },
+      "to": {
+        "caption": "Right mindset, right results",
+        "name": "Akhil, before coaching and after",
+        "tags": [
+          "transformation",
+          "before and after",
+          "online coaching",
+          "mindset"
+        ]
+      }
+    },
+    "ig-transform-day-75": {
+      "from": {
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation",
+          "fat loss",
+          "habits"
+        ],
+        "summary": "Over 75 days this client lost 4.7kg (6.2kg in total with Jake), did at least 150 workouts, drank at least 300 litres of water and had no cheat meals or alcohol."
+      },
+      "to": {
+        "tags": [
+          "transformation",
+          "fat loss",
+          "habits",
+          "75 days",
+          "challenge",
+          "two workouts a day",
+          "water",
+          "no alcohol"
+        ],
+        "summary": "Seventy-five days of two workouts a day, four litres of water and no cheat meals or alcohol. They came out 4.7kg lighter, and 6.2kg down since starting with Jake."
+      }
+    },
+    "ig-transform-jan-june": {
+      "from": {
+        "name": "Five months of cutting and shaping up",
+        "summary": "January 2023 on the left, June 2023 on the right. The client's caption says they were getting shredded and shaping up slowly.",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation"
+        ]
+      },
+      "to": {
+        "name": "Five months of getting shredded, slowly",
+        "summary": "The same client in the same gym, January 2023 and June 2023. Their own caption: getting shredded and shaping up slowly.",
+        "tags": [
+          "transformation",
+          "before and after",
+          "cutting",
+          "shredded",
+          "2023"
+        ]
+      }
+    },
+    "ig-brooke": {
+      "from": {
+        "caption": "Brooke, 4 weeks in",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation"
+        ]
+      },
+      "to": {
+        "caption": "Just in 4 weeks!",
+        "tags": [
+          "transformation",
+          "progress",
+          "4 weeks",
+          "check-in",
+          "online coaching"
+        ]
+      }
+    },
+    "ig-alanah": {
+      "from": {
+        "name": "Back to 120kg hip thrusts after a back injury",
+        "tags": [
+          "client result",
+          "team jd",
+          "strength",
+          "injury",
+          "everyday"
+        ]
+      },
+      "to": {
+        "name": "Alanah was back to 120kg hip thrusts five months after a back injury",
+        "tags": [
+          "strength",
+          "injury",
+          "back injury",
+          "hip thrust",
+          "120kg",
+          "top set",
+          "everyday"
+        ]
+      }
+    },
+    "ig-krissy": {
+      "from": {
+        "name": "7 new personal bests",
+        "summary": "Krissy's training app showed 7 new personal bests.",
+        "tags": [
+          "client result",
+          "team jd",
+          "strength",
+          "everyday"
+        ]
+      },
+      "to": {
+        "name": "TeamJD clients smash their program.",
+        "summary": "Krissy's training app logged 7 new personal bests.",
+        "tags": [
+          "strength",
+          "everyday",
+          "pb",
+          "personal best",
+          "training app"
+        ]
+      }
+    },
+    "ig-krissy-prep": {
+      "from": {
+        "name": "Krissy kept building after prep",
+        "summary": "Krissy put a photo from her prep next to a more recent one, captioned: in prep vs now, we growin'.",
+        "tags": [
+          "client result",
+          "team jd",
+          "transformation"
+        ]
+      },
+      "to": {
+        "name": "Off season done right!",
+        "summary": "\"In prep vs now, we growin'.\" Krissy's caption on a photo from her prep next to a recent one.",
+        "tags": [
+          "transformation",
+          "before and after",
+          "prep",
+          "growing",
+          "muscle"
+        ]
+      }
+    },
+    "ig-brooke-5-weeks": {
+      "from": {
+        "tags": [
+          "client result",
+          "team jd",
+          "everyday"
+        ]
+      },
+      "to": {
+        "tags": [
+          "everyday",
+          "progress",
+          "5 weeks",
+          "beach",
+          "online coaching"
+        ]
+      }
+    },
+    "ig-massimo": {
+      "from": {
+        "name": "1.3kg down heading into summer",
+        "tags": [
+          "client result",
+          "team jd",
+          "everyday",
+          "fat loss"
+        ]
+      },
+      "to": {
+        "name": "Summer shredding at TeamJD",
+        "tags": [
+          "everyday",
+          "fat loss",
+          "weight loss",
+          "summer",
+          "check-in",
+          "1.3kg"
+        ]
+      }
+    }
+  }
+}

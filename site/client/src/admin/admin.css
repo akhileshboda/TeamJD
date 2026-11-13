@@ -1675,6 +1675,17 @@ html:has(.jd-bulk-bar) {
   min-height: 24rem;
 }
 
+@property --jd-form-fade {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes jd-form-fade {
+  to {
+    --jd-form-fade: 1rem;
+  }
+}
+
 /* Laptops and wider: the editor is a workspace exactly as tall as the screen.
    The header and status bar stay put, only the form scrolls, and the preview
    fills the rest of the height, so all of it is always in view. */
@@ -1709,6 +1720,21 @@ html:has(.jd-bulk-bar) {
     padding: 0.25rem 0.75rem 1rem 0.25rem;
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* <html>'s scroll-padding doesn't reach this inner scroller: without this a
+       field reached by Tab or by an error link lands flush on the column's top
+       edge with its card's top cut off. */
+    scroll-padding-block: 1rem;
+  }
+  /* Scrolled, the cards fade out over the column's top 1rem instead of being
+     sliced on a hard line under the status bar. Unscrolled, nothing fades, so
+     the first card's top edge is always whole. */
+  @supports (animation-timeline: scroll()) {
+    .jd-editor-form {
+      mask-image: linear-gradient(to bottom, transparent, #000 var(--jd-form-fade));
+      animation: jd-form-fade linear both;
+      animation-timeline: scroll(self);
+      animation-range: 0 2rem;
+    }
   }
   .jd-editor-preview {
     position: static;
@@ -1839,6 +1865,14 @@ html:has(.jd-bulk-bar) {
 }
 .jd-form-note .jd-required-tag {
   margin: 0 0.125rem;
+}
+/* At the head of the editor's form the note is a quiet strip with the cards'
+   border and radius, so the form column starts on an edge at the same height
+   as the preview card beside it, not on a line of loose text. */
+.jd-editor-form > .jd-form-note:first-child {
+  padding: var(--jd-card-pad-sm);
+  border: 1px solid var(--jd-line);
+  border-radius: var(--jd-radius);
 }
 .jd-field-count {
   justify-self: end;
@@ -2108,9 +2142,12 @@ html:has(.jd-bulk-bar) {
   border-radius: var(--jd-radius);
   background: var(--jd-panel);
 }
+/* The status takes the spare width but never less than 18rem: once the bar is
+   too narrow for that beside the buttons, the buttons wrap to a row of their own
+   instead of squeezing the text into a column that breaks mid-phrase. */
 .jd-publish-bar-status {
   display: flex;
-  flex: 1;
+  flex: 1 1 18rem;
   align-items: center;
   gap: 1rem;
   min-width: 0;
@@ -2129,12 +2166,18 @@ html:has(.jd-bulk-bar) {
 .jd-publish-bar-where:not(:empty) {
   margin-right: 0.75rem;
 }
+/* "Saved just now" is one unit: it moves to the next line whole, never splits. */
 .jd-publish-bar-save {
+  display: inline-block;
   color: var(--jd-subtle);
+  white-space: nowrap;
 }
 .jd-publish-bar-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
+  margin-left: auto;
 }
 
 /* Phones, tablets and very short screens: the bar is fixed to the bottom of
@@ -3442,7 +3485,7 @@ html:has(.jd-bulk-bar) {
     top: var(--jd-topbar);
     z-index: var(--jd-z-sticky);
     display: block;
-    margin: 0 -1.5rem 1rem;
+    margin: 0 -1.5rem var(--jd-editor-gap);
     padding: 0.5rem 1.5rem;
     border-bottom: 1px solid var(--jd-line);
     background: var(--jd-canvas);

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, applySeedRevision, removePlaceholderResults, backfillResultAudience, foldTestimonialsIntoResults, mediaUsage } = require('./cmsCollections');
+const { COLLECTIONS, PUBLIC_OUTPUTS, SEED_DIR, applySeedRevision, applyResultsCopy, removePlaceholderResults, backfillResultAudience, foldTestimonialsIntoResults, mediaUsage } = require('./cmsCollections');
 const { normalizeSection, withDefaults } = require('./cmsSettings');
 
 // The dashboard's content store: one JSON file holding every collection.
@@ -195,6 +195,7 @@ function createCmsStore(options = {}) {
     }
     if (applySeedRevision(data, { now: now(), seedDir })) changed = true;
     if (removePlaceholderResults(data)) changed = true;
+    if (applyResultsCopy(data, { now: now(), seedDir })) changed = true;
     if (changed) await write(data);
     cache = data;
     return data;
@@ -226,6 +227,7 @@ function createCmsStore(options = {}) {
       id: record.id,
       order: record.order,
       status: statusOf(record),
+      createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       updatedBy: record.updatedBy,
       ...collectionDef(name).summarize(record, data)
@@ -239,7 +241,8 @@ function createCmsStore(options = {}) {
 
     list(name) {
       collectionDef(name);
-      return read((data) => sortedByOrder(data.collections[name]).map((record) => summaryRow(data, name, record)));
+      const sort = collectionDef(name).sort || sortedByOrder;
+      return read((data) => sort(data.collections[name]).map((record) => summaryRow(data, name, record)));
     },
 
     get(name, id) {
@@ -427,7 +430,7 @@ function createCmsStore(options = {}) {
         const normalized = def.normalizeDraft(draft, record?.draft);
         if (!record) {
           const firstOrder = Math.min(1, ...data.collections[name].map((item) => item.order));
-          record = { id: id ? String(id) : 'preview', order: firstOrder - 1, rev: 0 };
+          record = { id: id ? String(id) : 'preview', order: firstOrder - 1, rev: 0, createdAt: now() };
           data.collections[name].push(record);
         }
         record.draft = normalized;

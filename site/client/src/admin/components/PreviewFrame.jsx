@@ -36,7 +36,8 @@ function fitToStage(device, stage) {
 // posted into it (see hooks/useContent.js). `collections` maps a public
 // collection name to the list it should show; `section` names the part of the
 // page being edited, which the page scrolls to.
-export default function PreviewFrame({ path, collections, section, title = 'Preview', note }) {
+// `failed` says the newest draft could not be fetched, so the preview may be behind.
+export default function PreviewFrame({ path, collections, section, title = 'Preview', note, failed = false }) {
   const [device, setDevice] = useState(initialDevice)
   const [stage, setStage] = useState({ width: 390, height: 800 })
   const [expanded, setExpanded] = useState(false)
@@ -113,7 +114,9 @@ export default function PreviewFrame({ path, collections, section, title = 'Prev
       <div className="jd-preview-head">
         <div className="jd-preview-heading">
           <p className="jd-preview-title">{title}</p>
-          {note && <p className="jd-preview-note">{note}</p>}
+          {failed
+            ? <p className="jd-preview-note" role="status">The preview couldn't update. It will try again when you make a change.</p>
+            : note && <p className="jd-preview-note">{note}</p>}
         </div>
         <div className="jd-preview-tools">
           <div className="jd-segmented" role="group" aria-label="Preview size">

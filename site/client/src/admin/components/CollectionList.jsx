@@ -3,6 +3,7 @@ import { Reorder, useDragControls } from 'motion/react'
 import { Link, useNavigate, useResolvedPath, useSearchParams } from 'react-router-dom'
 import JourneyIcon from '../../components/JourneyIcon'
 import { bulkAction, createItem, listItems, reorderItems } from '../api'
+import { rememberListPosition, takeListScroll } from '../listReturn'
 import { Chip, ConfirmDialog, hasUnpublishedChanges, isLive, LiveSwitch, STATUS_HELP, timeAgo } from './ui'
 import { useToast } from './Toasts'
 
@@ -102,7 +103,7 @@ function StatusHelp({ canHide }) {
 
 // `live` is the Live switch's state and handler, or null where items cannot be
 // taken offline (services).
-function Row({ row, columns, selected, onSelect, live, reordering, onMove, onGrab, index, total }) {
+function Row({ row, columns, selected, onSelect, live, reordering, onMove, onGrab, onOpen, index, total }) {
   return (
     <>
       {reordering ? (
@@ -131,7 +132,7 @@ function Row({ row, columns, selected, onSelect, live, reordering, onMove, onGra
         {reordering ? (
           <span className="jd-row-title">{row.title}</span>
         ) : (
-          <Link className="jd-row-title jd-row-link" to={row.id}>{row.title}</Link>
+          <Link className="jd-row-title jd-row-link" to={row.id} onClick={onOpen}>{row.title}</Link>
         )}
         {row.subtitle && <span className="jd-row-subtitle">{row.subtitle}</span>}
       </span>
@@ -175,6 +176,7 @@ function ReorderRow({ row, ...rest }) {
 
 // A collection's list page: search, filters, bulk actions, reordering, and a
 // button to add a new item. Filters live in the URL so a refresh keeps them.
+// `reorderable` is false where the list keeps its own order (results, newest first).
 export default function CollectionList({
   collection,
   title,
@@ -185,6 +187,7 @@ export default function CollectionList({
   filters = [],
   emptyText,
   reorderHint,
+  reorderable = true,
   canHide = true,
   canDelete = true,
 }) {
@@ -202,6 +205,18 @@ export default function CollectionList({
   const [switching, setSwitching] = useState(null)
   const orderTimer = useRef(null)
   const pendingOrder = useRef(null)
+  const restored = useRef(false)
+
+  // Coming back from an item: once the rows are on the page, scroll to where
+  // the list was when it was opened (it is empty before then, so it cannot scroll).
+  useEffect(() => {
+    if (!rows || restored.current) return
+    restored.current = true
+    const scrollY = takeListScroll(collection)
+    // Effects run after the rows are in the page, so it is tall enough to scroll.
+    if (scrollY !== null) window.scrollTo({ top: scrollY, behavior: 'instant' })
+  }, [rows, collection])
+  const rememberPosition = () => rememberListPosition(collection)
 
   const load = useCallback(() => listItems(collection)
     .then((items) => {
@@ -328,6 +343,7 @@ export default function CollectionList({
     setBusy(true)
     try {
       const created = await createItem(collection, newDraft)
+      rememberPosition()
       navigate(created.id)
     } catch (failure) {
       notify({ tone: 'error', text: failure.message })
@@ -346,7 +362,7 @@ export default function CollectionList({
           {description && <p className="jd-page-lede">{description}</p>}
         </div>
         <div className="jd-list-head-actions">
-          {rows && rows.length > 1 && (
+          {reorderable && rows && rows.length > 1 && (
             <button type="button" className="jd-admin-button" aria-pressed={reordering} onClick={() => { setReordering(!reordering); setSelected(new Set()) }}>
               {reordering ? 'Done reordering' : 'Reorder'}
             </button>
@@ -432,7 +448,7 @@ export default function CollectionList({
               <ul className="jd-rows" role="rowgroup">
                 {visible.map((row) => (
                   <li key={row.id} role="row" className={`jd-row${selected.has(row.id) ? ' is-selected' : ''}`}>
-                    <Row row={row} columns={columns} selected={selected.has(row.id)} onSelect={selectRow} live={liveSwitch(row)} />
+                    <Row row={row} columns={columns} selected={selected.has(row.id)} onSelect={selectRow} live={liveSwitch(row)} onOpen={rememberPosition} />
                   </li>
                 ))}
               </ul>
