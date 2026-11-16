@@ -17,7 +17,8 @@
     "capacity:test": "node server/capacity-test.js",
     "test": "node --test --test-concurrency=1 server/deploy.test.js server/middleware/*.test.js server/routes/*.test.js server/services/*.test.js server/services/mail/*.test.js",
     "deploy:production": "bash server/deploy-production.sh",
-    "deploy:staging": "bash server/deploy-staging.sh"
+    "deploy:staging": "bash server/deploy-staging.sh",
+    "seo:check": "node server/services/seoCheck.js"
   },
   "nodemonConfig": {
     "ignore": [

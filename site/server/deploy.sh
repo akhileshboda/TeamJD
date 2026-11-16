@@ -459,3 +459,14 @@ else
 fi
 
 echo "${DEPLOY_ENVIRONMENT} deployment complete."
+
+# Public SEO smoke check (production only; staging is noindex on purpose).
+# Opt in with SEO_CHECK_URL in deploy.env. The deploy is already live by now,
+# so a failure here means "fix forward", not "nothing changed".
+if [[ "${DEPLOY_ENVIRONMENT}" == "production" && -n "${SEO_CHECK_URL:-}" ]]; then
+  echo "Running SEO check against ${SEO_CHECK_URL}..."
+  if ! node "${SITE_ROOT}/server/services/seoCheck.js" "${SEO_CHECK_URL}"; then
+    echo "Production is deployed, but the SEO check failed. Fix before Google recrawls." >&2
+    exit 1
+  fi
+fi
