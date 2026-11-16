@@ -29,7 +29,7 @@ function buildApp() {
   app.use(maintenanceMode);
   app.use('/assets', express.static(__dirname));
   app.get('/api/ping', (req, res) => res.json({ ok: true }));
-  app.get('/favicon.png', (req, res) => res.type('png').send('png'));
+  app.get(['/favicon.png', '/favicon.ico', '/apple-touch-icon.png'], (req, res) => res.type('png').send('png'));
   app.get('/', (req, res) => res.send('<html>home</html>'));
   return app;
 }
@@ -47,8 +47,10 @@ test('gated responses: 503.html for pages, JSON 503 for /api, Retry-After set, /
     assert.equal(asset.status, 200);
 
     // The sign-in page's tab icon must load before anyone has signed in.
-    const favicon = await request(app).get('/favicon.png');
-    assert.equal(favicon.status, 200);
+    for (const icon of ['/favicon.png', '/favicon.ico', '/apple-touch-icon.png']) {
+      const favicon = await request(app).get(icon);
+      assert.equal(favicon.status, 200, icon);
+    }
 
     const api = await request(app).get('/api/ping');
     assert.equal(api.status, 503);
