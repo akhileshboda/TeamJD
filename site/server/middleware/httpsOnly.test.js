@@ -56,3 +56,49 @@ test('the backstop is off outside production or without an HTTPS base URL', asyn
     assert.equal(response.status, 200);
   }
 });
+
+test('the www twin of the canonical host is redirected to the canonical host', async () => {
+  const response = await request(buildApp()).get('/page?x=1')
+    .set('Host', 'www.site.example.com')
+    .set('CF-Visitor', '{"scheme":"https"}');
+  assert.equal(response.status, 301);
+  assert.equal(response.headers.location, 'https://site.example.com/page?x=1');
+});
+
+test('other hosts are not redirected, so a rewritten tunnel Host cannot loop', async () => {
+  const response = await request(buildApp()).get('/page')
+    .set('Host', 'localhost:3000')
+    .set('CF-Visitor', '{"scheme":"https"}');
+  assert.equal(response.status, 200);
+});
+
+test('trailing slashes and /index.html fold into the canonical path in one hop', async () => {
+  const cases = [
+    ['/page/', '/page'],
+    ['/page/?x=1', '/page?x=1'],
+    ['/index.html', '/'],
+    ['/services/index.html', '/services']
+  ];
+  for (const [from, to] of cases) {
+    const response = await request(buildApp()).get(from).set('CF-Visitor', '{"scheme":"https"}');
+    assert.equal(response.status, 301, from);
+    assert.equal(response.headers.location, `https://site.example.com${to}`, from);
+  }
+
+  // Plain HTTP plus a trailing slash is still a single redirect.
+  const http = await request(buildApp()).get('/page/').set('X-Forwarded-Proto', 'http');
+  assert.equal(http.headers.location, 'https://site.example.com/page');
+});
+
+test('the home page, API paths and non-GET requests keep their exact path', async () => {
+  const home = await request(buildApp()).get('/').set('CF-Visitor', '{"scheme":"https"}');
+  assert.notEqual(home.status, 301);
+
+  const app = buildApp();
+  app.get('/api/thing/', (req, res) => res.send('api'));
+  const api = await request(app).get('/api/thing/').set('CF-Visitor', '{"scheme":"https"}');
+  assert.equal(api.status, 200);
+
+  const post = await request(buildApp()).post('/form/').set('CF-Visitor', '{"scheme":"https"}');
+  assert.notEqual(post.status, 301);
+});
