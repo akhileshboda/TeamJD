@@ -6,12 +6,14 @@ const { getCmsStore } = require('../services/cmsStore');
 const publicDir = path.join(__dirname, '..', '..', 'public');
 const MAINTENANCE_PAGE_PATH = path.join(publicDir, '503.html');
 const MAINTENANCE_RETRY_AFTER_SECONDS = 3600;
-// The favicon is the public logo mark; the sign-in page needs it before sign-in.
+// The favicons are the public logo mark; the sign-in page needs it before sign-in.
 // The crawl files stay reachable so search engines keep finding the site while
 // it is in maintenance; the homepage itself is handled by renderHoldingPage.
 const EXEMPT_PATHS = new Set([
   '/healthz',
+  '/favicon.ico',
   '/favicon.png',
+  '/apple-touch-icon.png',
   '/robots.txt',
   '/sitemap.xml',
   '/llms.txt',
